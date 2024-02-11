@@ -35,17 +35,17 @@ Ensure you have the following before you start:
 2. **Open the Project in Xcode:**
 
     Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
-    
+
     In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
 
 3. **Add YOLOv8 Models to the Project:**
 
     Export CoreML INT8 models using the `ultralytics` Python package, or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app). Then place them in the `YOLO/Models` directory.
-    
+
     ```python
     # Install with 'pip install ultralytics'
     from ultralytics import YOLO
-    
+
     # Export all YOLOv8 models to CoreML INT8 
     for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
         YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
@@ -56,7 +56,7 @@ Ensure you have the following before you start:
     Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
 
     <p align="center">
-      <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/bbe30e03-65c3-4cdb-9f15-2163f3147dbc" alt="Ultralytics YOLO XCode screenshot">
+    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/bbe30e03-65c3-4cdb-9f15-2163f3147dbc" alt="Ultralytics YOLO XCode screenshot">
     </p>
 
 ## 🚀 Usage

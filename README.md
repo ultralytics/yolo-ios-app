@@ -62,7 +62,7 @@ Ensure you have the following before you start:
 
 3. **Add YOLOv8 Models to the Project:**
 
-    Export CoreML INT8 models using the `ultralytics` Python package, or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app). Then place them in the `YOLO/Models` directory.
+    Export CoreML INT8 models using the `ultralytics` Python package, or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Then place them in the `YOLO/Models` directory.
 
     ```python
     # Install with 'pip install ultralytics'

@@ -35,6 +35,10 @@ Ensure you have the following before you start:
 2. **Open the Project in Xcode:**
 
     Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
+ 
+    <p align="center">
+    <img width="30%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
+    </p>
 
     In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
 
@@ -56,7 +60,7 @@ Ensure you have the following before you start:
     Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
 
     <p align="center">
-    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/bbe30e03-65c3-4cdb-9f15-2163f3147dbc" alt="Ultralytics YOLO XCode screenshot">
+    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
     </p>
 
 ## 🚀 Usage

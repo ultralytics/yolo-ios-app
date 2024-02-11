@@ -39,12 +39,13 @@ If you prefer to use specific model versions or need to customize the models, yo
 
 3. **Place Models in Project:** After exporting, locate the CoreML model files and place them in the `YOLO/Models` directory of your project.
 
+   
+    <p align="center">
+    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
+    </p>
+
 ## Finalizing the Setup
 
 Once you've added the models to the `YOLO/Models` directory by either downloading them from GitHub or exporting them using the Ultralytics package, your Ultralytics YOLO iOS App is ready to detect objects with high accuracy and performance.
-
-<p align="center">
-  <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
-</p>
 
 By offering these two options, we aim to provide flexibility and ensure you have access to the latest advancements in object detection technology. Whether you're a developer, researcher, or enthusiast, these options allow you to integrate YOLOv8 models into your iOS projects efficiently and effectively.

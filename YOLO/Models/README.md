@@ -1,5 +1,5 @@
 <img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320">
- 
+
 # Add YOLOv8 Models to the Project
 
 To utilize the full power of the Ultralytics YOLO iOS App, you'll need to add YOLOv8 models. These models are not included directly in the repository for two main reasons:

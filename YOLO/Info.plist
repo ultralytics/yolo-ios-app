@@ -21,7 +21,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>10</string>
+	<string>16</string>
 	<key>LSRequiresIPhoneOS</key>
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

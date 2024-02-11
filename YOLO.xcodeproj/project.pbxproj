@@ -360,7 +360,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.1.0;
+				MARKETING_VERSION = 8.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -388,7 +388,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.1.0;
+				MARKETING_VERSION = 8.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

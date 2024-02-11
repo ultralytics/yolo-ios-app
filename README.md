@@ -2,7 +2,7 @@
 
 # 🚀 Ultralytics YOLO iOS App
 
-[![Ultralytics Actions](https://github.com/ultralytics/assistant/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/assistant/actions/workflows/format.yml)
+[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 
 Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetection/id1452689527) GitHub repository! 📖 Leveraging Ultralytics' advanced YOLO object detection models, this app transforms your iOS device into an intelligent detection tool. Explore our guide to get started with the Ultralytics YOLO iOS App and discover the world in a new and exciting way.
 

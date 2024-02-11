@@ -35,7 +35,7 @@ Ensure you have the following before you start:
 2. **Open the Project in Xcode:**
 
     Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
- 
+
     <p align="center">
     <img width="30%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
     </p>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>StringsTable</key>
+        <string>Root</string>
+        <key>PreferenceSpecifiers</key>
+        <array>
+            <dict>
+                <key>Type</key>
+                <string>PSTitleValueSpecifier</string>
+                <key>Title</key>
+                <string>Version</string>
+                <key>Key</key>
+                <string>app_version</string>
+                <key>DefaultValue</key>
+                <string>0.0 (0)</string>
+            </dict>
+            <dict>
+                <key>Type</key>
+                <string>PSTitleValueSpecifier</string>
+                <key>Title</key>
+                <string>UUID</string>
+                <key>Key</key>
+                <string>uuid</string>
+                <key>DefaultValue</key>
+                <string>0</string>
+            </dict>
+            <dict>
+                <key>Type</key>
+                <string>PSToggleSwitchSpecifier</string>
+                <key>Title</key>
+                <string>Use Telephoto</string>
+                <key>Key</key>
+                <string>use_telephoto</string>
+                <key>DefaultValue</key>
+                <false/>
+            </dict>
+            <dict>
+                <key>Type</key>
+                <string>PSToggleSwitchSpecifier</string>
+                <key>Title</key>
+                <string>Developer Mode</string>
+                <key>Key</key>
+                <string>developer_mode</string>
+                <key>DefaultValue</key>
+                <false/>
+            </dict>
+        </array>
+    </dict>
+</plist>

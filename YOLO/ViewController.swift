@@ -17,7 +17,7 @@ import CoreML
 import UIKit
 import Vision
 
-var mlModel = try! yolov8s(configuration: .init()).model
+var mlModel = try! yolov8m(configuration: .init()).model
 
 class ViewController: UIViewController {
     @IBOutlet var videoPreview: UIView!

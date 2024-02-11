@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="ipad7_9" orientation="portrait" layout="fullscreen" appearance="light"/>
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
@@ -14,18 +14,18 @@
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="YOLO" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleAspectFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="744" height="1133"/>
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mCE-j4-QAA">
-                                <rect key="frame" x="0.0" y="-1" width="744" height="1134"/>
+                                <rect key="frame" x="0.0" y="-1" width="393" height="853"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <gestureRecognizers/>
                                 <edgeInsets key="layoutMargins" top="8" left="0.0" bottom="0.0" right="0.0"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="LabelTime">
-                                <rect key="frame" x="287" y="177" width="168" height="20"/>
+                                <rect key="frame" x="112" y="132" width="168" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
@@ -35,14 +35,14 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
-                                <rect key="frame" x="189" y="79" width="367" height="32"/>
+                                <rect key="frame" x="13" y="59" width="367" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
                                 <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
-                                <rect key="frame" x="195" y="131" width="355" height="32"/>
+                                <rect key="frame" x="19" y="98" width="355" height="32"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                                 <segments>
                                     <segment title="YOLOv8n" width="69"/>
@@ -56,11 +56,11 @@
                                 </connections>
                             </segmentedControl>
                             <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="lOR-xu-27i">
-                                <rect key="frame" x="354" y="549" width="37" height="37"/>
+                                <rect key="frame" x="178" y="408" width="37" height="37"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                             </activityIndicatorView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" insetsLayoutMarginsFromSafeArea="NO" text="1.00x" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vlL-Ye-WgQ" userLabel="zoom">
-                                <rect key="frame" x="341" y="1017" width="60" height="20"/>
+                                <rect key="frame" x="166" y="736" width="60" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
@@ -70,11 +70,11 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView userInteractionEnabled="NO" alpha="0.59999999999999998" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" preservesSuperviewLayoutMargins="YES" layoutMarginsFollowReadableWidth="YES" insetsLayoutMarginsFromSafeArea="NO" image="Focus" id="lFk-9g-4zt">
-                                <rect key="frame" x="0.0" y="306" width="744" height="523"/>
+                                <rect key="frame" x="0.0" y="230" width="393" height="393"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
-                                <rect key="frame" x="5" y="1032" width="100" height="14"/>
+                                <rect key="frame" x="5" y="751" width="100" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
@@ -84,14 +84,14 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
-                                <rect key="frame" x="566" y="836" width="159" height="56"/>
+                                <rect key="frame" x="215" y="555" width="159" height="56"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
                                 </accessibility>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.25 Confidence Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Yhe-73-Ryr" userLabel="LabelSliderConf">
-                                <rect key="frame" x="6" y="825" width="186" height="18"/>
+                                <rect key="frame" x="6" y="619" width="186" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -100,7 +100,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.25" minValue="0.01" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Gax-hR-qdY">
-                                <rect key="frame" x="3" y="847" width="175" height="31"/>
+                                <rect key="frame" x="3" y="641" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="n9W-cI-Zag"/>
                                     <constraint firstAttribute="width" constant="171" id="xzb-57-lTA"/>
@@ -113,7 +113,7 @@
                                 </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.45 IoU Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tZo-QP-q2z" userLabel="LabelSliderIoU">
-                                <rect key="frame" x="6" y="878" width="131" height="18"/>
+                                <rect key="frame" x="6" y="672" width="131" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -122,7 +122,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.45000000000000001" minValue="0.0" maxValue="0.98999999999999999" translatesAutoresizingMaskIntoConstraints="NO" id="6JI-Fw-yih">
-                                <rect key="frame" x="3" y="900" width="175" height="31"/>
+                                <rect key="frame" x="3" y="694" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="171" id="N91-bG-Rfc"/>
                                     <constraint firstAttribute="height" constant="30" id="cU4-9D-Of4"/>
@@ -135,7 +135,7 @@
                                 </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0 items (max 30)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ytf-30-5R8" userLabel="LabelSlider">
-                                <rect key="frame" x="8" y="260" width="116.5" height="18"/>
+                                <rect key="frame" x="8.0000000000000071" y="184" width="116.66666666666669" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -144,7 +144,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="30" minValue="1" maxValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="Ovr-pp-CtB">
-                                <rect key="frame" x="3" y="276" width="184" height="31"/>
+                                <rect key="frame" x="3" y="200" width="184" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="2Iw-3V-XhT"/>
                                     <constraint firstAttribute="width" constant="180" id="qdE-4r-T9O"/>
@@ -155,9 +155,8 @@
                                     <action selector="vibrate:" destination="BYZ-38-t0r" eventType="touchDown" id="OxN-X2-p1o"/>
                                 </connections>
                             </slider>
-                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="1" verticalHuggingPriority="1" insetsLayoutMarginsFromSafeArea="NO" id="3Rg-UC-ogI">
-                                <rect key="frame" x="-2" y="1063" width="745" height="50"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                            <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="1" verticalHuggingPriority="1" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3Rg-UC-ogI">
+                                <rect key="frame" x="0.0" y="769" width="393" height="49"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <items>
                                     <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="Iws-X9-mpr"/>
@@ -194,11 +193,14 @@
                             <constraint firstItem="Ovr-pp-CtB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="W2U-Xy-2TZ"/>
                             <constraint firstItem="Gax-hR-qdY" firstAttribute="top" secondItem="Yhe-73-Ryr" secondAttribute="bottom" constant="4" id="WvW-3b-L6y"/>
                             <constraint firstItem="6JI-Fw-yih" firstAttribute="top" secondItem="tZo-QP-q2z" secondAttribute="bottom" constant="4" id="acL-Dc-cLn"/>
+                            <constraint firstAttribute="trailing" secondItem="3Rg-UC-ogI" secondAttribute="trailing" id="alq-cZ-iIR"/>
                             <constraint firstItem="lFk-9g-4zt" firstAttribute="top" secondItem="Ytf-30-5R8" secondAttribute="bottom" constant="28" id="enE-h4-OrG"/>
                             <constraint firstItem="Ytf-30-5R8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="8" id="fio-88-KON"/>
+                            <constraint firstItem="3Rg-UC-ogI" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="gd1-rI-r2l"/>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="lkb-bl-PkB"/>
                             <constraint firstItem="6JI-Fw-yih" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="mI7-Wt-LH3"/>
                             <constraint firstItem="Gax-hR-qdY" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="nUQ-tC-N7o"/>
+                            <constraint firstItem="3Rg-UC-ogI" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="os3-Uk-Kum"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="top" secondItem="lFk-9g-4zt" secondAttribute="bottom" constant="-4" id="sch-Go-Cir"/>
                         </constraints>
                         <connections>

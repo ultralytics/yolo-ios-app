@@ -69,8 +69,12 @@ Ensure you have the following before you start:
 
     # Loop through all YOLOv8 model sizes
     for size in ("n", "s", "m", "l", "x"):
-        # Export YOLOv8 PyTorch models to CoreML INT8 format with NMS layers
-        YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+
+        # Load a YOLOv8 PyTorch model
+        model = YOLO(f"yolov8{size}.pt")
+
+        # Export the PyTorch model to CoreML INT8 format with NMS layers
+        model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
     ```
 
 4. **Run the Ultralytics YOLO iOS App:**

@@ -34,11 +34,19 @@ func bestCaptureDevice() -> AVCaptureDevice {
     }
 }
 
+func getFrontCameraDevicde() -> AVCaptureDevice {
+    if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+        return device
+    } else {
+        fatalError("Front Camera is not available")
+    }
+}
 public class VideoCapture: NSObject {
     public var previewLayer: AVCaptureVideoPreviewLayer?
     public weak var delegate: VideoCaptureDelegate?
 
-    let captureDevice = bestCaptureDevice()
+    //let captureDevice = bestCaptureDevice()
+    let captureDevice = getFrontCameraDevicde()
     let captureSession = AVCaptureSession()
     let videoOutput = AVCaptureVideoDataOutput()
     var cameraOutput = AVCapturePhotoOutput()

@@ -22,19 +22,12 @@ var mlModel = try! yolov8m(configuration: .init()).model
 class ViewController: UIViewController {
     @IBOutlet var videoPreview: UIView!
     @IBOutlet var View0: UIView!
-    @IBOutlet var segmentedControl: UISegmentedControl!
     @IBOutlet var playButtonOutlet: UIBarButtonItem!
     @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
-    @IBOutlet var slider: UISlider!
-    @IBOutlet var sliderConf: UISlider!
-    @IBOutlet var sliderIoU: UISlider!
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var labelFPS: UILabel!
     @IBOutlet weak var labelZoom: UILabel!
     @IBOutlet weak var labelVersion: UILabel!
-    @IBOutlet weak var labelSlider: UILabel!
-    @IBOutlet weak var labelSliderConf: UILabel!
-    @IBOutlet weak var labelSliderIoU: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     let selection = UISelectionFeedbackGenerator()
@@ -54,53 +47,18 @@ class ViewController: UIViewController {
     let developerMode = UserDefaults.standard.bool(forKey: "developer_mode")   // developer mode selected in settings
     let save_detections = false  // write every detection to detections.txt
     let save_frames = false  // write every frame to frames.txt
-    
-    lazy var visionRequest: VNCoreMLRequest = {
-        
-        let request = VNCoreMLRequest(model: detector, completionHandler: {
-            [weak self] request, error in
-            
-            self?.processObservations(for: request, error: error)
-        })
-        // NOTE: BoundingBoxView object scaling depends on request.imageCropAndScaleOption https://developer.apple.com/documentation/vision/vnimagecropandscaleoption
-        request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
-        return request
-    }()
-    
-    lazy var visionOnnxRequest: VNOnnxRequest = {
-        
-        let onnxRequest = VNOnnxRequest(modelPath: getOnnxModelPath(), completionHandler: {
-            [weak self] result in
-            
-            //self?.processOnnxObservations(for: result)
-        })
-        // NOTE: BoundingBoxView object scaling depends on request.imageCropAndScaleOption https://developer.apple.com/documentation/vision/vnimagecropandscaleoption
-        return onnxRequest
-    }()
+    // Global ORTSession initialized in the viewDidLoad
+    var ortSession: ORTSession?
+    var poseUtil: OnnxPoseUtils?
     
     func getOnnxModelPath() -> String{
         guard let modelPath = Bundle.main.path(forResource: "yolov8n-pose-pre", ofType: "onnx") else { fatalError("Error in finding model") }
         return modelPath
     }
     
-    // Global ORTSession initialized in the viewDidLoad
-    var ortSession: ORTSession?
-    var poseUtil: OnnxPoseUtils?
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        //load the ONNX model
-        slider.value = 30
-        setLabels()
-        setUpBoundingBoxViews()
-        startVideo()
-        setModel()
-        setModelOnnx()
-        poseUtil = OnnxPoseUtils()
-    }
     func setModelOnnx() {
         do {
             guard let modelPath = Bundle.main.path(forResource: "yolov8n-pose-pre", ofType: "onnx") else { fatalError("Error in finding model") }
-            
             let ortEnv = try ORTEnv(loggingLevel: ORTLoggingLevel.info)
             let ortSessionOptions = try ORTSessionOptions()
             try ortSessionOptions.registerCustomOps(functionPointer: RegisterCustomOps) // Register the bridging-header in Build settings
@@ -115,72 +73,21 @@ class ViewController: UIViewController {
         t4 = 0.0  // FPS dt smoothed
     }
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        //load the ONNX model
+        setLabels()
+        setUpBoundingBoxViews()
+        startVideo()
+        //setModel()
+        poseUtil = OnnxPoseUtils()
+        setModelOnnx()
+    }
+    
     @IBAction func vibrate(_ sender: Any) {
         selection.selectionChanged()
     }
-    
-    @IBAction func indexChanged(_ sender: Any) {
-        selection.selectionChanged()
-        activityIndicator.startAnimating()
         
-        /// Switch model
-        switch segmentedControl.selectedSegmentIndex {
-        case 0:
-            self.labelName.text = "YOLOv8n"
-            mlModel = try! yolov8n(configuration: .init()).model
-        case 1:
-            self.labelName.text = "YOLOv8s"
-            mlModel = try! yolov8s(configuration: .init()).model
-        case 2:
-            self.labelName.text = "YOLOv8m"
-            mlModel = try! yolov8m(configuration: .init()).model
-        case 3:
-            self.labelName.text = "YOLOv8l"
-            mlModel = try! yolov8l(configuration: .init()).model
-        case 4:
-            self.labelName.text = "YOLOv8x"
-            mlModel = try! yolov8x(configuration: .init()).model
-        default:
-            break
-        }
-        setModel()
-        setUpBoundingBoxViews()
-        activityIndicator.stopAnimating()
-    }
-    
-    func setModel() {
-        /// VNCoreMLModel
-        detector = try! VNCoreMLModel(for: mlModel)
-        detector.featureProvider = ThresholdProvider()
-        
-        /// VNCoreMLRequest
-        let request = VNCoreMLRequest(model: detector, completionHandler: { [weak self] request, error in
-            self?.processObservations(for: request, error: error)
-        })
-        let onnxRequest = VNOnnxRequest(modelPath: getOnnxModelPath(), completionHandler: { [weak self] result in
-            //self?.processOnnxObservations(for: result)
-        })
-        // Custom request
-        
-        request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
-        
-        visionRequest = request
-        visionOnnxRequest = onnxRequest
-        
-        t2 = 0.0 // inference dt smoothed
-        t3 = CACurrentMediaTime()  // FPS start
-        t4 = 0.0  // FPS dt smoothed
-    }
-    
-    /// Update thresholds from slider values
-    @IBAction func sliderChanged(_ sender: Any) {
-        let conf = Double(round(100 * sliderConf.value)) / 100
-        let iou = Double(round(100 * sliderIoU.value)) / 100
-        self.labelSliderConf.text = String(conf) + " Confidence Threshold"
-        self.labelSliderIoU.text = String(iou) + " IoU Threshold"
-        detector.featureProvider = ThresholdProvider(iouThreshold: iou, confidenceThreshold: conf)
-    }
-    
     @IBAction func takePhoto(_ sender: Any?) {
         let t0 = DispatchTime.now().uptimeNanoseconds
         
@@ -212,7 +119,7 @@ class ViewController: UIViewController {
     }
     
     func setLabels() {
-        self.labelName.text = "YOLOv8m"
+        self.labelName.text = "YOLOv8n Pose"
         self.labelVersion.text = "Version " + UserDefaults.standard.string(forKey: "app_version")!
     }
     
@@ -284,40 +191,24 @@ class ViewController: UIViewController {
         while boundingBoxViews.count < maxBoundingBoxViews {
             boundingBoxViews.append(BoundingBoxView())
         }
-        
-        // Retrieve class labels directly from the CoreML model's class labels, if available.
-        guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
-            fatalError("Class labels are missing from the model description")
-        }
-        
-        // Assign random colors to the classes.
-        for label in classLabels {
-            if colors[label] == nil {  // if key not in dict
-                colors[label] = UIColor(red: CGFloat.random(in: 0...1),
-                                        green: CGFloat.random(in: 0...1),
-                                        blue: CGFloat.random(in: 0...1),
-                                        alpha: 0.6)
-            }
-        }
     }
     
     func startVideo() {
         videoCapture = VideoCapture()
         videoCapture.delegate = self
-        
         videoCapture.setUp(sessionPreset: .photo) { success in
             // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
             if success {
                 // Add the video preview into the UI.
                 if let previewLayer = self.videoCapture.previewLayer {
-                    //self.videoPreview.layer.addSublayer(previewLayer)
-                    //self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
+                    self.videoPreview.layer.addSublayer(previewLayer)
+                    self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
                 }
                 
                 // Add the bounding box layers to the UI, on top of the video preview.
-                //for box in self.boundingBoxViews {
-                  //  box.addToLayer(self.videoPreview.layer)
-                //}
+                for box in self.boundingBoxViews {
+                    box.addToLayer(self.videoPreview.layer)
+                }
                 
                 // Once everything is set up, we can start capturing live video.
                 self.videoCapture.start()
@@ -328,38 +219,13 @@ class ViewController: UIViewController {
     func predict(sampleBuffer: CMSampleBuffer) {
         if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
             currentBuffer = pixelBuffer
-            
-            /// - Tag: MappingOrientation
-            // The frame is always oriented based on the camera sensor,
-            // so in most cases Vision needs to rotate it for the model to work as expected.
-            let imageOrientation: CGImagePropertyOrientation
-            switch UIDevice.current.orientation {
-            case .portrait:
-                imageOrientation = .up
-            case .portraitUpsideDown:
-                imageOrientation = .down
-            case .landscapeLeft:
-                imageOrientation = .left
-            case .landscapeRight:
-                imageOrientation = .right
-            case .unknown:
-                print("The device orientation is unknown, the predictions may be affected")
-                fallthrough
-            default:
-                imageOrientation = .up
-            }
-            
-            // Invoke a VNRequestHandler with that image
-            //let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
             let onnxHandler = VNOnnxHandler(cvImageBufffer: pixelBuffer, session: ortSession!)
             DispatchQueue.main.async {
                 if UIDevice.current.orientation != .faceUp {  // stop if placed down on a table
                     self.t0 = CACurrentMediaTime()  // inference start
                     do {
-                        
-                        //print("Sample buffer size \(sampleBuffer.dataBuffer?.isEmpty)")
-                        //try handler.perform([visionRequest])
-                        //let outputTensor = try onnxHandler.perform([self.visionOnnxRequest])
+                        self.videoPreview.layer.sublayers = nil // Remove all previous layers to avoid an OOM problem
+                        //let outputTensor = try onnxHandler.perform()
                         let prevTime = DispatchTime.now().uptimeNanoseconds
                         let outputImage = try onnxHandler.performImage(poseUtil: self.poseUtil!)
                         let nextTime = DispatchTime.now().uptimeNanoseconds
@@ -372,19 +238,20 @@ class ViewController: UIViewController {
                         self.videoPreview.layer.addSublayer(l)
                         l.isHidden = false
                         //self.processOnnxObservations(for: outputTensor, inputImage: UIImage(cgImage: CGImage.create(from: pixelBuffer)!))
-                        
-                        
                     } catch {
                         print("Error in model execution \(error)")
                     }
                     self.t1 = CACurrentMediaTime() - self.t0  // inference dt
                 }
-                
                 self.currentBuffer = nil
-           }
+            }
         }
     }
     
+    /// Convert the outputTensor values into a layer for super imposing on the videoPreview layer
+    ///     - Params
+    ///        - request: The output tensor after procesing the image
+    ///        - inputImage: The original image that was proccessed by the onnx model
     func processOnnxObservations(for request: ORTValue, inputImage: UIImage) {
         DispatchQueue.main.async {
             self.showOnnx(opTensor: request, inputImage: inputImage)
@@ -415,7 +282,7 @@ class ViewController: UIViewController {
         let heightRatio = targetHeight / inputImage.size.height
         let scaleFactor = min(widthRatio, heightRatio)
         
-        // date
+        // date for developer mode
         let date = Date()
         let calendar = Calendar.current
         let hour = calendar.component(.hour, from: date)
@@ -424,7 +291,6 @@ class ViewController: UIViewController {
         let nanoseconds = calendar.component(.nanosecond, from: date)
         let sec_day = Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9  // seconds in the day
         
-        self.labelSlider.text = String() + " items (max " + String(Int(slider.value)) + ")"
         
         // pose datapoints
         var keypoints:[Float32] = Array()
@@ -446,56 +312,61 @@ class ViewController: UIViewController {
             let box = keypoints[0..<4] // The first 4 points are the bounding box co-ords.
             // Refer yolov8_pose_e2e.py run_inference method under the https://onnxruntime.ai/docs/tutorials/mobile/pose-detection.html
             
-            let half_w = Double(box[2]) * Double(scaleFactor)
-            let half_h = Double(box[3]) * Double(scaleFactor)
-            let x = Double(box[0]) * Double(scaleFactor)
-            let y = Double(box[1]) * Double(scaleFactor)
+            let half_w = Double(box[2] / 2 )
+            let half_h = Double(box[3] / 2 )
+            let x = (Double(box[0]) - Double(half_w)) * widthRatio
+            let y = (Double(box[1]) - Double(half_h)) * heightRatio
+            //let rect = CGRect(x: -x, y: y, width: Double(half_w * 2), height: Double(half_h * 2))
             
-            let keypointsWithoutBoxes = Array(keypoints[6..<keypoints.count]) // Based on 17 key
+            var keypointsWithoutBoxes = Array(keypoints[6..<keypoints.count]) // Based on 17 key
+            //keypointsWithoutBoxes = keypointsWithoutBoxes.map { Float($0) * Float(scaleFactor) }
             
             for i in 0..<boundingBoxViews.count {
                 
                 //var rect = prediction.boundingBox  // normalized xywh, origin lower left
-                var rect = CGRect(x: Double(x), y: Double(y), width: Double(half_w), height: Double(half_h))
+                let rect = CGRect(x: x, y: y, width: Double(half_w), height: Double(half_h))
+                
+                // This part is commented because I am unable to figure out the scaling part
+                /*
+                 switch UIDevice.current.orientation {
+                 case .portraitUpsideDown:
+                 rect = CGRect(x: 1.0 - rect.origin.x - rect.width,
+                 y: 1.0 - rect.origin.y - rect.height,
+                 width: rect.width,
+                 height: rect.height)
+                 case .landscapeLeft:
+                 rect = CGRect(x: rect.origin.y,
+                 y: 1.0 - rect.origin.x - rect.width,
+                 width: rect.height,
+                 height: rect.width)
+                 case .landscapeRight:
+                 rect = CGRect(x: 1.0 - rect.origin.y - rect.height,
+                 y: rect.origin.x,
+                 width: rect.height,
+                 height: rect.width)
+                 case .unknown:
+                 print("The device orientation is unknown, the predictions may be affected")
+                 fallthrough
+                 default: break
+                 }
+                 
+                 if ratio >= 1 { // iPhone ratio = 1.218
+                 let offset = (1 - ratio) * (0.5 - rect.minX)
+                 let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
+                 rect = rect.applying(transform)
+                 rect.size.width *= ratio
+                 } else { // iPad ratio = 0.75
+                 let offset = (ratio - 1) * (0.5 - rect.maxY)
+                 let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
+                 rect = rect.applying(transform)
+                 rect.size.height /= ratio
+                 }
+                 */
+                
                 NSLog("Rect origin \(rect.origin.debugDescription)")
                 NSLog("Rect size \(rect.size.debugDescription)")
                 NSLog("Input image : \(inputImage.size.debugDescription)")
                 NSLog("Video frame \(videoPreview.frame)")
-                switch UIDevice.current.orientation {
-                case .portraitUpsideDown:
-                    rect = CGRect(x: 1.0 - rect.origin.x - rect.width,
-                                  y: 1.0 - rect.origin.y - rect.height,
-                                  width: rect.width,
-                                  height: rect.height)
-                case .landscapeLeft:
-                    rect = CGRect(x: rect.origin.y,
-                                  y: 1.0 - rect.origin.x - rect.width,
-                                  width: rect.height,
-                                  height: rect.width)
-                case .landscapeRight:
-                    rect = CGRect(x: 1.0 - rect.origin.y - rect.height,
-                                  y: rect.origin.x,
-                                  width: rect.height,
-                                  height: rect.width)
-                case .unknown:
-                    print("The device orientation is unknown, the predictions may be affected")
-                    fallthrough
-                default: break
-                }
-                
-                if ratio >= 1 { // iPhone ratio = 1.218
-                    let offset = (1 - ratio) * (0.5 - rect.minX)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-                    rect = rect.applying(transform)
-                    rect.size.width *= ratio
-                } else { // iPad ratio = 0.75
-                    let offset = (ratio - 1) * (0.5 - rect.maxY)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-                    rect = rect.applying(transform)
-                    rect.size.height /= ratio
-                }
-                
-                
                 
                 // Scale normalized to pixels [375, 812] [width, height]
                 //rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
@@ -509,10 +380,7 @@ class ViewController: UIViewController {
                 // Show the bounding box.
                 
                 boundingBoxViews[i].showOnnx(frame: rect,
-                                             label: String(format: "%@ %.1f", bestClass, confidence * 100),
-                                             color: colors[bestClass] ?? UIColor.white,
-                                             alpha: CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9),
-                                             keypoints: keypointsWithoutBoxes)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
+                                             keypoints: keypointsWithoutBoxes, widthRatio: Float(widthRatio), heightRatio: Float(heightRatio)) // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
                 
                 if developerMode {
                     if save_detections {
@@ -524,8 +392,6 @@ class ViewController: UIViewController {
             }
             
         }
-        
-        
         // Write
         if developerMode {
             if save_detections {
@@ -544,26 +410,6 @@ class ViewController: UIViewController {
         // print(UIDevice.current.identifierForVendor!)
         // saveImage()
     }
-    
-    func processObservations(for request: VNRequest, error: Error?) {
-        DispatchQueue.main.async {
-            if let results = request.results as? [VNRecognizedObjectObservation] {
-                NSLog("Results \(results)")
-                self.show(predictions: results)
-            } else {
-                self.show(predictions: [])
-            }
-            
-            // Measure FPS
-            if self.t1 < 10.0 {  // valid dt
-                self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-            }
-            self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-            self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
-            self.t3 = CACurrentMediaTime()
-        }
-    }
-    
     // Save text file
     func saveText(text: String, file: String = "saved.txt") {
         if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
@@ -622,127 +468,6 @@ class ViewController: UIViewController {
         } else {
             return 0
         }
-    }
-    
-    func show(predictions: [VNRecognizedObjectObservation]) {
-        let width = videoPreview.bounds.width  // 375 pix
-        let height = videoPreview.bounds.height  // 812 pix
-        var str = ""
-        
-        // ratio = videoPreview AR divided by sessionPreset AR
-        var ratio: CGFloat = 1.0
-        if videoCapture.captureSession.sessionPreset == .photo {
-            ratio = (height / width) / (4.0 / 3.0)  // .photo
-        } else {
-            ratio = (height / width) / (16.0 / 9.0)  // .hd4K3840x2160, .hd1920x1080, .hd1280x720 etc.
-        }
-        
-        // date
-        let date = Date()
-        let calendar = Calendar.current
-        let hour = calendar.component(.hour, from: date)
-        let minutes = calendar.component(.minute, from: date)
-        let seconds = calendar.component(.second, from: date)
-        let nanoseconds = calendar.component(.nanosecond, from: date)
-        let sec_day = Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9  // seconds in the day
-        
-        self.labelSlider.text = String(predictions.count) + " items (max " + String(Int(slider.value)) + ")"
-        for i in 0..<boundingBoxViews.count {
-            if i < predictions.count && i < Int(slider.value) {
-                let prediction = predictions[i]
-                
-                var rect = prediction.boundingBox  // normalized xywh, origin lower left
-                
-                
-                switch UIDevice.current.orientation {
-                case .portraitUpsideDown:
-                    rect = CGRect(x: 1.0 - rect.origin.x - rect.width,
-                                  y: 1.0 - rect.origin.y - rect.height,
-                                  width: rect.width,
-                                  height: rect.height)
-                case .landscapeLeft:
-                    rect = CGRect(x: rect.origin.y,
-                                  y: 1.0 - rect.origin.x - rect.width,
-                                  width: rect.height,
-                                  height: rect.width)
-                case .landscapeRight:
-                    rect = CGRect(x: 1.0 - rect.origin.y - rect.height,
-                                  y: rect.origin.x,
-                                  width: rect.height,
-                                  height: rect.width)
-                case .unknown:
-                    print("The device orientation is unknown, the predictions may be affected")
-                    fallthrough
-                default: break
-                }
-                
-                if ratio >= 1 { // iPhone ratio = 1.218
-                    let offset = (1 - ratio) * (0.5 - rect.minX)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-                    rect = rect.applying(transform)
-                    rect.size.width *= ratio
-                } else { // iPad ratio = 0.75
-                    let offset = (ratio - 1) * (0.5 - rect.maxY)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-                    rect = rect.applying(transform)
-                    rect.size.height /= ratio
-                }
-                
-                // Scale normalized to pixels [375, 812] [width, height]
-                rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
-                NSLog("Rect after normalized \(rect.origin)")
-                NSLog("Rect after normalized \(rect.size)")
-                // The labels array is a list of VNClassificationObservation objects,
-                // with the highest scoring class first in the list.
-                let bestClass = prediction.labels[0].identifier
-                let confidence = prediction.labels[0].confidence
-                // print(confidence, rect)  // debug (confidence, xywh) with xywh origin top left (pixels)
-                
-                // Show the bounding box.
-                boundingBoxViews[i].show(frame: rect,
-                                         label: String(format: "%@ %.1f", bestClass, confidence * 100),
-                                         color: colors[bestClass] ?? UIColor.white,
-                                         alpha: CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9))  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
-                
-                if developerMode {
-                    // Write
-                    if save_detections {
-                        str += String(format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
-                                      sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
-                                      rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
-                    }
-                    
-                    // Action trigger upon detection
-                    // if false {
-                    //     if (bestClass == "car") {  // "cell phone", "car", "person"
-                    //         self.takePhoto(nil)
-                    //         // self.pauseButton(nil)
-                    //         sleep(2)
-                    //     }
-                    // }
-                }
-            } else {
-                boundingBoxViews[i].hide()
-            }
-        }
-        
-        // Write
-        if developerMode {
-            if save_detections {
-                saveText(text: str, file: "detections.txt")  // Write stats for each detection
-            }
-            if save_frames {
-                str = String(format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
-                             sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
-                             self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
-                saveText(text: str, file: "frames.txt")  // Write stats for each image
-            }
-        }
-        
-        // Debug
-        // print(str)
-        // print(UIDevice.current.identifierForVendor!)
-        // saveImage()
     }
     
     // Pinch to Zoom Start ---------------------------------------------------------------------------------------------

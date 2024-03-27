@@ -24,11 +24,13 @@ class BoundingBoxView {
     /// The layer that displays the pose
     let lineLayer: CAShapeLayer
 
+    /// The parent layer
+    var parentLayer: CALayer?
     /// Initializes a new BoundingBoxView with configured shape and text layers.
     init() {
         shapeLayer = CAShapeLayer()
         shapeLayer.fillColor = UIColor.clear.cgColor  // No fill to only show the bounding outline
-        shapeLayer.lineWidth = 4  // Set the stroke line width
+        shapeLayer.lineWidth = 2  // Set the stroke line width
         shapeLayer.isHidden = true  // Initially hidden; shown when a detection occurs
 
         textLayer = CATextLayer()
@@ -39,94 +41,59 @@ class BoundingBoxView {
         textLayer.alignmentMode = .center  // Center-align the text within the layer
         
         lineLayer = CAShapeLayer()
+        lineLayer.fillColor = UIColor.clear.cgColor
         lineLayer.lineWidth = 2
         lineLayer.isHidden = true
-        lineLayer.fillColor = UIColor.clear.cgColor
     }
 
     /// Adds the bounding box and text layers to a specified parent layer.
     /// - Parameter parent: The CALayer to which the bounding box and text layers will be added.
     func addToLayer(_ parent: CALayer) {
-        parent.addSublayer(shapeLayer)
-        parent.addSublayer(textLayer)
-        parent.addSublayer(lineLayer)
+        parentLayer = parent
+        parentLayer!.addSublayer(shapeLayer)
+        parentLayer!.addSublayer(textLayer)
+        parentLayer!.addSublayer(lineLayer)
     }
-
+    
     /// Updates the bounding box and label to be visible with specified properties.
     /// - Parameters:
     ///   - frame: The CGRect frame defining the bounding box's size and position.
-    ///   - label: The text label to display (e.g., object class and confidence).
-    ///   - color: The color of the bounding box stroke and label background.
-    ///   - alpha: The opacity level for the bounding box stroke and label background.
-    func show(frame: CGRect, label: String, color: UIColor, alpha: CGFloat) {
-        CATransaction.setDisableActions(true)  // Disable implicit animations
-
-        let path = UIBezierPath(roundedRect: frame, cornerRadius: 6.0)  // Rounded rectangle for the bounding box
-        shapeLayer.path = path.cgPath
-        shapeLayer.strokeColor = color.withAlphaComponent(alpha).cgColor  // Apply color and alpha to the stroke
-        shapeLayer.isHidden = false  // Make the shape layer visible
-
-        textLayer.string = label  // Set the label text
-        textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor  // Apply color and alpha to the background
-        textLayer.isHidden = false  // Make the text layer visible
-        textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor  // Set text color
-
-        // Calculate the text size and position based on the label content
-        let attributes = [NSAttributedString.Key.font: textLayer.font as Any]
-        let textRect = label.boundingRect(with: CGSize(width: 400, height: 100),
-                options: .truncatesLastVisibleLine,
-                attributes: attributes, context: nil)
-        let textSize = CGSize(width: textRect.width + 12, height: textRect.height)  // Add padding to the text size
-        let textOrigin = CGPoint(x: frame.origin.x - 2, y: frame.origin.y - textSize.height - 2)  // Position above the bounding box
-        textLayer.frame = CGRect(origin: textOrigin, size: textSize)  // Set the text layer frame
-    }
-    
-    func showOnnx(frame: CGRect, label: String, color: UIColor, alpha: CGFloat, keypoints: [Float32]) {
+    ///   - keypoints: The pose keypoints
+    ///   - widthRatio: To scale the keypoiints x co-ord
+    ///   - heightRatio: To scale the keypoints y co-ord
+    ///
+    func showOnnx(frame: CGRect, keypoints: [Float32], widthRatio: Float, heightRatio: Float ) {
         CATransaction.setDisableActions(true)  // Disable implicit animations
 
         let path = UIBezierPath(roundedRect: frame, cornerRadius: 6.0)  // Rounded rectangle for the bounding box
         shapeLayer.path = path.cgPath
         shapeLayer.strokeColor = Color.black.cgColor  // Apply color and alpha to the stroke
         shapeLayer.lineWidth = 4
-        shapeLayer.isHidden = false  // Make the shape layer visible
-
-        textLayer.string = "Test label"  // Set the label text
-        textLayer.fontSize = 20
-        textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor  // Apply color and alpha to the background
-        textLayer.isHidden = false  // Make the text layer visible
-        textLayer.foregroundColor = UIColor.white.cgColor  // Set text color
+        shapeLayer.isHidden = false // Make the shape layer visible
+        parentLayer?.addSublayer(shapeLayer)
         
-        
-        lineLayer.strokeColor = Color.blue.cgColor
-        lineLayer.isHidden = false
-
-        let linePath = UIBezierPath(arcCenter: CGPoint(x: (Double(keypoints[0]) - 375), y: (Double(keypoints[1]) - 812)/2), radius: 2.0, startAngle: 0.0, endAngle: 360.0, clockwise: true)
+        // This loop has drawbacks. The layer that is drawn cannot be erased, so the previous keypoints remain.
+        // Also the scaling of keypoints is questionable at best. Just a placeholder method for now.
         for i in stride(from: 0, through: keypoints.count-1, by: 3) {
-            let kp_x = keypoints[i] - 375
-            let kp_y = (keypoints[i+1] - 812) / 2
+            let keyPointsLayer = CAShapeLayer()
+            let kp_x = keypoints[i] * widthRatio
+            let kp_y = keypoints[i+1] * heightRatio
             let confidence = keypoints[i+2]
             if (confidence < 0.5) { // Can potentially remove hardcoding and make the confidence configurable
                 continue
             }
-            linePath.move(to: CGPoint(x: Double(kp_x), y: Double(kp_y)))
-            
+            let rFrame = CGRect(x: Double(kp_x), y: Double(kp_y), width: 10, height: 10)
+            let pointPath = UIBezierPath(roundedRect: rFrame, cornerRadius: 6.0)
+            keyPointsLayer.path = pointPath.cgPath
+            keyPointsLayer.isHidden = true
+            parentLayer?.addSublayer(keyPointsLayer)
+            keyPointsLayer.isHidden = false
         }
-        lineLayer.path = linePath.cgPath
-
-        /*
-        // Calculate the text size and position based on the label content
-        let attributes = [NSAttributedString.Key.font: textLayer.font as Any]
-        let textRect = label.boundingRect(with: CGSize(width: 400, height: 100),
-                options: .truncatesLastVisibleLine,
-                attributes: attributes, context: nil)
-        let textSize = CGSize(width: textRect.width + 12, height: textRect.height)  // Add padding to the text size
-        let textOrigin = CGPoint(x: frame.origin.x - 2, y: frame.origin.y - textSize.height - 2)  // Position above the bounding box
-        textLayer.frame = CGRect(origin: textOrigin, size: textSize)  // Set the text layer frame
-         */
     }
     /// Hides the bounding box and text layers.
     func hide() {
         shapeLayer.isHidden = true
         textLayer.isHidden = true
+        lineLayer.isHidden = true
     }
 }

@@ -35,7 +35,7 @@ func bestCaptureDevice() -> AVCaptureDevice {
 }
 
 /// Placeholder method for testing on front facing camera
-func getFrontCameraDevicde() -> AVCaptureDevice {
+func getFrontCameraDevice() -> AVCaptureDevice {
     if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
         return device
     } else {
@@ -47,7 +47,7 @@ public class VideoCapture: NSObject {
     public weak var delegate: VideoCaptureDelegate?
 
     let captureDevice = bestCaptureDevice()
-    //let captureDevice = getFrontCameraDevicde()
+    //let captureDevice = getFrontCameraDevice()
     let captureSession = AVCaptureSession()
     let videoOutput = AVCaptureVideoDataOutput()
     var cameraOutput = AVCapturePhotoOutput()
@@ -79,6 +79,7 @@ public class VideoCapture: NSObject {
         let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.videoGravity = .resizeAspectFill
         previewLayer.connection?.videoOrientation = .portrait
+        //previewLayer.connection?.videoOrientation = .landscapeLeft
         self.previewLayer = previewLayer
 
         let settings: [String: Any] = [

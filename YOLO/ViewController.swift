@@ -226,10 +226,14 @@ class ViewController: UIViewController {
                     do {
                         self.videoPreview.layer.sublayers = nil // Remove all previous layers to avoid an OOM problem
                         //let outputTensor = try onnxHandler.perform()
-                        let prevTime = DispatchTime.now().uptimeNanoseconds
+                        
                         let outputImage = try onnxHandler.performImage(poseUtil: self.poseUtil!)
-                        let nextTime = DispatchTime.now().uptimeNanoseconds
-                        NSLog("Processing time \(nextTime - prevTime)")
+                        if self.t1 < 10.0 {  // valid dt
+                            self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+                        }
+                        self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+                        self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
+                        self.t3 = CACurrentMediaTime()
                         let l = CALayer()
                         l.contents = outputImage.cgImage
                         l.contentsGravity = .resizeAspect

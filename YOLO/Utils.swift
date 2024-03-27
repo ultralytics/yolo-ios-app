@@ -105,6 +105,10 @@ class OnnxPoseUtils : NSObject {
         UIColor.red.setStroke()
         UIRectFrame(rectangle)
         
+        guard let context = UIGraphicsGetCurrentContext() else { return UIImage() }
+        context.setLineWidth(2.0)
+        context.setStrokeColor(UIColor.blue.cgColor)
+        context.move(to: CGPoint(x: Double(keypoints[0]), y: Double(keypoints[1])))
         
         for i in stride(from: 0, through: keypoints.count-1, by: 3) {
             let kp_x = keypoints[i]
@@ -113,14 +117,41 @@ class OnnxPoseUtils : NSObject {
             if (confidence < 0.5) { // Can potentially remove hardcoding and make the confidence configurable
                 continue
             }
-            let rect = CGRect(x: Double(kp_x), y: Double(kp_y), width: 20.0, height: 20.0)
+            let rect = CGRect(x: Double(kp_x), y: Double(kp_y), width: 10.0, height: 10.0)
             UIRectFill(rect)
             
         }
-        
         image = UIGraphicsGetImageFromCurrentImageContext()!
         UIGraphicsEndImageContext()
         return image
     }
     
+    /// Placeholder method to draw lines for poses.
+    private func drawPoseLines(image: UIImage, keypoints: [Float32]) -> UIImage {
+        var image = image
+        let imageSize = image.size
+        let scale: CGFloat = 0
+        UIGraphicsBeginImageContextWithOptions(imageSize, false, scale)
+        image.draw(at: CGPoint.zero)
+        guard let context = UIGraphicsGetCurrentContext() else { return UIImage() }
+        context.setLineWidth(2.0)
+        context.setStrokeColor(UIColor.blue.cgColor)
+        
+        
+        for i in stride(from: 3, through: keypoints.count-1, by: 3) {
+            context.move(to: CGPoint(x: Double(keypoints[i-3]), y: Double(keypoints[i-2])))
+            let kp_x = keypoints[i]
+            let kp_y = keypoints[i+1]
+            let confidence = keypoints[i+2]
+            if (confidence < 0.5) { // Can potentially remove hardcoding and make the confidence configurable
+                continue
+            }
+            context.addLine(to: CGPoint(x: Double(kp_x), y: Double(kp_y)))
+            context.strokePath()
+            
+        }
+        image = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        return image
+    }
 }

@@ -5,7 +5,7 @@
 name: Ultralytics Actions
 
 on:
-  pull_request: # all branches
+  pull_request_target: # all branches
   push:
     branches: [main]
 

@@ -254,8 +254,8 @@ class ViewController: UIViewController {
     
     /// Convert the outputTensor values into a layer for super imposing on the videoPreview layer
     ///     - Params
-    ///        - request: The output tensor after procesing the image
-    ///        - inputImage: The original image that was proccessed by the onnx model
+    ///        - request: The output tensor after processing the image
+    ///        - inputImage: The original image that was processed by the onnx model
     func processOnnxObservations(for request: ORTValue, inputImage: UIImage) {
         DispatchQueue.main.async {
             self.showOnnx(opTensor: request, inputImage: inputImage)

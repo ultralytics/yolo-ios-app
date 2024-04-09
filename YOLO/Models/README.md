@@ -32,7 +32,7 @@ If you prefer to use specific model versions or need to customize the models, yo
     ```python
     from ultralytics import YOLO
 
-    # Export all YOLOv8 models to CoreML INT8 
+    # Export all YOLOv8 models to CoreML INT8
     for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
         YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
     ```

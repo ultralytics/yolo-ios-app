@@ -85,9 +85,9 @@ class BoundingBoxView {
 
         if !innerTexts.isEmpty {
             innerTextLayer.string = innerTexts  // Set the inner text
-            innerTextLayer.backgroundColor = UIColor.red.withAlphaComponent(0.5).cgColor  // No background color
+            innerTextLayer.backgroundColor = UIColor.clear.cgColor  // No background color
             innerTextLayer.isHidden = false  // Make the inner text layer visible
-            innerTextLayer.foregroundColor = UIColor.white.cgColor  // Set text color
+            innerTextLayer.foregroundColor = UIColor.red.cgColor  // Set text color
             innerTextLayer.frame = CGRect(x: frame.origin.x + 4, y: frame.origin.y + 4, width: frame.width / 2 - 8, height: frame.height - 8)
             // Set the inner text layer frame
         } else {

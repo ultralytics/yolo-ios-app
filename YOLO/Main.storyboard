@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -182,18 +182,30 @@
                                 </items>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </toolbar>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="pGx-Os-eUk">
+                                <rect key="frame" x="261" y="177.66666666666666" width="127" height="32"/>
+                                <segments>
+                                    <segment title="Detect"/>
+                                    <segment title="Human"/>
+                                </segments>
+                                <connections>
+                                    <action selector="taskSegmentControlChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="XL0-bf-CL7"/>
+                                </connections>
+                            </segmentedControl>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="top" secondItem="Gax-hR-qdY" secondAttribute="bottom" constant="1" id="3qP-Re-vUy"/>
+                            <constraint firstItem="pGx-Os-eUk" firstAttribute="centerY" secondItem="Ytf-30-5R8" secondAttribute="centerY" id="CPI-10-mXb"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="GB3-HN-lcm"/>
                             <constraint firstItem="lFk-9g-4zt" firstAttribute="top" secondItem="Ovr-pp-CtB" secondAttribute="bottom" id="Sqq-Bb-Nvv"/>
                             <constraint firstItem="Ovr-pp-CtB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="W2U-Xy-2TZ"/>
                             <constraint firstItem="Gax-hR-qdY" firstAttribute="top" secondItem="Yhe-73-Ryr" secondAttribute="bottom" constant="4" id="WvW-3b-L6y"/>
                             <constraint firstItem="6JI-Fw-yih" firstAttribute="top" secondItem="tZo-QP-q2z" secondAttribute="bottom" constant="4" id="acL-Dc-cLn"/>
                             <constraint firstAttribute="trailing" secondItem="3Rg-UC-ogI" secondAttribute="trailing" id="alq-cZ-iIR"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="pGx-Os-eUk" secondAttribute="trailing" constant="5" id="bQf-TM-PBS"/>
                             <constraint firstItem="lFk-9g-4zt" firstAttribute="top" secondItem="Ytf-30-5R8" secondAttribute="bottom" constant="28" id="enE-h4-OrG"/>
                             <constraint firstItem="Ytf-30-5R8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="8" id="fio-88-KON"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="gd1-rI-r2l"/>
@@ -223,6 +235,7 @@
                         <outlet property="slider" destination="Ovr-pp-CtB" id="iHy-z4-EIQ"/>
                         <outlet property="sliderConf" destination="Gax-hR-qdY" id="KNe-MM-FBA"/>
                         <outlet property="sliderIoU" destination="6JI-Fw-yih" id="dqE-hH-MVS"/>
+                        <outlet property="taskSegmentControl" destination="pGx-Os-eUk" id="2Fh-eH-HZm"/>
                         <outlet property="videoPreview" destination="mCE-j4-QAA" id="mP0-Qx-oq6"/>
                     </connections>
                 </viewController>

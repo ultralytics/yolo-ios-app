@@ -34,7 +34,7 @@ func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float) -> [I
     return selectedIndices
 }
 
-// Human model's output [1,95,8400] to [(Box, Confidence, HumanFeatures)]
+// Human model's output [1,15,8400] to [(Box, Confidence, HumanFeatures)]
 
 func PostProcessHuman(prediction: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float) -> [(CGRect, Float, [Float])] {
     let numAnchors = prediction.shape[2].intValue
@@ -62,7 +62,7 @@ func PostProcessHuman(prediction: MLMultiArray, confidenceThreshold: Float, iouT
             
             var boxFeatures = [Float](repeating: 0, count: 11)
             for k in 0..<11 {
-                let key = (84 + k) * numAnchors + j
+                let key = (5 + k) * numAnchors + j
                 boxFeatures[k] = featurePointer[key]
             }
             
@@ -80,7 +80,7 @@ func PostProcessHuman(prediction: MLMultiArray, confidenceThreshold: Float, iouT
     for idx in selectedIndices {
         selectedBoxesAndFeatures.append((boxes[idx], scores[idx], features[idx]))
     }
-    
+    print(selectedBoxesAndFeatures)
     return selectedBoxesAndFeatures
 }
 

@@ -279,17 +279,8 @@ class ViewController: UIViewController {
     // share image
     @IBAction func shareButton(_ sender: Any) {
         selection.selectionChanged()
-        let bounds = UIScreen.main.bounds
-        //let bounds = self.View0.bounds
-        
-        UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
-        self.View0.drawHierarchy(in: bounds, afterScreenUpdates: false)
-        let img = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        let activityViewController = UIActivityViewController(activityItems: [img!], applicationActivities: nil)
-        activityViewController.popoverPresentationController?.sourceView = self.View0
-        self.present(activityViewController, animated: true, completion: nil)
-        // playButton("")
+        let settings = AVCapturePhotoSettings()
+        self.videoCapture.cameraOutput.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
     
     // share screenshot
@@ -675,13 +666,30 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
             print("error occurred : \(error.localizedDescription)")
         }
         if let dataImage = photo.fileDataRepresentation() {
-            print(UIImage(data: dataImage)?.size as Any)
             let dataProvider = CGDataProvider(data: dataImage as CFData)
             let cgImageRef: CGImage! = CGImage(jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
             let image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: UIImage.Orientation.right)
+
+            let imageView = UIImageView(image: image)
+            imageView.contentMode = .scaleAspectFill
+            imageView.frame = videoPreview.frame
+            let imageLayer = imageView.layer
+            var sublayers = videoPreview.layer.sublayers ?? []
+            let insertIndex = max(sublayers.count - 1, 0)
+            videoPreview.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
             
-            // Save to camera roll
-            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+            let bounds = UIScreen.main.bounds
+            UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
+            self.View0.drawHierarchy(in: bounds, afterScreenUpdates: true)
+            let img = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            imageLayer.removeFromSuperlayer()
+            let activityViewController = UIActivityViewController(activityItems: [img!], applicationActivities: nil)
+            activityViewController.popoverPresentationController?.sourceView = self.View0
+            self.present(activityViewController, animated: true, completion: nil)
+//
+//            // Save to camera roll
+//            UIImageWriteToSavedPhotosAlbum(img!, nil, nil, nil);
         } else {
             print("AVCapturePhotoCaptureDelegate Error")
         }

@@ -84,49 +84,15 @@ func PostProcessHuman(prediction: MLMultiArray, confidenceThreshold: Float, iouT
     return selectedBoxesAndFeatures
 }
 
-let genders = ["female", "male"]
-let races = ["asian", "white", "middle eastern", "indian", "latino", "black"]
-
-struct HumanFeatures {
-    let weight: Float
-    let height: Float
-    let age: Int
-    let gender: String
-    let genderConfidence: Float
-    let race: String
-    let raceConfidence: Float
-    
-    init(features:[Float]) {
-        self.weight = features[0]
-        self.height = features[1]
-        self.age = Int(round(features[2]))
-        let genderCandidates = Array(features[3..<5])
-        var genderMaxIndex = 0
-        var genderMaxValue = genderCandidates[0]
-
-        for (genderIndex, genderValue) in genderCandidates.dropFirst().enumerated() {
-            if genderValue > genderMaxValue {
-                genderMaxValue = genderValue
-                genderMaxIndex = genderIndex + 1
-            }
-        }
-        
-        self.gender = genders[genderMaxIndex]
-        self.genderConfidence = genderMaxValue
-        
-        let raceCandidates =  Array(features[5...])
-        var raceMaxIndex = 0
-        var raceMaxValue = raceCandidates[0]
-
-        for (raceIndex, raceValue) in raceCandidates.dropFirst().enumerated() {
-            if raceValue > raceMaxValue {
-                raceMaxValue = raceValue
-                raceMaxIndex = raceIndex + 1
-            }
-        }
-        self.race = races[raceMaxIndex]
-        self.raceConfidence = raceMaxValue
+func toPerson(boxesAndScoresAndFeatures:[(CGRect, Float, [Float])]) -> [Person] {
+    var persons = [Person]()
+    for detectedHuman in boxesAndScoresAndFeatures {
+        var person = Person(index: -1)
+        person.update(box: detectedHuman.0, score: detectedHuman.1, features: detectedHuman.2)
+        person.color = .red
+        persons.append(person)
     }
+    return persons
 }
 
 extension CGRect {

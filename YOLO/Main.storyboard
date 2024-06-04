@@ -192,13 +192,27 @@
                                     <action selector="taskSegmentControlChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="XL0-bf-CL7"/>
                                 </connections>
                             </segmentedControl>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tracking" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vmV-l5-46D">
+                                <rect key="frame" x="291.66666666666669" y="645.66666666666663" width="66" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.91247808929999996" green="0.97697538139999995" blue="0.98418968920000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="bmb-wR-twF">
+                                <rect key="frame" x="300" y="676.66666666666663" width="51" height="31"/>
+                                <connections>
+                                    <action selector="TrackingSwitch:" destination="BYZ-38-t0r" eventType="valueChanged" id="rza-vu-vi5"/>
+                                </connections>
+                            </switch>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <gestureRecognizers/>
                         <constraints>
+                            <constraint firstItem="pGx-Os-eUk" firstAttribute="centerX" secondItem="vmV-l5-46D" secondAttribute="centerX" id="0Bh-1l-MR6"/>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="top" secondItem="Gax-hR-qdY" secondAttribute="bottom" constant="1" id="3qP-Re-vUy"/>
                             <constraint firstItem="pGx-Os-eUk" firstAttribute="centerY" secondItem="Ytf-30-5R8" secondAttribute="centerY" id="CPI-10-mXb"/>
+                            <constraint firstItem="vmV-l5-46D" firstAttribute="centerY" secondItem="Gax-hR-qdY" secondAttribute="centerY" id="DJ7-Ph-M8G"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="GB3-HN-lcm"/>
                             <constraint firstItem="lFk-9g-4zt" firstAttribute="top" secondItem="Ovr-pp-CtB" secondAttribute="bottom" id="Sqq-Bb-Nvv"/>
                             <constraint firstItem="Ovr-pp-CtB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="W2U-Xy-2TZ"/>
@@ -209,10 +223,12 @@
                             <constraint firstItem="lFk-9g-4zt" firstAttribute="top" secondItem="Ytf-30-5R8" secondAttribute="bottom" constant="28" id="enE-h4-OrG"/>
                             <constraint firstItem="Ytf-30-5R8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="8" id="fio-88-KON"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="gd1-rI-r2l"/>
+                            <constraint firstItem="bmb-wR-twF" firstAttribute="top" secondItem="vmV-l5-46D" secondAttribute="bottom" constant="10" id="gdf-kJ-7tu"/>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="lkb-bl-PkB"/>
                             <constraint firstItem="6JI-Fw-yih" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="mI7-Wt-LH3"/>
                             <constraint firstItem="Gax-hR-qdY" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="nUQ-tC-N7o"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="os3-Uk-Kum"/>
+                            <constraint firstItem="bmb-wR-twF" firstAttribute="centerX" secondItem="vmV-l5-46D" secondAttribute="centerX" id="p9W-cC-Oi0"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="top" secondItem="lFk-9g-4zt" secondAttribute="bottom" constant="-4" id="sch-Go-Cir"/>
                         </constraints>
                         <connections>
@@ -257,7 +273,7 @@
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray5Color">
-            <color red="0.8980392157" green="0.8980392157" blue="0.91764705879999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.89803921568627454" green="0.89803921568627454" blue="0.91764705882352937" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

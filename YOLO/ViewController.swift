@@ -74,6 +74,8 @@ class ViewController: UIViewController {
     var task: Task = .detect
     var confidenceThreshold:Float = 0.25
     var iouThreshold:Float = 0.4
+    var tracking = false
+    var tracker = TrackingModel()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -212,6 +214,16 @@ class ViewController: UIViewController {
         }
     }
      
+    @IBAction func TrackingSwitch(_ sender: UISwitch) {
+        tracking.toggle()
+        if tracking {
+            sender.isOn = true
+        } else {
+            sender.isOn = false
+        }
+    }
+    
+    
     @IBAction func takePhoto(_ sender: Any?) {
         let t0 = DispatchTime.now().uptimeNanoseconds
         
@@ -393,9 +405,9 @@ class ViewController: UIViewController {
         case .detect:
             DispatchQueue.main.async {
                 if let results = request.results as? [VNRecognizedObjectObservation] {
-                    self.show(predictions: results, boxesAndValues: [])
+                    self.show(predictions: results, persons: [])
                 } else {
-                    self.show(predictions: [], boxesAndValues: [])
+                    self.show(predictions: [], persons: [])
                 }
                 
                 // Measure FPS
@@ -413,9 +425,15 @@ class ViewController: UIViewController {
                     if let prediction = results.first?.featureValue.multiArrayValue {
 
                         let pred = PostProcessHuman(prediction:prediction, confidenceThreshold: self.confidenceThreshold, iouThreshold: self.iouThreshold)
-                        self.show(predictions: [], boxesAndValues: pred)
+                        var persons:[Person] = []
+                        if !self.tracking {
+                            persons = toPerson(boxesAndScoresAndFeatures: pred)
+                        } else {
+                            persons = self.tracker.track(boxesAndScoresAndFeatures: pred)
+                        }
+                        self.show(predictions: [], persons: persons)
                     } else {
-                        self.show(predictions: [], boxesAndValues: [])
+                        self.show(predictions: [], persons: [])
                     }
                     if self.t1 < 10.0 {  // valid dt
                         self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
@@ -492,7 +510,7 @@ class ViewController: UIViewController {
         }
     }
     
-    func show(predictions: [VNRecognizedObjectObservation], boxesAndValues: [(CGRect, Float, [Float])]) {
+    func show(predictions: [VNRecognizedObjectObservation], persons: [Person]) {
         let width = videoPreview.bounds.width
         let height = videoPreview.bounds.height
         var str = ""
@@ -518,7 +536,7 @@ class ViewController: UIViewController {
         case .detect:
             resultCount = predictions.count
         case .human:
-            resultCount = boxesAndValues.count
+            resultCount = persons.count
         }
         self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
         for i in 0..<boundingBoxViews.count {
@@ -540,13 +558,17 @@ class ViewController: UIViewController {
                     boxColor = colors[bestClass] ?? UIColor.white
                     alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
                 case .human:
-                    let (box, score, features) = boxesAndValues[i]
+                    let person = persons[i]
+                    let box = person.box
                     rect = CGRect(x: box.minX/640, y: box.minY/640, width: box.width/640, height: box.height/640)
-                    confidence = CGFloat(score)
-                    label = String(format: "%@ %.1f", "person", confidence * 100)
-                    let humanFeatures = HumanFeatures(features: features)
-                    innerTexts = "weight: " + String(format: "%.2f", humanFeatures.weight) + "\n" + "height: " + String(format: "%.2f", humanFeatures.height) + "\n" + "age: " + String(humanFeatures.age) + "\n" + humanFeatures.gender + ": " + String(format: "%.2f", humanFeatures.genderConfidence) + "\n" + humanFeatures.race + ": " + String(format: "%.2f", humanFeatures.raceConfidence)
-                    boxColor = .red
+                    confidence = CGFloat(person.score)
+                    if person.index == -1 {
+                        label = "person"
+                    } else {
+                        label = String(format: "%@ %.1f", "ID: \(person.index)", confidence * 100)
+                    }
+                    innerTexts = "weight: " + String(format: "%.2f", person.weight) + "\n" + "height: " + String(format: "%.2f", person.height) + "\n" + "age: " + String(person.age) + "\n" + person.gender + ": " + String(format: "%.2f", person.genderConfidence) + "\n" + person.race + ": " + String(format: "%.2f", person.raceConfidence)
+                    boxColor = person.color
                     
                 }
                 var displayRect = rect
@@ -610,8 +632,7 @@ class ViewController: UIViewController {
             }
         }
     }
-    
-    
+
     // Pinch to Zoom Start ---------------------------------------------------------------------------------------------
     let minimumZoom: CGFloat = 1.0
     let maximumZoom: CGFloat = 10.0

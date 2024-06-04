@@ -24,6 +24,8 @@ class ViewController: UIViewController {
     @IBOutlet var View0: UIView!
     @IBOutlet var segmentedControl: UISegmentedControl!
     @IBOutlet weak var taskSegmentControl: UISegmentedControl!
+    @IBOutlet weak var trackingLabel: UILabel!
+    @IBOutlet weak var trackingSwitch: UISwitch!
     @IBOutlet var playButtonOutlet: UIBarButtonItem!
     @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
     @IBOutlet var slider: UISlider!
@@ -198,6 +200,8 @@ class ViewController: UIViewController {
         switch sender.selectedSegmentIndex {
         case 0:
             if self.task != .detect {
+                self.trackingLabel.isHidden = true
+                self.trackingSwitch.isHidden = true
                 self.task = .detect
                 self.setModel()
             }
@@ -207,6 +211,8 @@ class ViewController: UIViewController {
                 for i in 0..<self.boundingBoxViews.count {
                     self.boundingBoxViews[i].hide()
                 }
+                self.trackingLabel.isHidden = false
+                self.trackingSwitch.isHidden = false
                 self.setModel()
             }
         default:

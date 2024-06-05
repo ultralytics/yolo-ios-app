@@ -56,6 +56,21 @@ struct Person {
     
     mutating func update(box:CGRect, score:Float, features:[Float]) {
         self.box = box
+        if scoreRawList.count >= updateFrequency {
+            scoreRawList.removeFirst()
+            weightRawList.removeFirst()
+            heightRawList.removeFirst()
+            ageRawList.removeFirst()
+            maleRawList.removeFirst()
+            femaleRawList.removeFirst()
+            asianRawList.removeFirst()
+            whiteRawList.removeFirst()
+            middleEasternRawList.removeFirst()
+            indianRawList.removeFirst()
+            latinoRawList.removeFirst()
+            blackRawList.removeFirst()
+        }
+        
 
         self.scoreRawList.append(score)
         self.weightRawList.append(features[0])
@@ -69,28 +84,8 @@ struct Person {
         self.indianRawList.append(features[8])
         self.latinoRawList.append(features[9])
         self.blackRawList.append(features[10])
-        
-        if !stable || scoreRawList.count >= updateFrequency {
-            stable = true
-            calcurateFeatures()
-        }
-        
-        if scoreRawList.count >= updateFrequency {
-            scoreRawList.removeAll()
-            weightRawList.removeAll()
-            heightRawList.removeAll()
-            ageRawList.removeAll()
-            maleRawList.removeAll()
-            femaleRawList.removeAll()
-            asianRawList.removeAll()
-            whiteRawList.removeAll()
-            middleEasternRawList.removeAll()
-            indianRawList.removeAll()
-            latinoRawList.removeAll()
-            blackRawList.removeAll()
-
-        }
-        
+        calcurateFeatures()
+                
         self.unDetectedCounter = 0
     }
     

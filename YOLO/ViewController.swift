@@ -30,16 +30,21 @@ class ViewController: UIViewController {
     @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
     @IBOutlet var slider: UISlider!
     @IBOutlet var sliderConf: UISlider!
+    @IBOutlet weak var sliderConfLandScape: UISlider!
     @IBOutlet var sliderIoU: UISlider!
+    @IBOutlet weak var sliderIoULandScape: UISlider!
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var labelFPS: UILabel!
     @IBOutlet weak var labelZoom: UILabel!
     @IBOutlet weak var labelVersion: UILabel!
     @IBOutlet weak var labelSlider: UILabel!
     @IBOutlet weak var labelSliderConf: UILabel!
+    @IBOutlet weak var labelSliderConfLandScape: UILabel!
     @IBOutlet weak var labelSliderIoU: UILabel!
+    @IBOutlet weak var labelSliderIoULandScape: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var forcus: UIImageView!
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!
@@ -85,8 +90,45 @@ class ViewController: UIViewController {
         taskSegmentControl.selectedSegmentIndex = 0
         setLabels()
         setUpBoundingBoxViews()
+        setUpOrientationChangeNotification()
         startVideo()
         // setModel()
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+
+        if size.width > size.height {
+            labelSliderConf.isHidden = true
+            sliderConf.isHidden = true
+            labelSliderIoU.isHidden = true
+            sliderIoU.isHidden = true
+            labelSliderConfLandScape.isHidden = false
+            sliderConfLandScape.isHidden = false
+            labelSliderIoULandScape.isHidden = false
+            sliderIoULandScape.isHidden = false
+
+        } else {
+            labelSliderConf.isHidden = false
+            sliderConf.isHidden = false
+            labelSliderIoU.isHidden = false
+            sliderIoU.isHidden = false
+            labelSliderConfLandScape.isHidden = true
+            sliderConfLandScape.isHidden = true
+            labelSliderIoULandScape.isHidden = true
+            sliderIoULandScape.isHidden = true
+        }
+        self.videoCapture.previewLayer?.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+
+    }
+    
+    private func setUpOrientationChangeNotification() {
+         NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+     }
+    
+    @objc func orientationDidChange() {
+        videoCapture.updateVideoOrientation()
+
     }
     
     @IBAction func vibrate(_ sender: Any) {
@@ -380,12 +422,12 @@ class ViewController: UIViewController {
             case .portraitUpsideDown:
                 imageOrientation = .down
             case .landscapeLeft:
-                imageOrientation = .left
+                imageOrientation = .up
             case .landscapeRight:
-                imageOrientation = .right
+                imageOrientation = .up
             case .unknown:
-                print("The device orientation is unknown, the predictions may be affected")
-                fallthrough
+                imageOrientation = .up
+
             default:
                 imageOrientation = .up
             }
@@ -522,6 +564,7 @@ class ViewController: UIViewController {
         var str = ""
         
         var ratio: CGFloat = 1.0
+        
         if videoCapture.captureSession.sessionPreset == .photo {
             ratio = (height / width) / (4.0 / 3.0)
         } else {
@@ -578,7 +621,6 @@ class ViewController: UIViewController {
                     
                 }
                 var displayRect = rect
-
                 switch UIDevice.current.orientation {
                 case .portraitUpsideDown:
                     displayRect = CGRect(x: 1.0 - rect.origin.x - rect.width,
@@ -586,15 +628,15 @@ class ViewController: UIViewController {
                                          width: rect.width,
                                          height: rect.height)
                 case .landscapeLeft:
-                    displayRect = CGRect(x: rect.origin.y,
-                                         y: 1.0 - rect.origin.x - rect.width,
-                                         width: rect.height,
-                                         height: rect.width)
+                    displayRect = CGRect(x: rect.origin.x,
+                                         y: rect.origin.y,
+                                         width: rect.width,
+                                         height: rect.height)
                 case .landscapeRight:
-                    displayRect = CGRect(x: 1.0 - rect.origin.y - rect.height,
-                                         y: rect.origin.x,
-                                         width: rect.height,
-                                         height: rect.width)
+                    displayRect = CGRect(x: rect.origin.x,
+                                         y: rect.origin.y,
+                                         width: rect.width,
+                                         height: rect.height)
                 case .unknown:
                     print("The device orientation is unknown, the predictions may be affected")
                     fallthrough
@@ -611,14 +653,17 @@ class ViewController: UIViewController {
                         }
                         displayRect.size.width *= ratio
                     } else {
-                        let offset = (ratio - 1) * (0.5 - displayRect.maxY)
                         if task == .detect {
+                            let offset = (ratio - 1) * (0.5 - displayRect.maxY)
+
                             let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
                             displayRect = displayRect.applying(transform)
                         } else {
-                            let transform = CGAffineTransform(translationX: 0, y: 1-offset)
+                            let offset = (ratio - 1) * (0.5 - displayRect.minY)
+                            let transform = CGAffineTransform(translationX: 0, y: offset)
                             displayRect = displayRect.applying(transform)
                         }
+                        ratio = (height / width) / (3.0 / 4.0)
                         displayRect.size.height /= ratio
                     }
                 displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
@@ -677,7 +722,10 @@ class ViewController: UIViewController {
             self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
         default: break
         }
-    }  // Pinch to Zoom Start ------------------------------------------------------------------------------------------
+    }  // Pinch to Zoom Start
+
+
+    // ------------------------------------------------------------------------------------------
 }  // ViewController class End
 
 extension ViewController: VideoCaptureDelegate {

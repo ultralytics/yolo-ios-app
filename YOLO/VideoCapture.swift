@@ -43,7 +43,7 @@ public class VideoCapture: NSObject {
     let videoOutput = AVCaptureVideoDataOutput()
     var cameraOutput = AVCapturePhotoOutput()
     let queue = DispatchQueue(label: "camera-queue")
-
+    
     // Configures the camera and capture session with optional session presets.
     public func setUp(sessionPreset: AVCaptureSession.Preset = .hd1280x720, completion: @escaping (Bool) -> Void) {
         queue.async {
@@ -86,9 +86,22 @@ public class VideoCapture: NSObject {
         if captureSession.canAddOutput(cameraOutput) {
             captureSession.addOutput(cameraOutput)
         }
-
-        videoOutput.connection(with: .video)?.videoOrientation = .portrait
-
+        switch UIDevice.current.orientation {
+        case .portrait:
+            videoOutput.connection(with: .video)?.videoOrientation = .portrait
+        case .portraitUpsideDown:
+            videoOutput.connection(with: .video)?.videoOrientation = .portraitUpsideDown
+        case .landscapeRight:
+            videoOutput.connection(with: .video)?.videoOrientation = .landscapeLeft
+        case .landscapeLeft:
+            videoOutput.connection(with: .video)?.videoOrientation = .landscapeRight
+        default:
+            videoOutput.connection(with: .video)?.videoOrientation = .portrait
+        }
+        
+        if let connection = videoOutput.connection(with: .video) {
+            self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+        }
         do {
             try captureDevice.lockForConfiguration()
             captureDevice.focusMode = .continuousAutoFocus
@@ -119,6 +132,24 @@ public class VideoCapture: NSObject {
             captureSession.stopRunning()
         }
     }
+    
+    func updateVideoOrientation() {
+        guard let connection = videoOutput.connection(with: .video) else { return }
+        switch UIDevice.current.orientation {
+        case .portrait:
+            connection.videoOrientation = .portrait
+        case .portraitUpsideDown:
+            connection.videoOrientation = .portraitUpsideDown
+        case .landscapeRight:
+            connection.videoOrientation = .landscapeLeft
+        case .landscapeLeft:
+            connection.videoOrientation = .landscapeRight
+        default:
+            return
+        }
+        self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+    }
+
 }
 
 // Extension to handle AVCaptureVideoDataOutputSampleBufferDelegate events.

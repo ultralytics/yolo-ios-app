@@ -19,7 +19,7 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://www.instagram.com/ultralytics/"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-instagram.png" width="3%" alt="Ultralytics Instagram"></a>
+  <a href="https://ultralytics.com/bilibili"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-bilibili.png" width="3%" alt="Ultralytics Instagram"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://ultralytics.com/discord"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
   <br>
@@ -46,43 +46,43 @@ Ensure you have the following before you start:
 
 1. **Clone the Repository:**
 
-    ```sh
-    git clone https://github.com/ultralytics/yolo-ios-app.git
-    ```
+   ```sh
+   git clone https://github.com/ultralytics/yolo-ios-app.git
+   ```
 
 2. **Open the Project in Xcode:**
 
-    Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
+   Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
 
-    <p align="center">
-    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
-    </p>
+   <p align="center">
+   <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
+   </p>
 
-    In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
+   In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
 
 3. **Add YOLOv8 Models to the Project:**
 
-    Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLOv8 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
+   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLOv8 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
 
-    ```python
-    from ultralytics import YOLO
+   ```python
+   from ultralytics import YOLO
 
-    # Loop through all YOLOv8 model sizes
-    for size in ("n", "s", "m", "l", "x"):
-        # Load a YOLOv8 PyTorch model
-        model = YOLO(f"yolov8{size}.pt")
+   # Loop through all YOLOv8 model sizes
+   for size in ("n", "s", "m", "l", "x"):
+       # Load a YOLOv8 PyTorch model
+       model = YOLO(f"yolov8{size}.pt")
 
-        # Export the PyTorch model to CoreML INT8 format with NMS layers
-        model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-    ```
+       # Export the PyTorch model to CoreML INT8 format with NMS layers
+       model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+   ```
 
 4. **Run the Ultralytics YOLO iOS App:**
 
-    Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
+   Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
 
-    <p align="center">
-    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
-    </p>
+   <p align="center">
+   <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
+   </p>
 
 ## 🚀 Usage
 
@@ -123,7 +123,7 @@ Ultralytics offers two licensing options:
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://www.instagram.com/ultralytics/"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-instagram.png" width="3%" alt="Ultralytics Instagram"></a>
+  <a href="https://ultralytics.com/bilibili"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-bilibili.png" width="3%" alt="Ultralytics Instagram"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://ultralytics.com/discord"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
 </div>

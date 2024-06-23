@@ -347,6 +347,7 @@
                         <outlet property="sliderIoU" destination="6JI-Fw-yih" id="dqE-hH-MVS"/>
                         <outlet property="sliderIoULandScape" destination="ewl-Fj-awn" id="D1R-cd-zER"/>
                         <outlet property="taskSegmentControl" destination="pGx-Os-eUk" id="2Fh-eH-HZm"/>
+                        <outlet property="toolBar" destination="3Rg-UC-ogI" id="9Zm-na-p2k"/>
                         <outlet property="trackingLabel" destination="vmV-l5-46D" id="oaI-pU-iPT"/>
                         <outlet property="trackingSwitch" destination="bmb-wR-twF" id="mpp-e1-9Hx"/>
                         <outlet property="videoPreview" destination="mCE-j4-QAA" id="mP0-Qx-oq6"/>
@@ -359,7 +360,7 @@
                     </connections>
                 </pinchGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="197.18309859154931" y="129.00763358778624"/>
+            <point key="canvasLocation" x="196.18320610687022" y="128.87323943661971"/>
         </scene>
     </scenes>
     <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>

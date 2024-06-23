@@ -45,6 +45,8 @@ class ViewController: UIViewController {
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     @IBOutlet weak var forcus: UIImageView!
+    
+    @IBOutlet weak var toolBar: UIToolbar!
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!
@@ -103,6 +105,9 @@ class ViewController: UIViewController {
             sliderConf.isHidden = true
             labelSliderIoU.isHidden = true
             sliderIoU.isHidden = true
+            toolBar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
+            toolBar.setShadowImage(UIImage(), forToolbarPosition: .any)
+
             labelSliderConfLandScape.isHidden = false
             sliderConfLandScape.isHidden = false
             labelSliderIoULandScape.isHidden = false
@@ -113,6 +118,9 @@ class ViewController: UIViewController {
             sliderConf.isHidden = false
             labelSliderIoU.isHidden = false
             sliderIoU.isHidden = false
+            toolBar.setBackgroundImage(nil, forToolbarPosition: .any, barMetrics: .default)
+            toolBar.setShadowImage(nil, forToolbarPosition: .any)
+
             labelSliderConfLandScape.isHidden = true
             sliderConfLandScape.isHidden = true
             labelSliderIoULandScape.isHidden = true
@@ -743,8 +751,21 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
         if let dataImage = photo.fileDataRepresentation() {
             let dataProvider = CGDataProvider(data: dataImage as CFData)
             let cgImageRef: CGImage! = CGImage(jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
-            let image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: UIImage.Orientation.right)
-
+            var orientation = CGImagePropertyOrientation.right
+            switch UIDevice.current.orientation {
+            case .landscapeLeft:
+                orientation = .up
+            case .landscapeRight:
+                orientation = .down
+            default:
+                break
+            }
+            var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
+            if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
+               let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent) {
+               image = UIImage(cgImage: cgImage)
+                
+            }
             let imageView = UIImageView(image: image)
             imageView.contentMode = .scaleAspectFill
             imageView.frame = videoPreview.frame

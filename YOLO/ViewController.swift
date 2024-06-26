@@ -399,6 +399,21 @@ class ViewController: UIViewController {
                         
                         let activityViewController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
                         activityViewController.popoverPresentationController?.sourceView = self.view
+                        activityViewController.completionWithItemsHandler = { activity, success, items, error in
+                            if success {
+                                do {
+                                    try FileManager.default.removeItem(at: url)
+                                    print("CSV file deleted successfully")
+                                } catch {
+                                    print("Failed to delete CSV file: \(error)")
+                                }
+                            } else if let error = error {
+                                print("Activity failed: \(error)")
+                            } else {
+                                print("Activity was cancelled.")
+                            }
+                        }
+
                         self.present(activityViewController, animated: true, completion: nil)
                     }
                 } else {

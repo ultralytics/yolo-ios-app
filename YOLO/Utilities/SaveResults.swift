@@ -8,7 +8,7 @@
 
 import Foundation
 
-let detectionHeader = "sec_day, free_space, batteryLevel ,class,confidence,box\n"
+let detectionHeader = "sec_day, free_space, batteryLevel ,class,confidence,box_x, box_y, box_w, box_h\n"
 let humanHeader = "sec_day, free_space, battery_level ,id, confidence, box_x, box_y, box_w, box_h, weight, height, age, gender, gender_confidence, race, race_confidence \n"
 
 func saveDetectionResultsToCSV(detectionResults:[String], task: Task) -> URL? {

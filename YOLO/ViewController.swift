@@ -18,6 +18,10 @@ import UIKit
 import Vision
 
 var mlModel = try! yolov8m(configuration: .init()).model
+enum Task {
+    case detect
+    case human
+}
 
 class ViewController: UIViewController {
     @IBOutlet var videoPreview: UIView!
@@ -47,6 +51,9 @@ class ViewController: UIViewController {
     @IBOutlet weak var forcus: UIImageView!
     
     @IBOutlet weak var toolBar: UIToolbar!
+    
+    @IBOutlet weak var saveDataButton: UIBarButtonItem!
+    
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!
@@ -61,9 +68,11 @@ class ViewController: UIViewController {
     // var cameraOutput: AVCapturePhotoOutput!
     
     // Developer mode
-    let developerMode = UserDefaults.standard.bool(forKey: "developer_mode")   // developer mode selected in settings
-    let save_detections = false  // write every detection to detections.txt
+    var developerMode = UserDefaults.standard.bool(forKey: "developer_mode")   // developer mode selected in settings
+    var save_detections = false  // write every detection to detections.txt
     let save_frames = false  // write every frame to frames.txt
+    var save_strings:[String] = []
+    let saveQueue = DispatchQueue(label: "com.ultralytics.saveQueue")
     
     lazy var visionRequest: VNCoreMLRequest = {
         let request = VNCoreMLRequest(model: detector, completionHandler: {
@@ -75,11 +84,6 @@ class ViewController: UIViewController {
         return request
     }()
     
-    enum Task {
-        case detect
-        case human
-    }
-    
     var task: Task = .detect
     var confidenceThreshold:Float = 0.25
     var iouThreshold:Float = 0.4
@@ -88,6 +92,7 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        NotificationCenter.default.addObserver(self, selector: #selector(updateDeveloperMode), name: .settingsChanged, object: nil)
         slider.value = 30
         taskSegmentControl.selectedSegmentIndex = 0
         setLabels()
@@ -95,6 +100,33 @@ class ViewController: UIViewController {
         setUpOrientationChangeNotification()
         startVideo()
         // setModel()
+    }
+    
+    @objc func updateDeveloperMode() {
+        let userDefaults = UserDefaults.standard
+        developerMode = userDefaults.bool(forKey: "developer_mode")
+        if !developerMode {
+            save_detections = false
+            saveDataButton.isEnabled = false
+            saveDataButton.tintColor = UIColor.clear
+        } else {
+            saveDataButton.isEnabled = true
+            saveDataButton.tintColor = nil
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if developerMode {
+            save_strings = []
+            save_detections = false
+            saveDataButton.isEnabled = true
+            saveDataButton.tintColor = nil
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self, name: .settingsChanged, object: nil)
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
@@ -247,6 +279,10 @@ class ViewController: UIViewController {
     }
     
     @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
+        save_strings.removeAll()
+        saveDataButton.tintColor = nil
+        save_detections = false
+
         switch sender.selectedSegmentIndex {
         case 0:
             if self.task != .detect {
@@ -349,6 +385,30 @@ class ViewController: UIViewController {
         selection.selectionChanged()
         let settings = AVCapturePhotoSettings()
         self.videoCapture.cameraOutput.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
+    }
+  
+    @IBAction func saveData(_ sender: Any) {
+        save_detections.toggle()
+        if !save_detections {
+            saveDataButton.tintColor = nil
+
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
+                
+                if let url = saveDetectionResultsToCSV(detectionResults: save_strings, task: task) {
+                    DispatchQueue.main.async {
+                        
+                        let activityViewController = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                        activityViewController.popoverPresentationController?.sourceView = self.view
+                        self.present(activityViewController, animated: true, completion: nil)
+                    }
+                } else {
+                    print("Failed to create CSV file.")
+                }
+                save_strings.removeAll()
+            }
+        } else {
+            saveDataButton.tintColor = UIColor.red
+        }
     }
     
     // share screenshot
@@ -680,9 +740,29 @@ class ViewController: UIViewController {
                 
                 if developerMode {
                     if save_detections {
-                        str += String(format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
-                                      sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
-                                      rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+                        saveQueue.async { [self] in
+                            guard save_detections else {return}
+                            var str = ""
+                            switch task {
+                            case .detect:
+                                str += String(format: "%.3f,%.3f,%.3f,%@, %.2f,%.3f,%.3f,%.3f,%.3f\n",
+                                                       sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
+                                                       rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+                            case .human:
+                                let person = persons[i]
+                                var id = ""
+                                if person.index == -1 {
+                                    id = "-"
+                                } else {
+                                    id = String(person.index)
+                                }
+                                str += String(format: "%.3f,%.3f,%.3f,%@, %.2f,%.3f,%.3f,%.3f,%.3f,%.2f,%.2f,%d,%@,%.2f,%@,%.2f\n",
+                                              sec_day, freeSpace(), UIDevice.current.batteryLevel, id, confidence,
+                                              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, person.weight, person.height, person.age, person.gender, person.genderConfidence, person.race, person.raceConfidence)
+                            }
+                            
+                            save_strings.append(str)
+                        }
                     }
                 }
                 

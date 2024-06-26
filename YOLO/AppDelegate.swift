@@ -43,6 +43,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         return true
     }
+    
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        NotificationCenter.default.post(name: .settingsChanged, object: nil)
+    }
+}
+
+extension Notification.Name {
+    static let settingsChanged = Notification.Name("settingsChanged")
 }
 
 /// Extension to CALayer to add functionality for generating screenshots of any layer.

@@ -164,6 +164,11 @@
                                         </connections>
                                     </barButtonItem>
                                     <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="JO8-jv-HRS"/>
+                                    <barButtonItem title="save" id="YV1-JN-u6P">
+                                        <connections>
+                                            <action selector="saveData:" destination="BYZ-38-t0r" id="v16-zT-uYI"/>
+                                        </connections>
+                                    </barButtonItem>
                                     <barButtonItem enabled="NO" systemItem="flexibleSpace" id="aMO-nw-6x7"/>
                                 </items>
                                 <color key="tintColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -304,7 +309,9 @@
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="os3-Uk-Kum"/>
                             <constraint firstItem="bmb-wR-twF" firstAttribute="centerX" secondItem="vmV-l5-46D" secondAttribute="centerX" id="p9W-cC-Oi0"/>
                             <constraint firstItem="vlL-Ye-WgQ" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="tnc-kB-JNh"/>
-                            <constraint firstItem="3Rg-UC-ogI" firstAttribute="top" secondItem="vlL-Ye-WgQ" secondAttribute="bottom" constant="26" id="yej-cN-5fU"/>
+                            <constraint firstItem="3Rg-UC-ogI" firstAttribute="top" secondItem="vlL-Ye-WgQ" secondAttribute="bottom" constant="10" id="yej-cN-5fU">
+                                <variation key="heightClass=regular-widthClass=compact" constant="26"/>
+                            </constraint>
                             <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="zJN-OL-7hd"/>
                         </constraints>
                         <variation key="default">
@@ -340,6 +347,7 @@
                         <outlet property="labelZoom" destination="vlL-Ye-WgQ" id="OIv-03-1de"/>
                         <outlet property="pauseButtonOutlet" destination="Pes-is-qDX" id="uqc-gB-onZ"/>
                         <outlet property="playButtonOutlet" destination="gHs-cs-nVf" id="YgY-EV-fyY"/>
+                        <outlet property="saveDataButton" destination="YV1-JN-u6P" id="D0W-4a-NAG"/>
                         <outlet property="segmentedControl" destination="9cm-Nq-b3N" id="RqH-Ft-fGI"/>
                         <outlet property="slider" destination="Ovr-pp-CtB" id="iHy-z4-EIQ"/>
                         <outlet property="sliderConf" destination="Gax-hR-qdY" id="KNe-MM-FBA"/>

@@ -1,11 +1,11 @@
-//
-//  PostProcessSegment.swift
-//  YOLO
-//
-//  Created by 間嶋大輔 on 2024/06/17.
-//  Copyright © 2024 Ultralytics. All rights reserved.
-//
 
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  PostProcessSegment for Ultralytics YOLO App
+
+// These functions are designed to post-process inference results from the YOLOv8-Segment model in the Ultralytics YOLO app to display segment masks.
+
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
     import UIKit
     import Vision
     import Accelerate

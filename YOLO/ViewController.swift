@@ -45,6 +45,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     @IBOutlet weak var forcus: UIImageView!
+    var maskLayer: CALayer = CALayer()
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!
@@ -76,6 +77,7 @@ class ViewController: UIViewController {
     enum Task {
         case detect
         case human
+        case seg
     }
     
     var task: Task = .detect
@@ -128,7 +130,6 @@ class ViewController: UIViewController {
     
     @objc func orientationDidChange() {
         videoCapture.updateVideoOrientation()
-
     }
     
     @IBAction func vibrate(_ sender: Any) {
@@ -136,6 +137,7 @@ class ViewController: UIViewController {
     }
     
     @IBAction func indexChanged(_ sender: Any) {
+        self.removeAllMaskSubLayers()
         selection.selectionChanged()
         activityIndicator.startAnimating()
         setModel()
@@ -204,8 +206,48 @@ class ViewController: UIViewController {
                 } else {
                     // Fallback on earlier versions
                 }
+                
             default:
                 break
+            }
+            case .seg:
+            switch segmentedControl.selectedSegmentIndex {
+            case 0:
+                self.labelName.text = "YOLOv8n"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8n_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 1:
+                self.labelName.text = "YOLOv8s"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8s_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 2:
+                self.labelName.text = "YOLOv8m"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8m_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 3:
+                self.labelName.text = "YOLOv8l"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8l_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 4:
+                self.labelName.text = "YOLOv8x"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8x_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            default:break
             }
             
         }
@@ -239,6 +281,8 @@ class ViewController: UIViewController {
     }
     
     @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
+        self.removeAllMaskSubLayers()
+        
         switch sender.selectedSegmentIndex {
         case 0:
             if self.task != .detect {
@@ -255,6 +299,16 @@ class ViewController: UIViewController {
                 }
                 self.trackingLabel.isHidden = false
                 self.trackingSwitch.isHidden = false
+                self.setModel()
+            }
+        case 2:
+            if self.task != .seg {
+                self.task = .seg
+                for i in 0..<self.boundingBoxViews.count {
+                    self.boundingBoxViews[i].hide()
+                }
+                self.trackingLabel.isHidden = true
+                self.trackingSwitch.isHidden = true
                 self.setModel()
             }
         default:
@@ -358,7 +412,10 @@ class ViewController: UIViewController {
     
     let maxBoundingBoxViews = 100
     var boundingBoxViews = [BoundingBoxView]()
-    var colors: [String: UIColor] = [:]
+    var colors: [String:UIColor] = [:]
+    var colorsForMask: [String:(red: UInt8, green: UInt8, blue: UInt8)] = [:]
+    var classes: [String] = []
+    
     
     func setUpBoundingBoxViews() {
         // Ensure all bounding box views are initialized up to the maximum allowed.
@@ -371,7 +428,7 @@ class ViewController: UIViewController {
             guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
                 fatalError("Class labels are missing from the model description")
             }
-            
+            classes = classLabels
             // Assign random colors to the classes.
             for label in classLabels {
                 if colors[label] == nil {  // if key not in dict
@@ -381,7 +438,14 @@ class ViewController: UIViewController {
                                             alpha: 0.6)
                 }
             }
+            
+            for (key,color) in colors {
+                guard let colorForMask = color.toRGBComponents() else {fatalError()}
+                colorsForMask[key] = colorForMask
+            }
         }
+        
+        
     }
     
     func startVideo() {
@@ -396,7 +460,9 @@ class ViewController: UIViewController {
                     self.videoPreview.layer.addSublayer(previewLayer)
                     self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
                 }
-                
+                self.setupMaskLayer()
+                self.videoPreview.layer.addSublayer(self.maskLayer)
+
                 // Add the bounding box layers to the UI, on top of the video preview.
                 for box in self.boundingBoxViews {
                     box.addToLayer(self.videoPreview.layer)
@@ -453,9 +519,9 @@ class ViewController: UIViewController {
         case .detect:
             DispatchQueue.main.async {
                 if let results = request.results as? [VNRecognizedObjectObservation] {
-                    self.show(predictions: results, persons: [])
+                    self.show(predictions: results, persons: [],processedBoxAndMasks: [])
                 } else {
-                    self.show(predictions: [], persons: [])
+                    self.show(predictions: [], persons: [],processedBoxAndMasks: [])
                 }
                 
                 // Measure FPS
@@ -479,10 +545,34 @@ class ViewController: UIViewController {
                         } else {
                             persons = self.tracker.track(boxesAndScoresAndFeatures: pred)
                         }
-                        self.show(predictions: [], persons: persons)
+                        self.show(predictions: [], persons: persons, processedBoxAndMasks: [])
                     } else {
-                        self.show(predictions: [], persons: [])
+                        self.show(predictions: [], persons: [],processedBoxAndMasks: [])
                     }
+                    if self.t1 < 10.0 {  // valid dt
+                        self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+                    }
+                    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+                    self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
+                    self.t3 = CACurrentMediaTime()
+                }
+            }
+        case .seg:
+            if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+                DispatchQueue.main.async { [self] in
+                    guard results.count == 2 else { return }
+                    let masks = results[0].featureValue.multiArrayValue
+                    let pred = results[1].featureValue.multiArrayValue
+                    let processed = getBoundingBoxesAndMasks(feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
+                    
+                    self.show(predictions: [], persons: [], processedBoxAndMasks:processed)
+                    DispatchQueue.main.async {
+                        let a = Date()
+                        self.updateMaskAndBoxes(detectedObjects: processed, maskArray: masks!)
+                        print(Date().timeIntervalSince(a))
+                    }
+                    
+
                     if self.t1 < 10.0 {  // valid dt
                         self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
                     }
@@ -558,7 +648,7 @@ class ViewController: UIViewController {
         }
     }
     
-    func show(predictions: [VNRecognizedObjectObservation], persons: [Person]) {
+    func show(predictions: [VNRecognizedObjectObservation], persons: [Person], processedBoxAndMasks:[(CGRect,Int,Float, MLMultiArray)]) {
         let width = videoPreview.bounds.width
         let height = videoPreview.bounds.height
         var str = ""
@@ -586,6 +676,8 @@ class ViewController: UIViewController {
             resultCount = predictions.count
         case .human:
             resultCount = persons.count
+        case .seg:
+            resultCount = processedBoxAndMasks.count
         }
         self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
         for i in 0..<boundingBoxViews.count {
@@ -618,7 +710,16 @@ class ViewController: UIViewController {
                     }
                     innerTexts = "weight: " + String(format: "%.2f", person.weight) + "\n" + "height: " + String(format: "%.2f", person.height) + "\n" + "age: " + String(person.age) + "\n" + person.gender + ": " + String(format: "%.2f", person.genderConfidence) + "\n" + person.race + ": " + String(format: "%.2f", person.raceConfidence)
                     boxColor = person.color
-                    
+                case .seg:
+                    let processed = processedBoxAndMasks[i]
+                    let box = processed.0
+                    rect = CGRect(x: box.minX/640, y: box.minY/640, width: box.width/640, height: box.height/640)
+                    confidence = CGFloat(processed.2)
+                    bestClass = classes[processed.1]
+                    label = String(format: "%@ %.1f", bestClass, confidence * 100)
+                    boxColor = colors[bestClass] ?? UIColor.white
+                    alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+
                 }
                 var displayRect = rect
                 switch UIDevice.current.orientation {
@@ -743,7 +844,16 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
         if let dataImage = photo.fileDataRepresentation() {
             let dataProvider = CGDataProvider(data: dataImage as CFData)
             let cgImageRef: CGImage! = CGImage(jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
-            let image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: UIImage.Orientation.right)
+            var orientation = UIImage.Orientation.right
+            switch UIDevice.current.orientation {
+            case .landscapeLeft:
+                orientation = .up
+            case .landscapeRight:
+                orientation = .down
+            default:
+                break
+            }
+            var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: orientation)
 
             let imageView = UIImageView(image: image)
             imageView.contentMode = .scaleAspectFill

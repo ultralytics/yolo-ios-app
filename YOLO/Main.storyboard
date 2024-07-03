@@ -179,23 +179,24 @@
                                 </variation>
                             </toolbar>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="pGx-Os-eUk">
-                                <rect key="frame" x="261" y="171" width="127" height="32"/>
+                                <rect key="frame" x="197" y="171" width="191" height="32"/>
                                 <segments>
                                     <segment title="Detect"/>
                                     <segment title="Human"/>
+                                    <segment title="Seg"/>
                                 </segments>
                                 <connections>
                                     <action selector="taskSegmentControlChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="XL0-bf-CL7"/>
                                 </connections>
                             </segmentedControl>
                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tracking" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vmV-l5-46D">
-                                <rect key="frame" x="291.66666666666669" y="623.66666666666663" width="66" height="20"/>
+                                <rect key="frame" x="259.66666666666669" y="623.66666666666663" width="66" height="20"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" red="0.91247808929999996" green="0.97697538139999995" blue="0.98418968920000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <switch hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="bmb-wR-twF">
-                                <rect key="frame" x="300" y="653.66666666666663" width="51" height="31"/>
+                                <rect key="frame" x="268" y="653.66666666666663" width="51" height="31"/>
                                 <connections>
                                     <action selector="TrackingSwitch:" destination="BYZ-38-t0r" eventType="valueChanged" id="rza-vu-vi5"/>
                                 </connections>

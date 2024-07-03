@@ -19,6 +19,7 @@
 		730E72CD2BFC43BF000E1F45 /* PostProcessing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E72CC2BFC43BF000E1F45 /* PostProcessing.swift */; };
 		73A4E7752C0EA36D00218E8F /* HumanModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A4E7742C0EA36D00218E8F /* HumanModel.swift */; };
 		73A4E7772C0EA37300218E8F /* TrackingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A4E7762C0EA37300218E8F /* TrackingModel.swift */; };
+		73FE95F32C3500AC00C6C806 /* PostProcessSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FE95F22C3500AC00C6C806 /* PostProcessSegment.swift */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +38,7 @@
 		730E72CC2BFC43BF000E1F45 /* PostProcessing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostProcessing.swift; sourceTree = "<group>"; };
 		73A4E7742C0EA36D00218E8F /* HumanModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HumanModel.swift; sourceTree = "<group>"; };
 		73A4E7762C0EA37300218E8F /* TrackingModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TrackingModel.swift; sourceTree = "<group>"; };
+		73FE95F22C3500AC00C6C806 /* PostProcessSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostProcessSegment.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
 		8EDAAA4507D2D23D7FAB827F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -56,6 +58,7 @@
 		636166E72514438D0054FA7E /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				73FE95F22C3500AC00C6C806 /* PostProcessSegment.swift */,
 				73A4E7762C0EA37300218E8F /* TrackingModel.swift */,
 				73A4E7742C0EA36D00218E8F /* HumanModel.swift */,
 				730E72CC2BFC43BF000E1F45 /* PostProcessing.swift */,
@@ -204,6 +207,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73FE95F32C3500AC00C6C806 /* PostProcessSegment.swift in Sources */,
 				730E72CD2BFC43BF000E1F45 /* PostProcessing.swift in Sources */,
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,

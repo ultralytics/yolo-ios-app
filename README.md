@@ -25,7 +25,7 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
   <br>
   <br>
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" style="text-decoration:none;">
-    <img src="https://raw.githubusercontent.com/ultralytics/assets/master/app/app-store.svg" width="15%" alt="Apple App store"></a>
+    <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 
 ## 🛠 Quickstart: Setting Up the Ultralytics YOLO iOS App

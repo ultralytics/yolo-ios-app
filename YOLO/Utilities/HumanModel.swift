@@ -73,7 +73,7 @@ struct Person {
         
 
         self.scoreRawList.append(score)
-        self.weightRawList.append(features[0])
+        self.weightRawList.append(Float(applyPolyModel(weight: Double(features[0]))))
         self.heightRawList.append(features[1])
         self.ageRawList.append(features[2])
         self.femaleRawList.append(features[3])
@@ -143,6 +143,23 @@ struct Person {
         return sum / Float(numbers.count)
     }
 
+    private mutating func applyPolyModel(weight: Double, degree: Int = 4) -> Double {
+        let coef: [Double] = [0, 44.196, -1.2491, 0.014767, -6.2096e-05]
+        let intercept: Double = -477.7766285997004
+
+        let weight2 = weight * weight
+        let weight3 = weight2 * weight
+        let weight4 = weight3 * weight
+
+        let result = coef[0]
+                    + coef[1] * weight
+                    + coef[2] * weight2
+                    + coef[3] * weight3
+                    + coef[4] * weight4
+                    + intercept
+
+        return result
+    }
 }
 
 let genders = ["female", "male"]

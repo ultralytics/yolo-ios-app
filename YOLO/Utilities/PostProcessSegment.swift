@@ -32,71 +32,77 @@
             }
         }
 
-            func getBoundingBoxesAndMasks(feature: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float) -> [(CGRect, Int, Float, MLMultiArray)] {
-                let numAnchors = feature.shape[2].intValue
-                let numFeatures = feature.shape[1].intValue
-                let boxFeatureLength = 4
-                let maskConfidenceLength = 32
-                let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
+        func getBoundingBoxesAndMasks(feature: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float) -> [(CGRect, Int, Float, MLMultiArray)] {
+            let numAnchors = feature.shape[2].intValue
+            let numFeatures = feature.shape[1].intValue
+            let boxFeatureLength = 4
+            let maskConfidenceLength = 32
+            let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
-                var results = [(CGRect, Float, Int, MLMultiArray)]()
-                let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+            var results = [(CGRect, Float, Int, MLMultiArray)]()
+            let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
 
-                let queue = DispatchQueue.global(qos: .userInitiated)
-                let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+            let queue = DispatchQueue.global(qos: .userInitiated)
+            let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
 
-                DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-                    let baseOffset = j
-                    let x = featurePointer[baseOffset]
-                    let y = featurePointer[numAnchors + baseOffset]
-                    let width = featurePointer[2 * numAnchors + baseOffset]
-                    let height = featurePointer[3 * numAnchors + baseOffset]
+            DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
+                let baseOffset = j
+                let x = featurePointer[baseOffset]
+                let y = featurePointer[numAnchors + baseOffset]
+                let width = featurePointer[2 * numAnchors + baseOffset]
+                let height = featurePointer[3 * numAnchors + baseOffset]
 
-                    let boxWidth = CGFloat(width)
-                    let boxHeight = CGFloat(height)
-                    let boxX = CGFloat(x - width / 2)
-                    let boxY = CGFloat(y - height / 2)
+                let boxWidth = CGFloat(width)
+                let boxHeight = CGFloat(height)
+                let boxX = CGFloat(x - width / 2)
+                let boxY = CGFloat(y - height / 2)
 
-                    let boundingBox = CGRect(x: boxX, y: boxY, width: boxWidth, height: boxHeight)
+                let boundingBox = CGRect(x: boxX, y: boxY, width: boxWidth, height: boxHeight)
 
-                    var classProbs = [Float](repeating: 0, count: numClasses)
-                    classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
-                        vDSP_mtrans(featurePointer + 4 * numAnchors + baseOffset, numAnchors, classProbsPointer.baseAddress!, 1, 1, vDSP_Length(numClasses))
+                var classProbs = [Float](repeating: 0, count: numClasses)
+                classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
+                    vDSP_mtrans(featurePointer + 4 * numAnchors + baseOffset, numAnchors, classProbsPointer.baseAddress!, 1, 1, vDSP_Length(numClasses))
+                }
+                var maxClassValue: Float = 0
+                var maxClassIndex: vDSP_Length = 0
+                vDSP_maxvi(classProbs, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
+
+                if maxClassValue > confidenceThreshold {
+                    let maskProbsPointer = featurePointer + (4 + numClasses) * numAnchors + baseOffset
+                    let maskProbs = try! MLMultiArray(shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
+                    for i in 0..<maskConfidenceLength {
+                        maskProbs[i] = NSNumber(value: maskProbsPointer[i * numAnchors])
                     }
-                    var maxClassValue: Float = 0
-                    var maxClassIndex: vDSP_Length = 0
-                    vDSP_maxvi(classProbs, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
 
-                    if maxClassValue > confidenceThreshold {
-                        let maskProbsPointer = featurePointer + (4 + numClasses) * numAnchors + baseOffset
-                        let maskProbs = try! MLMultiArray(shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
-                        for i in 0..<maskConfidenceLength {
-                            maskProbs[i] = NSNumber(value: maskProbsPointer[i * numAnchors])
-                        }
+                    let result = (boundingBox, maxClassValue, Int(maxClassIndex), maskProbs)
 
-                        let result = (boundingBox, maxClassValue, Int(maxClassIndex), maskProbs)
-
-                        // Using resultsQueue to synchronize access to results
-                        resultsQueue.async(flags: .barrier) {
-                            results.append(result)
-                        }
+                    // Using resultsQueue to synchronize access to results
+                    resultsQueue.async(flags: .barrier) {
+                        results.append(result)
                     }
                 }
-
-                // Ensuring all updates to results are complete
-                resultsQueue.sync(flags: .barrier) {}
-
-                let boxesOnly = results.map { $0.0 }
-                let scoresOnly = results.map { $0.1 }
-                let selectedIndices = nonMaxSuppression(boxes: boxesOnly, scores: scoresOnly, threshold: iouThreshold)
-
-                var selectedBoxesAndFeatures = [(CGRect, Int, Float, MLMultiArray)]()
-                for idx in selectedIndices {
-                    selectedBoxesAndFeatures.append((results[idx].0, results[idx].2, results[idx].1, results[idx].3))
-                }
-
-                return selectedBoxesAndFeatures
             }
+
+            // Ensuring all updates to results are complete
+            resultsQueue.sync(flags: .barrier) {}
+
+            var selectedBoxesAndFeatures = [(CGRect, Int, Float, MLMultiArray)]()
+
+            // Perform NMS class by class
+            for classIndex in 0..<numClasses {
+                let classResults = results.filter { $0.2 == classIndex }
+                if !classResults.isEmpty {
+                    let boxesOnly = classResults.map { $0.0 }
+                    let scoresOnly = classResults.map { $0.1 }
+                    let selectedIndices = nonMaxSuppression(boxes: boxesOnly, scores: scoresOnly, threshold: iouThreshold)
+                    for idx in selectedIndices {
+                        selectedBoxesAndFeatures.append((classResults[idx].0, classResults[idx].2, classResults[idx].1, classResults[idx].3))
+                    }
+                }
+            }
+
+            return selectedBoxesAndFeatures
+        }
         
         func updateMaskAndBoxes(detectedObjects: [(CGRect, Int, Float, MLMultiArray)], maskArray: MLMultiArray) {
             if detectedObjects.isEmpty {
@@ -154,8 +160,8 @@
             vDSP_mmul(masksPointer, 1, protosPointer, 1, masksPointerOutput, 1, vDSP_Length(1), vDSP_Length(maskHeight * maskWidth), vDSP_Length(maskChannels))
             
             let threshold: Float = 0.5
-            let label = classes[colorIndex]
-            let color = colorsForMask[label]!
+            let maskColorIndex = colorIndex % 20
+            let color = colorsForMask[colorIndex]
             let red = UInt8(color.red)
             let green = UInt8(color.green)
             let blue = UInt8(color.blue)

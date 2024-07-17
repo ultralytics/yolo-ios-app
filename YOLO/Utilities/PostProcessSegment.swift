@@ -28,7 +28,11 @@
                 offSet = height / ratio
                 margin = (offSet - self.videoPreview.bounds.width) / 2
                 self.maskLayer.frame = CGRect(x:-margin, y: 0, width: offSet, height: self.videoPreview.bounds.height)
-                
+            } else {
+                offSet = width / ratio
+                margin = (offSet - self.videoPreview.bounds.height) / 2
+                self.maskLayer.frame = CGRect(x:0, y: -margin, width: self.videoPreview.bounds.width, height: offSet)
+
             }
         }
 

@@ -42,8 +42,12 @@ class ViewController: UIViewController {
     @IBOutlet weak var labelSliderConfLandScape: UILabel!
     @IBOutlet weak var labelSliderIoU: UILabel!
     @IBOutlet weak var labelSliderIoULandScape: UILabel!
+    @IBOutlet weak var playButtonLandScape: UIButton!
+    @IBOutlet weak var pauseButtonLandScape: UIButton!
+    @IBOutlet weak var shareButtonLandScape: UIButton!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    @IBOutlet weak var toolbar: UIToolbar!
     @IBOutlet weak var forcus: UIImageView!
     var maskLayer: CALayer = CALayer()
     let selection = UISelectionFeedbackGenerator()
@@ -109,6 +113,10 @@ class ViewController: UIViewController {
             sliderConfLandScape.isHidden = false
             labelSliderIoULandScape.isHidden = false
             sliderIoULandScape.isHidden = false
+            toolbar.isHidden = true
+            playButtonLandScape.isHidden = false
+            pauseButtonLandScape.isHidden = false
+            shareButtonLandScape.isHidden = false
 
         } else {
             labelSliderConf.isHidden = false
@@ -119,9 +127,17 @@ class ViewController: UIViewController {
             sliderConfLandScape.isHidden = true
             labelSliderIoULandScape.isHidden = true
             sliderIoULandScape.isHidden = true
+            toolbar.isHidden = false
+            playButtonLandScape.isHidden = true
+            pauseButtonLandScape.isHidden = true
+            shareButtonLandScape.isHidden = true
+
         }
         self.videoCapture.previewLayer?.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-
+        coordinator.animate(alongsideTransition: { context in
+        }, completion: { context in
+            self.setupMaskLayer()
+        })
     }
     
     private func setUpOrientationChangeNotification() {

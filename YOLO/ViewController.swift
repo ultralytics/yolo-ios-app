@@ -89,6 +89,9 @@ class ViewController: UIViewController {
     var iouThreshold:Float = 0.4
     var tracking = false
     var tracker = TrackingModel()
+    var segmentCount = 0
+    
+    var screenshotImageView:UIImageView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -873,7 +876,41 @@ class ViewController: UIViewController {
         }
     }  // Pinch to Zoom Start
 
+    func showShareAlert(image: UIImage) {
+         let alertController = UIAlertController(title: "Do you want to share this image?", message: nil, preferredStyle: .alert)
+         
+         let shareAction = UIAlertAction(title: "OK", style: .default) { _ in
+             self.shareImage(image: image)
+         }
+         
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            self.hideScreenshotImageView()
+        }
+         
+         alertController.addAction(shareAction)
+         alertController.addAction(cancelAction)
+         
+         if let popoverController = alertController.popoverPresentationController {
+             popoverController.sourceView = self.view
+             popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY - 100, width: 0, height: 0)
+             popoverController.permittedArrowDirections = []
+         }
+         
+         present(alertController, animated: true, completion: nil)
+     }
 
+    func shareImage(image: UIImage) {
+        let activityViewController = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        activityViewController.popoverPresentationController?.sourceView = self.View0
+        self.present(activityViewController, animated: true) { 
+            self.hideScreenshotImageView()
+        }
+    }
+    
+    func hideScreenshotImageView() {
+        self.screenshotImageView?.removeFromSuperview()
+        self.screenshotImageView = nil
+    }
     // ------------------------------------------------------------------------------------------
 }  // ViewController class End
 
@@ -917,9 +954,18 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
             let img = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
             imageLayer.removeFromSuperlayer()
-            let activityViewController = UIActivityViewController(activityItems: [img!], applicationActivities: nil)
-            activityViewController.popoverPresentationController?.sourceView = self.View0
-            self.present(activityViewController, animated: true, completion: nil)
+            
+            let screenshotImageView = UIImageView(image: img)
+            screenshotImageView.frame = view.bounds
+            screenshotImageView.contentMode = .scaleAspectFit
+            view.addSubview(screenshotImageView)
+            self.screenshotImageView = screenshotImageView
+
+            UIView.animate(withDuration: 0.3, animations: {
+                screenshotImageView.frame = CGRect(x: 20, y: 100, width: self.view.bounds.width - 40, height: self.view.bounds.height - 200)
+            }) { _ in
+                self.showShareAlert(image: img!)
+            }
 //
 //            // Save to camera roll
 //            UIImageWriteToSavedPhotosAlbum(img!, nil, nil, nil);

@@ -606,7 +606,6 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
                 break
             }
             var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: orientation)
-
             let imageView = UIImageView(image: image)
             imageView.contentMode = .scaleAspectFill
             imageView.frame = videoPreview.frame

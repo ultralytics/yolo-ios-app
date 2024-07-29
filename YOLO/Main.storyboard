@@ -139,7 +139,7 @@
                                 </connections>
                             </slider>
                             <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="1" verticalHuggingPriority="1" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3Rg-UC-ogI">
-                                <rect key="frame" x="0.0" y="782" width="393" height="49"/>
+                                <rect key="frame" x="0.0" y="787" width="393" height="44"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="24" id="wAH-Ui-IPj"/>
@@ -178,28 +178,6 @@
                                     </mask>
                                 </variation>
                             </toolbar>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="pGx-Os-eUk">
-                                <rect key="frame" x="261" y="171" width="127" height="32"/>
-                                <segments>
-                                    <segment title="Detect"/>
-                                    <segment title="Human"/>
-                                </segments>
-                                <connections>
-                                    <action selector="taskSegmentControlChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="XL0-bf-CL7"/>
-                                </connections>
-                            </segmentedControl>
-                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tracking" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vmV-l5-46D">
-                                <rect key="frame" x="291.66666666666669" y="623.66666666666663" width="66" height="20"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.91247808929999996" green="0.97697538139999995" blue="0.98418968920000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <switch hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="bmb-wR-twF">
-                                <rect key="frame" x="300" y="653.66666666666663" width="51" height="31"/>
-                                <connections>
-                                    <action selector="TrackingSwitch:" destination="BYZ-38-t0r" eventType="valueChanged" id="rza-vu-vi5"/>
-                                </connections>
-                            </switch>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.45 IoU Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tZo-QP-q2z" userLabel="LabelSliderIoU">
                                 <rect key="frame" x="6" y="677.66666666666663" width="131" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
@@ -256,7 +234,6 @@
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="pGx-Os-eUk" firstAttribute="centerX" secondItem="vmV-l5-46D" secondAttribute="centerX" id="0Bh-1l-MR6"/>
                             <constraint firstAttribute="bottom" secondItem="mCE-j4-QAA" secondAttribute="bottom" id="0zh-eM-EmE"/>
                             <constraint firstItem="BZf-Ft-ERG" firstAttribute="top" secondItem="9cm-Nq-b3N" secondAttribute="bottom" constant="-1" id="10a-HD-y6c"/>
                             <constraint firstItem="mCE-j4-QAA" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="2Hf-C7-PKF"/>
@@ -264,13 +241,10 @@
                             <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="4VU-KS-qnX"/>
                             <constraint firstItem="uD3-7n-e7T" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="8ED-Ty-itL"/>
                             <constraint firstItem="ewl-Fj-awn" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="CCH-hl-rSK"/>
-                            <constraint firstItem="pGx-Os-eUk" firstAttribute="centerY" secondItem="Ytf-30-5R8" secondAttribute="centerY" id="CPI-10-mXb"/>
                             <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="9" id="CsQ-eU-xjO"/>
                             <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="DEd-UO-Mod"/>
-                            <constraint firstItem="3Rg-UC-ogI" firstAttribute="top" secondItem="bmb-wR-twF" secondAttribute="bottom" constant="9.3333333333333144" id="E1T-DA-dNF"/>
                             <constraint firstAttribute="trailing" secondItem="q1Z-jK-UQS" secondAttribute="trailing" id="EpS-OI-uaC"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="GB3-HN-lcm"/>
-                            <constraint firstItem="6JI-Fw-yih" firstAttribute="centerY" secondItem="bmb-wR-twF" secondAttribute="centerY" id="JyK-Ei-FGf"/>
                             <constraint firstItem="Krk-z8-jWR" firstAttribute="top" secondItem="Ovr-pp-CtB" secondAttribute="bottom" constant="1" id="Ned-gk-ai9"/>
                             <constraint firstItem="mCE-j4-QAA" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" id="NnK-y0-UOk"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="6JI-Fw-yih" secondAttribute="bottom" constant="34" id="OLO-X9-93N">
@@ -284,14 +258,11 @@
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="top" secondItem="q1Z-jK-UQS" secondAttribute="bottom" constant="-4" id="YFd-Jg-Obg"/>
                             <constraint firstItem="6JI-Fw-yih" firstAttribute="top" secondItem="tZo-QP-q2z" secondAttribute="bottom" constant="4" id="acL-Dc-cLn"/>
                             <constraint firstAttribute="trailing" secondItem="3Rg-UC-ogI" secondAttribute="trailing" id="alq-cZ-iIR"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="pGx-Os-eUk" secondAttribute="trailing" constant="5" id="bQf-TM-PBS"/>
                             <constraint firstItem="q1Z-jK-UQS" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="d57-2L-ne7"/>
                             <constraint firstItem="Ovr-pp-CtB" firstAttribute="top" secondItem="Ytf-30-5R8" secondAttribute="bottom" constant="-2" id="eQz-A3-6YS"/>
                             <constraint firstItem="mCE-j4-QAA" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="fJk-bN-O88"/>
                             <constraint firstItem="Ytf-30-5R8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="8" id="fio-88-KON"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="bottom" secondItem="8bC-Xf-vdC" secondAttribute="bottom" constant="-21" id="gd1-rI-r2l"/>
-                            <constraint firstItem="bmb-wR-twF" firstAttribute="top" secondItem="vmV-l5-46D" secondAttribute="bottom" constant="10" id="gdf-kJ-7tu"/>
-                            <constraint firstItem="vmV-l5-46D" firstAttribute="centerY" secondItem="Yhe-73-Ryr" secondAttribute="centerY" id="gib-Da-0uW"/>
                             <constraint firstItem="q4C-U4-wS4" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="hDd-mh-Ihd"/>
                             <constraint firstItem="ewl-Fj-awn" firstAttribute="top" secondItem="uD3-7n-e7T" secondAttribute="bottom" constant="4" id="iOx-Xn-wjC"/>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="lkb-bl-PkB"/>
@@ -302,7 +273,6 @@
                             <constraint firstItem="q1Z-jK-UQS" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" multiplier="0.475352" id="oNB-Ef-CH0"/>
                             <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="onI-er-Sda"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="os3-Uk-Kum"/>
-                            <constraint firstItem="bmb-wR-twF" firstAttribute="centerX" secondItem="vmV-l5-46D" secondAttribute="centerX" id="p9W-cC-Oi0"/>
                             <constraint firstItem="vlL-Ye-WgQ" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="tnc-kB-JNh"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="top" secondItem="vlL-Ye-WgQ" secondAttribute="bottom" constant="26" id="yej-cN-5fU"/>
                             <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="zJN-OL-7hd"/>
@@ -310,15 +280,11 @@
                         <variation key="default">
                             <mask key="constraints">
                                 <exclude reference="OLO-X9-93N"/>
-                                <exclude reference="JyK-Ei-FGf"/>
-                                <exclude reference="E1T-DA-dNF"/>
                             </mask>
                         </variation>
                         <variation key="heightClass=compact-widthClass=regular">
                             <mask key="constraints">
                                 <include reference="4VU-KS-qnX"/>
-                                <exclude reference="JyK-Ei-FGf"/>
-                                <include reference="gdf-kJ-7tu"/>
                             </mask>
                         </variation>
                         <connections>
@@ -346,10 +312,7 @@
                         <outlet property="sliderConfLandScape" destination="q4C-U4-wS4" id="UVy-LZ-5RX"/>
                         <outlet property="sliderIoU" destination="6JI-Fw-yih" id="dqE-hH-MVS"/>
                         <outlet property="sliderIoULandScape" destination="ewl-Fj-awn" id="D1R-cd-zER"/>
-                        <outlet property="taskSegmentControl" destination="pGx-Os-eUk" id="2Fh-eH-HZm"/>
                         <outlet property="toolBar" destination="3Rg-UC-ogI" id="9Zm-na-p2k"/>
-                        <outlet property="trackingLabel" destination="vmV-l5-46D" id="oaI-pU-iPT"/>
-                        <outlet property="trackingSwitch" destination="bmb-wR-twF" id="mpp-e1-9Hx"/>
                         <outlet property="videoPreview" destination="mCE-j4-QAA" id="mP0-Qx-oq6"/>
                     </connections>
                 </viewController>

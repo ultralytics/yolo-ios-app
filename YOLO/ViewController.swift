@@ -17,7 +17,7 @@ import CoreML
 import UIKit
 import Vision
 
-var mlModel = try! yolov8m(configuration: .init()).model
+var mlModel:MLModel!
 
 class ViewController: UIViewController {
     @IBOutlet var videoPreview: UIView!
@@ -71,6 +71,11 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        ModelFileManager.shared.deleteAllDownloadedModels()
+        ModelCacheManager.shared.loadBundledModel()
+        mlModel = ModelCacheManager.shared.modelCache["yolov8m"]
+        detector = try! VNCoreMLModel(for: mlModel)
+        downloadAllModels()
         slider.value = 30
         setLabels()
         setUpBoundingBoxViews()

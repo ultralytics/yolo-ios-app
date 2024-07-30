@@ -18,6 +18,7 @@
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		73FD886D2C5931B700CFF647 /* ModelURLs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FD886B2C5931B700CFF647 /* ModelURLs.swift */; };
 		73FD886E2C5931B700CFF647 /* ModelChacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FD886C2C5931B700CFF647 /* ModelChacheManager.swift */; };
+		73FD88752C59411600CFF647 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73FD88742C59411600CFF647 /* ZIPFoundation */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73FD88752C59411600CFF647 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +124,9 @@
 			dependencies = (
 			);
 			name = YOLO;
+			packageProductDependencies = (
+				73FD88742C59411600CFF647 /* ZIPFoundation */,
+			);
 			productName = YOLO;
 			productReference = 7BCB411721C3096100BFC4D0 /* YOLO.app */;
 			productType = "com.apple.product-type.application";
@@ -151,6 +156,9 @@
 				Base,
 			);
 			mainGroup = 7BCB410E21C3096100BFC4D0;
+			packageReferences = (
+				73FD88732C59411600CFF647 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			productRefGroup = 7BCB411821C3096100BFC4D0 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -339,7 +347,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -367,7 +375,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -410,6 +418,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		73FD88732C59411600CFF647 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		73FD88742C59411600CFF647 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 73FD88732C59411600CFF647 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7BCB410F21C3096100BFC4D0 /* Project object */;
 }

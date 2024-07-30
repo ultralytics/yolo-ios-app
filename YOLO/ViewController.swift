@@ -85,20 +85,25 @@ class ViewController: UIViewController {
         /// Switch model
         switch segmentedControl.selectedSegmentIndex {
         case 0:
-            self.labelName.text = "YOLOv8n"
-            mlModel = try! yolov8n(configuration: .init()).model
+            let modelName = "YOLOv8s"
+            self.labelName.text = modelName
+            userDidSelectFile(with: modelName)
         case 1:
-            self.labelName.text = "YOLOv8s"
-            mlModel = try! yolov8s(configuration: .init()).model
+            let modelName = "YOLOv8s"
+            self.labelName.text = modelName
+            userDidSelectFile(with: modelName)
         case 2:
-            self.labelName.text = "YOLOv8m"
-            mlModel = try! yolov8m(configuration: .init()).model
+            let modelName = "YOLOv8m"
+            self.labelName.text = modelName
+            userDidSelectFile(with: modelName)
         case 3:
-            self.labelName.text = "YOLOv8l"
-            mlModel = try! yolov8l(configuration: .init()).model
+            let modelName = "YOLOv8l"
+            self.labelName.text = modelName
+            userDidSelectFile(with: modelName)
         case 4:
-            self.labelName.text = "YOLOv8x"
-            mlModel = try! yolov8x(configuration: .init()).model
+            let modelName = "YOLOv8x"
+            self.labelName.text = modelName
+            userDidSelectFile(with: modelName)
         default:
             break
         }
@@ -107,6 +112,67 @@ class ViewController: UIViewController {
         activityIndicator.stopAnimating()
     }
 
+    func downloadAllModels() {
+        for (key, remoteURL) in fileMappings {
+            let fileName = remoteURL.lastPathComponent
+            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { model, key in
+                if let model = model {
+                    print("Loaded model for key: \(key)")
+                } else {
+                    print("Failed to load model for key: \(key)")
+                }
+            }
+        }
+    }
+    // ユーザーがファイルを選択した場合
+    func userDidSelectFile(with key: String) {
+        print(ModelCacheManager.shared.modelCache.keys)
+        
+//        if let currentSelectedKey = ModelCacheManager.shared.getCurrentSelectedModelKey() {
+//            if currentSelectedKey != key {
+//                // 現在のダウンロードをキャンセル
+//                ModelDownloadManager.shared.cancelCurrentDownload()
+//            }
+//        }
+        
+        let selectedURL = fileMappings.first { $0.0 == key }?.1
+        guard let remoteURL = selectedURL else {
+            print("Invalid key: \(key)")
+            return
+        }
+        
+        let fileName = key
+        
+        ModelCacheManager.shared.setCurrentSelectedModelKey(key)
+        
+        // キャッシュまたはローカルにモデルがある場合はすぐに返す
+        if let cachedModel = ModelCacheManager.shared.modelCache[key] {
+            print("Model loaded from cache for key: \(key)")
+            // モデルの使用
+        } else if ModelCacheManager.shared.isModelDownloaded(key: key) {
+            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { model, key in
+                if let model = model {
+                    print("Model loaded from local storage for key: \(key)")
+                    // モデルの使用
+                } else {
+                    print("Failed to load model from local storage for key: \(key)")
+                }
+            }
+        } else {
+            // ダウンロードを優先する
+            ModelCacheManager.shared.prioritizeDownload(for: fileName) { model, key in
+                // モデルが準備できた時の処理
+                if let model = model {
+                    print("User selected model is ready for key: \(key)")
+                    // モデルの使用
+                } else {
+                    print("Failed to initialize model for key: \(key)")
+                }
+            }
+        }
+    }
+
+    
     func setModel() {
         /// VNCoreMLModel
         detector = try! VNCoreMLModel(for: mlModel)

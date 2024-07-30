@@ -42,7 +42,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var downloadingLabell: UILabel!
     @IBOutlet weak var downloadingLabelx: UILabel!
     let selection = UISelectionFeedbackGenerator()
-    var detector = try! VNCoreMLModel(for: mlModel)
+    var detector:VNCoreMLModel!
     var session: AVCaptureSession!
     var videoCapture: VideoCapture!
     var currentBuffer: CVPixelBuffer?

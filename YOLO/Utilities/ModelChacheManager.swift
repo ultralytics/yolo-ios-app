@@ -49,11 +49,10 @@ class ModelCacheManager {
             let destinationURL = documentsURL.appendingPathComponent("yolov8m.mlmodelc")
             
             do {
-                if FileManager.default.fileExists(atPath: destinationURL.path) {
-                    try FileManager.default.removeItem(at: destinationURL)
+                if !FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.copyItem(at: url, to: destinationURL)
+                    print("File copied to documents directory: \(destinationURL.path)")
                 }
-                try FileManager.default.copyItem(at: url, to: destinationURL)
-                print("File copied to documents directory: \(destinationURL.path)")
             } catch {
                 print("Error copying file: \(error)")
             }

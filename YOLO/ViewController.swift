@@ -36,7 +36,11 @@ class ViewController: UIViewController {
     @IBOutlet weak var labelSliderConf: UILabel!
     @IBOutlet weak var labelSliderIoU: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-
+    @IBOutlet weak var downloadingLabeln: UILabel!
+    @IBOutlet weak var downloadingLabels: UILabel!
+    @IBOutlet weak var downloadingLabelm: UILabel!
+    @IBOutlet weak var downloadingLabell: UILabel!
+    @IBOutlet weak var downloadingLabelx: UILabel!
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!

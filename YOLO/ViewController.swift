@@ -76,7 +76,7 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        ModelFileManager.shared.deleteAllDownloadedModels()
+//        ModelFileManager.shared.deleteAllDownloadedModels()
         ModelCacheManager.shared.loadBundledModel()
         mlModel = ModelCacheManager.shared.modelCache["yolov8m"]
         detector = try! VNCoreMLModel(for: mlModel)

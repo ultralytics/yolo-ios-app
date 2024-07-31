@@ -303,33 +303,33 @@ class ViewController: UIViewController {
     @IBAction func priorizeButtonnTapped(_ sender: UIButton) {
         sender.isHidden = true
         priorizeDownload(key: "yolov8n")
-        downloadingLabeln.text = "priorized"
+        downloadingLabeln.text = "prioritized"
         downloadingLabeln.textColor = .red
     }
     
     @IBAction func priorizeButtonsTapped(_ sender: UIButton) {
         sender.isHidden = true
         priorizeDownload(key: "yolov8s")
-        downloadingLabels.text = "priorized"
+        downloadingLabels.text = "prioritized"
         downloadingLabels.textColor = .red
     }
     @IBAction func priorizeButtonmTapped(_ sender: UIButton) {
         sender.isHidden = true
         priorizeDownload(key: "yolov8m")
-        downloadingLabelm.text = "priorized"
+        downloadingLabelm.text = "prioritized"
         downloadingLabelm.textColor = .red
     }
     
     @IBAction func priorizeButtonlTapped(_ sender: UIButton) {
         sender.isHidden = true
         priorizeDownload(key:"yolov8l")
-        downloadingLabell.text = "priorized"
+        downloadingLabell.text = "prioritized"
         downloadingLabell.textColor = .red
     }
     @IBAction func priorizeButtonxTapped(_ sender: UIButton) {
         sender.isHidden = true
         priorizeDownload(key:"yolov8x")
-        downloadingLabelx.text = "priorized"
+        downloadingLabelx.text = "prioritized"
         downloadingLabelx.textColor = .red
     }
     /// Update thresholds from slider values

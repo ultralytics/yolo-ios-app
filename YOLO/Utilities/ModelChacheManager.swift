@@ -12,26 +12,7 @@ class ModelCacheManager {
     private init() {
         loadBundledModel()
     }
-    
-    enum ModelState {
-        case cached
-        case local
-        case remote
-        case notFound
-    }
-    
-    func getModelState(for key: String) -> ModelState {
-        if modelCache[key] != nil {
-            return .cached
-        } else if isModelDownloaded(key: key) {
-            return .local
-        } else if let remoteURL = getRemoteURL(for: key) {
-            return .remote
-        } else {
-            return .notFound
-        }
-    }
-
+        
     private func getRemoteURL(for key: String) -> URL? {
         for (fileName, url) in fileMappings {
             if fileName == key {
@@ -46,12 +27,14 @@ class ModelCacheManager {
            let bundledModel = try? MLModel(contentsOf: url) {
             addModelToCache(bundledModel, for: "yolov8m")
             let documentsURL = getDocumentsDirectory()
-            let destinationURL = documentsURL.appendingPathComponent("yolov8m.mlmodelc")
+            let destinationURL = documentsURL.appendingPathComponent("yolov8m").appendingPathExtension("mlmodelc")
             
             do {
                 if !FileManager.default.fileExists(atPath: destinationURL.path) {
                     try FileManager.default.copyItem(at: url, to: destinationURL)
                     print("File copied to documents directory: \(destinationURL.path)")
+                } else {
+                    print("File already exists in documents directory: \(destinationURL.path)")
                 }
             } catch {
                 print("Error copying file: \(error)")
@@ -75,6 +58,7 @@ class ModelCacheManager {
         if FileManager.default.fileExists(atPath: modelURL.path) {
             do {
                 let model = try MLModel(contentsOf: modelURL)
+                addModelToCache(model, for: key)
                 completion(model, key)
             } catch let error {
                 print(error)
@@ -160,7 +144,6 @@ class ModelDownloadManager: NSObject {
     static let shared = ModelDownloadManager()
     private var downloadTasks: [URLSessionDownloadTask: (url: URL, key: String)] = [:]
     private var priorityTask: URLSessionDownloadTask?
-    private var pendingRequests: [String: [(MLModel?, String) -> Void]] = [:]
     
     private override init() {}
     
@@ -182,9 +165,25 @@ class ModelDownloadManager: NSObject {
     func prioritizeDownload(for fileName: String, completion: @escaping (MLModel?, String) -> Void) {
         for (task, urlKeyPair) in downloadTasks {
             if urlKeyPair.url.lastPathComponent.contains(fileName) {
-                task.priority = URLSessionTask.highPriority
-                addPendingRequest(for: fileName, completion: completion)
-                priorityTask = task
+                task.cancel(byProducingResumeData: { resumeData in
+                    if let resumeData = resumeData {
+                        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+                        let priorityDownloadTask = session.downloadTask(withResumeData: resumeData)
+                        priorityDownloadTask.priority = URLSessionTask.highPriority
+                        self.downloadTasks[priorityDownloadTask] = urlKeyPair
+                        self.downloadCompletionHandlers[priorityDownloadTask] = completion
+                        self.priorityTask = priorityDownloadTask
+                        priorityDownloadTask.resume()
+                    } else {
+                        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+                        let priorityDownloadTask = session.downloadTask(with: task.originalRequest!)
+                        priorityDownloadTask.priority = URLSessionTask.highPriority
+                        self.downloadTasks[priorityDownloadTask] = urlKeyPair
+                        self.downloadCompletionHandlers[priorityDownloadTask] = completion
+                        self.priorityTask = priorityDownloadTask
+                        priorityDownloadTask.resume()
+                    }
+                })
                 break
             }
         }
@@ -193,23 +192,6 @@ class ModelDownloadManager: NSObject {
     func cancelCurrentDownload() {
         priorityTask?.cancel()
         priorityTask = nil
-    }
-    
-    func addPendingRequest(for fileName: String, completion: @escaping (MLModel?, String) -> Void) {
-        if pendingRequests[fileName] != nil {
-            pendingRequests[fileName]?.append(completion)
-        } else {
-            pendingRequests[fileName] = [completion]
-        }
-    }
-    
-    private func processPendingRequests(for fileName: String, model: MLModel?, key: String) {
-        if let completions = pendingRequests[fileName] {
-            for completion in completions {
-                completion(model, key)
-            }
-            pendingRequests.removeValue(forKey: fileName)
-        }
     }
 }
 
@@ -233,19 +215,16 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
                 print("modelURL: \(modelURL)")
                 loadModel(from: modelURL, key: key) { model in
                     self.downloadCompletionHandlers[downloadTask]?(model, key)
-                    self.processPendingRequests(for: destinationURL.lastPathComponent, model: model, key: key)
                     self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
                 }
             } catch {
                 print("Extraction of ZIP archive failed with error: \(error)")
                 self.downloadCompletionHandlers[downloadTask]?(nil, key)
-                self.processPendingRequests(for: destinationURL.lastPathComponent, model: nil, key: key)
                 self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
             }
         } catch {
             print("Error moving downloaded file: \(error)")
             self.downloadCompletionHandlers[downloadTask]?(nil, key)
-            self.processPendingRequests(for: destinationURL.lastPathComponent, model: nil, key: key)
             self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
         }
     }
@@ -255,7 +234,10 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
             do {
                 let compiledModelURL = try MLModel.compileModel(at: url)
                 let model = try MLModel(contentsOf: compiledModelURL)
+                let localModelURL = self.getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension("mlmodelc")
                 ModelCacheManager.shared.addModelToCache(model, for: key)
+                try FileManager.default.moveItem(at: compiledModelURL, to: localModelURL)
+                print("model copied to document directory")
                 DispatchQueue.main.async {
                     completion(model)
                 }
@@ -306,4 +288,18 @@ func getModelFileURL(fileName: String) -> URL? {
 func fileExists(at url: URL) -> Bool {
     let fileManager = FileManager.default
     return fileManager.fileExists(atPath: url.path)
+}
+
+extension URL {
+    func changingFileExtension(to newExtension: String) -> URL? {
+        var urlString = self.absoluteString
+        
+        if let range = urlString.range(of: "\\.[^./]*$", options: .regularExpression) {
+            urlString.replaceSubrange(range, with: ".\(newExtension)")
+        } else {
+            urlString.append(".\(newExtension)")
+        }
+        
+        return URL(string: urlString)
+    }
 }

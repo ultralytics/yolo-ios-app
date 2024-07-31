@@ -41,6 +41,11 @@ class ViewController: UIViewController {
     @IBOutlet weak var downloadingLabelm: UILabel!
     @IBOutlet weak var downloadingLabell: UILabel!
     @IBOutlet weak var downloadingLabelx: UILabel!
+    @IBOutlet weak var priorizeButtonn: UIButton!
+    @IBOutlet weak var priorizeButtons: UIButton!
+    @IBOutlet weak var priorizeButtonm: UIButton!
+    @IBOutlet weak var priorizeButtonl: UIButton!
+    @IBOutlet weak var priorizeButtonx: UIButton!
     let selection = UISelectionFeedbackGenerator()
     var detector:VNCoreMLModel!
     var session: AVCaptureSession!
@@ -78,6 +83,7 @@ class ViewController: UIViewController {
         downloadAllModels()
         slider.value = 30
         setLabels()
+        setupSegmentecControl()
         setUpBoundingBoxViews()
         startVideo()
         // setModel()
@@ -94,24 +100,24 @@ class ViewController: UIViewController {
         /// Switch model
         switch segmentedControl.selectedSegmentIndex {
         case 0:
-            let modelName = "YOLOv8s"
-            self.labelName.text = modelName
+            let modelName = "yolov8n"
+            self.labelName.text = "YOLOv8n"
             userDidSelectFile(with: modelName)
         case 1:
-            let modelName = "YOLOv8s"
-            self.labelName.text = modelName
+            let modelName = "yolov8s"
+            self.labelName.text = "YOLOv8s"
             userDidSelectFile(with: modelName)
         case 2:
-            let modelName = "YOLOv8m"
-            self.labelName.text = modelName
+            let modelName = "yolov8m"
+            self.labelName.text = "YOLOv8m"
             userDidSelectFile(with: modelName)
         case 3:
-            let modelName = "YOLOv8l"
-            self.labelName.text = modelName
+            let modelName = "yolov8l"
+            self.labelName.text = "YOLOv8l"
             userDidSelectFile(with: modelName)
         case 4:
-            let modelName = "YOLOv8x"
-            self.labelName.text = modelName
+            let modelName = "yolov8x"
+            self.labelName.text = "YOLOv8x"
             userDidSelectFile(with: modelName)
         default:
             break
@@ -124,8 +130,9 @@ class ViewController: UIViewController {
     func downloadAllModels() {
         for (key, remoteURL) in fileMappings {
             let fileName = remoteURL.lastPathComponent
-            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { model, key in
+            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { [self] model, key in
                 if let model = model {
+                    enableSegmentedControl(key: key)
                     print("Loaded model for key: \(key)")
                 } else {
                     print("Failed to load model for key: \(key)")
@@ -133,54 +140,56 @@ class ViewController: UIViewController {
             }
         }
     }
-    // ユーザーがファイルを選択した場合
+
     func userDidSelectFile(with key: String) {
         print(ModelCacheManager.shared.modelCache.keys)
         
 //        if let currentSelectedKey = ModelCacheManager.shared.getCurrentSelectedModelKey() {
 //            if currentSelectedKey != key {
-//                // 現在のダウンロードをキャンセル
 //                ModelDownloadManager.shared.cancelCurrentDownload()
 //            }
 //        }
         
-        let selectedURL = fileMappings.first { $0.0 == key }?.1
-        guard let remoteURL = selectedURL else {
-            print("Invalid key: \(key)")
-            return
-        }
-        
+        guard presetModels.contains(key) else { return }
         let fileName = key
         
         ModelCacheManager.shared.setCurrentSelectedModelKey(key)
         
-        // キャッシュまたはローカルにモデルがある場合はすぐに返す
         if let cachedModel = ModelCacheManager.shared.modelCache[key] {
             print("Model loaded from cache for key: \(key)")
-            // モデルの使用
+            enableSegmentedControl(key: key)
+            mlModel = cachedModel
+            setRequest()
         } else if ModelCacheManager.shared.isModelDownloaded(key: key) {
-            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { model, key in
+            let selectedURL = fileMappings.first { $0.0 == key }?.1
+            guard let remoteURL = selectedURL else {
+                print("Invalid key: \(key)")
+                return
+            }
+            ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { [self] model, key in
                 if let model = model {
                     print("Model loaded from local storage for key: \(key)")
-                    // モデルの使用
+                    enableSegmentedControl(key: key)
+                    mlModel = model
+                    setRequest()
+                    
                 } else {
                     print("Failed to load model from local storage for key: \(key)")
                 }
             }
         } else {
-            // ダウンロードを優先する
-            ModelCacheManager.shared.prioritizeDownload(for: fileName) { model, key in
-                // モデルが準備できた時の処理
+            ModelCacheManager.shared.prioritizeDownload(for: fileName) { [self] model, key in
                 if let model = model {
                     print("User selected model is ready for key: \(key)")
-                    // モデルの使用
+                    enableSegmentedControl(key: key)
+//                    mlModel = model
+//                    setRequest()
                 } else {
                     print("Failed to initialize model for key: \(key)")
                 }
             }
         }
     }
-
     
     func setModel() {
         /// VNCoreMLModel
@@ -197,7 +206,132 @@ class ViewController: UIViewController {
         t3 = CACurrentMediaTime()  // FPS start
         t4 = 0.0  // FPS dt smoothed
     }
+    
+    func setRequest() {
+        print(mlModel.modelDescription)
+        detector = try! VNCoreMLModel(for: mlModel)
+        detector.featureProvider = ThresholdProvider()
 
+        /// VNCoreMLRequest
+        let request = VNCoreMLRequest(model: detector, completionHandler: { [weak self] request, error in
+            self?.processObservations(for: request, error: error)
+        })
+        request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
+        visionRequest = request
+        t2 = 0.0 // inference dt smoothed
+        t3 = CACurrentMediaTime()  // FPS start
+        t4 = 0.0  // FPS dt smoothed
+    }
+
+    func setupSegmentecControl() {
+        priorizeButtonn.setTitle("", for: .normal)
+        priorizeButtons.setTitle("", for: .normal)
+        priorizeButtonm.setTitle("", for: .normal)
+        priorizeButtonl.setTitle("", for: .normal)
+        priorizeButtonx.setTitle("", for: .normal)
+
+        var enableIndexes:[Int] = []
+        for (i,modelName) in presetModels.enumerated() {
+            if ModelCacheManager.shared.isModelDownloaded(key: modelName) {
+                enableIndexes.append(i)
+            }
+        }
+        for i in 0...4 {
+            if !enableIndexes.contains(i) {
+                self.segmentedControl.setEnabled(false, forSegmentAt: i)
+                switch i {
+                case 0:
+                    downloadingLabeln.isHidden = false
+                    priorizeButtonn.isHidden = false
+                case 1:
+                    downloadingLabels.isHidden = false
+                    priorizeButtons.isHidden = false
+                case 2:
+                    downloadingLabelm.isHidden = false
+                    priorizeButtonm.isHidden = false
+                case 3:
+                    downloadingLabell.isHidden = false
+                    priorizeButtonl.isHidden = false
+                case 4:
+                    downloadingLabelx.isHidden = false
+                    priorizeButtonx.isHidden = false
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
+    func enableSegmentedControl(key: String) {
+        guard let index = presetModels.firstIndex(of: key) else { return }
+        self.segmentedControl.setEnabled(true, forSegmentAt: index)
+        switch index {
+        case 0:
+            downloadingLabeln.isHidden = true
+            priorizeButtonn.isHidden = true
+        case 1:
+            downloadingLabels.isHidden = true
+            priorizeButtons.isHidden = true
+        case 2:
+            downloadingLabelm.isHidden = true
+            priorizeButtonm.isHidden = true
+        case 3:
+            downloadingLabell.isHidden = true
+            priorizeButtonl.isHidden = true
+        case 4:
+            downloadingLabelx.isHidden = true
+            priorizeButtonl.isHidden = true
+        default:
+            break
+        }
+    }
+    
+    private func priorizeDownload(key: String) {
+        ModelCacheManager.shared.prioritizeDownload(for: key) { [self] model, key in
+            if let model = model {
+                print("User selected model is ready for key: \(key)")
+                enableSegmentedControl(key: key)
+//                mlModel = model
+//                setRequest()
+            } else {
+                print("Failed to initialize model for key: \(key)")
+            }
+        }
+
+    }
+    
+    @IBAction func priorizeButtonnTapped(_ sender: UIButton) {
+        sender.isHidden = true
+        priorizeDownload(key: "yolov8n")
+        downloadingLabeln.text = "priorized"
+        downloadingLabeln.textColor = .red
+    }
+    
+    @IBAction func priorizeButtonsTapped(_ sender: UIButton) {
+        sender.isHidden = true
+        priorizeDownload(key: "yolov8s")
+        downloadingLabels.text = "priorized"
+        downloadingLabels.textColor = .red
+    }
+    @IBAction func priorizeButtonmTapped(_ sender: UIButton) {
+        sender.isHidden = true
+        priorizeDownload(key: "yolov8m")
+        downloadingLabelm.text = "priorized"
+        downloadingLabelm.textColor = .red
+    }
+    
+    @IBAction func priorizeButtonlTapped(_ sender: UIButton) {
+        sender.isHidden = true
+        priorizeDownload(key:"yolov8l")
+        downloadingLabell.text = "priorized"
+        downloadingLabell.textColor = .red
+    }
+    @IBAction func priorizeButtonxTapped(_ sender: UIButton) {
+        sender.isHidden = true
+        priorizeDownload(key:"yolov8x")
+        downloadingLabelx.text = "priorized"
+        downloadingLabelx.textColor = .red
+    }
     /// Update thresholds from slider values
     @IBAction func sliderChanged(_ sender: Any) {
         let conf = Double(round(100 * sliderConf.value)) / 100

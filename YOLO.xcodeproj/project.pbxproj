@@ -16,8 +16,6 @@
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
-		73B6CD1A2C594AA7008A9CEC /* yolov8m.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B6CD182C594AA5008A9CEC /* yolov8m.swift */; };
-		73B6CD1B2C594AA7008A9CEC /* yolov8m.mlmodelc in Resources */ = {isa = PBXBuildFile; fileRef = 73B6CD192C594AA7008A9CEC /* yolov8m.mlmodelc */; };
 		73FD886D2C5931B700CFF647 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FD886B2C5931B700CFF647 /* Models.swift */; };
 		73FD886E2C5931B700CFF647 /* ModelChacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FD886C2C5931B700CFF647 /* ModelChacheManager.swift */; };
 		73FD88752C59411600CFF647 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73FD88742C59411600CFF647 /* ZIPFoundation */; };
@@ -36,8 +34,6 @@
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		63B8B0A821E62A890026FBC3 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		73B6CD182C594AA5008A9CEC /* yolov8m.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = yolov8m.swift; sourceTree = "<group>"; };
-		73B6CD192C594AA7008A9CEC /* yolov8m.mlmodelc */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = yolov8m.mlmodelc; sourceTree = "<group>"; };
 		73FD886B2C5931B700CFF647 /* Models.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		73FD886C2C5931B700CFF647 /* ModelChacheManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ModelChacheManager.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,8 +85,6 @@
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				73B6CD192C594AA7008A9CEC /* yolov8m.mlmodelc */,
-				73B6CD182C594AA5008A9CEC /* yolov8m.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -182,7 +176,6 @@
 				636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */,
 				63CF37202514455300E2DEA1 /* Main.storyboard in Resources */,
 				63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */,
-				73B6CD1B2C594AA7008A9CEC /* yolov8m.mlmodelc in Resources */,
 				63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */,
 				633BC6FB22EDE73D00821BCA /* Settings.bundle in Resources */,
 			);
@@ -222,7 +215,6 @@
 				73FD886E2C5931B700CFF647 /* ModelChacheManager.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
-				73B6CD1A2C594AA7008A9CEC /* yolov8m.swift in Sources */,
 				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -355,7 +347,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -383,7 +375,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";

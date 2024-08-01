@@ -10,7 +10,7 @@ class ModelCacheManager {
     private var currentSelectedModelKey: String?
     
     private init() {
-        loadBundledModel()
+//        loadBundledModel()
     }
         
     private func getRemoteURL(for key: String) -> URL? {

@@ -73,18 +73,17 @@ class ViewController: UIViewController {
         request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
         return request
     }()
+    
+    var firstModelLoaded = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
-//        ModelFileManager.shared.deleteAllDownloadedModels()
-        ModelCacheManager.shared.loadBundledModel()
-        mlModel = ModelCacheManager.shared.modelCache["yolov8m"]
-        detector = try! VNCoreMLModel(for: mlModel)
-        downloadAllModels()
+        ModelFileManager.shared.deleteAllDownloadedModels()
+//        ModelCacheManager.shared.loadBundledModel()
+        loadFirstModel()
         slider.value = 30
         setLabels()
         setupSegmentecControl()
-        setUpBoundingBoxViews()
         startVideo()
         // setModel()
     }
@@ -127,7 +126,28 @@ class ViewController: UIViewController {
         activityIndicator.stopAnimating()
     }
 
-    func downloadAllModels() {
+    private func loadFirstModel() {
+        guard let firstModel = firstModels["detect"] else { fatalError("invalid model url") }
+        let key = firstModel.0
+        let remoteURL = firstModel.1
+        let fileName = remoteURL.lastPathComponent
+        ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { [self] model, key in
+            if let model = model {
+                mlModel = model
+                detector = try! VNCoreMLModel(for: mlModel)
+                setUpBoundingBoxViews()
+                enableSegmentedControl(key: key)
+                firstModelLoaded = true
+                downloadAllModels()
+
+                print("Loaded model for key: \(key)")
+            } else {
+                print("Failed to load model for key: \(key)")
+            }
+        }
+    }
+    
+    private func downloadAllModels() {
         for (key, remoteURL) in fileMappings {
             let fileName = remoteURL.lastPathComponent
             ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { [self] model, key in
@@ -208,7 +228,6 @@ class ViewController: UIViewController {
     }
     
     func setRequest() {
-        print(mlModel.modelDescription)
         detector = try! VNCoreMLModel(for: mlModel)
         detector.featureProvider = ThresholdProvider()
 
@@ -485,6 +504,9 @@ class ViewController: UIViewController {
     }
 
     func predict(sampleBuffer: CMSampleBuffer) {
+        
+        guard firstModelLoaded else { return }
+        
         if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
             currentBuffer = pixelBuffer
 

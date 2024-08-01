@@ -78,7 +78,7 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        ModelFileManager.shared.deleteAllDownloadedModels()
+//        ModelFileManager.shared.deleteAllDownloadedModels()
 //        ModelCacheManager.shared.loadBundledModel()
         loadFirstModel()
         slider.value = 30

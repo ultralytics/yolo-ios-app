@@ -133,9 +133,14 @@ class ViewController: UIViewController {
         let fileName = remoteURL.lastPathComponent
         ModelCacheManager.shared.loadModel(from: fileName, remoteURL: remoteURL, key: key) { [self] model, key in
             if let model = model {
+                segmentedControl.selectedSegmentIndex = 2
                 mlModel = model
                 detector = try! VNCoreMLModel(for: mlModel)
                 setUpBoundingBoxViews()
+                // Add the bounding box layers to the UI, on top of the video preview.
+                for box in self.boundingBoxViews {
+                    box.addToLayer(self.videoPreview.layer)
+                }
                 enableSegmentedControl(key: key)
                 firstModelLoaded = true
                 downloadAllModels()
@@ -490,11 +495,6 @@ class ViewController: UIViewController {
                 if let previewLayer = self.videoCapture.previewLayer {
                     self.videoPreview.layer.addSublayer(previewLayer)
                     self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
-                }
-
-                // Add the bounding box layers to the UI, on top of the video preview.
-                for box in self.boundingBoxViews {
-                    box.addToLayer(self.videoPreview.layer)
                 }
 
                 // Once everything is set up, we can start capturing live video.

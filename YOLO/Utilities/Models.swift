@@ -1,11 +1,3 @@
-//
-//  ModelURLs.swift
-//  YOLO
-//
-//  Created by 間嶋大輔 on 2024/07/28.
-//  Copyright © 2024 Ultralytics. All rights reserved.
-//
-
 import Foundation
 
 let presetModels = ["yolov8n","yolov8s","yolov8m","yolov8l","yolov8x"]

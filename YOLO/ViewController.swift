@@ -17,8 +17,10 @@ import CoreML
 import UIKit
 import Vision
 
-var mlModel = try! yolov8m(configuration: .init()).model
+@available(iOS 15.0, *)
+var mlModel = try! yolov8n_pose(configuration: .init()).model
 
+@available(iOS 15.0, *)
 class ViewController: UIViewController {
     @IBOutlet var videoPreview: UIView!
     @IBOutlet var View0: UIView!
@@ -82,13 +84,16 @@ class ViewController: UIViewController {
         case detect
         case human
         case seg
+        case pose
     }
     
-    var task: Task = .detect
+    var task: Task = .pose
     var confidenceThreshold:Float = 0.25
     var iouThreshold:Float = 0.4
     var tracking = false
     var tracker = TrackingModel()
+    
+    var overlayLayer:CAShapeLayer!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -162,111 +167,111 @@ class ViewController: UIViewController {
     }
     
     func setModel() {
-        
-        /// Switch model
-        switch task {
-        case .detect:
-            switch segmentedControl.selectedSegmentIndex {
-            case 0:
-                self.labelName.text = "YOLOv8n"
-                mlModel = try! yolov8n(configuration: .init()).model
-            case 1:
-                self.labelName.text = "YOLOv8s"
-                mlModel = try! yolov8s(configuration: .init()).model
-            case 2:
-                self.labelName.text = "YOLOv8m"
-                mlModel = try! yolov8m(configuration: .init()).model
-            case 3:
-                self.labelName.text = "YOLOv8l"
-                mlModel = try! yolov8l(configuration: .init()).model
-            case 4:
-                self.labelName.text = "YOLOv8x"
-                mlModel = try! yolov8x(configuration: .init()).model
-            default:
-                break
-            }
-        case .human:
-            switch segmentedControl.selectedSegmentIndex {
-            case 0:
-                self.labelName.text = "YOLOv8n"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8n_human(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 1:
-                self.labelName.text = "YOLOv8s"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8s_human(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 2:
-                self.labelName.text = "YOLOv8m"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8m_human(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 3:
-                self.labelName.text = "YOLOv8l"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8l_human(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 4:
-                self.labelName.text = "YOLOv8x"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8x_human(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-                
-            default:
-                break
-            }
-            case .seg:
-            switch segmentedControl.selectedSegmentIndex {
-            case 0:
-                self.labelName.text = "YOLOv8n"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8n_seg(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 1:
-                self.labelName.text = "YOLOv8s"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8s_seg(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 2:
-                self.labelName.text = "YOLOv8m"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8m_seg(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 3:
-                self.labelName.text = "YOLOv8l"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8l_seg(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            case 4:
-                self.labelName.text = "YOLOv8x"
-                if #available(iOS 15.0, *) {
-                    mlModel = try! yolov8x_seg(configuration: .init()).model
-                } else {
-                    // Fallback on earlier versions
-                }
-            default:break
-            }
-            
-        }
+//        
+//        /// Switch model
+//        switch task {
+//        case .detect:
+//            switch segmentedControl.selectedSegmentIndex {
+//            case 0:
+//                self.labelName.text = "YOLOv8n"
+//                mlModel = try! yolov8n(configuration: .init()).model
+//            case 1:
+//                self.labelName.text = "YOLOv8s"
+//                mlModel = try! yolov8s(configuration: .init()).model
+//            case 2:
+//                self.labelName.text = "YOLOv8m"
+//                mlModel = try! yolov8m(configuration: .init()).model
+//            case 3:
+//                self.labelName.text = "YOLOv8l"
+//                mlModel = try! yolov8l(configuration: .init()).model
+//            case 4:
+//                self.labelName.text = "YOLOv8x"
+//                mlModel = try! yolov8x(configuration: .init()).model
+//            default:
+//                break
+//            }
+//        case .human:
+//            switch segmentedControl.selectedSegmentIndex {
+//            case 0:
+//                self.labelName.text = "YOLOv8n"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8n_human(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 1:
+//                self.labelName.text = "YOLOv8s"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8s_human(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 2:
+//                self.labelName.text = "YOLOv8m"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8m_human(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 3:
+//                self.labelName.text = "YOLOv8l"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8l_human(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 4:
+//                self.labelName.text = "YOLOv8x"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8x_human(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//                
+//            default:
+//                break
+//            }
+//            case .seg:
+//            switch segmentedControl.selectedSegmentIndex {
+//            case 0:
+//                self.labelName.text = "YOLOv8n"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8n_seg(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 1:
+//                self.labelName.text = "YOLOv8s"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8s_seg(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 2:
+//                self.labelName.text = "YOLOv8m"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8m_seg(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 3:
+//                self.labelName.text = "YOLOv8l"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8l_seg(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            case 4:
+//                self.labelName.text = "YOLOv8x"
+//                if #available(iOS 15.0, *) {
+//                    mlModel = try! yolov8x_seg(configuration: .init()).model
+//                } else {
+//                    // Fallback on earlier versions
+//                }
+//            default:break
+//            }
+//            
+//        }
         DispatchQueue.global(qos: .userInitiated).async { [self] in
 
         /// VNCoreMLModel
@@ -515,7 +520,13 @@ class ViewController: UIViewController {
                 for box in self.boundingBoxViews {
                     box.addToLayer(self.videoPreview.layer)
                 }
-                
+                self.overlayLayer = CAShapeLayer()
+                self.overlayLayer.frame = self.view.bounds
+                self.overlayLayer.strokeColor = UIColor.red.cgColor
+                self.overlayLayer.lineWidth = 2.0
+                self.overlayLayer.fillColor = UIColor.clear.cgColor
+                self.view.layer.addSublayer(self.overlayLayer)
+
                 // Once everything is set up, we can start capturing live video.
                 self.videoCapture.start()
             }
@@ -585,7 +596,7 @@ class ViewController: UIViewController {
                 DispatchQueue.main.async {
                     
                     if let prediction = results.first?.featureValue.multiArrayValue {
-
+                        
                         let pred = PostProcessHuman(prediction:prediction, confidenceThreshold: self.confidenceThreshold, iouThreshold: self.iouThreshold)
                         var persons:[Person] = []
                         if !self.tracking {
@@ -620,7 +631,7 @@ class ViewController: UIViewController {
                         print(Date().timeIntervalSince(a))
                     }
                     
-
+                    
                     if self.t1 < 10.0 {  // valid dt
                         self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
                     }
@@ -629,6 +640,35 @@ class ViewController: UIViewController {
                     self.t3 = CACurrentMediaTime()
                 }
             }
+        case .pose:
+            if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+                DispatchQueue.main.async { [self] in
+                    
+                    if let prediction = results.first?.featureValue.multiArrayValue {
+                        
+                        let pred = PostProcessPose(prediction:prediction, confidenceThreshold: self.confidenceThreshold, iouThreshold: self.iouThreshold)
+                        print(pred)
+                        for p in pred {
+                            drawKeypoints(keypoints: p.2, originalSize: CGSize(width: 640, height: 640))
+                        }
+//                        if !self.tracking {
+//                            persons = toPerson(boxesAndScoresAndFeatures: pred)
+//                        } else {
+//                            persons = self.tracker.track(boxesAndScoresAndFeatures: pred)
+//                        }
+//                        self.show(predictions: [], persons: persons, processedBoxAndMasks: [])
+                    } else {
+                        self.show(predictions: [], persons: [],processedBoxAndMasks: [])
+                    }
+                    if self.t1 < 10.0 {  // valid dt
+                        self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+                    }
+                    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+                    self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
+                    self.t3 = CACurrentMediaTime()
+                }
+            }
+
         }
     }
     
@@ -726,6 +766,8 @@ class ViewController: UIViewController {
             resultCount = persons.count
         case .seg:
             resultCount = processedBoxAndMasks.count
+        case .pose:
+            break
         }
         self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
         for i in 0..<boundingBoxViews.count {
@@ -767,7 +809,8 @@ class ViewController: UIViewController {
                     label = String(format: "%@ %.1f", bestClass, confidence * 100)
                     boxColor = colors[bestClass] ?? UIColor.white
                     alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-
+                case .pose:
+                    break
                 }
                 var displayRect = rect
                 switch UIDevice.current.orientation {
@@ -877,6 +920,7 @@ class ViewController: UIViewController {
     // ------------------------------------------------------------------------------------------
 }  // ViewController class End
 
+@available(iOS 15.0, *)
 extension ViewController: VideoCaptureDelegate {
     func videoCapture(_ capture: VideoCapture, didCaptureVideoFrame sampleBuffer: CMSampleBuffer) {
         predict(sampleBuffer: sampleBuffer)
@@ -884,6 +928,7 @@ extension ViewController: VideoCaptureDelegate {
 }
 
 // Programmatically save image
+@available(iOS 15.0, *)
 extension ViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {

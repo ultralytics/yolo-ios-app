@@ -11,7 +11,8 @@
     import Accelerate
     import MetalPerformanceShaders
 
-    extension ViewController {
+@available(iOS 15.0, *)
+extension ViewController {
         func setupMaskLayer() {
             let width = videoPreview.bounds.width
             let height = videoPreview.bounds.height

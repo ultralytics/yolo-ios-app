@@ -27,16 +27,22 @@ class ViewController: UIViewController {
     @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
     @IBOutlet var slider: UISlider!
     @IBOutlet var sliderConf: UISlider!
+    @IBOutlet weak var sliderConfLandScape: UISlider!
     @IBOutlet var sliderIoU: UISlider!
+    @IBOutlet weak var sliderIoULandScape: UISlider!
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var labelFPS: UILabel!
     @IBOutlet weak var labelZoom: UILabel!
     @IBOutlet weak var labelVersion: UILabel!
     @IBOutlet weak var labelSlider: UILabel!
     @IBOutlet weak var labelSliderConf: UILabel!
+    @IBOutlet weak var labelSliderConfLandScape: UILabel!
     @IBOutlet weak var labelSliderIoU: UILabel!
+    @IBOutlet weak var labelSliderIoULandScape: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-
+    @IBOutlet weak var forcus: UIImageView!
+    @IBOutlet weak var toolBar: UIToolbar!
+    
     let selection = UISelectionFeedbackGenerator()
     var detector = try! VNCoreMLModel(for: mlModel)
     var session: AVCaptureSession!
@@ -49,12 +55,12 @@ class ViewController: UIViewController {
     var t3 = CACurrentMediaTime()  // FPS start
     var t4 = 0.0  // FPS dt smoothed
     // var cameraOutput: AVCapturePhotoOutput!
-
+    
     // Developer mode
     let developerMode = UserDefaults.standard.bool(forKey: "developer_mode")   // developer mode selected in settings
     let save_detections = false  // write every detection to detections.txt
     let save_frames = false  // write every frame to frames.txt
-
+    
     lazy var visionRequest: VNCoreMLRequest = {
         let request = VNCoreMLRequest(model: detector, completionHandler: {
             [weak self] request, error in
@@ -64,24 +70,66 @@ class ViewController: UIViewController {
         request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
         return request
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         slider.value = 30
         setLabels()
         setUpBoundingBoxViews()
+        setUpOrientationChangeNotification()
         startVideo()
         // setModel()
     }
-
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        
+        if size.width > size.height {
+            labelSliderConf.isHidden = true
+            sliderConf.isHidden = true
+            labelSliderIoU.isHidden = true
+            sliderIoU.isHidden = true
+            toolBar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
+            toolBar.setShadowImage(UIImage(), forToolbarPosition: .any)
+            
+            labelSliderConfLandScape.isHidden = false
+            sliderConfLandScape.isHidden = false
+            labelSliderIoULandScape.isHidden = false
+            sliderIoULandScape.isHidden = false
+            
+        } else {
+            labelSliderConf.isHidden = false
+            sliderConf.isHidden = false
+            labelSliderIoU.isHidden = false
+            sliderIoU.isHidden = false
+            toolBar.setBackgroundImage(nil, forToolbarPosition: .any, barMetrics: .default)
+            toolBar.setShadowImage(nil, forToolbarPosition: .any)
+            
+            labelSliderConfLandScape.isHidden = true
+            sliderConfLandScape.isHidden = true
+            labelSliderIoULandScape.isHidden = true
+            sliderIoULandScape.isHidden = true
+        }
+        self.videoCapture.previewLayer?.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        
+    }
+    
+    private func setUpOrientationChangeNotification() {
+        NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+    }
+    
+    @objc func orientationDidChange() {
+        videoCapture.updateVideoOrientation()
+    }
+    
     @IBAction func vibrate(_ sender: Any) {
         selection.selectionChanged()
     }
-
+    
     @IBAction func indexChanged(_ sender: Any) {
         selection.selectionChanged()
         activityIndicator.startAnimating()
-
+        
         /// Switch model
         switch segmentedControl.selectedSegmentIndex {
         case 0:
@@ -106,12 +154,13 @@ class ViewController: UIViewController {
         setUpBoundingBoxViews()
         activityIndicator.stopAnimating()
     }
-
+    
     func setModel() {
+        
         /// VNCoreMLModel
         detector = try! VNCoreMLModel(for: mlModel)
         detector.featureProvider = ThresholdProvider()
-
+        
         /// VNCoreMLRequest
         let request = VNCoreMLRequest(model: detector, completionHandler: { [weak self] request, error in
             self?.processObservations(for: request, error: error)
@@ -122,7 +171,7 @@ class ViewController: UIViewController {
         t3 = CACurrentMediaTime()  // FPS start
         t4 = 0.0  // FPS dt smoothed
     }
-
+    
     /// Update thresholds from slider values
     @IBAction func sliderChanged(_ sender: Any) {
         let conf = Double(round(100 * sliderConf.value)) / 100
@@ -131,10 +180,10 @@ class ViewController: UIViewController {
         self.labelSliderIoU.text = String(iou) + " IoU Threshold"
         detector.featureProvider = ThresholdProvider(iouThreshold: iou, confidenceThreshold: conf)
     }
-
+    
     @IBAction func takePhoto(_ sender: Any?) {
         let t0 = DispatchTime.now().uptimeNanoseconds
-
+        
         // 1. captureSession and cameraOutput
         // session = videoCapture.captureSession  // session = AVCaptureSession()
         // session.sessionPreset = AVCaptureSession.Preset.photo
@@ -142,67 +191,67 @@ class ViewController: UIViewController {
         // cameraOutput.isHighResolutionCaptureEnabled = true
         // cameraOutput.isDualCameraDualPhotoDeliveryEnabled = true
         // print("1 Done: ", Double(DispatchTime.now().uptimeNanoseconds - t0) / 1E9)
-
+        
         // 2. Settings
         let settings = AVCapturePhotoSettings()
         // settings.flashMode = .off
         // settings.isHighResolutionPhotoEnabled = cameraOutput.isHighResolutionCaptureEnabled
         // settings.isDualCameraDualPhotoDeliveryEnabled = self.videoCapture.cameraOutput.isDualCameraDualPhotoDeliveryEnabled
-
+        
         // 3. Capture Photo
         usleep(20_000)  // short 10 ms delay to allow camera to focus
         self.videoCapture.cameraOutput.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
         print("3 Done: ", Double(DispatchTime.now().uptimeNanoseconds - t0) / 1E9)
     }
-
+    
     @IBAction func logoButton(_ sender: Any) {
         selection.selectionChanged()
         if let link = URL(string: "https://www.ultralytics.com") {
             UIApplication.shared.open(link)
         }
     }
-
+    
     func setLabels() {
         self.labelName.text = "YOLOv8m"
         self.labelVersion.text = "Version " + UserDefaults.standard.string(forKey: "app_version")!
     }
-
+    
     @IBAction func playButton(_ sender: Any) {
         selection.selectionChanged()
         self.videoCapture.start()
         playButtonOutlet.isEnabled = false
         pauseButtonOutlet.isEnabled = true
     }
-
+    
     @IBAction func pauseButton(_ sender: Any?) {
         selection.selectionChanged()
         self.videoCapture.stop()
         playButtonOutlet.isEnabled = true
         pauseButtonOutlet.isEnabled = false
     }
-
+    
     @IBAction func switchCameraTapped(_ sender: Any) {
         self.videoCapture.captureSession.beginConfiguration()
         let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
         self.videoCapture.captureSession.removeInput(currentInput!)
         // let newCameraDevice = currentInput?.device == .builtInWideAngleCamera ? getCamera(with: .front) : getCamera(with: .back)
-
+        
         let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)!
         guard let videoInput1 = try? AVCaptureDeviceInput(device: device) else {
             return
         }
-
+        
         self.videoCapture.captureSession.addInput(videoInput1)
         self.videoCapture.captureSession.commitConfiguration()
     }
-
+    
     // share image
     @IBAction func shareButton(_ sender: Any) {
         selection.selectionChanged()
         let settings = AVCapturePhotoSettings()
         self.videoCapture.cameraOutput.capturePhoto(with: settings, delegate: self as AVCapturePhotoCaptureDelegate)
     }
-
+    
     // share screenshot
     @IBAction func saveScreenshotButton(_ shouldSave: Bool = true) {
         // let layer = UIApplication.shared.keyWindow!.layer
@@ -211,41 +260,41 @@ class ViewController: UIViewController {
         // layer.render(in: UIGraphicsGetCurrentContext()!)
         // let screenshot = UIGraphicsGetImageFromCurrentImageContext()
         // UIGraphicsEndImageContext()
-
+        
         // let screenshot = UIApplication.shared.screenShot
         // UIImageWriteToSavedPhotosAlbum(screenshot!, nil, nil, nil)
     }
-
+    
     let maxBoundingBoxViews = 100
     var boundingBoxViews = [BoundingBoxView]()
     var colors: [String: UIColor] = [:]
-
+    
     func setUpBoundingBoxViews() {
         // Ensure all bounding box views are initialized up to the maximum allowed.
         while boundingBoxViews.count < maxBoundingBoxViews {
             boundingBoxViews.append(BoundingBoxView())
         }
-
+        
         // Retrieve class labels directly from the CoreML model's class labels, if available.
         guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
             fatalError("Class labels are missing from the model description")
         }
-
+        
         // Assign random colors to the classes.
         for label in classLabels {
             if colors[label] == nil {  // if key not in dict
                 colors[label] = UIColor(red: CGFloat.random(in: 0...1),
-                        green: CGFloat.random(in: 0...1),
-                        blue: CGFloat.random(in: 0...1),
-                        alpha: 0.6)
+                                        green: CGFloat.random(in: 0...1),
+                                        blue: CGFloat.random(in: 0...1),
+                                        alpha: 0.6)
             }
         }
     }
-
+    
     func startVideo() {
         videoCapture = VideoCapture()
         videoCapture.delegate = self
-
+        
         videoCapture.setUp(sessionPreset: .photo) { success in
             // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
             if success {
@@ -254,22 +303,22 @@ class ViewController: UIViewController {
                     self.videoPreview.layer.addSublayer(previewLayer)
                     self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
                 }
-
+                
                 // Add the bounding box layers to the UI, on top of the video preview.
                 for box in self.boundingBoxViews {
                     box.addToLayer(self.videoPreview.layer)
                 }
-
+                
                 // Once everything is set up, we can start capturing live video.
                 self.videoCapture.start()
             }
         }
     }
-
+    
     func predict(sampleBuffer: CMSampleBuffer) {
         if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
             currentBuffer = pixelBuffer
-
+            
             /// - Tag: MappingOrientation
             // The frame is always oriented based on the camera sensor,
             // so in most cases Vision needs to rotate it for the model to work as expected.
@@ -280,16 +329,16 @@ class ViewController: UIViewController {
             case .portraitUpsideDown:
                 imageOrientation = .down
             case .landscapeLeft:
-                imageOrientation = .left
+                imageOrientation = .up
             case .landscapeRight:
-                imageOrientation = .right
+                imageOrientation = .up
             case .unknown:
-                print("The device orientation is unknown, the predictions may be affected")
-                fallthrough
+                imageOrientation = .up
+                
             default:
                 imageOrientation = .up
             }
-
+            
             // Invoke a VNRequestHandler with that image
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
             if UIDevice.current.orientation != .faceUp {  // stop if placed down on a table
@@ -301,11 +350,11 @@ class ViewController: UIViewController {
                 }
                 t1 = CACurrentMediaTime() - t0  // inference dt
             }
-
+            
             currentBuffer = nil
         }
     }
-
+    
     func processObservations(for request: VNRequest, error: Error?) {
         DispatchQueue.main.async {
             if let results = request.results as? [VNRecognizedObjectObservation] {
@@ -313,7 +362,7 @@ class ViewController: UIViewController {
             } else {
                 self.show(predictions: [])
             }
-
+            
             // Measure FPS
             if self.t1 < 10.0 {  // valid dt
                 self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
@@ -323,12 +372,12 @@ class ViewController: UIViewController {
             self.t3 = CACurrentMediaTime()
         }
     }
-
+    
     // Save text file
     func saveText(text: String, file: String = "saved.txt") {
         if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             let fileURL = dir.appendingPathComponent(file)
-
+            
             // Writing
             do {  // Append to file if it exists
                 let fileHandle = try FileHandle(forWritingTo: fileURL)
@@ -342,12 +391,12 @@ class ViewController: UIViewController {
                     print("no file written")
                 }
             }
-
+            
             // Reading
             // do {let text2 = try String(contentsOf: fileURL, encoding: .utf8)} catch {/* error handling here */}
         }
     }
-
+    
     // Save image file
     func saveImage() {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
@@ -355,7 +404,7 @@ class ViewController: UIViewController {
         let image = UIImage(named: "ultralytics_yolo_logotype.png")
         FileManager.default.createFile(atPath: fileURL.path, contents: image!.jpegData(compressionQuality: 0.5), attributes: nil)
     }
-
+    
     // Return hard drive space (GB)
     func freeSpace() -> Double {
         let fileURL = URL(fileURLWithPath: NSHomeDirectory() as String)
@@ -367,7 +416,7 @@ class ViewController: UIViewController {
         }
         return 0
     }
-
+    
     // Return RAM usage (GB)
     func memoryUsage() -> Double {
         var taskInfo = mach_task_basic_info()
@@ -383,7 +432,7 @@ class ViewController: UIViewController {
             return 0
         }
     }
-
+    
     func show(predictions: [VNRecognizedObjectObservation]) {
         let width = videoPreview.bounds.width  // 375 pix
         let height = videoPreview.bounds.height  // 812 pix
@@ -415,37 +464,39 @@ class ViewController: UIViewController {
                 switch UIDevice.current.orientation {
                 case .portraitUpsideDown:
                     rect = CGRect(x: 1.0 - rect.origin.x - rect.width,
-                            y: 1.0 - rect.origin.y - rect.height,
-                            width: rect.width,
-                            height: rect.height)
+                                         y: 1.0 - rect.origin.y - rect.height,
+                                         width: rect.width,
+                                         height: rect.height)
                 case .landscapeLeft:
-                    rect = CGRect(x: rect.origin.y,
-                            y: 1.0 - rect.origin.x - rect.width,
-                            width: rect.height,
-                            height: rect.width)
+                    rect = CGRect(x: rect.origin.x,
+                                         y: rect.origin.y,
+                                         width: rect.width,
+                                         height: rect.height)
                 case .landscapeRight:
-                    rect = CGRect(x: 1.0 - rect.origin.y - rect.height,
-                            y: rect.origin.x,
-                            width: rect.height,
-                            height: rect.width)
+                    rect = CGRect(x: rect.origin.x,
+                                         y: rect.origin.y,
+                                         width: rect.width,
+                                         height: rect.height)
                 case .unknown:
                     print("The device orientation is unknown, the predictions may be affected")
                     fallthrough
                 default: break
                 }
 
-                if ratio >= 1 { // iPhone ratio = 1.218
+                if ratio >= 1 {
                     let offset = (1 - ratio) * (0.5 - rect.minX)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-                    rect = rect.applying(transform)
+                        let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
+                        rect = rect.applying(transform)
                     rect.size.width *= ratio
-                } else { // iPad ratio = 0.75
-                    let offset = (ratio - 1) * (0.5 - rect.maxY)
-                    let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
+                } else {
+                        let offset = (ratio - 1) * (0.5 - rect.maxY)
+
+                        let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
                     rect = rect.applying(transform)
+                    ratio = (height / width) / (3.0 / 4.0)
                     rect.size.height /= ratio
                 }
-
+            
                 // Scale normalized to pixels [375, 812] [width, height]
                 rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
 
@@ -454,12 +505,13 @@ class ViewController: UIViewController {
                 let bestClass = prediction.labels[0].identifier
                 let confidence = prediction.labels[0].confidence
                 // print(confidence, rect)  // debug (confidence, xywh) with xywh origin top left (pixels)
-
+                let label =  String(format: "%@ %.1f", bestClass, confidence * 100)
+                let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
                 // Show the bounding box.
                 boundingBoxViews[i].show(frame: rect,
-                        label: String(format: "%@ %.1f", bestClass, confidence * 100),
+                        label:label,
                         color: colors[bestClass] ?? UIColor.white,
-                        alpha: CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9))  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
+                        alpha: alpha)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
 
                 if developerMode {
                     // Write
@@ -501,20 +553,20 @@ class ViewController: UIViewController {
         // print(UIDevice.current.identifierForVendor!)
         // saveImage()
     }
-
+    
     // Pinch to Zoom Start ---------------------------------------------------------------------------------------------
     let minimumZoom: CGFloat = 1.0
     let maximumZoom: CGFloat = 10.0
     var lastZoomFactor: CGFloat = 1.0
-
+    
     @IBAction func pinch(_ pinch: UIPinchGestureRecognizer) {
         let device = videoCapture.captureDevice
-
+        
         // Return zoom value between the minimum and maximum zoom values
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {
             return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
         }
-
+        
         func update(scale factor: CGFloat) {
             do {
                 try device.lockForConfiguration()
@@ -526,7 +578,7 @@ class ViewController: UIViewController {
                 print("\(error.localizedDescription)")
             }
         }
-
+        
         let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
         switch pinch.state {
         case .began: fallthrough
@@ -540,7 +592,10 @@ class ViewController: UIViewController {
             self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
         default: break
         }
-    }  // Pinch to Zoom Start ------------------------------------------------------------------------------------------
+    }  // Pinch to Zoom Start
+    
+    
+    // ------------------------------------------------------------------------------------------
 }  // ViewController class End
 
 extension ViewController: VideoCaptureDelegate {
@@ -558,13 +613,25 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
         if let dataImage = photo.fileDataRepresentation() {
             let dataProvider = CGDataProvider(data: dataImage as CFData)
             let cgImageRef: CGImage! = CGImage(jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
-            let image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: UIImage.Orientation.right)
+            var orientation = CGImagePropertyOrientation.right
+            switch UIDevice.current.orientation {
+            case .landscapeLeft:
+                orientation = .up
+            case .landscapeRight:
+                orientation = .down
+            default:
+                break
+            }
+            var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
+            if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
+               let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent) {
+                image = UIImage(cgImage: cgImage)
+                
+            }
             let imageView = UIImageView(image: image)
             imageView.contentMode = .scaleAspectFill
             imageView.frame = videoPreview.frame
             let imageLayer = imageView.layer
-            var sublayers = videoPreview.layer.sublayers ?? []
-            let insertIndex = max(sublayers.count - 1, 0)
             videoPreview.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
             
             let bounds = UIScreen.main.bounds
@@ -576,9 +643,9 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
             let activityViewController = UIActivityViewController(activityItems: [img!], applicationActivities: nil)
             activityViewController.popoverPresentationController?.sourceView = self.View0
             self.present(activityViewController, animated: true, completion: nil)
-//
-//            // Save to camera roll
-//            UIImageWriteToSavedPhotosAlbum(img!, nil, nil, nil);
+            //
+            //            // Save to camera roll
+            //            UIImageWriteToSavedPhotosAlbum(img!, nil, nil, nil);
         } else {
             print("AVCapturePhotoCaptureDelegate Error")
         }

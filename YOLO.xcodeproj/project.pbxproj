@@ -23,7 +23,6 @@
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		6323C44D22186177008AE681 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6323C44F22186177008AE681 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };

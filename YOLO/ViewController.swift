@@ -508,9 +508,8 @@ class ViewController: UIViewController {
           let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
           rect = rect.applying(transform)
           rect.size.width *= ratio
-        } else {
+        } else {  // iPad ratio = 0.75
           let offset = (ratio - 1) * (0.5 - rect.maxY)
-
           let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
           rect = rect.applying(transform)
           ratio = (height / width) / (3.0 / 4.0)

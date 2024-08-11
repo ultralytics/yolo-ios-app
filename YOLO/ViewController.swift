@@ -503,7 +503,7 @@ class ViewController: UIViewController {
         default: break
         }
 
-        if ratio >= 1 {
+        if ratio >= 1 {  // iPhone ratio = 1.218
           let offset = (1 - ratio) * (0.5 - rect.minX)
           let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
           rect = rect.applying(transform)

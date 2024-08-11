@@ -346,7 +346,6 @@ class ViewController: UIViewController {
         imageOrientation = .up
       case .unknown:
         imageOrientation = .up
-
       default:
         imageOrientation = .up
       }
@@ -618,6 +617,7 @@ class ViewController: UIViewController {
   }  // Pinch to Zoom Start
 
   // ------------------------------------------------------------------------------------------
+
 }  // ViewController class End
 
 extension ViewController: VideoCaptureDelegate {

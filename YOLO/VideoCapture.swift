@@ -137,7 +137,6 @@ public class VideoCapture: NSObject {
       captureSession.stopRunning()
     }
   }
-
   func updateVideoOrientation() {
     guard let connection = videoOutput.connection(with: .video) else { return }
     switch UIDevice.current.orientation {
@@ -154,7 +153,6 @@ public class VideoCapture: NSObject {
     }
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
   }
-
 }
 
 // Extension to handle AVCaptureVideoDataOutputSampleBufferDelegate events.

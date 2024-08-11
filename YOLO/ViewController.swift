@@ -27,15 +27,21 @@ class ViewController: UIViewController {
   @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
   @IBOutlet var slider: UISlider!
   @IBOutlet var sliderConf: UISlider!
+  @IBOutlet weak var sliderConfLandScape: UISlider!
   @IBOutlet var sliderIoU: UISlider!
+  @IBOutlet weak var sliderIoULandScape: UISlider!
   @IBOutlet weak var labelName: UILabel!
   @IBOutlet weak var labelFPS: UILabel!
   @IBOutlet weak var labelZoom: UILabel!
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var labelSlider: UILabel!
   @IBOutlet weak var labelSliderConf: UILabel!
+  @IBOutlet weak var labelSliderConfLandScape: UILabel!
   @IBOutlet weak var labelSliderIoU: UILabel!
+  @IBOutlet weak var labelSliderIoULandScape: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+  @IBOutlet weak var forcus: UIImageView!
+  @IBOutlet weak var toolBar: UIToolbar!
 
   let selection = UISelectionFeedbackGenerator()
   var detector = try! VNCoreMLModel(for: mlModel)
@@ -72,8 +78,55 @@ class ViewController: UIViewController {
     slider.value = 30
     setLabels()
     setUpBoundingBoxViews()
+    setUpOrientationChangeNotification()
     startVideo()
     // setModel()
+  }
+
+  override func viewWillTransition(
+    to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator
+  ) {
+    super.viewWillTransition(to: size, with: coordinator)
+
+    if size.width > size.height {
+      labelSliderConf.isHidden = true
+      sliderConf.isHidden = true
+      labelSliderIoU.isHidden = true
+      sliderIoU.isHidden = true
+      toolBar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
+      toolBar.setShadowImage(UIImage(), forToolbarPosition: .any)
+
+      labelSliderConfLandScape.isHidden = false
+      sliderConfLandScape.isHidden = false
+      labelSliderIoULandScape.isHidden = false
+      sliderIoULandScape.isHidden = false
+
+    } else {
+      labelSliderConf.isHidden = false
+      sliderConf.isHidden = false
+      labelSliderIoU.isHidden = false
+      sliderIoU.isHidden = false
+      toolBar.setBackgroundImage(nil, forToolbarPosition: .any, barMetrics: .default)
+      toolBar.setShadowImage(nil, forToolbarPosition: .any)
+
+      labelSliderConfLandScape.isHidden = true
+      sliderConfLandScape.isHidden = true
+      labelSliderIoULandScape.isHidden = true
+      sliderIoULandScape.isHidden = true
+    }
+    self.videoCapture.previewLayer?.frame = CGRect(
+      x: 0, y: 0, width: size.width, height: size.height)
+
+  }
+
+  private func setUpOrientationChangeNotification() {
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(orientationDidChange),
+      name: UIDevice.orientationDidChangeNotification, object: nil)
+  }
+
+  @objc func orientationDidChange() {
+    videoCapture.updateVideoOrientation()
   }
 
   @IBAction func vibrate(_ sender: Any) {
@@ -110,6 +163,7 @@ class ViewController: UIViewController {
   }
 
   func setModel() {
+
     /// VNCoreMLModel
     detector = try! VNCoreMLModel(for: mlModel)
     detector.featureProvider = ThresholdProvider()
@@ -287,12 +341,11 @@ class ViewController: UIViewController {
       case .portraitUpsideDown:
         imageOrientation = .down
       case .landscapeLeft:
-        imageOrientation = .left
+        imageOrientation = .up
       case .landscapeRight:
-        imageOrientation = .right
+        imageOrientation = .up
       case .unknown:
-        print("The device orientation is unknown, the predictions may be affected")
-        fallthrough
+        imageOrientation = .up
       default:
         imageOrientation = .up
       }
@@ -434,16 +487,16 @@ class ViewController: UIViewController {
             height: rect.height)
         case .landscapeLeft:
           rect = CGRect(
-            x: rect.origin.y,
-            y: 1.0 - rect.origin.x - rect.width,
-            width: rect.height,
-            height: rect.width)
+            x: rect.origin.x,
+            y: rect.origin.y,
+            width: rect.width,
+            height: rect.height)
         case .landscapeRight:
           rect = CGRect(
-            x: 1.0 - rect.origin.y - rect.height,
-            y: rect.origin.x,
-            width: rect.height,
-            height: rect.width)
+            x: rect.origin.x,
+            y: rect.origin.y,
+            width: rect.width,
+            height: rect.height)
         case .unknown:
           print("The device orientation is unknown, the predictions may be affected")
           fallthrough
@@ -459,6 +512,7 @@ class ViewController: UIViewController {
           let offset = (ratio - 1) * (0.5 - rect.maxY)
           let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
           rect = rect.applying(transform)
+          ratio = (height / width) / (3.0 / 4.0)
           rect.size.height /= ratio
         }
 
@@ -470,13 +524,14 @@ class ViewController: UIViewController {
         let bestClass = prediction.labels[0].identifier
         let confidence = prediction.labels[0].confidence
         // print(confidence, rect)  // debug (confidence, xywh) with xywh origin top left (pixels)
-
+        let label = String(format: "%@ %.1f", bestClass, confidence * 100)
+        let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
         // Show the bounding box.
         boundingBoxViews[i].show(
           frame: rect,
-          label: String(format: "%@ %.1f", bestClass, confidence * 100),
+          label: label,
           color: colors[bestClass] ?? UIColor.white,
-          alpha: CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9))  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
+          alpha: alpha)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
 
         if developerMode {
           // Write
@@ -558,7 +613,7 @@ class ViewController: UIViewController {
       self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
     default: break
     }
-  }  // Pinch to Zoom Start ------------------------------------------------------------------------------------------
+  }  // Pinch to Zoom End --------------------------------------------------------------------------------------------
 }  // ViewController class End
 
 extension ViewController: VideoCaptureDelegate {
@@ -580,13 +635,25 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      let image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: UIImage.Orientation.right)
+      var orientation = CGImagePropertyOrientation.right
+      switch UIDevice.current.orientation {
+      case .landscapeLeft:
+        orientation = .up
+      case .landscapeRight:
+        orientation = .down
+      default:
+        break
+      }
+      var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
+      if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
+        let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
+      {
+        image = UIImage(cgImage: cgImage)
+      }
       let imageView = UIImageView(image: image)
       imageView.contentMode = .scaleAspectFill
       imageView.frame = videoPreview.frame
       let imageLayer = imageView.layer
-      var sublayers = videoPreview.layer.sublayers ?? []
-      let insertIndex = max(sublayers.count - 1, 0)
       videoPreview.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
 
       let bounds = UIScreen.main.bounds

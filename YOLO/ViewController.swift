@@ -613,10 +613,7 @@ class ViewController: UIViewController {
       self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
     default: break
     }
-  }  // Pinch to Zoom Start
-
-  // ------------------------------------------------------------------------------------------
-
+  }  // Pinch to Zoom End --------------------------------------------------------------------------------------------
 }  // ViewController class End
 
 extension ViewController: VideoCaptureDelegate {

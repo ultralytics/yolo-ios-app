@@ -9,6 +9,7 @@ on:
     types: [opened]
   pull_request_target:
     branches: [main]
+    types: [opened, closed, synchronize, review_requested]
 
 jobs:
   format:

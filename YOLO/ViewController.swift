@@ -649,7 +649,6 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
         let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
       {
         image = UIImage(cgImage: cgImage)
-
       }
       let imageView = UIImageView(image: image)
       imageView.contentMode = .scaleAspectFill

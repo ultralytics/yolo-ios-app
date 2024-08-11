@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320">
+<a href="https://ultralytics.com" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
 # Add YOLOv8 Models to the Project
 
@@ -23,19 +23,19 @@ If you prefer to use specific model versions or need to customize the models, yo
 
 1. **Installation:** First, ensure you have the `ultralytics` package installed. If not, you can install it using pip:
 
-    ```sh
-    pip install ultralytics
-    ```
+   ```sh
+   pip install ultralytics
+   ```
 
 2. **Export Models:** Use the following Python script to export YOLOv8 models to the CoreML format, optimized for INT8 quantization for better performance on iOS devices. The script exports all YOLOv8 model sizes (`n`, `s`, `m`, `l`, `x`) as CoreML models.
 
-    ```python
-    from ultralytics import YOLO
+   ```python
+   from ultralytics import YOLO
 
-    # Export all YOLOv8 models to CoreML INT8
-    for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
-        YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-    ```
+   # Export all YOLOv8 models to CoreML INT8
+   for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
+       YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+   ```
 
 3. **Place Models in Project:** After exporting, locate the CoreML model files and place them in the `YOLO/Models` directory of your project.
 

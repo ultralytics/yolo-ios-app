@@ -37,6 +37,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       UserDefaults.standard.set("\(appVersion) (\(buildVersion))", forKey: "app_version")
     }
 
+
+
+
+
+    
     // Store the device's UUID in UserDefaults for identification purposes.
     if let uuid = UIDevice.current.identifierForVendor?.uuidString {
       UserDefaults.standard.set(uuid, forKey: "uuid")

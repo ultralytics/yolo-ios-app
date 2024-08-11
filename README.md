@@ -103,6 +103,7 @@ We warmly welcome your contributions to Ultralytics' open-source projects! Your 
 Ultralytics offers two licensing options:
 
 - **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/licenses/) open-source license, perfect for academics, researchers, and enthusiasts. It encourages sharing knowledge and collaboration. See the [LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE) file for details.
+
 - **Enterprise License**: Designed for commercial use, this license permits integrating Ultralytics software into proprietary products and services. For commercial use, please contact us through [Ultralytics Licensing](https://ultralytics.com/license).
 
 ## 🤝 Contact

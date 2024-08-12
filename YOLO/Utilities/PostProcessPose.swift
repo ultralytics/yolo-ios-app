@@ -6,7 +6,7 @@ import CoreML
 extension ViewController {
     func PostProcessPose(prediction: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float) -> [(CGRect, Float, [Float])] {
         let numAnchors = prediction.shape[2].intValue
-        let featureCount = prediction.shape[1].intValue - 5 // 56個のうち、ボックス(4)と信頼度(1)を除いた51個の特徴量
+        let featureCount = prediction.shape[1].intValue - 5
         var boxes = [CGRect]()
         var scores = [Float]()
         var features = [[Float]]()
@@ -53,103 +53,119 @@ extension ViewController {
         return zip(zip(filteredBoxes, filteredScores), filteredFeatures).map { ($0.0, $0.1, $1) }
     }
     
-    func drawKeypoints(keypoints: [Float], originalSize: CGSize, confidenceThreshold: Float = 0.25) {
-        let path = UIBezierPath()
-        let keypointTuples = stride(from: 0, to: keypoints.count, by: 3).map {
-            (keypoints[$0], keypoints[$0 + 1], keypoints[$0 + 2])
-        }
-        
-        guard keypointTuples.count == 17 else { return }
-        
-        // リサイズスケールファクター
-        let scaleX = view.bounds.width / originalSize.width
-        let scaleY = view.bounds.height / originalSize.height
-        
-        // キーポイントカラーの設定
-        let kptColor: [UIColor] = [
-            UIColor(red: 255/255, green: 0/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 85/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 170/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 170/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 85/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 85/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 170/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 170/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 85/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 85/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 170/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 255/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 255/255, green: 0/255, blue: 170/255, alpha: 1)
-        ]
-        
-        // キーポイントの描画
-        for (index, (x, y, conf)) in keypointTuples.enumerated() {
-            if conf < confidenceThreshold { continue }
+    
+    func drawKeypoints(
+        keypointsList: [[Float]],
+        boundingBoxes:[(CGRect,Float)],
+        on layer: CALayer,
+        imageViewSize: CGSize,
+        originalImageSize: CGSize,
+        radius: CGFloat = 5,
+        confThreshold: Float = 0.25,
+        drawSkeleton: Bool = true
+    ) {
+        for (i,keypoints) in keypointsList.enumerated() {
             
-            let xPos = CGFloat(x) * scaleX
-            let yPos = CGFloat(y) * scaleY
-            
-            // キーポイントの円を描画
-            let circlePath = UIBezierPath(arcCenter: CGPoint(x: xPos, y: yPos), radius: 5, startAngle: 0, endAngle: CGFloat.pi * 2, clockwise: true)
-            let circleLayer = CAShapeLayer()
-            circleLayer.path = circlePath.cgPath
-            circleLayer.fillColor = kptColor[index % kptColor.count].cgColor
-            overlayLayer.addSublayer(circleLayer)
-        }
-        
-        // スケルトンラインの描画
-        let skeleton = [
-            (0, 1), (1, 2), (2, 3), (3, 4),
-            (0, 5), (5, 6), (6, 7), (7, 8),
-            (0, 9), (9, 10), (10, 11), (11, 12),
-            (0, 13), (13, 14), (14, 15), (15, 16)
-        ]
-        
-        let limbColor: [UIColor] = [
-            UIColor(red: 255/255, green: 0/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 85/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 170/255, blue: 0/255, alpha: 1),
-            UIColor(red: 255/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 170/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 85/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 0/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 85/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 170/255, alpha: 1),
-            UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 170/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 85/255, blue: 255/255, alpha: 1),
-            UIColor(red: 0/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 85/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 170/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 255/255, green: 0/255, blue: 255/255, alpha: 1),
-            UIColor(red: 255/255, green: 0/255, blue: 170/255, alpha: 1)
-        ]
-        
-        for (index, (start, end)) in skeleton.enumerated() {
-            let (startX, startY, startConf) = keypointTuples[start]
-            let (endX, endY, endConf) = keypointTuples[end]
-            
-            if startConf < confidenceThreshold || endConf < confidenceThreshold { continue }
-            
-            let startXPos = CGFloat(startX) * scaleX
-            let startYPos = CGFloat(startY) * scaleY
-            let endXPos = CGFloat(endX) * scaleX
-            let endYPos = CGFloat(endY) * scaleY
-            
-            // スケルトンラインを描画
-            let linePath = UIBezierPath()
-            linePath.move(to: CGPoint(x: startXPos, y: startYPos))
-            linePath.addLine(to: CGPoint(x: endXPos, y: endYPos))
-            
-            let lineLayer = CAShapeLayer()
-            lineLayer.path = linePath.cgPath
-            lineLayer.strokeColor = limbColor[index % limbColor.count].cgColor
-            lineLayer.lineWidth = 2.0
-            overlayLayer.addSublayer(lineLayer)
+            drawSinglePersonKeypoints(
+                keypoints: keypoints, boundingBox: boundingBoxes[i],
+                on: layer,
+                imageViewSize: imageViewSize,
+                originalImageSize: originalImageSize,
+                radius: radius,
+                confThreshold: confThreshold,
+                drawSkeleton: drawSkeleton
+            )
         }
     }
+    
+    func drawSinglePersonKeypoints(
+        keypoints: [Float],
+        boundingBox: (CGRect, Float),
+        on layer: CALayer,
+        imageViewSize: CGSize,
+        originalImageSize: CGSize,
+        radius: CGFloat,
+        confThreshold: Float,
+        drawSkeleton: Bool
+    ) {
+        guard keypoints.count == 51 else {
+            print("Keypoints array must have 51 elements.")
+            return
+        }
+        
+        let scaleXToOriginal = Float(originalImageSize.width / 640)
+        let scaleYToOriginal = Float(originalImageSize.height / 640)
+        
+        let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
+        let scaleYToView = Float(imageViewSize.height / originalImageSize.height)
+        
+        var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
+                
+        for i in 0..<17 {
+            let x = keypoints[i * 3] * scaleXToOriginal * scaleXToView
+            let y = keypoints[i * 3 + 1] * scaleYToOriginal * scaleYToView
+            let conf = keypoints[i * 3 + 2]
+            
+            let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+            let box = boundingBox.0
+            
+            if conf >= confThreshold && box.contains(CGPoint(x: CGFloat(keypoints[i * 3]), y: CGFloat(keypoints[i * 3 + 1]))) {
+                points[i] = (point, conf)
+                
+                drawCircle(on: layer, at: point, radius: radius, color: kptColorIndices[i])
+            }
+        }
+        
+        if drawSkeleton {
+            for (index, bone) in skeleton.enumerated() {
+                let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
+                
+                guard startIdx < points.count, endIdx < points.count else {
+                    print("Invalid skeleton indices: \(startIdx), \(endIdx)")
+                    continue
+                }
+                
+                let startPoint = points[startIdx].0
+                let endPoint = points[endIdx].0
+                let startConf = points[startIdx].1
+                let endConf = points[endIdx].1
+                
+                if startConf >= confThreshold && endConf >= confThreshold {
+                    drawLine(on: layer, from: startPoint, to: endPoint, color: limbColorIndices[index])
+                }
+            }
+        }
+    }
+    
+    func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color index: Int) {
+        let circleLayer = CAShapeLayer()
+        circleLayer.path = UIBezierPath(
+            arcCenter: point,
+            radius: radius,
+            startAngle: 0,
+            endAngle: .pi * 2,
+            clockwise: true
+        ).cgPath
+        
+        let color = posePalette[index].map { $0 / 255.0 }
+        circleLayer.fillColor = UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+        
+        layer.addSublayer(circleLayer)
+    }
+    
+    func drawLine(on layer: CALayer, from start: CGPoint, to end: CGPoint, color index: Int) {
+        let lineLayer = CAShapeLayer()
+        let path = UIBezierPath()
+        path.move(to: start)
+        path.addLine(to: end)
+        
+        lineLayer.path = path.cgPath
+        lineLayer.lineWidth = 2
+        
+        let color = posePalette[index].map { $0 / 255.0 }
+        lineLayer.strokeColor = UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+        
+        layer.addSublayer(lineLayer)
+    }
+
 }

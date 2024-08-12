@@ -18,7 +18,7 @@ import UIKit
 import Vision
 
 @available(iOS 15.0, *)
-var mlModel = try! yolov8n_pose(configuration: .init()).model
+var mlModel = try! yolov8m(configuration: .init()).model
 
 @available(iOS 15.0, *)
 class ViewController: UIViewController {
@@ -94,7 +94,7 @@ class ViewController: UIViewController {
     var tracker = TrackingModel()
     
     var overlayLayer:CAShapeLayer!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         slider.value = 30
@@ -167,111 +167,150 @@ class ViewController: UIViewController {
     }
     
     func setModel() {
-//        
-//        /// Switch model
-//        switch task {
-//        case .detect:
-//            switch segmentedControl.selectedSegmentIndex {
-//            case 0:
-//                self.labelName.text = "YOLOv8n"
-//                mlModel = try! yolov8n(configuration: .init()).model
-//            case 1:
-//                self.labelName.text = "YOLOv8s"
-//                mlModel = try! yolov8s(configuration: .init()).model
-//            case 2:
-//                self.labelName.text = "YOLOv8m"
-//                mlModel = try! yolov8m(configuration: .init()).model
-//            case 3:
-//                self.labelName.text = "YOLOv8l"
-//                mlModel = try! yolov8l(configuration: .init()).model
-//            case 4:
-//                self.labelName.text = "YOLOv8x"
-//                mlModel = try! yolov8x(configuration: .init()).model
-//            default:
-//                break
-//            }
-//        case .human:
-//            switch segmentedControl.selectedSegmentIndex {
-//            case 0:
-//                self.labelName.text = "YOLOv8n"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8n_human(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 1:
-//                self.labelName.text = "YOLOv8s"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8s_human(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 2:
-//                self.labelName.text = "YOLOv8m"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8m_human(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 3:
-//                self.labelName.text = "YOLOv8l"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8l_human(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 4:
-//                self.labelName.text = "YOLOv8x"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8x_human(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//                
-//            default:
-//                break
-//            }
-//            case .seg:
-//            switch segmentedControl.selectedSegmentIndex {
-//            case 0:
-//                self.labelName.text = "YOLOv8n"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8n_seg(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 1:
-//                self.labelName.text = "YOLOv8s"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8s_seg(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 2:
-//                self.labelName.text = "YOLOv8m"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8m_seg(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 3:
-//                self.labelName.text = "YOLOv8l"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8l_seg(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            case 4:
-//                self.labelName.text = "YOLOv8x"
-//                if #available(iOS 15.0, *) {
-//                    mlModel = try! yolov8x_seg(configuration: .init()).model
-//                } else {
-//                    // Fallback on earlier versions
-//                }
-//            default:break
-//            }
-//            
-//        }
+        
+        /// Switch model
+        switch task {
+        case .detect:
+            switch segmentedControl.selectedSegmentIndex {
+            case 0:
+                self.labelName.text = "YOLOv8n"
+                mlModel = try! yolov8n(configuration: .init()).model
+            case 1:
+                self.labelName.text = "YOLOv8s"
+                mlModel = try! yolov8s(configuration: .init()).model
+            case 2:
+                self.labelName.text = "YOLOv8m"
+                mlModel = try! yolov8m(configuration: .init()).model
+            case 3:
+                self.labelName.text = "YOLOv8l"
+                mlModel = try! yolov8l(configuration: .init()).model
+            case 4:
+                self.labelName.text = "YOLOv8x"
+                mlModel = try! yolov8x(configuration: .init()).model
+            default:
+                break
+            }
+        case .human:
+            switch segmentedControl.selectedSegmentIndex {
+            case 0:
+                self.labelName.text = "YOLOv8n"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8n_human(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 1:
+                self.labelName.text = "YOLOv8s"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8s_human(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 2:
+                self.labelName.text = "YOLOv8m"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8m_human(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 3:
+                self.labelName.text = "YOLOv8l"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8l_human(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 4:
+                self.labelName.text = "YOLOv8x"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8x_human(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+                
+            default:
+                break
+            }
+            case .seg:
+            switch segmentedControl.selectedSegmentIndex {
+            case 0:
+                self.labelName.text = "YOLOv8n"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8n_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 1:
+                self.labelName.text = "YOLOv8s"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8s_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 2:
+                self.labelName.text = "YOLOv8m"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8m_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 3:
+                self.labelName.text = "YOLOv8l"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8l_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            case 4:
+                self.labelName.text = "YOLOv8x"
+                if #available(iOS 15.0, *) {
+                    mlModel = try! yolov8x_seg(configuration: .init()).model
+                } else {
+                    // Fallback on earlier versions
+                }
+            default:break
+            }
+        case .pose:
+        switch segmentedControl.selectedSegmentIndex {
+        case 0:
+            self.labelName.text = "YOLOv8n"
+            if #available(iOS 15.0, *) {
+                mlModel = try! yolov8n_pose(configuration: .init()).model
+            } else {
+                // Fallback on earlier versions
+            }
+        case 1:
+            self.labelName.text = "YOLOv8s"
+            if #available(iOS 15.0, *) {
+                mlModel = try! yolov8s_pose(configuration: .init()).model
+            } else {
+                // Fallback on earlier versions
+            }
+        case 2:
+            self.labelName.text = "YOLOv8m"
+            if #available(iOS 15.0, *) {
+                mlModel = try! yolov8m_pose(configuration: .init()).model
+            } else {
+                // Fallback on earlier versions
+            }
+        case 3:
+            self.labelName.text = "YOLOv8l"
+            if #available(iOS 15.0, *) {
+                mlModel = try! yolov8l_pose(configuration: .init()).model
+            } else {
+                // Fallback on earlier versions
+            }
+        case 4:
+            self.labelName.text = "YOLOv8x"
+            if #available(iOS 15.0, *) {
+                mlModel = try! yolov8x_pose(configuration: .init()).model
+            } else {
+                // Fallback on earlier versions
+            }
+        default:break
+        }
+
+        }
         DispatchQueue.global(qos: .userInitiated).async { [self] in
 
         /// VNCoreMLModel
@@ -433,28 +472,6 @@ class ViewController: UIViewController {
     
     let maxBoundingBoxViews = 100
     var boundingBoxViews = [BoundingBoxView]()
-    let ultralyticsColorsolors: [UIColor] = [
-        UIColor(red: 4/255, green: 42/255, blue: 255/255, alpha:  0.6),  // #042AFF
-        UIColor(red: 11/255, green: 219/255, blue: 235/255, alpha:  0.6), // #0BDBEB
-        UIColor(red: 243/255, green: 243/255, blue: 243/255, alpha:  0.6), // #F3F3F3
-        UIColor(red: 0/255, green: 223/255, blue: 183/255, alpha:  0.6),  // #00DFB7
-        UIColor(red: 17/255, green: 31/255, blue: 104/255, alpha:  0.6),  // #111F68
-        UIColor(red: 255/255, green: 111/255, blue: 221/255, alpha:  0.6), // #FF6FDD
-        UIColor(red: 255/255, green: 68/255, blue: 79/255, alpha:  0.6),  // #FF444F
-        UIColor(red: 204/255, green: 237/255, blue: 0/255, alpha:  0.6),  // #CCED00
-        UIColor(red: 0/255, green: 243/255, blue: 68/255, alpha:  0.6),   // #00F344
-        UIColor(red: 189/255, green: 0/255, blue: 255/255, alpha:  0.6),  // #BD00FF
-        UIColor(red: 0/255, green: 180/255, blue: 255/255, alpha:  0.6),  // #00B4FF
-        UIColor(red: 221/255, green: 0/255, blue: 186/255, alpha:  0.6),  // #DD00BA
-        UIColor(red: 0/255, green: 255/255, blue: 255/255, alpha:  0.6),  // #00FFFF
-        UIColor(red: 38/255, green: 192/255, blue: 0/255, alpha:  0.6),   // #26C000
-        UIColor(red: 1/255, green: 255/255, blue: 179/255, alpha:  0.6),  // #01FFB3
-        UIColor(red: 125/255, green: 36/255, blue: 255/255, alpha:  0.6), // #7D24FF
-        UIColor(red: 123/255, green: 0/255, blue: 104/255, alpha:  0.6),  // #7B0068
-        UIColor(red: 255/255, green: 27/255, blue: 108/255, alpha:  0.6), // #FF1B6C
-        UIColor(red: 252/255, green: 109/255, blue: 47/255, alpha:  0.6), // #FC6D2F
-        UIColor(red: 162/255, green: 255/255, blue: 11/255, alpha:  0.6)  // #A2FF0B
-    ]
 
     var colors: [String:UIColor] = [:]
     var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
@@ -578,9 +595,9 @@ class ViewController: UIViewController {
         case .detect:
             DispatchQueue.main.async {
                 if let results = request.results as? [VNRecognizedObjectObservation] {
-                    self.show(predictions: results, persons: [],processedBoxAndMasks: [])
+                    self.show(predictions: results, persons: [],processedBoxAndMasks: [], boxes: [])
                 } else {
-                    self.show(predictions: [], persons: [],processedBoxAndMasks: [])
+                    self.show(predictions: [], persons: [],processedBoxAndMasks: [], boxes: [])
                 }
                 
                 // Measure FPS
@@ -604,9 +621,9 @@ class ViewController: UIViewController {
                         } else {
                             persons = self.tracker.track(boxesAndScoresAndFeatures: pred)
                         }
-                        self.show(predictions: [], persons: persons, processedBoxAndMasks: [])
+                        self.show(predictions: [], persons: persons, processedBoxAndMasks: [], boxes: [])
                     } else {
-                        self.show(predictions: [], persons: [],processedBoxAndMasks: [])
+                        self.show(predictions: [], persons: [],processedBoxAndMasks: [],boxes: [])
                     }
                     if self.t1 < 10.0 {  // valid dt
                         self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
@@ -624,7 +641,7 @@ class ViewController: UIViewController {
                     let pred = results[1].featureValue.multiArrayValue
                     let processed = getBoundingBoxesAndMasks(feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
                     
-                    self.show(predictions: [], persons: [], processedBoxAndMasks:processed)
+                    self.show(predictions: [], persons: [], processedBoxAndMasks:processed, boxes: [])
                     DispatchQueue.main.async {
                         let a = Date()
                         self.updateMaskAndBoxes(detectedObjects: processed, maskArray: masks!)
@@ -647,18 +664,20 @@ class ViewController: UIViewController {
                     if let prediction = results.first?.featureValue.multiArrayValue {
                         
                         let pred = PostProcessPose(prediction:prediction, confidenceThreshold: self.confidenceThreshold, iouThreshold: self.iouThreshold)
-                        print(pred)
+                        var boxes = [(CGRect, Float)]()
+                        var kpts = [[Float]]()
+
                         for p in pred {
-                            drawKeypoints(keypoints: p.2, originalSize: CGSize(width: 640, height: 640))
+                            boxes.append((p.0, p.1))
+                            kpts.append(p.2)
                         }
-//                        if !self.tracking {
-//                            persons = toPerson(boxesAndScoresAndFeatures: pred)
-//                        } else {
-//                            persons = self.tracker.track(boxesAndScoresAndFeatures: pred)
-//                        }
-//                        self.show(predictions: [], persons: persons, processedBoxAndMasks: [])
+                        self.show(predictions: [], persons: [],processedBoxAndMasks: [], boxes: boxes)
+                        self.maskLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+
+                        self.drawKeypoints(keypointsList: kpts,boundingBoxes: boxes, on: maskLayer, imageViewSize: maskLayer.bounds.size, originalImageSize: maskLayer.bounds.size)
+
                     } else {
-                        self.show(predictions: [], persons: [],processedBoxAndMasks: [])
+                        self.show(predictions: [], persons: [],processedBoxAndMasks: [], boxes: [])
                     }
                     if self.t1 < 10.0 {  // valid dt
                         self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
@@ -736,7 +755,7 @@ class ViewController: UIViewController {
         }
     }
     
-    func show(predictions: [VNRecognizedObjectObservation], persons: [Person], processedBoxAndMasks:[(CGRect,Int,Float, MLMultiArray)]) {
+    func show(predictions: [VNRecognizedObjectObservation], persons: [Person], processedBoxAndMasks:[(CGRect,Int,Float, MLMultiArray)], boxes:[(CGRect, Float)]) {
         let width = videoPreview.bounds.width
         let height = videoPreview.bounds.height
         var str = ""
@@ -767,7 +786,7 @@ class ViewController: UIViewController {
         case .seg:
             resultCount = processedBoxAndMasks.count
         case .pose:
-            break
+            resultCount = boxes.count
         }
         self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
         for i in 0..<boundingBoxViews.count {
@@ -810,7 +829,15 @@ class ViewController: UIViewController {
                     boxColor = colors[bestClass] ?? UIColor.white
                     alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
                 case .pose:
-                    break
+                    let person = boxes[i]
+                    let box = person.0
+                    let conf = person.1
+                    rect = CGRect(x: box.minX/640, y: box.minY/640, width: box.width/640, height: box.height/640)
+                    bestClass = "person"
+                    confidence = CGFloat(conf)
+                    label = String(format: "%@ %.1f", bestClass, confidence * 100)
+                    boxColor = ultralyticsColorsolors[0]
+                    alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
                 }
                 var displayRect = rect
                 switch UIDevice.current.orientation {

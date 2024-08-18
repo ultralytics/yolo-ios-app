@@ -29,6 +29,8 @@ If you prefer to use specific model versions or need to customize the models, yo
 
 2. **Export Models:** Use the following Python script to export YOLOv8 models to the CoreML format, optimized for INT8 quantization for better performance on iOS devices. The script exports all YOLOv8 model sizes (`n`, `s`, `m`, `l`, `x`) as CoreML models.
 
+- Export Detection Models
+  
    ```python
    from ultralytics import YOLO
 
@@ -36,7 +38,17 @@ If you prefer to use specific model versions or need to customize the models, yo
    for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
        YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
    ```
+   
+- Export Segmentation Models
 
+   ```python
+   from ultralytics import YOLO
+
+   # Export all YOLOv8 models to CoreML INT8
+   for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
+       YOLO(f"yolov8{size}-seg.pt").export(format="coreml", int8=True, imgsz=[640, 384])
+   ```
+   
 3. **Place Models in Project:** After exporting, locate the CoreML model files and place them in the `YOLO/Models` directory of your project.
 
 <p align="center">

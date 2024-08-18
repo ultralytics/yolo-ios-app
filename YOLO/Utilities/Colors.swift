@@ -1,11 +1,3 @@
-//
-//  Colors.swift
-//  YOLO
-//
-//  Created by 間嶋大輔 on 2024/08/18.
-//  Copyright © 2024 Ultralytics. All rights reserved.
-//
-
 import Foundation
 import UIKit
 

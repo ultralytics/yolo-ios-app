@@ -251,8 +251,8 @@ class ViewController: UIViewController {
     self.labelSliderIoU.text = String(iou) + " IoU Threshold"
     detector.featureProvider = ThresholdProvider(iouThreshold: iou, confidenceThreshold: conf)
   }
-
-    @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
+    
+  @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
       self.removeAllMaskSubLayers()
 
       switch sender.selectedSegmentIndex {

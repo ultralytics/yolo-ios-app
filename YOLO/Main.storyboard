@@ -235,6 +235,9 @@
                                     <segment title="Detect"/>
                                     <segment title="Seg"/>
                                 </segments>
+                                <connections>
+                                    <action selector="taskSegmentControlChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="iTM-XR-4Wt"/>
+                                </connections>
                             </segmentedControl>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>

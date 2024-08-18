@@ -703,6 +703,20 @@ class ViewController: UIViewController {
         boundingBoxViews[i].hide()
       }
     }
+
+    // Write
+    if developerMode {
+      if save_detections {
+        saveText(text: str, file: "detections.txt")  // Write stats for each detection
+      }
+      if save_frames {
+        str = String(
+          format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
+          sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
+          self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
+        saveText(text: str, file: "frames.txt")  // Write stats for each image
+      }
+    }
   }
 
   // Pinch to Zoom Start ---------------------------------------------------------------------------------------------

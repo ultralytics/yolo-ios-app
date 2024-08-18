@@ -48,7 +48,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var forcus: UIImageView!
   @IBOutlet weak var toolBar: UIToolbar!
   var maskLayer: CALayer = CALayer()
-    
+
   let selection = UISelectionFeedbackGenerator()
   var detector = try! VNCoreMLModel(for: mlModel)
   var session: AVCaptureSession!
@@ -78,7 +78,7 @@ class ViewController: UIViewController {
     request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
     return request
   }()
-    
+
   var task: Task = .detect
   var colors: [String: UIColor] = [:]
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
@@ -163,83 +163,83 @@ class ViewController: UIViewController {
     /// Switch model
     switch task {
     case .detect:
-    switch segmentedControl.selectedSegmentIndex {
-    case 0:
-      self.labelName.text = "YOLOv8n"
-      mlModel = try! yolov8n(configuration: .init()).model
-    case 1:
-      self.labelName.text = "YOLOv8s"
-      mlModel = try! yolov8s(configuration: .init()).model
-    case 2:
-      self.labelName.text = "YOLOv8m"
-      mlModel = try! yolov8m(configuration: .init()).model
-    case 3:
-      self.labelName.text = "YOLOv8l"
-      mlModel = try! yolov8l(configuration: .init()).model
-    case 4:
-      self.labelName.text = "YOLOv8x"
-      mlModel = try! yolov8x(configuration: .init()).model
-    default:
-      break
-    }
+      switch segmentedControl.selectedSegmentIndex {
+      case 0:
+        self.labelName.text = "YOLOv8n"
+        mlModel = try! yolov8n(configuration: .init()).model
+      case 1:
+        self.labelName.text = "YOLOv8s"
+        mlModel = try! yolov8s(configuration: .init()).model
+      case 2:
+        self.labelName.text = "YOLOv8m"
+        mlModel = try! yolov8m(configuration: .init()).model
+      case 3:
+        self.labelName.text = "YOLOv8l"
+        mlModel = try! yolov8l(configuration: .init()).model
+      case 4:
+        self.labelName.text = "YOLOv8x"
+        mlModel = try! yolov8x(configuration: .init()).model
+      default:
+        break
+      }
     case .seg:
-    switch segmentedControl.selectedSegmentIndex {
-    case 0:
-      self.labelName.text = "YOLOv8n"
-      if #available(iOS 15.0, *) {
-        mlModel = try! yolov8n_seg(configuration: .init()).model
-      } else {
-        // Fallback on earlier versions
+      switch segmentedControl.selectedSegmentIndex {
+      case 0:
+        self.labelName.text = "YOLOv8n"
+        if #available(iOS 15.0, *) {
+          mlModel = try! yolov8n_seg(configuration: .init()).model
+        } else {
+          // Fallback on earlier versions
+        }
+      case 1:
+        self.labelName.text = "YOLOv8s"
+        if #available(iOS 15.0, *) {
+          mlModel = try! yolov8s_seg(configuration: .init()).model
+        } else {
+          // Fallback on earlier versions
+        }
+      case 2:
+        self.labelName.text = "YOLOv8m"
+        if #available(iOS 15.0, *) {
+          mlModel = try! yolov8m_seg(configuration: .init()).model
+        } else {
+          // Fallback on earlier versions
+        }
+      case 3:
+        self.labelName.text = "YOLOv8l"
+        if #available(iOS 15.0, *) {
+          mlModel = try! yolov8l_seg(configuration: .init()).model
+        } else {
+          // Fallback on earlier versions
+        }
+      case 4:
+        self.labelName.text = "YOLOv8x"
+        if #available(iOS 15.0, *) {
+          mlModel = try! yolov8x_seg(configuration: .init()).model
+        } else {
+          // Fallback on earlier versions
+        }
+      default: break
       }
-    case 1:
-      self.labelName.text = "YOLOv8s"
-      if #available(iOS 15.0, *) {
-        mlModel = try! yolov8s_seg(configuration: .init()).model
-      } else {
-        // Fallback on earlier versions
-      }
-    case 2:
-      self.labelName.text = "YOLOv8m"
-      if #available(iOS 15.0, *) {
-        mlModel = try! yolov8m_seg(configuration: .init()).model
-      } else {
-        // Fallback on earlier versions
-      }
-    case 3:
-      self.labelName.text = "YOLOv8l"
-      if #available(iOS 15.0, *) {
-        mlModel = try! yolov8l_seg(configuration: .init()).model
-      } else {
-        // Fallback on earlier versions
-      }
-    case 4:
-      self.labelName.text = "YOLOv8x"
-      if #available(iOS 15.0, *) {
-        mlModel = try! yolov8x_seg(configuration: .init()).model
-      } else {
-        // Fallback on earlier versions
-      }
-    default: break
-    }
 
     }
     DispatchQueue.global(qos: .userInitiated).async { [self] in
 
-    /// VNCoreMLModel
-    detector = try! VNCoreMLModel(for: mlModel)
-    detector.featureProvider = ThresholdProvider()
+      /// VNCoreMLModel
+      detector = try! VNCoreMLModel(for: mlModel)
+      detector.featureProvider = ThresholdProvider()
 
-    /// VNCoreMLRequest
-    let request = VNCoreMLRequest(
-      model: detector,
-      completionHandler: { [weak self] request, error in
-        self?.processObservations(for: request, error: error)
-      })
-    request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
-    visionRequest = request
-    t2 = 0.0  // inference dt smoothed
-    t3 = CACurrentMediaTime()  // FPS start
-    t4 = 0.0  // FPS dt smoothed
+      /// VNCoreMLRequest
+      let request = VNCoreMLRequest(
+        model: detector,
+        completionHandler: { [weak self] request, error in
+          self?.processObservations(for: request, error: error)
+        })
+      request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
+      visionRequest = request
+      t2 = 0.0  // inference dt smoothed
+      t3 = CACurrentMediaTime()  // FPS start
+      t4 = 0.0  // FPS dt smoothed
     }
   }
 
@@ -251,30 +251,30 @@ class ViewController: UIViewController {
     self.labelSliderIoU.text = String(iou) + " IoU Threshold"
     detector.featureProvider = ThresholdProvider(iouThreshold: iou, confidenceThreshold: conf)
   }
-    
-  @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
-      self.removeAllMaskSubLayers()
 
-      switch sender.selectedSegmentIndex {
-      case 0:
-        if self.task != .detect {
-          self.task = .detect
-          self.setModel()
-        }
-      case 1:
-        if self.task != .seg {
-          self.task = .seg
-          for i in 0..<self.boundingBoxViews.count {
-            self.boundingBoxViews[i].hide()
-          }
-          self.setModel()
-        }
-      default:
-        break
+  @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
+    self.removeAllMaskSubLayers()
+
+    switch sender.selectedSegmentIndex {
+    case 0:
+      if self.task != .detect {
+        self.task = .detect
+        self.setModel()
       }
+    case 1:
+      if self.task != .seg {
+        self.task = .seg
+        for i in 0..<self.boundingBoxViews.count {
+          self.boundingBoxViews[i].hide()
+        }
+        self.setModel()
+      }
+    default:
+      break
     }
-    
-    @IBAction func takePhoto(_ sender: Any?) {
+  }
+
+  @IBAction func takePhoto(_ sender: Any?) {
     let t0 = DispatchTime.now().uptimeNanoseconds
 
     // 1. captureSession and cameraOutput
@@ -370,34 +370,34 @@ class ViewController: UIViewController {
     }
 
     // Retrieve class labels directly from the CoreML model's class labels, if available.
-      guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
-        fatalError("Class labels are missing from the model description")
-      }
-      classes = classLabels
+    guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
+      fatalError("Class labels are missing from the model description")
+    }
+    classes = classLabels
 
-      // Assign random colors to the classes.
-      var count = 0
-      for label in classLabels {
-        let color = ultralyticsColorsolors[count]
-        count += 1
-        if count > 19 {
-          count = 0
-        }
-        if colors[label] == nil {  // if key not in dict
-          colors[label] = color
-        }
+    // Assign random colors to the classes.
+    var count = 0
+    for label in classLabels {
+      let color = ultralyticsColorsolors[count]
+      count += 1
+      if count > 19 {
+        count = 0
       }
+      if colors[label] == nil {  // if key not in dict
+        colors[label] = color
+      }
+    }
 
-      count = 0
-      for (key, color) in colors {
-        let color = ultralyticsColorsolors[count]
-        count += 1
-        if count > 19 {
-          count = 0
-        }
-        guard let colorForMask = color.toRGBComponents() else { fatalError() }
-        colorsForMask.append(colorForMask)
+    count = 0
+    for (key, color) in colors {
+      let color = ultralyticsColorsolors[count]
+      count += 1
+      if count > 19 {
+        count = 0
       }
+      guard let colorForMask = color.toRGBComponents() else { fatalError() }
+      colorsForMask.append(colorForMask)
+    }
   }
 
   func startVideo() {
@@ -461,7 +461,7 @@ class ViewController: UIViewController {
         }
         t1 = CACurrentMediaTime() - t0  // inference dt
       }
-        
+
       currentBuffer = nil
     }
   }
@@ -469,37 +469,14 @@ class ViewController: UIViewController {
   func processObservations(for request: VNRequest, error: Error?) {
     switch task {
     case .detect:
-    DispatchQueue.main.async {
-      if let results = request.results as? [VNRecognizedObjectObservation] {
-        self.show(predictions: results, processedBoxAndMasks: [])
-      } else {
-        self.show(predictions: [], processedBoxAndMasks: [])
-      }
-
-      // Measure FPS
-      if self.t1 < 10.0 {  // valid dt
-        self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-      }
-      self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
-      self.t3 = CACurrentMediaTime()
-    }
-    case .seg:
-    if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-      DispatchQueue.main.async { [self] in
-        guard results.count == 2 else { return }
-        let masks = results[0].featureValue.multiArrayValue
-        let pred = results[1].featureValue.multiArrayValue
-        let processed = getBoundingBoxesAndMasks(
-          feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
-
-        self.show(predictions: [], processedBoxAndMasks: processed)
-        DispatchQueue.main.async {
-          let a = Date()
-          self.updateMaskAndBoxes(detectedObjects: processed, maskArray: masks!)
-          print(Date().timeIntervalSince(a))
+      DispatchQueue.main.async {
+        if let results = request.results as? [VNRecognizedObjectObservation] {
+          self.show(predictions: results, processedBoxAndMasks: [])
+        } else {
+          self.show(predictions: [], processedBoxAndMasks: [])
         }
 
+        // Measure FPS
         if self.t1 < 10.0 {  // valid dt
           self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
         }
@@ -507,7 +484,30 @@ class ViewController: UIViewController {
         self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
         self.t3 = CACurrentMediaTime()
       }
-    }
+    case .seg:
+      if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+        DispatchQueue.main.async { [self] in
+          guard results.count == 2 else { return }
+          let masks = results[0].featureValue.multiArrayValue
+          let pred = results[1].featureValue.multiArrayValue
+          let processed = getBoundingBoxesAndMasks(
+            feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
+
+          self.show(predictions: [], processedBoxAndMasks: processed)
+          DispatchQueue.main.async {
+            let a = Date()
+            self.updateMaskAndBoxes(detectedObjects: processed, maskArray: masks!)
+            print(Date().timeIntervalSince(a))
+          }
+
+          if self.t1 < 10.0 {  // valid dt
+            self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+          }
+          self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+          self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
+          self.t3 = CACurrentMediaTime()
+        }
+      }
     }
 
   }
@@ -598,7 +598,7 @@ class ViewController: UIViewController {
     let seconds = calendar.component(.second, from: date)
     let nanoseconds = calendar.component(.nanosecond, from: date)
     let sec_day =
-        Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9
+      Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9
 
     var resultCount = 0
 
@@ -629,7 +629,8 @@ class ViewController: UIViewController {
         case .seg:
           let processed = processedBoxAndMasks[i]
           let box = processed.0
-          rect = CGRect(x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+          rect = CGRect(
+            x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
           confidence = CGFloat(processed.2)
           bestClass = classes[processed.1]
           label = String(format: "%@ %.1f", bestClass, confidence * 100)

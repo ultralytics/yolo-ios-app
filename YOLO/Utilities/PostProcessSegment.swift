@@ -157,7 +157,7 @@ extension ViewController {
       self.removeAllMaskSubLayers()
       newLayers.forEach { self.maskLayer.addSublayer($0) }
 
-//      print("Processing Time: \(Date().timeIntervalSince(startTime)) seconds")
+      //      print("Processing Time: \(Date().timeIntervalSince(startTime)) seconds")
     }
   }
 

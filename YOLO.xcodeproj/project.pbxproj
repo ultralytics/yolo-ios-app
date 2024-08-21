@@ -231,23 +231,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6381D21C2B7817C200ABA4E8 /* yolov8n.mlpackage in Sources */,
+				6381D21A2B7817C200ABA4E8 /* yolov8s.mlpackage in Sources */,
 				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
-				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
+				6381D2182B7817C200ABA4E8 /* yolov8l.mlpackage in Sources */,
+				6381D2192B7817C200ABA4E8 /* yolov8x.mlpackage in Sources */,
+				733310CE2C71BEB0001D647B /* yolov8n-seg.mlpackage in Sources */,
+				733310D02C71BEB0001D647B /* yolov8s-seg.mlpackage in Sources */,
 				733310CF2C71BEB0001D647B /* yolov8m-seg.mlpackage in Sources */,
 				733310D12C71BEB0001D647B /* yolov8l-seg.mlpackage in Sources */,
-				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
-				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
-				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
+				733310CD2C71BEB0001D647B /* yolov8x-seg.mlpackage in Sources */,
 				733310D52C71C5CE001D647B /* PostProcessSegment.swift in Sources */,
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
-				733310D02C71BEB0001D647B /* yolov8s-seg.mlpackage in Sources */,
 				733310D42C71C5CE001D647B /* Colors.swift in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
-				733310CD2C71BEB0001D647B /* yolov8x-seg.mlpackage in Sources */,
 				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
-				733310CE2C71BEB0001D647B /* yolov8n-seg.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

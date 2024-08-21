@@ -27,7 +27,7 @@ If you prefer to use specific model versions or need to customize the models, yo
    pip install ultralytics
    ```
 
-2. **Export Models:** Use the following Python script to export YOLOv8 models to the CoreML format, optimized for INT8 quantization for better performance on iOS devices. The script exports all YOLOv8 model sizes (`n`, `s`, `m`, `l`, `x`) as CoreML models.
+2. **Export Models:** Use the following Python script to export YOLOv8 models to the CoreML format, optimized for INT8 quantization for better performance on iOS devices. The script exports all YOLOv8 model sizes (n, s, m, l, x) as CoreML models for both instance segmentation and object detection.
 
 ```python
 from ultralytics import YOLO

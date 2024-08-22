@@ -16,7 +16,7 @@
 	    6381D2182B7817C200ABA4E8 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2132B7817C200ABA4E8 /* yolov8l.mlpackage */; };
 	    6381D2192B7817C200ABA4E8 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2142B7817C200ABA4E8 /* yolov8x.mlpackage */; };
 	    6381D21A2B7817C200ABA4E8 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2152B7817C200ABA4E8 /* yolov8s.mlpackage */; };
-	        6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2162B7817C200ABA4E8 /* yolov8m.mlpackage */; };
+	    6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2162B7817C200ABA4E8 /* yolov8m.mlpackage */; };
 	        6381D21C2B7817C200ABA4E8 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2172B7817C200ABA4E8 /* yolov8n.mlpackage */; };
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };

@@ -103,7 +103,6 @@ public class VideoCapture: NSObject {
     default:
       videoOutput.connection(with: .video)?.videoOrientation = .portrait
     }
-  }
 
     if let connection = videoOutput.connection(with: .video) {
       self.previewLayer?.connection?.videoOrientation = connection.videoOrientation

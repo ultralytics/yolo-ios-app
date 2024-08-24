@@ -395,8 +395,6 @@ class ViewController: UIViewController {
         for box in self.boundingBoxViews {
           box.addToLayer(self.videoPreview.layer)
         }
-        t1 = CACurrentMediaTime() - t0  // inference dt
-      }
 
         // Once everything is set up, we can start capturing live video.
         self.videoCapture.start()
@@ -524,7 +522,6 @@ class ViewController: UIViewController {
       // Reading
       // do {let text2 = try String(contentsOf: fileURL, encoding: .utf8)} catch {/* error handling here */}
     }
-
   }
 
   // Save image file

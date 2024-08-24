@@ -3,7 +3,43 @@ import Foundation
 import UIKit
 
 @available(iOS 15.0, *)
+
 extension ViewController {
+
+  func setupMaskLayer() {
+    let width = videoPreview.bounds.width
+    let height = videoPreview.bounds.height
+
+    var ratio: CGFloat = 1.0
+    if videoCapture.captureSession.sessionPreset == .photo {
+      ratio = (4.0 / 3.0)
+    } else {
+      ratio = (16.0 / 9.0)
+    }
+    
+    var offSet = CGFloat.zero
+    var margin = CGFloat.zero
+    if view.bounds.width < view.bounds.height {
+      offSet = height / ratio
+      margin = (offSet - self.videoPreview.bounds.width) / 2
+      self.maskLayer.frame = CGRect(
+        x: -margin, y: 0, width: offSet, height: self.videoPreview.bounds.height)
+    } else {
+      offSet = width / ratio
+      margin = (offSet - self.videoPreview.bounds.height) / 2
+      self.maskLayer.frame = CGRect(
+        x: 0, y: -margin, width: self.videoPreview.bounds.width, height: offSet)
+    }
+    
+  }
+
+  func removeAllMaskSubLayers() {
+    self.maskLayer.sublayers?.forEach { layer in
+      layer.removeFromSuperlayer()
+    }
+    self.maskLayer.sublayers = nil
+  }
+
   func PostProcessPose(prediction: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float)
     -> [(CGRect, Float, [Float])]
   {
@@ -174,4 +210,33 @@ extension ViewController {
     layer.addSublayer(lineLayer)
   }
 
+}
+
+func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float) -> [Int] {
+  let sortedIndices = scores.enumerated().sorted { $0.element > $1.element }.map { $0.offset }
+  var selectedIndices = [Int]()
+  var activeIndices = [Bool](repeating: true, count: boxes.count)
+
+  for i in 0..<sortedIndices.count {
+    let idx = sortedIndices[i]
+    if activeIndices[idx] {
+      selectedIndices.append(idx)
+      for j in i + 1..<sortedIndices.count {
+        let otherIdx = sortedIndices[j]
+        if activeIndices[otherIdx] {
+          let intersection = boxes[idx].intersection(boxes[otherIdx])
+          if intersection.area > CGFloat(threshold) * min(boxes[idx].area, boxes[otherIdx].area) {
+            activeIndices[otherIdx] = false
+          }
+        }
+      }
+    }
+  }
+  return selectedIndices
+}
+
+extension CGRect {
+  var area: CGFloat {
+    return width * height
+  }
 }

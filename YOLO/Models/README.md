@@ -35,6 +35,7 @@ If you prefer to use specific model versions or need to customize the models, yo
    # Export all YOLOv8 models to CoreML INT8
    for size in ("n", "s", "m", "l", "x"):  # all YOLOv8 model sizes
        YOLO(f"yolov8{size}.pt").export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+       YOLO(f"yolov8{size}-pose.pt").export(format="coreml", int8=True, imgsz=[640, 384])
    ```
 
 3. **Place Models in Project:** After exporting, locate the CoreML model files and place them in the `YOLO/Models` directory of your project.

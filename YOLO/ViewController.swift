@@ -316,7 +316,7 @@ class ViewController: UIViewController {
     guard let videoInput1 = try? AVCaptureDeviceInput(device: device) else {
       return
     }
-
+    
     self.videoCapture.captureSession.addInput(videoInput1)
     self.videoCapture.captureSession.commitConfiguration()
   }
@@ -395,6 +395,8 @@ class ViewController: UIViewController {
         for box in self.boundingBoxViews {
           box.addToLayer(self.videoPreview.layer)
         }
+        t1 = CACurrentMediaTime() - t0  // inference dt
+      }
 
         // Once everything is set up, we can start capturing live video.
         self.videoCapture.start()
@@ -522,6 +524,7 @@ class ViewController: UIViewController {
       // Reading
       // do {let text2 = try String(contentsOf: fileURL, encoding: .utf8)} catch {/* error handling here */}
     }
+
   }
 
   // Save image file
@@ -564,6 +567,7 @@ class ViewController: UIViewController {
   }
 
   func show(predictions: [VNRecognizedObjectObservation], predsPose: [(CGRect, Float, [Float])]) {
+
     let width = videoPreview.bounds.width  // 375 pix
     let height = videoPreview.bounds.height  // 812 pix
     var str = ""
@@ -686,14 +690,23 @@ class ViewController: UIViewController {
           frame: displayRect, label: label, color: boxColor, alpha: alpha)
 
         if developerMode {
+          // Write
           if save_detections {
             str += String(
               format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
               sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
               rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
           }
-        }
 
+          // Action trigger upon detection
+          // if false {
+          //     if (bestClass == "car") {  // "cell phone", "car", "person"
+          //         self.takePhoto(nil)
+          //         // self.pauseButton(nil)
+          //         sleep(2)
+          //     }
+          // }
+        }
       } else {
         boundingBoxViews[i].hide()
       }

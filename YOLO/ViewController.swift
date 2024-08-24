@@ -316,7 +316,7 @@ class ViewController: UIViewController {
     guard let videoInput1 = try? AVCaptureDeviceInput(device: device) else {
       return
     }
-    
+
     self.videoCapture.captureSession.addInput(videoInput1)
     self.videoCapture.captureSession.commitConfiguration()
   }

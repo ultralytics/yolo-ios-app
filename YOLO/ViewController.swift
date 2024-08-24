@@ -79,7 +79,7 @@ class ViewController: UIViewController {
     case detect
     case pose
   }
-  
+
   var task: Task = .detect
   var confidenceThreshold: Float = 0.25
   var iouThreshold: Float = 0.4
@@ -127,12 +127,12 @@ class ViewController: UIViewController {
     }
     self.videoCapture.previewLayer?.frame = CGRect(
       x: 0, y: 0, width: size.width, height: size.height)
-      coordinator.animate(
-        alongsideTransition: { context in
-        },
-        completion: { context in
-          self.setupMaskLayer()
-        })
+    coordinator.animate(
+      alongsideTransition: { context in
+      },
+      completion: { context in
+        self.setupMaskLayer()
+      })
   }
 
   private func setUpOrientationChangeNotification() {
@@ -158,7 +158,7 @@ class ViewController: UIViewController {
   }
 
   func setModel() {
-      /// Switch model
+    /// Switch model
     switch task {
     case .detect:
       switch segmentedControl.selectedSegmentIndex {
@@ -180,7 +180,7 @@ class ViewController: UIViewController {
       default:
         break
       }
-      
+
     case .pose:
       switch segmentedControl.selectedSegmentIndex {
       case 0:
@@ -189,7 +189,7 @@ class ViewController: UIViewController {
       case 1:
         self.labelName.text = "YOLOv8s"
         mlModel = try! yolov8s_pose(configuration: .init()).model
-        
+
       case 2:
         self.labelName.text = "YOLOv8m"
         mlModel = try! yolov8m_pose(configuration: .init()).model
@@ -215,7 +215,7 @@ class ViewController: UIViewController {
         model: detector,
         completionHandler: { [weak self] request, error in
           self?.processObservations(for: request, error: error)
-      })
+        })
       request.imageCropAndScaleOption = .scaleFill  // .scaleFit, .scaleFill, .centerCrop
       visionRequest = request
       t2 = 0.0  // inference dt smoothed
@@ -233,30 +233,30 @@ class ViewController: UIViewController {
     detector.featureProvider = ThresholdProvider(iouThreshold: iou, confidenceThreshold: conf)
   }
 
-    @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
-      self.removeAllMaskSubLayers()
+  @IBAction func taskSegmentControlChanged(_ sender: UISegmentedControl) {
+    self.removeAllMaskSubLayers()
 
-      switch sender.selectedSegmentIndex {
-      case 0:
-        if self.task != .detect {
-          self.task = .detect
-          self.setModel()
-        }
-      case 1:
-        if self.task != .pose {
-          self.task = .pose
-          for i in 0..<self.boundingBoxViews.count {
-            self.boundingBoxViews[i].hide()
-          }
-          self.setModel()
-        }
-      default:
-        break
+    switch sender.selectedSegmentIndex {
+    case 0:
+      if self.task != .detect {
+        self.task = .detect
+        self.setModel()
       }
-        
+    case 1:
+      if self.task != .pose {
+        self.task = .pose
+        for i in 0..<self.boundingBoxViews.count {
+          self.boundingBoxViews[i].hide()
+        }
+        self.setModel()
+      }
+    default:
+      break
     }
-    
-    @IBAction func takePhoto(_ sender: Any?) {
+
+  }
+
+  @IBAction func takePhoto(_ sender: Any?) {
     let t0 = DispatchTime.now().uptimeNanoseconds
 
     // 1. captureSession and cameraOutput
@@ -356,10 +356,10 @@ class ViewController: UIViewController {
     // Retrieve class labels directly from the CoreML model's class labels, if available.
     if task == .detect {
       guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
-          fatalError("Class labels are missing from the model description")
+        fatalError("Class labels are missing from the model description")
       }
       classes = classLabels
-        // Assign random colors to the classes.
+      // Assign random colors to the classes.
       var count = 0
       for label in classLabels {
         let color = ultralyticsColorsolors[count]
@@ -387,7 +387,7 @@ class ViewController: UIViewController {
           self.videoPreview.layer.addSublayer(previewLayer)
           self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
         }
-        
+
         self.setupMaskLayer()
         self.videoPreview.layer.addSublayer(self.maskLayer)
 
@@ -461,7 +461,7 @@ class ViewController: UIViewController {
         self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", 1 / self.t4, self.t2 * 1000)  // t2 seconds to ms
         self.t3 = CACurrentMediaTime()
       }
-        
+
     case .pose:
       if let results = request.results as? [VNCoreMLFeatureValueObservation] {
         DispatchQueue.main.async { [self] in
@@ -589,10 +589,10 @@ class ViewController: UIViewController {
     var resultCount = 0
 
     switch task {
-      case .detect:
-        resultCount = predictions.count
-      case .pose:
-        resultCount = predsPose.count
+    case .detect:
+      resultCount = predictions.count
+    case .pose:
+      resultCount = predsPose.count
     }
 
     self.labelSlider.text =
@@ -620,40 +620,40 @@ class ViewController: UIViewController {
           let box = predPose.0
           let conf = predPose.1
           rect = CGRect(
-              x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+            x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
           bestClass = "person"
           confidence = CGFloat(conf)
           label = String(format: "%@ %.1f", bestClass, confidence * 100)
           boxColor = ultralyticsColorsolors[0]
           alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
         }
-        
+
         var displayRect = rect
         switch UIDevice.current.orientation {
         case .portraitUpsideDown:
           displayRect = CGRect(
-              x: 1.0 - rect.origin.x - rect.width,
-              y: 1.0 - rect.origin.y - rect.height,
-              width: rect.width,
-              height: rect.height)
+            x: 1.0 - rect.origin.x - rect.width,
+            y: 1.0 - rect.origin.y - rect.height,
+            width: rect.width,
+            height: rect.height)
         case .landscapeLeft:
           displayRect = CGRect(
-              x: rect.origin.x,
-              y: rect.origin.y,
-              width: rect.width,
-              height: rect.height)
+            x: rect.origin.x,
+            y: rect.origin.y,
+            width: rect.width,
+            height: rect.height)
         case .landscapeRight:
           displayRect = CGRect(
-              x: rect.origin.x,
-              y: rect.origin.y,
-              width: rect.width,
-              height: rect.height)
+            x: rect.origin.x,
+            y: rect.origin.y,
+            width: rect.width,
+            height: rect.height)
         case .unknown:
           print("The device orientation is unknown, the predictions may be affected")
           fallthrough
         default: break
         }
-        
+
         if ratio >= 1 {
           let offset = (1 - ratio) * (0.5 - displayRect.minX)
           if task == .detect {
@@ -663,7 +663,7 @@ class ViewController: UIViewController {
             let transform = CGAffineTransform(translationX: offset, y: 0)
             displayRect = displayRect.applying(transform)
           }
-          
+
           displayRect.size.width *= ratio
         } else {
           if task == .detect {
@@ -671,34 +671,33 @@ class ViewController: UIViewController {
 
             let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
             displayRect = displayRect.applying(transform)
-         } else {
+          } else {
             let offset = (ratio - 1) * (0.5 - displayRect.minY)
             let transform = CGAffineTransform(translationX: 0, y: offset)
             displayRect = displayRect.applying(transform)
-        }
+          }
           ratio = (height / width) / (3.0 / 4.0)
           displayRect.size.height /= ratio
         }
-          
+
         displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
 
         boundingBoxViews[i].show(
-            frame: displayRect, label: label, color: boxColor, alpha: alpha)
+          frame: displayRect, label: label, color: boxColor, alpha: alpha)
 
         if developerMode {
           if save_detections {
             str += String(
-                format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
-                sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
-                rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+              format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
+              sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
+              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
           }
         }
 
-        } else {
-          boundingBoxViews[i].hide()
+      } else {
+        boundingBoxViews[i].hide()
       }
     }
-  
 
     // Write
     if developerMode {

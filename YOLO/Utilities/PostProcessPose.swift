@@ -16,7 +16,7 @@ extension ViewController {
     } else {
       ratio = (16.0 / 9.0)
     }
-    
+
     var offSet = CGFloat.zero
     var margin = CGFloat.zero
     if view.bounds.width < view.bounds.height {
@@ -30,7 +30,7 @@ extension ViewController {
       self.maskLayer.frame = CGRect(
         x: 0, y: -margin, width: self.videoPreview.bounds.width, height: offSet)
     }
-    
+
   }
 
   func removeAllMaskSubLayers() {

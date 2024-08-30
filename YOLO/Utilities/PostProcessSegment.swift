@@ -46,7 +46,7 @@ extension ViewController {
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
-    var results = [(CGRect, Float, Int, MLMultiArray)]()
+    var results = [(CGRect, Int, Float, MLMultiArray)]()
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
 
     let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
@@ -83,7 +83,7 @@ extension ViewController {
           maskProbs[i] = NSNumber(value: maskProbsPointer[i * numAnchors])
         }
 
-        let result = (boundingBox, maxClassValue, Int(maxClassIndex), maskProbs)
+        let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
 
         // Using resultsQueue to synchronize access to results
         resultsQueue.async(flags: .barrier) {
@@ -99,15 +99,15 @@ extension ViewController {
 
     // Perform NMS class by class
     for classIndex in 0..<numClasses {
-      let classResults = results.filter { $0.2 == classIndex }
+      let classResults = results.filter { $0.1 == classIndex }
       if !classResults.isEmpty {
         let boxesOnly = classResults.map { $0.0 }
-        let scoresOnly = classResults.map { $0.1 }
+        let scoresOnly = classResults.map { $0.2 }
         let selectedIndices = nonMaxSuppression(
           boxes: boxesOnly, scores: scoresOnly, threshold: iouThreshold)
         for idx in selectedIndices {
           selectedBoxesAndFeatures.append(
-            (classResults[idx].0, classResults[idx].2, classResults[idx].1, classResults[idx].3))
+            (classResults[idx].0, classResults[idx].1, classResults[idx].2, classResults[idx].3))
         }
       }
     }

@@ -1,3 +1,8 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  PostProcessSegment for Ultralytics YOLO App
+// These functions are designed to post-process inference results from the YOLOv8-Pose model in the Ultralytics YOLO app to display a Pose skeleton.
+
 import CoreML
 import Foundation
 import UIKit
@@ -6,7 +11,7 @@ import UIKit
 
 extension ViewController {
 
-  func setupMaskLayer() {
+  func setupOverlayLayer() {
     let width = videoPreview.bounds.width
     let height = videoPreview.bounds.height
 
@@ -22,22 +27,22 @@ extension ViewController {
     if view.bounds.width < view.bounds.height {
       offSet = height / ratio
       margin = (offSet - self.videoPreview.bounds.width) / 2
-      self.maskLayer.frame = CGRect(
+      self.overlayLayer.frame = CGRect(
         x: -margin, y: 0, width: offSet, height: self.videoPreview.bounds.height)
     } else {
       offSet = width / ratio
       margin = (offSet - self.videoPreview.bounds.height) / 2
-      self.maskLayer.frame = CGRect(
+      self.overlayLayer.frame = CGRect(
         x: 0, y: -margin, width: self.videoPreview.bounds.width, height: offSet)
     }
 
   }
 
   func removeAllMaskSubLayers() {
-    self.maskLayer.sublayers?.forEach { layer in
+    self.overlayLayer.sublayers?.forEach { layer in
       layer.removeFromSuperlayer()
     }
-    self.maskLayer.sublayers = nil
+    self.overlayLayer.sublayers = nil
   }
 
   func PostProcessPose(prediction: MLMultiArray, confidenceThreshold: Float, iouThreshold: Float)

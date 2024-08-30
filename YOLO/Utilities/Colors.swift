@@ -1,6 +1,8 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  Colors.swift
-//  YOLO
+//  Colors for Ultralytics YOLO App
+
+// These colors are set to use the same Ultralytics color palette as the Python version.
 
 import Foundation
 import UIKit

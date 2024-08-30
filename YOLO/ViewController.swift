@@ -43,7 +43,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var forcus: UIImageView!
   @IBOutlet weak var toolBar: UIToolbar!
-  var maskLayer: CALayer = CALayer()
+  var overlayLayer: CALayer = CALayer()
 
   let selection = UISelectionFeedbackGenerator()
   var detector = try! VNCoreMLModel(for: mlModel)
@@ -131,7 +131,7 @@ class ViewController: UIViewController {
       alongsideTransition: { context in
       },
       completion: { context in
-        self.setupMaskLayer()
+        self.setupOverlayLayer()
       })
   }
 
@@ -388,8 +388,8 @@ class ViewController: UIViewController {
           self.videoCapture.previewLayer?.frame = self.videoPreview.bounds  // resize preview layer
         }
 
-        self.setupMaskLayer()
-        self.videoPreview.layer.addSublayer(self.maskLayer)
+        self.setupOverlayLayer()
+        self.videoPreview.layer.addSublayer(self.overlayLayer)
 
         // Add the bounding box layers to the UI, on top of the video preview.
         for box in self.boundingBoxViews {
@@ -479,11 +479,11 @@ class ViewController: UIViewController {
               kpts.append(pred.2)
             }
             self.show(predictions: [], predsPose: preds)
-            self.maskLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+            self.overlayLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
 
             self.drawKeypoints(
-              keypointsList: kpts, boundingBoxes: boxes, on: maskLayer,
-              imageViewSize: maskLayer.bounds.size, originalImageSize: maskLayer.bounds.size)
+              keypointsList: kpts, boundingBoxes: boxes, on: overlayLayer,
+              imageViewSize: overlayLayer.bounds.size, originalImageSize: overlayLayer.bounds.size)
 
           } else {
             self.show(predictions: [], predsPose: [])

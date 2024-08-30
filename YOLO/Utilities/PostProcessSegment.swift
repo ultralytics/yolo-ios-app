@@ -4,9 +4,10 @@
 
 // These functions are designed to post-process inference results from the YOLOv8-Segment model in the Ultralytics YOLO app to display segment masks.
 
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+
 import Accelerate
 import MetalPerformanceShaders
-//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 import UIKit
 import Vision
 

@@ -1,6 +1,6 @@
 //  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  PostProcessSegment for Ultralytics YOLO App
+//  PostProcessPose for Ultralytics YOLO App
 // These functions are designed to post-process inference results from the YOLOv8-Pose model in the Ultralytics YOLO app to display a Pose skeleton.
 
 import CoreML

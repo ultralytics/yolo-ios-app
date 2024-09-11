@@ -13,16 +13,24 @@
 		636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFCA221E62DD300DE43BC /* VideoCapture.swift */; };
 		636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFCA721E62DD300DE43BC /* AppDelegate.swift */; };
 		636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 636EFCB821E62E3900DE43BC /* Assets.xcassets */; };
-		6381D2182B7817C200ABA4E8 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2132B7817C200ABA4E8 /* yolov8l.mlpackage */; };
-		6381D2192B7817C200ABA4E8 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2142B7817C200ABA4E8 /* yolov8x.mlpackage */; };
-		6381D21A2B7817C200ABA4E8 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2152B7817C200ABA4E8 /* yolov8s.mlpackage */; };
-		6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2162B7817C200ABA4E8 /* yolov8m.mlpackage */; };
-		6381D21C2B7817C200ABA4E8 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 6381D2172B7817C200ABA4E8 /* yolov8n.mlpackage */; };
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
+		7333105F2C69CE95001D647B /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333105E2C69CE95001D647B /* Colors.swift */; };
+		737FDB332C7A6D19009A6696 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB292C7A6D0A009A6696 /* yolov8s.mlpackage */; };
+		737FDB342C7A6D19009A6696 /* yolov8x-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2A2C7A6D0D009A6696 /* yolov8x-pose.mlpackage */; };
+		737FDB352C7A6D19009A6696 /* yolov8l-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2B2C7A6D0F009A6696 /* yolov8l-pose.mlpackage */; };
+		737FDB362C7A6D19009A6696 /* yolov8m-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2C2C7A6D11009A6696 /* yolov8m-pose.mlpackage */; };
+		737FDB372C7A6D19009A6696 /* yolov8s-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2D2C7A6D12009A6696 /* yolov8s-pose.mlpackage */; };
+		737FDB382C7A6D19009A6696 /* yolov8n-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2E2C7A6D12009A6696 /* yolov8n-pose.mlpackage */; };
+		737FDB392C7A6D19009A6696 /* yolov8m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB2F2C7A6D13009A6696 /* yolov8m.mlpackage */; };
+		737FDB3A2C7A6D19009A6696 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB302C7A6D17009A6696 /* yolov8x.mlpackage */; };
+		737FDB3B2C7A6D19009A6696 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB312C7A6D17009A6696 /* yolov8n.mlpackage */; };
+		737FDB3C2C7A6D19009A6696 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 737FDB322C7A6D19009A6696 /* yolov8l.mlpackage */; };
+		73B6CD452C5DA43E008A9CEC /* PostProcessPose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B6CD442C5DA43E008A9CEC /* PostProcessPose.swift */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		6323C44D22186177008AE681 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6323C44F22186177008AE681 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
@@ -34,12 +42,19 @@
 		636EFCA221E62DD300DE43BC /* VideoCapture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6381D2132B7817C200ABA4E8 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
-		6381D2142B7817C200ABA4E8 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
-		6381D2152B7817C200ABA4E8 /* yolov8s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8s.mlpackage; sourceTree = "<group>"; };
-		6381D2162B7817C200ABA4E8 /* yolov8m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8m.mlpackage; sourceTree = "<group>"; };
-		6381D2172B7817C200ABA4E8 /* yolov8n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8n.mlpackage; sourceTree = "<group>"; };
 		63B8B0A821E62A890026FBC3 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		7333105E2C69CE95001D647B /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		737FDB292C7A6D0A009A6696 /* yolov8s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8s.mlpackage; sourceTree = "<group>"; };
+		737FDB2A2C7A6D0D009A6696 /* yolov8x-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-pose.mlpackage"; sourceTree = "<group>"; };
+		737FDB2B2C7A6D0F009A6696 /* yolov8l-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8l-pose.mlpackage"; sourceTree = "<group>"; };
+		737FDB2C2C7A6D11009A6696 /* yolov8m-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8m-pose.mlpackage"; sourceTree = "<group>"; };
+		737FDB2D2C7A6D12009A6696 /* yolov8s-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8s-pose.mlpackage"; sourceTree = "<group>"; };
+		737FDB2E2C7A6D12009A6696 /* yolov8n-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8n-pose.mlpackage"; sourceTree = "<group>"; };
+		737FDB2F2C7A6D13009A6696 /* yolov8m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8m.mlpackage; sourceTree = "<group>"; };
+		737FDB302C7A6D17009A6696 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
+		737FDB312C7A6D17009A6696 /* yolov8n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8n.mlpackage; sourceTree = "<group>"; };
+		737FDB322C7A6D19009A6696 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
+		73B6CD442C5DA43E008A9CEC /* PostProcessPose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostProcessPose.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
 		8EDAAA4507D2D23D7FAB827F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -61,6 +76,8 @@
 			children = (
 				636166E9251443B20054FA7E /* ThresholdProvider.swift */,
 				8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */,
+				73B6CD442C5DA43E008A9CEC /* PostProcessPose.swift */,
+				7333105E2C69CE95001D647B /* Colors.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -86,11 +103,16 @@
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				6381D2132B7817C200ABA4E8 /* yolov8l.mlpackage */,
-				6381D2162B7817C200ABA4E8 /* yolov8m.mlpackage */,
-				6381D2172B7817C200ABA4E8 /* yolov8n.mlpackage */,
-				6381D2152B7817C200ABA4E8 /* yolov8s.mlpackage */,
-				6381D2142B7817C200ABA4E8 /* yolov8x.mlpackage */,
+				737FDB2B2C7A6D0F009A6696 /* yolov8l-pose.mlpackage */,
+				737FDB322C7A6D19009A6696 /* yolov8l.mlpackage */,
+				737FDB2C2C7A6D11009A6696 /* yolov8m-pose.mlpackage */,
+				737FDB2F2C7A6D13009A6696 /* yolov8m.mlpackage */,
+				737FDB2E2C7A6D12009A6696 /* yolov8n-pose.mlpackage */,
+				737FDB312C7A6D17009A6696 /* yolov8n.mlpackage */,
+				737FDB2D2C7A6D12009A6696 /* yolov8s-pose.mlpackage */,
+				737FDB292C7A6D0A009A6696 /* yolov8s.mlpackage */,
+				737FDB2A2C7A6D0D009A6696 /* yolov8x-pose.mlpackage */,
+				737FDB302C7A6D17009A6696 /* yolov8x.mlpackage */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -209,16 +231,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6381D21B2B7817C200ABA4E8 /* yolov8m.mlpackage in Sources */,
-				6381D21C2B7817C200ABA4E8 /* yolov8n.mlpackage in Sources */,
+				737FDB352C7A6D19009A6696 /* yolov8l-pose.mlpackage in Sources */,
+				737FDB332C7A6D19009A6696 /* yolov8s.mlpackage in Sources */,
+				73B6CD452C5DA43E008A9CEC /* PostProcessPose.swift in Sources */,
+				737FDB3C2C7A6D19009A6696 /* yolov8l.mlpackage in Sources */,
+				737FDB3B2C7A6D19009A6696 /* yolov8n.mlpackage in Sources */,
+				737FDB342C7A6D19009A6696 /* yolov8x-pose.mlpackage in Sources */,
+				7333105F2C69CE95001D647B /* Colors.swift in Sources */,
+				737FDB372C7A6D19009A6696 /* yolov8s-pose.mlpackage in Sources */,
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
+				737FDB382C7A6D19009A6696 /* yolov8n-pose.mlpackage in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
-				6381D2182B7817C200ABA4E8 /* yolov8l.mlpackage in Sources */,
-				6381D21A2B7817C200ABA4E8 /* yolov8s.mlpackage in Sources */,
-				6381D2192B7817C200ABA4E8 /* yolov8x.mlpackage in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
+				737FDB392C7A6D19009A6696 /* yolov8m.mlpackage in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
+				737FDB362C7A6D19009A6696 /* yolov8m-pose.mlpackage in Sources */,
 				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
+				737FDB3A2C7A6D19009A6696 /* yolov8x.mlpackage in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,7 +378,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
@@ -359,7 +388,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.2.0;
+				MARKETING_VERSION = 8.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -377,7 +406,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLO/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
@@ -387,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.2.0;
+				MARKETING_VERSION = 8.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

@@ -520,8 +520,29 @@ class ViewController: UIViewController {
         }
 
         // Scale normalized to pixels [375, 812] [width, height]
+          // Scale normalized to pixels [375, 812] [width, height]
         rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
 
+
+          // Adjust bounding box for aspect ratio differences
+          let previewAspectRatio = width / height  // video previewのアスペクト比
+          let inputAspectRatio: CGFloat = 16.0 / 9.0  // カメラのアスペクト比
+
+          if previewAspectRatio > inputAspectRatio {
+              // 横に余白がある場合 (pillarboxing)
+              let scaleFactor = height / (width / inputAspectRatio)
+              rect.origin.y *= scaleFactor
+              rect.size.height *= scaleFactor
+          } else {
+              // 縦に余白がある場合 (letterboxing)
+              let scaleFactor = width / (height * inputAspectRatio)
+              rect.origin.x *= scaleFactor
+              rect.size.width *= scaleFactor
+
+              // 縦方向の余白（上下にズレる原因）の補正
+              let verticalPadding = (height - (width / inputAspectRatio)) / 2
+              rect.origin.y += verticalPadding
+          }
         // The labels array is a list of VNClassificationObservation objects,
         // with the highest scoring class first in the list.
         let bestClass = prediction.labels[0].identifier

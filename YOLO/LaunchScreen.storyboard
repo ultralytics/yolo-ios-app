@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="retina5_9" orientation="portrait" appearance="light"/>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina5_9" orientation="landscape" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -16,23 +16,40 @@
                         <viewControllerLayoutGuide type="bottom" id="xb3-aO-Qok"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleAspectFit" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                        <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="ultralytics_yolo_logotype.png" translatesAutoresizingMaskIntoConstraints="NO" id="CPK-0W-BZj">
-                                <rect key="frame" x="19" y="156" width="336" height="500"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
-                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="wf7-MX-LKd">
+                                <rect key="frame" x="72.666666666666686" y="0.0" width="666.66666666666652" height="375"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ultralytics_yolo_logotype.png" translatesAutoresizingMaskIntoConstraints="NO" id="CPK-0W-BZj">
+                                        <rect key="frame" x="0.0" y="-10" width="666" height="395"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </imageView>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="CPK-0W-BZj" firstAttribute="centerY" secondItem="wf7-MX-LKd" secondAttribute="centerY" id="3TO-rW-T1G"/>
+                                    <constraint firstAttribute="width" secondItem="wf7-MX-LKd" secondAttribute="height" multiplier="16:9" id="RGH-xq-XLE"/>
+                                    <constraint firstAttribute="trailing" secondItem="CPK-0W-BZj" secondAttribute="trailing" id="YUJ-Vc-8oV"/>
+                                    <constraint firstItem="CPK-0W-BZj" firstAttribute="leading" secondItem="wf7-MX-LKd" secondAttribute="leading" id="bUU-au-FNl"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstAttribute="bottom" secondItem="wf7-MX-LKd" secondAttribute="bottom" id="Nfe-YB-AJa"/>
+                            <constraint firstItem="wf7-MX-LKd" firstAttribute="top" secondItem="Llm-lL-Icb" secondAttribute="bottom" id="Y6g-PE-YUj"/>
+                            <constraint firstItem="wf7-MX-LKd" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="jU3-xH-w3x"/>
+                        </constraints>
                     </view>
                     <toolbarItems/>
                     <nil key="simulatedBottomBarMetrics"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="50.399999999999999" y="373.89162561576359"/>
+            <point key="canvasLocation" x="50.246305418719217" y="373.60000000000002"/>
         </scene>
     </scenes>
     <resources>

@@ -16,11 +16,6 @@
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
-		731B24732CA53AE8005527C9 /* yolov8s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 731B24712CA53AE8005527C9 /* yolov8s.mlpackage */; };
-		731B24742CA53AE8005527C9 /* yolov8m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 731B246F2CA53AE8005527C9 /* yolov8m.mlpackage */; };
-		731B24752CA53AE8005527C9 /* yolov8n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 731B24702CA53AE8005527C9 /* yolov8n.mlpackage */; };
-		731B24762CA53AE8005527C9 /* yolov8l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 731B246E2CA53AE8005527C9 /* yolov8l.mlpackage */; };
-		731B24772CA53AE8005527C9 /* yolov8x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 731B24722CA53AE8005527C9 /* yolov8x.mlpackage */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
 
@@ -36,11 +31,6 @@
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		63B8B0A821E62A890026FBC3 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		731B246E2CA53AE8005527C9 /* yolov8l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8l.mlpackage; sourceTree = "<group>"; };
-		731B246F2CA53AE8005527C9 /* yolov8m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8m.mlpackage; sourceTree = "<group>"; };
-		731B24702CA53AE8005527C9 /* yolov8n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8n.mlpackage; sourceTree = "<group>"; };
-		731B24712CA53AE8005527C9 /* yolov8s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8s.mlpackage; sourceTree = "<group>"; };
-		731B24722CA53AE8005527C9 /* yolov8x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolov8x.mlpackage; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
 		8EDAAA4507D2D23D7FAB827F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -87,11 +77,6 @@
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				731B246E2CA53AE8005527C9 /* yolov8l.mlpackage */,
-				731B246F2CA53AE8005527C9 /* yolov8m.mlpackage */,
-				731B24702CA53AE8005527C9 /* yolov8n.mlpackage */,
-				731B24712CA53AE8005527C9 /* yolov8s.mlpackage */,
-				731B24722CA53AE8005527C9 /* yolov8x.mlpackage */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -211,11 +196,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
-				731B24732CA53AE8005527C9 /* yolov8s.mlpackage in Sources */,
-				731B24742CA53AE8005527C9 /* yolov8m.mlpackage in Sources */,
-				731B24752CA53AE8005527C9 /* yolov8n.mlpackage in Sources */,
-				731B24762CA53AE8005527C9 /* yolov8l.mlpackage in Sources */,
-				731B24772CA53AE8005527C9 /* yolov8x.mlpackage in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,

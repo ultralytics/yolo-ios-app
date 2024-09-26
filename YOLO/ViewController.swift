@@ -451,154 +451,118 @@ class ViewController: UIViewController {
     }
   }
 
-  func show(predictions: [VNRecognizedObjectObservation]) {
-    let width = videoPreview.bounds.width  // 375 pix
-    let height = videoPreview.bounds.height  // 812 pix
-    var str = ""
+    func show(predictions: [VNRecognizedObjectObservation]) {
+      let width = videoPreview.bounds.width
+      let height = videoPreview.bounds.height
+      var str = ""
 
-    // ratio = videoPreview AR divided by sessionPreset AR
-    var ratio: CGFloat = 1.0
-    if videoCapture.captureSession.sessionPreset == .photo {
-      ratio = (height / width) / (4.0 / 3.0)  // .photo
-    } else {
-      ratio = (height / width) / (16.0 / 9.0)  // .hd4K3840x2160, .hd1920x1080, .hd1280x720 etc.
-    }
+      var ratio: CGFloat = 1.0
 
-    // date
-    let date = Date()
-    let calendar = Calendar.current
-    let hour = calendar.component(.hour, from: date)
-    let minutes = calendar.component(.minute, from: date)
-    let seconds = calendar.component(.second, from: date)
-    let nanoseconds = calendar.component(.nanosecond, from: date)
-    let sec_day =
-      Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9  // seconds in the day
-
-    self.labelSlider.text =
-      String(predictions.count) + " items (max " + String(Int(slider.value)) + ")"
-    for i in 0..<boundingBoxViews.count {
-      if i < predictions.count && i < Int(slider.value) {
-        let prediction = predictions[i]
-
-        var rect = prediction.boundingBox  // normalized xywh, origin lower left
-        switch UIDevice.current.orientation {
-        case .portraitUpsideDown:
-          rect = CGRect(
-            x: 1.0 - rect.origin.x - rect.width,
-            y: 1.0 - rect.origin.y - rect.height,
-            width: rect.width,
-            height: rect.height)
-        case .landscapeLeft:
-          rect = CGRect(
-            x: rect.origin.x,
-            y: rect.origin.y,
-            width: rect.width,
-            height: rect.height)
-        case .landscapeRight:
-          rect = CGRect(
-            x: rect.origin.x,
-            y: rect.origin.y,
-            width: rect.width,
-            height: rect.height)
-        case .unknown:
-          print("The device orientation is unknown, the predictions may be affected")
-          fallthrough
-        default: break
-        }
-
-        if ratio >= 1 {  // iPhone ratio = 1.218
-          let offset = (1 - ratio) * (0.5 - rect.minX)
-          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-          rect = rect.applying(transform)
-          rect.size.width *= ratio
-        } else {  // iPad ratio = 0.75
-          let offset = (ratio - 1) * (0.5 - rect.maxY)
-          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-          rect = rect.applying(transform)
-          ratio = (height / width) / (3.0 / 4.0)
-          rect.size.height /= ratio
-        }
-
-        // Scale normalized to pixels [375, 812] [width, height]
-          // Scale normalized to pixels [375, 812] [width, height]
-        rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
-
-
-          // Adjust bounding box for aspect ratio differences
-          let previewAspectRatio = width / height  // video previewのアスペクト比
-          let inputAspectRatio: CGFloat = 16.0 / 9.0  // カメラのアスペクト比
-
-          if previewAspectRatio > inputAspectRatio {
-              // 横に余白がある場合 (pillarboxing)
-              let scaleFactor = height / (width / inputAspectRatio)
-              rect.origin.y *= scaleFactor
-              rect.size.height *= scaleFactor
-          } else {
-              // 縦に余白がある場合 (letterboxing)
-              let scaleFactor = width / (height * inputAspectRatio)
-              rect.origin.x *= scaleFactor
-              rect.size.width *= scaleFactor
-
-              // 縦方向の余白（上下にズレる原因）の補正
-              let verticalPadding = (height - (width / inputAspectRatio)) / 2
-              rect.origin.y += verticalPadding
-          }
-        // The labels array is a list of VNClassificationObservation objects,
-        // with the highest scoring class first in the list.
-        let bestClass = prediction.labels[0].identifier
-        let confidence = prediction.labels[0].confidence
-        // print(confidence, rect)  // debug (confidence, xywh) with xywh origin top left (pixels)
-        let label = String(format: "%@ %.1f", bestClass, confidence * 100)
-        let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-        // Show the bounding box.
-        boundingBoxViews[i].show(
-          frame: rect,
-          label: label,
-          color: colors[bestClass] ?? UIColor.white,
-          alpha: alpha)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
-
-        if developerMode {
-          // Write
-          if save_detections {
-            str += String(
-              format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
-              sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
-              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
-          }
-
-          // Action trigger upon detection
-          // if false {
-          //     if (bestClass == "car") {  // "cell phone", "car", "person"
-          //         self.takePhoto(nil)
-          //         // self.pauseButton(nil)
-          //         sleep(2)
-          //     }
-          // }
-        }
+      if videoCapture.captureSession.sessionPreset == .photo {
+        ratio = (height / width) / (4.0 / 3.0)
       } else {
-        boundingBoxViews[i].hide()
+        ratio = (height / width) / (16.0 / 9.0)
+      }
+
+      let date = Date()
+      let calendar = Calendar.current
+      let hour = calendar.component(.hour, from: date)
+      let minutes = calendar.component(.minute, from: date)
+      let seconds = calendar.component(.second, from: date)
+      let nanoseconds = calendar.component(.nanosecond, from: date)
+      let sec_day = Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9
+
+      var resultCount = 0
+
+      resultCount = predictions.count
+      self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
+      for i in 0..<boundingBoxViews.count {
+        if i < (resultCount) && i < Int(slider.value) {
+          var rect = CGRect.zero
+          var label = ""
+          var boxColor: UIColor = .white
+          var confidence: CGFloat = 0
+          var alpha: CGFloat = 0.9
+          var bestClass = ""
+          let prediction = predictions[i]
+          rect = prediction.boundingBox
+          bestClass = prediction.labels[0].identifier
+          confidence = CGFloat(prediction.labels[0].confidence)
+          label = String(format: "%@ %.1f", bestClass, confidence * 100)
+          boxColor = colors[bestClass] ?? UIColor.white
+          alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+          var displayRect = rect
+          switch UIDevice.current.orientation {
+          case .portraitUpsideDown:
+            displayRect = CGRect(
+              x: 1.0 - rect.origin.x - rect.width,
+              y: 1.0 - rect.origin.y - rect.height,
+              width: rect.width,
+              height: rect.height)
+          case .landscapeLeft:
+            displayRect = CGRect(
+              x: rect.origin.x,
+              y: rect.origin.y,
+              width: rect.width,
+              height: rect.height)
+          case .landscapeRight:
+            displayRect = CGRect(
+              x: rect.origin.x,
+              y: rect.origin.y,
+              width: rect.width,
+              height: rect.height)
+          case .unknown:
+            print("The device orientation is unknown, the predictions may be affected")
+            fallthrough
+          default: break
+          }
+          if ratio >= 1 {
+            let offset = (1 - ratio) * (0.5 - displayRect.minX)
+            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
+            displayRect = displayRect.applying(transform)
+
+            displayRect.size.width *= ratio
+          } else {
+            let offset = (ratio - 1) * (0.5 - displayRect.maxY)
+            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
+            displayRect = displayRect.applying(transform)
+
+            ratio = (height / width) / (3.0 / 4.0)
+            displayRect.size.height /= ratio
+          }
+          displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
+
+          boundingBoxViews[i].show(frame: displayRect, label: label, color: boxColor, alpha: alpha)
+
+          if developerMode {
+            if save_detections {
+              str += String(
+                format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
+                sec_day, freeSpace(), UIDevice.current.batteryLevel, bestClass, confidence,
+                rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+            }
+          }
+
+        } else {
+          boundingBoxViews[i].hide()
+        }
+      }
+
+      // Write
+      if developerMode {
+        if save_detections {
+          saveText(text: str, file: "detections.txt")  // Write stats for each detection
+        }
+        if save_frames {
+          str = String(
+            format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
+            sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
+            self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
+          saveText(text: str, file: "frames.txt")  // Write stats for each image
+        }
       }
     }
 
-    // Write
-    if developerMode {
-      if save_detections {
-        saveText(text: str, file: "detections.txt")  // Write stats for each detection
-      }
-      if save_frames {
-        str = String(
-          format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
-          sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
-          self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
-        saveText(text: str, file: "frames.txt")  // Write stats for each image
-      }
-    }
-
-    // Debug
-    // print(str)
-    // print(UIDevice.current.identifierForVendor!)
-    // saveImage()
-  }
 
   // Pinch to Zoom Start ---------------------------------------------------------------------------------------------
   let minimumZoom: CGFloat = 1.0

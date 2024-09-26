@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina6_12" orientation="portrait" appearance="light"/>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_12" orientation="landscape" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23084"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -14,17 +14,24 @@
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="YOLO" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleAspectFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <rect key="frame" x="0.0" y="0.0" width="852" height="393"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="9b8-Id-Sgk" userLabel="ParentView">
+                                <rect key="frame" x="0.0" y="-43" width="852" height="479"/>
+                                <color key="backgroundColor" systemColor="systemMintColor"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" secondItem="9b8-Id-Sgk" secondAttribute="height" multiplier="16:9" id="DS6-vw-6Yn"/>
+                                </constraints>
+                            </view>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mCE-j4-QAA">
-                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <rect key="frame" x="0.0" y="-43" width="852" height="479"/>
                                 <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <gestureRecognizers/>
                                 <edgeInsets key="layoutMargins" top="8" left="0.0" bottom="0.0" right="0.0"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="LabelTime">
-                                <rect key="frame" x="175.66666666666666" y="132" width="42" height="20"/>
+                                <rect key="frame" x="405" y="73" width="42" height="20"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -33,13 +40,13 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
-                                <rect key="frame" x="163" y="59" width="67" height="34"/>
+                                <rect key="frame" x="392.66666666666669" y="0.0" width="67" height="34"/>
                                 <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
                                 <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
-                                <rect key="frame" x="19" y="102" width="355" height="32"/>
+                                <rect key="frame" x="248.66666666666663" y="43" width="355" height="32"/>
                                 <segments>
                                     <segment title="YOLOv8n" width="69"/>
                                     <segment title="YOLOv8s" width="69"/>
@@ -52,11 +59,11 @@
                                 </connections>
                             </segmentedControl>
                             <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="lOR-xu-27i">
-                                <rect key="frame" x="178" y="405" width="37" height="37"/>
+                                <rect key="frame" x="408" y="177" width="37" height="37"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                             </activityIndicatorView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" insetsLayoutMarginsFromSafeArea="NO" text="1.00x" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vlL-Ye-WgQ" userLabel="zoom">
-                                <rect key="frame" x="166" y="736" width="60" height="20"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="1.00x" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vlL-Ye-WgQ" userLabel="zoom">
+                                <rect key="frame" x="406" y="294" width="40" height="20"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -65,7 +72,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
-                                <rect key="frame" x="5" y="751" width="100" height="14"/>
+                                <rect key="frame" x="5" y="292" width="100" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
@@ -75,17 +82,17 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Focus" translatesAutoresizingMaskIntoConstraints="NO" id="q1Z-jK-UQS">
-                                <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
+                                <rect key="frame" x="0.0" y="103" width="852" height="187"/>
                             </imageView>
                             <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
-                                <rect key="frame" x="215" y="555" width="159" height="67"/>
+                                <rect key="frame" x="674" y="96" width="159" height="67"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
                                 </accessibility>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.25 Confidence Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Yhe-73-Ryr" userLabel="LabelSliderConf">
-                                <rect key="frame" x="6" y="624.66666666666663" width="186" height="18"/>
+                                <rect key="frame" x="65" y="286" width="186" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -94,7 +101,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.25" minValue="0.01" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Gax-hR-qdY">
-                                <rect key="frame" x="3" y="646.66666666666663" width="175" height="31"/>
+                                <rect key="frame" x="62" y="308" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="171" id="xzb-57-lTA"/>
                                 </constraints>
@@ -106,7 +113,7 @@
                                 </connections>
                             </slider>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.45000000000000001" minValue="0.0" maxValue="0.98999999999999999" translatesAutoresizingMaskIntoConstraints="NO" id="6JI-Fw-yih">
-                                <rect key="frame" x="3" y="699.66666666666663" width="175" height="31"/>
+                                <rect key="frame" x="62" y="361" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="171" id="N91-bG-Rfc"/>
                                 </constraints>
@@ -118,7 +125,7 @@
                                 </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0 items (max 30)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ytf-30-5R8" userLabel="LabelSlider">
-                                <rect key="frame" x="8.0000000000000071" y="177.66666666666666" width="116.66666666666669" height="18"/>
+                                <rect key="frame" x="67" y="57" width="116.66666666666669" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -127,7 +134,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="30" minValue="1" maxValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="Ovr-pp-CtB">
-                                <rect key="frame" x="3" y="193.66666666666666" width="184" height="31"/>
+                                <rect key="frame" x="62" y="73" width="184" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="2Iw-3V-XhT"/>
                                     <constraint firstAttribute="width" constant="180" id="qdE-4r-T9O"/>
@@ -139,7 +146,7 @@
                                 </connections>
                             </slider>
                             <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="1" verticalHuggingPriority="1" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3Rg-UC-ogI">
-                                <rect key="frame" x="0.0" y="787" width="393" height="44"/>
+                                <rect key="frame" x="0.0" y="340" width="852" height="32"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="24" id="wAH-Ui-IPj"/>
@@ -179,7 +186,7 @@
                                 </variation>
                             </toolbar>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.45 IoU Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="tZo-QP-q2z" userLabel="LabelSliderIoU">
-                                <rect key="frame" x="6" y="677.66666666666663" width="131" height="18"/>
+                                <rect key="frame" x="65" y="339" width="131" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -188,7 +195,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider hidden="YES" opaque="NO" alpha="0.89999997615814209" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.44999998807907104" minValue="0.0" maxValue="0.99000000953674316" translatesAutoresizingMaskIntoConstraints="NO" id="ewl-Fj-awn">
-                                <rect key="frame" x="3" y="299.66666666666669" width="175" height="31"/>
+                                <rect key="frame" x="62" y="179" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="171" id="5cc-eL-68i"/>
                                 </constraints>
@@ -200,7 +207,7 @@
                                 </connections>
                             </slider>
                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.45 IoU Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uD3-7n-e7T" userLabel="LabelSliderIoU">
-                                <rect key="frame" x="6" y="277.66666666666669" width="131" height="18"/>
+                                <rect key="frame" x="65" y="157" width="131" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -209,7 +216,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <slider hidden="YES" opaque="NO" alpha="0.89999997615814209" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.25" minValue="0.0099999997764825821" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="q4C-U4-wS4">
-                                <rect key="frame" x="3" y="246.66666666666663" width="175" height="31"/>
+                                <rect key="frame" x="62" y="126" width="175" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="171" id="W2y-bT-mx3"/>
                                 </constraints>
@@ -221,7 +228,7 @@
                                 </connections>
                             </slider>
                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.25 Confidence Threshold" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Krk-z8-jWR" userLabel="LabelSliderConf">
-                                <rect key="frame" x="6" y="224.66666666666666" width="186" height="18"/>
+                                <rect key="frame" x="65" y="104" width="186" height="18"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                 </accessibility>
@@ -234,19 +241,22 @@
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstAttribute="bottom" secondItem="mCE-j4-QAA" secondAttribute="bottom" id="0zh-eM-EmE"/>
+                            <constraint firstItem="9b8-Id-Sgk" firstAttribute="bottom" secondItem="mCE-j4-QAA" secondAttribute="bottom" id="0zh-eM-EmE"/>
                             <constraint firstItem="BZf-Ft-ERG" firstAttribute="top" secondItem="9cm-Nq-b3N" secondAttribute="bottom" constant="-1" id="10a-HD-y6c"/>
-                            <constraint firstItem="mCE-j4-QAA" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="2Hf-C7-PKF"/>
+                            <constraint firstItem="mCE-j4-QAA" firstAttribute="leading" secondItem="9b8-Id-Sgk" secondAttribute="leading" id="2Hf-C7-PKF"/>
                             <constraint firstItem="tZo-QP-q2z" firstAttribute="top" secondItem="Gax-hR-qdY" secondAttribute="bottom" constant="1" id="3qP-Re-vUy"/>
                             <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="4VU-KS-qnX"/>
                             <constraint firstItem="uD3-7n-e7T" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="8ED-Ty-itL"/>
                             <constraint firstItem="ewl-Fj-awn" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="CCH-hl-rSK"/>
                             <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="9" id="CsQ-eU-xjO"/>
                             <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="DEd-UO-Mod"/>
+                            <constraint firstAttribute="trailing" secondItem="9b8-Id-Sgk" secondAttribute="trailing" id="Eli-jV-vmw"/>
                             <constraint firstAttribute="trailing" secondItem="q1Z-jK-UQS" secondAttribute="trailing" id="EpS-OI-uaC"/>
                             <constraint firstItem="Yhe-73-Ryr" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="6" id="GB3-HN-lcm"/>
+                            <constraint firstItem="9b8-Id-Sgk" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="IeQ-1A-MGv"/>
                             <constraint firstItem="Krk-z8-jWR" firstAttribute="top" secondItem="Ovr-pp-CtB" secondAttribute="bottom" constant="1" id="Ned-gk-ai9"/>
-                            <constraint firstItem="mCE-j4-QAA" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" id="NnK-y0-UOk"/>
+                            <constraint firstItem="mCE-j4-QAA" firstAttribute="trailing" secondItem="9b8-Id-Sgk" secondAttribute="trailing" id="NnK-y0-UOk"/>
+                            <constraint firstItem="9b8-Id-Sgk" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="O2r-lX-z4i"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="6JI-Fw-yih" secondAttribute="bottom" constant="34" id="OLO-X9-93N">
                                 <variation key="heightClass=compact-widthClass=regular" constant="34"/>
                             </constraint>
@@ -260,7 +270,7 @@
                             <constraint firstAttribute="trailing" secondItem="3Rg-UC-ogI" secondAttribute="trailing" id="alq-cZ-iIR"/>
                             <constraint firstItem="q1Z-jK-UQS" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="d57-2L-ne7"/>
                             <constraint firstItem="Ovr-pp-CtB" firstAttribute="top" secondItem="Ytf-30-5R8" secondAttribute="bottom" constant="-2" id="eQz-A3-6YS"/>
-                            <constraint firstItem="mCE-j4-QAA" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="fJk-bN-O88"/>
+                            <constraint firstItem="mCE-j4-QAA" firstAttribute="top" secondItem="9b8-Id-Sgk" secondAttribute="top" id="fJk-bN-O88"/>
                             <constraint firstItem="Ytf-30-5R8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="8" id="fio-88-KON"/>
                             <constraint firstItem="3Rg-UC-ogI" firstAttribute="bottom" secondItem="8bC-Xf-vdC" secondAttribute="bottom" constant="-21" id="gd1-rI-r2l"/>
                             <constraint firstItem="q4C-U4-wS4" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="5" id="hDd-mh-Ihd"/>
@@ -323,7 +333,7 @@
                     </connections>
                 </pinchGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="196.18320610687022" y="128.87323943661971"/>
+            <point key="canvasLocation" x="195.77464788732397" y="127.48091603053435"/>
         </scene>
     </scenes>
     <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -331,10 +341,13 @@
         <image name="Focus" width="414" height="414"/>
         <image name="ultralytics_yolo_logotype.png" width="1406" height="394"/>
         <systemColor name="groupTableViewBackgroundColor">
-            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray5Color">
-            <color red="0.8980392157" green="0.8980392157" blue="0.91764705879999997" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.89803921568627454" green="0.89803921568627454" blue="0.91764705882352937" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemMintColor">
+            <color red="0.0" green="0.7803921568627451" blue="0.74509803921568629" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

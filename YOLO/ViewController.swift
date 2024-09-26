@@ -75,6 +75,9 @@ class ViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    toolBar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
+    toolBar.setShadowImage(UIImage(), forToolbarPosition: .any)
+
     slider.value = 30
     setLabels()
     setUpBoundingBoxViews()
@@ -114,8 +117,8 @@ class ViewController: UIViewController {
       labelSliderIoULandScape.isHidden = true
       sliderIoULandScape.isHidden = true
     }
-    self.videoCapture.previewLayer?.frame = CGRect(
-      x: 0, y: 0, width: size.width, height: size.height)
+//    self.videoCapture.previewLayer?.frame = CGRect(
+//      x: 0, y: 0, width: size.width, height: size.height)
 
   }
 

@@ -1,16 +1,18 @@
 {
   "images": [
     {
+      "filename": "ultralytics_square_focus_image.png",
       "idiom": "universal",
       "scale": "1x"
     },
     {
+      "filename": "ultralytics_square_focus_image 1.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
+      "filename": "ultralytics_square_focus_image 2.png",
       "idiom": "universal",
-      "filename": "ultralytics_square_focus_image.png",
       "scale": "3x"
     }
   ],

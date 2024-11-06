@@ -1,7 +1,7 @@
 //  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
 //  Main View Controller for Ultralytics YOLO App
-//  This file is part of the Ultralytics YOLO app, enabling real-time object detection using YOLOv8 models on iOS devices.
+//  This file is part of the Ultralytics YOLO app, enabling real-time object detection using YOLO11 models on iOS devices.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
@@ -17,7 +17,7 @@ import CoreMedia
 import UIKit
 import Vision
 
-var mlModel = try! yolov8m(configuration: .init()).model
+var mlModel = try! yolo11m(configuration: .init()).model
 
 class ViewController: UIViewController {
   @IBOutlet var videoPreview: UIView!
@@ -140,20 +140,20 @@ class ViewController: UIViewController {
     /// Switch model
     switch segmentedControl.selectedSegmentIndex {
     case 0:
-      self.labelName.text = "YOLOv8n"
-      mlModel = try! yolov8n(configuration: .init()).model
+      self.labelName.text = "YOLO11n"
+      mlModel = try! yolo11n(configuration: .init()).model
     case 1:
-      self.labelName.text = "YOLOv8s"
-      mlModel = try! yolov8s(configuration: .init()).model
+      self.labelName.text = "YOLO11s"
+      mlModel = try! yolo11s(configuration: .init()).model
     case 2:
-      self.labelName.text = "YOLOv8m"
-      mlModel = try! yolov8m(configuration: .init()).model
+      self.labelName.text = "YOLO11m"
+      mlModel = try! yolo11m(configuration: .init()).model
     case 3:
-      self.labelName.text = "YOLOv8l"
-      mlModel = try! yolov8l(configuration: .init()).model
+      self.labelName.text = "YOLO11l"
+      mlModel = try! yolo11l(configuration: .init()).model
     case 4:
-      self.labelName.text = "YOLOv8x"
-      mlModel = try! yolov8x(configuration: .init()).model
+      self.labelName.text = "YOLO11x"
+      mlModel = try! yolo11x(configuration: .init()).model
     default:
       break
     }
@@ -222,7 +222,7 @@ class ViewController: UIViewController {
   }
 
   func setLabels() {
-    self.labelName.text = "YOLOv8m"
+    self.labelName.text = "YOLO11m"
     self.labelVersion.text = "Version " + UserDefaults.standard.string(forKey: "app_version")!
   }
 

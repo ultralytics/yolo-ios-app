@@ -16,11 +16,19 @@
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
-		73E3C7FE2CE3AF1A00E2D85C /* yolo11m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */; };
-		73E3C7FF2CE3AF1A00E2D85C /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */; };
-		73E3C8002CE3AF1A00E2D85C /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */; };
-		73E3C8012CE3AF1A00E2D85C /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */; };
-		73E3C8022CE3AF1A00E2D85C /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */; };
+		733FEE4F2CF2D77600C0D4E9 /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE4D2CF2D77600C0D4E9 /* yolo11s.mlpackage */; };
+		733FEE502CF2D77600C0D4E9 /* yolo11m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE4B2CF2D77600C0D4E9 /* yolo11m.mlpackage */; };
+		733FEE512CF2D77600C0D4E9 /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE4C2CF2D77600C0D4E9 /* yolo11n.mlpackage */; };
+		733FEE522CF2D77600C0D4E9 /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE4E2CF2D77600C0D4E9 /* yolo11x.mlpackage */; };
+		733FEE532CF2D77600C0D4E9 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE4A2CF2D77600C0D4E9 /* yolo11l.mlpackage */; };
+		733FEE552CF2DB6500C0D4E9 /* Classify.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE542CF2DB6500C0D4E9 /* Classify.swift */; };
+		733FEE572CF357A900C0D4E9 /* yolo11n-cls.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE562CF357A900C0D4E9 /* yolo11n-cls.mlpackage */; };
+		733FEE592CF3589A00C0D4E9 /* Detect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE582CF3589A00C0D4E9 /* Detect.swift */; };
+		733FEE5B2CF4BFA400C0D4E9 /* Segment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE5A2CF4BFA400C0D4E9 /* Segment.swift */; };
+		733FEE5D2CF5108C00C0D4E9 /* CoreML.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE5C2CF5108C00C0D4E9 /* CoreML.swift */; };
+		733FEE5F2CF579EE00C0D4E9 /* yolo11n-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE5E2CF579EE00C0D4E9 /* yolo11n-seg.mlpackage */; };
+		733FEE632CF57A2200C0D4E9 /* yolo11n-pose.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE612CF57A2200C0D4E9 /* yolo11n-pose.mlpackage */; };
+		733FEE652CF6D65A00C0D4E9 /* Pose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733FEE642CF6D65A00C0D4E9 /* Pose.swift */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
 
@@ -36,11 +44,19 @@
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		63B8B0A821E62A890026FBC3 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
-		73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11m.mlpackage; sourceTree = "<group>"; };
-		73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
-		73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
-		73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
+		733FEE4A2CF2D77600C0D4E9 /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
+		733FEE4B2CF2D77600C0D4E9 /* yolo11m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11m.mlpackage; sourceTree = "<group>"; };
+		733FEE4C2CF2D77600C0D4E9 /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
+		733FEE4D2CF2D77600C0D4E9 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
+		733FEE4E2CF2D77600C0D4E9 /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
+		733FEE542CF2DB6500C0D4E9 /* Classify.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Classify.swift; sourceTree = "<group>"; };
+		733FEE562CF357A900C0D4E9 /* yolo11n-cls.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolo11n-cls.mlpackage"; sourceTree = "<group>"; };
+		733FEE582CF3589A00C0D4E9 /* Detect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Detect.swift; sourceTree = "<group>"; };
+		733FEE5A2CF4BFA400C0D4E9 /* Segment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Segment.swift; sourceTree = "<group>"; };
+		733FEE5C2CF5108C00C0D4E9 /* CoreML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreML.swift; sourceTree = "<group>"; };
+		733FEE5E2CF579EE00C0D4E9 /* yolo11n-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolo11n-seg.mlpackage"; sourceTree = "<group>"; };
+		733FEE612CF57A2200C0D4E9 /* yolo11n-pose.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolo11n-pose.mlpackage"; sourceTree = "<group>"; };
+		733FEE642CF6D65A00C0D4E9 /* Pose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pose.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
 		8EDAAA4507D2D23D7FAB827F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -62,6 +78,11 @@
 			children = (
 				636166E9251443B20054FA7E /* ThresholdProvider.swift */,
 				8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */,
+				733FEE5C2CF5108C00C0D4E9 /* CoreML.swift */,
+				733FEE582CF3589A00C0D4E9 /* Detect.swift */,
+				733FEE542CF2DB6500C0D4E9 /* Classify.swift */,
+				733FEE5A2CF4BFA400C0D4E9 /* Segment.swift */,
+				733FEE642CF6D65A00C0D4E9 /* Pose.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -87,11 +108,14 @@
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */,
-				73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */,
-				73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */,
-				73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */,
-				73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */,
+				733FEE4A2CF2D77600C0D4E9 /* yolo11l.mlpackage */,
+				733FEE4B2CF2D77600C0D4E9 /* yolo11m.mlpackage */,
+				733FEE4C2CF2D77600C0D4E9 /* yolo11n.mlpackage */,
+				733FEE4D2CF2D77600C0D4E9 /* yolo11s.mlpackage */,
+				733FEE4E2CF2D77600C0D4E9 /* yolo11x.mlpackage */,
+				733FEE562CF357A900C0D4E9 /* yolo11n-cls.mlpackage */,
+				733FEE5E2CF579EE00C0D4E9 /* yolo11n-seg.mlpackage */,
+				733FEE612CF57A2200C0D4E9 /* yolo11n-pose.mlpackage */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -211,14 +235,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
+				733FEE4F2CF2D77600C0D4E9 /* yolo11s.mlpackage in Sources */,
+				733FEE502CF2D77600C0D4E9 /* yolo11m.mlpackage in Sources */,
+				733FEE5B2CF4BFA400C0D4E9 /* Segment.swift in Sources */,
+				733FEE512CF2D77600C0D4E9 /* yolo11n.mlpackage in Sources */,
+				733FEE522CF2D77600C0D4E9 /* yolo11x.mlpackage in Sources */,
+				733FEE552CF2DB6500C0D4E9 /* Classify.swift in Sources */,
+				733FEE5F2CF579EE00C0D4E9 /* yolo11n-seg.mlpackage in Sources */,
+				733FEE632CF57A2200C0D4E9 /* yolo11n-pose.mlpackage in Sources */,
+				733FEE572CF357A900C0D4E9 /* yolo11n-cls.mlpackage in Sources */,
+				733FEE532CF2D77600C0D4E9 /* yolo11l.mlpackage in Sources */,
+				733FEE592CF3589A00C0D4E9 /* Detect.swift in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
-				73E3C7FE2CE3AF1A00E2D85C /* yolo11m.mlpackage in Sources */,
-				73E3C7FF2CE3AF1A00E2D85C /* yolo11l.mlpackage in Sources */,
-				73E3C8002CE3AF1A00E2D85C /* yolo11x.mlpackage in Sources */,
-				73E3C8012CE3AF1A00E2D85C /* yolo11s.mlpackage in Sources */,
-				73E3C8022CE3AF1A00E2D85C /* yolo11n.mlpackage in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
+				733FEE652CF6D65A00C0D4E9 /* Pose.swift in Sources */,
+				733FEE5D2CF5108C00C0D4E9 /* CoreML.swift in Sources */,
 				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

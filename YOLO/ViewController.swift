@@ -248,15 +248,21 @@ class ViewController: UIViewController {
     self.videoCapture.captureSession.beginConfiguration()
     let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
     self.videoCapture.captureSession.removeInput(currentInput!)
-    // let newCameraDevice = currentInput?.device == .builtInWideAngleCamera ? getCamera(with: .front) : getCamera(with: .back)
+    guard let currentPosition = currentInput?.device.position else { return }
 
-    let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)!
-    guard let videoInput1 = try? AVCaptureDeviceInput(device: device) else {
+    let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
+
+    let newCameraDevice = bestCaptureDevice(for: nextCameraPosition)
+
+    guard let videoInput1 = try? AVCaptureDeviceInput(device: newCameraDevice) else {
       return
     }
 
     self.videoCapture.captureSession.addInput(videoInput1)
+    self.videoCapture.updateVideoOrientation()
+
     self.videoCapture.captureSession.commitConfiguration()
+
   }
 
   // share image
@@ -707,12 +713,18 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      var orientation = CGImagePropertyOrientation.right
+      var isCameraFront = false
+      if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
+        currentInput.device.position == .front
+      {
+        isCameraFront = true
+      }
+      var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
       switch UIDevice.current.orientation {
       case .landscapeLeft:
-        orientation = .up
+        orientation = isCameraFront ? .downMirrored : .up
       case .landscapeRight:
-        orientation = .down
+        orientation = isCameraFront ? .upMirrored : .down
       default:
         break
       }

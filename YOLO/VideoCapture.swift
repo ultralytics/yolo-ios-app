@@ -22,38 +22,44 @@ public protocol VideoCaptureDelegate: AnyObject {
 
 // Identifies the best available camera device based on user preferences and device capabilities.
 func bestCaptureDevice(for position: AVCaptureDevice.Position) -> AVCaptureDevice {
-    if position == .back {
-        // バックカメラの場合
-        if UserDefaults.standard.bool(forKey: "use_telephoto"),
-           let device = AVCaptureDevice.default(.builtInTelephotoCamera, for: .video, position: .back) {
-            return device
-        } else if let device = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
-            return device
-        } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-            return device
-        } else {
-            fatalError("Expected back camera device is not available.")
-        }
-    } else if position == .front {
-        // フロントカメラの場合
-        if let device = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .front) {
-            return device
-        } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
-            return device
-        } else {
-            fatalError("Expected front camera device is not available.")
-        }
+  if position == .back {
+    // バックカメラの場合
+    if UserDefaults.standard.bool(forKey: "use_telephoto"),
+      let device = AVCaptureDevice.default(.builtInTelephotoCamera, for: .video, position: .back)
+    {
+      return device
+    } else if let device = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back)
+    {
+      return device
+    } else if let device = AVCaptureDevice.default(
+      .builtInWideAngleCamera, for: .video, position: .back)
+    {
+      return device
     } else {
-        fatalError("Unsupported camera position: \(position)")
+      fatalError("Expected back camera device is not available.")
     }
+  } else if position == .front {
+    // フロントカメラの場合
+    if let device = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .front)
+    {
+      return device
+    } else if let device = AVCaptureDevice.default(
+      .builtInWideAngleCamera, for: .video, position: .front)
+    {
+      return device
+    } else {
+      fatalError("Expected front camera device is not available.")
+    }
+  } else {
+    fatalError("Unsupported camera position: \(position)")
+  }
 }
-
 
 public class VideoCapture: NSObject {
   public var previewLayer: AVCaptureVideoPreviewLayer?
   public weak var delegate: VideoCaptureDelegate?
 
-    let captureDevice = bestCaptureDevice(for: .back)
+  let captureDevice = bestCaptureDevice(for: .back)
   let captureSession = AVCaptureSession()
   let videoOutput = AVCaptureVideoDataOutput()
   var cameraOutput = AVCapturePhotoOutput()
@@ -150,34 +156,31 @@ public class VideoCapture: NSObject {
     }
   }
 
-    func updateVideoOrientation() {
-        guard let connection = videoOutput.connection(with: .video) else { return }
-        switch UIDevice.current.orientation {
-        case .portrait:
-            connection.videoOrientation = .portrait
-        case .portraitUpsideDown:
-            connection.videoOrientation = .portraitUpsideDown
-        case .landscapeRight:
-            connection.videoOrientation = .landscapeLeft
-        case .landscapeLeft:
-            connection.videoOrientation = .landscapeRight
-        default:
-            return
-        }
-        
-        
-        let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
-        if currentInput?.device.position == .front {
-            connection.isVideoMirrored = true
-        } else {
-            connection.isVideoMirrored = false
-        }
-
-        self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+  func updateVideoOrientation() {
+    guard let connection = videoOutput.connection(with: .video) else { return }
+    switch UIDevice.current.orientation {
+    case .portrait:
+      connection.videoOrientation = .portrait
+    case .portraitUpsideDown:
+      connection.videoOrientation = .portraitUpsideDown
+    case .landscapeRight:
+      connection.videoOrientation = .landscapeLeft
+    case .landscapeLeft:
+      connection.videoOrientation = .landscapeRight
+    default:
+      return
     }
 
-    
-    
+    let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
+    if currentInput?.device.position == .front {
+      connection.isVideoMirrored = true
+    } else {
+      connection.isVideoMirrored = false
+    }
+
+    self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+  }
+
 }
 
 // Extension to handle AVCaptureVideoDataOutputSampleBufferDelegate events.
@@ -196,4 +199,3 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     // Optionally handle dropped frames, e.g., due to full buffer.
   }
 }
-

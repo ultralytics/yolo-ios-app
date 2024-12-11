@@ -163,6 +163,12 @@
                                             <action selector="shareButton:" destination="BYZ-38-t0r" id="t5S-8x-M27"/>
                                         </connections>
                                     </barButtonItem>
+                                    <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="vzs-nM-KXr"/>
+                                    <barButtonItem image="camera.rotate" catalog="system" springLoaded="YES" id="tPm-bz-9sp">
+                                        <connections>
+                                            <action selector="switchCameraTapped:" destination="BYZ-38-t0r" id="Jtd-Ds-swh"/>
+                                        </connections>
+                                    </barButtonItem>
                                     <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="JO8-jv-HRS"/>
                                     <barButtonItem enabled="NO" systemItem="flexibleSpace" id="aMO-nw-6x7"/>
                                 </items>
@@ -329,6 +335,7 @@
     <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
     <resources>
         <image name="Focus" width="414" height="414"/>
+        <image name="camera.rotate" catalog="system" width="128" height="93"/>
         <image name="ultralytics_yolo_logotype.png" width="1406" height="394"/>
         <systemColor name="groupTableViewBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

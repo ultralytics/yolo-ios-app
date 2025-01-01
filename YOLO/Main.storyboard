@@ -294,7 +294,7 @@
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
                         <outlet property="activityIndicator" destination="lOR-xu-27i" id="RHs-yl-MIU"/>
-                        <outlet property="forcus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
+                        <outlet property="focus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelSlider" destination="Ytf-30-5R8" id="wW5-66-erL"/>

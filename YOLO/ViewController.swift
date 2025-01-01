@@ -40,7 +40,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var labelSliderIoU: UILabel!
   @IBOutlet weak var labelSliderIoULandScape: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var forcus: UIImageView!
+  @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var toolBar: UIToolbar!
 
   let selection = UISelectionFeedbackGenerator()

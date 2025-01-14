@@ -29,6 +29,8 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 
+## Contents
+
 This repository is a comprehensive project that includes:
 
 ### Ultralytics YOLO iOS App (Main App)

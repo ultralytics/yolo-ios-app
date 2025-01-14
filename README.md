@@ -7,20 +7,6 @@
 
 Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetection/id1452689527) GitHub repository! 📖 Leveraging Ultralytics' advanced [YOLO11 object detection models](https://github.com/ultralytics/ultralytics), this repositry transforms your iOS device into an intelligent detection tool. Explore our guide to get started with the Ultralytics YOLO iOS App and discover the world in a new and exciting way.
 
-    This repository is a comprehensive project that includes:
-
-    **Ultralytics YOLO iOS App (Main App)**
-
-    A primary iOS application that allows easy real-time object detection on iOS devices. Simply drag and drop your custom model to use it in the app.
-    
-    **Swift Package (YOLO Library)**
-
-    A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
-    Easily integrate YOLO models into your app with a single line of code:
-
-    ```
-    let result = model(uiImage)
-    ```
 <div align="center">
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="https://github.com/ultralytics/ultralytics/assets/26833433/fd3c8a92-fec0-4253-b4ac-ee94f5ced3fb" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
@@ -43,6 +29,20 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 
+    This repository is a comprehensive project that includes:
+
+    **Ultralytics YOLO iOS App (Main App)**
+
+    A primary iOS application that allows easy real-time object detection on iOS devices. Simply drag and drop your custom model to use it in the app.
+    
+    **Swift Package (YOLO Library)**
+
+    A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
+    Easily integrate YOLO models into your app with a single line of code:
+
+    ```
+    let result = model(uiImage)
+    ```
 ## 🛠 Quickstart: Setting Up the Ultralytics YOLO iOS App
 
 Getting started with the Ultralytics YOLO iOS App is straightforward. Follow these steps to install the app on your iOS device.

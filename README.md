@@ -31,11 +31,11 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
 
 This repository is a comprehensive project that includes:
 
-**Ultralytics YOLO iOS App (Main App)**
+### Ultralytics YOLO iOS App (Main App)
 
 A primary iOS application that allows easy real-time object detection on iOS devices. Simply drag and drop your custom model to use it in the app.
     
-**Swift Package (YOLO Library)**
+### Swift Package (YOLO Library)
 
 A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
 Easily integrate YOLO models into your app with a single line of code:
@@ -43,6 +43,9 @@ Easily integrate YOLO models into your app with a single line of code:
 ```
 let result = model(uiImage)
 ```
+
+And Example iOS apps demonstrating how to use the Swift Package.
+Includes samples for single-image inference and real-time inference.
 
 ## 🛠 Quickstart: Setting Up the Ultralytics YOLO iOS App
 

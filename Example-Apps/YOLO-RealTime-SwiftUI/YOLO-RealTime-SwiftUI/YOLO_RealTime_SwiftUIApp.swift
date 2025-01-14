@@ -9,9 +9,9 @@ import SwiftUI
 
 @main
 struct YOLO_RealTime_SwiftUIApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
     }
+  }
 }

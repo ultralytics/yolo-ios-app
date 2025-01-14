@@ -1,27 +1,29 @@
-import Vision
 import CoreImage
+import Vision
 
 protocol ResultsListener {
-    func on(result: YOLOResult)
+  func on(result: YOLOResult)
 }
 
 protocol InferenceTimeListener {
-    func on(inferenceTime: Double)
+  func on(inferenceTime: Double)
 }
 
 protocol FpsRateListener {
-    func on(fpsRate: Double)
+  func on(fpsRate: Double)
 }
 
-protocol Predictor{
-    func predict(sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?, onInferenceTime: InferenceTimeListener?, onFpsRate: FpsRateListener?)
-    func predictOnImage(image: CIImage) -> YOLOResult
-    var labels: [String] { get set }
+protocol Predictor {
+  func predict(
+    sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
+    onInferenceTime: InferenceTimeListener?, onFpsRate: FpsRateListener?)
+  func predictOnImage(image: CIImage) -> YOLOResult
+  var labels: [String] { get set }
 }
 
-enum PredictorError: Error{
-    case invalidTask
-    case noLabelsFound
-    case invalidUrl
-    case modelFileNotFound
+enum PredictorError: Error {
+  case invalidTask
+  case noLabelsFound
+  case invalidUrl
+  case modelFileNotFound
 }

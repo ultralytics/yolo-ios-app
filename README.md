@@ -39,7 +39,7 @@ A primary iOS application that allows easy real-time object detection on iOS dev
 
 Simply drag and drop your custom model to use it in the app.
     
-### [YOLO (Swift Package)](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/Source/YOLO)
+### [YOLO (Swift Package)](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/Sources/YOLO)
 
 A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
 
@@ -61,11 +61,9 @@ Includes samples for single-image inference and real-time inference.
 
 ・If you’d like to integrate YOLO into your own app, check out the Swift Package and example usage.
 
-Link Here (TBD)
+**[YOLO (Swift Package)](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/Sources/YOLO)**
 
-・To export your Python YOLO model to CoreML, see the export guide.
-
-Link Here (TBD)
+・To export your Python YOLO model to CoreML, see the **[export guide](https://docs.ultralytics.com/en/modes/export/)**.
 
 ## ✨ Highlights
 ### Real-Time Inference

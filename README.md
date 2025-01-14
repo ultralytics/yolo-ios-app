@@ -33,7 +33,7 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
 
 This repository is a comprehensive project that includes:
 
-### Ultralytics YOLO iOS App (Main App)
+### [Ultralytics YOLO iOS App (Main App)]((https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/YOLO-iOS-App))
 
 A primary iOS application that allows easy real-time object detection on iOS devices. 
 
@@ -56,7 +56,8 @@ Includes samples for single-image inference and real-time inference.
 ## 🛠 Quickstart Guide
 
 ・If you’re new to YOLO on mobile or just want to test your own model, we recommend starting with the main YOLO-iOS-App.
-Link Here (TBD)
+
+[**Ultralytics YOLO iOS App(Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/YOLO-iOS-App)
 
 ・If you’d like to integrate YOLO into your own app, check out the Swift Package and example usage.
 

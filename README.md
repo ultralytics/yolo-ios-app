@@ -39,7 +39,7 @@ A primary iOS application that allows easy real-time object detection on iOS dev
 
 Simply drag and drop your custom model to use it in the app.
     
-### YOLO (Swift Package)
+### [YOLO (Swift Package)](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/Source/YOLO)
 
 A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
 
@@ -49,7 +49,7 @@ Easily integrate YOLO models into your app with a single line of code:
 let result = model(uiImage)
 ```
 
-And **Example apps** demonstrating how to use the Swift Package.
+And **[Example apps](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/Example-Apps)** demonstrating how to use the Swift Package.
 
 Includes samples for single-image inference and real-time inference.
 

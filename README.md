@@ -33,7 +33,7 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
 
 This repository is a comprehensive project that includes:
 
-### [Ultralytics YOLO iOS App (Main App)]((https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/YOLO-iOS-App))
+### [Ultralytics YOLO iOS App (Main App)](https://github.com/ultralytics/yolo-ios-app/tree/change-xcode-project-name/YOLO-iOS-App)
 
 A primary iOS application that allows easy real-time object detection on iOS devices. 
 

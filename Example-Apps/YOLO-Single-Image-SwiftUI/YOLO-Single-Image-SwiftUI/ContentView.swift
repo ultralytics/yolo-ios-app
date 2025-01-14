@@ -1,6 +1,6 @@
 import SwiftUI
 import PhotosUI
-import UltralyticsMobile
+import YOLO
 
 struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?

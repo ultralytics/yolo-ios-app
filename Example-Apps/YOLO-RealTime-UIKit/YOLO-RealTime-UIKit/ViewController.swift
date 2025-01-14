@@ -1,6 +1,6 @@
 
 import UIKit
-import UltralyticsMobile
+import YOLO
 class ViewController: UIViewController {
 
     var yoloView:YOLOView!

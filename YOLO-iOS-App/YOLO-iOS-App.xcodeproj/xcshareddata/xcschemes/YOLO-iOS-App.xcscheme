@@ -45,11 +45,20 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7BCB411621C3096100BFC4D0"
+            BuildableName = "YOLO-iOS-App.app"
+            BlueprintName = "YOLO-iOS-App"
+            ReferencedContainer = "container:YOLO-iOS-App.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "7BCB411621C3096100BFC4D0"
             BuildableName = "YOLO.app"
             BlueprintName = "YOLO"
             ReferencedContainer = "container:YOLO.xcodeproj">
          </BuildableReference>
-      </BuildableProductRunnable>
+      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -67,6 +76,15 @@
             ReferencedContainer = "container:YOLO.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "7BCB411621C3096100BFC4D0"
+            BuildableName = "YOLO.app"
+            BlueprintName = "YOLO"
+            ReferencedContainer = "container:YOLO.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

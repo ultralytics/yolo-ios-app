@@ -16,11 +16,6 @@
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
-		73E3C7FE2CE3AF1A00E2D85C /* yolo11m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */; };
-		73E3C7FF2CE3AF1A00E2D85C /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */; };
-		73E3C8002CE3AF1A00E2D85C /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */; };
-		73E3C8012CE3AF1A00E2D85C /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */; };
-		73E3C8022CE3AF1A00E2D85C /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */; };
 		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
 /* End PBXBuildFile section */
 
@@ -35,15 +30,8 @@
 		636EFCA221E62DD300DE43BC /* VideoCapture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		63B8B0A821E62A890026FBC3 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
-		73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11m.mlpackage; sourceTree = "<group>"; };
-		73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
-		73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
-		73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
-		7BCB411721C3096100BFC4D0 /* YOLO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLO.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7BCB411721C3096100BFC4D0 /* YOLO-iOS-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YOLO-iOS-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
-		8EDAAA4507D2D23D7FAB827F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +54,7 @@
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		636EFC9B21E62DD300DE43BC /* YOLO */ = {
+		636EFC9B21E62DD300DE43BC /* YOLO-iOS-App */ = {
 			isa = PBXGroup;
 			children = (
 				63A946D8271800E20001C3ED /* Models */,
@@ -81,17 +69,12 @@
 				636EFCB821E62E3900DE43BC /* Assets.xcassets */,
 				6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */,
 			);
-			path = YOLO;
+			path = "YOLO-iOS-App";
 			sourceTree = "<group>";
 		};
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				73E3C7F92CE3AF1A00E2D85C /* yolo11l.mlpackage */,
-				73E3C7FA2CE3AF1A00E2D85C /* yolo11m.mlpackage */,
-				73E3C7FB2CE3AF1A00E2D85C /* yolo11n.mlpackage */,
-				73E3C7FC2CE3AF1A00E2D85C /* yolo11s.mlpackage */,
-				73E3C7FD2CE3AF1A00E2D85C /* yolo11x.mlpackage */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -99,9 +82,7 @@
 		7BCB410E21C3096100BFC4D0 = {
 			isa = PBXGroup;
 			children = (
-				8EDAAA4507D2D23D7FAB827F /* README.md */,
-				636EFC9B21E62DD300DE43BC /* YOLO */,
-				63B8B0A821E62A890026FBC3 /* .gitignore */,
+				636EFC9B21E62DD300DE43BC /* YOLO-iOS-App */,
 				7BCB411821C3096100BFC4D0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -109,7 +90,7 @@
 		7BCB411821C3096100BFC4D0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7BCB411721C3096100BFC4D0 /* YOLO.app */,
+				7BCB411721C3096100BFC4D0 /* YOLO-iOS-App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -117,9 +98,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		7BCB411621C3096100BFC4D0 /* YOLO */ = {
+		7BCB411621C3096100BFC4D0 /* YOLO-iOS-App */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7BCB412921C3096200BFC4D0 /* Build configuration list for PBXNativeTarget "YOLO" */;
+			buildConfigurationList = 7BCB412921C3096200BFC4D0 /* Build configuration list for PBXNativeTarget "YOLO-iOS-App" */;
 			buildPhases = (
 				63F890A422A1723300072C38 /* ShellScript */,
 				7BCB411321C3096100BFC4D0 /* Sources */,
@@ -130,9 +111,9 @@
 			);
 			dependencies = (
 			);
-			name = YOLO;
+			name = "YOLO-iOS-App";
 			productName = YOLO;
-			productReference = 7BCB411721C3096100BFC4D0 /* YOLO.app */;
+			productReference = 7BCB411721C3096100BFC4D0 /* YOLO-iOS-App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -151,7 +132,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 7BCB411221C3096100BFC4D0 /* Build configuration list for PBXProject "YOLO" */;
+			buildConfigurationList = 7BCB411221C3096100BFC4D0 /* Build configuration list for PBXProject "YOLO-iOS-App" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -164,7 +145,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				7BCB411621C3096100BFC4D0 /* YOLO */,
+				7BCB411621C3096100BFC4D0 /* YOLO-iOS-App */,
 			);
 		};
 /* End PBXProject section */
@@ -213,11 +194,6 @@
 				636EFCAF21E62DD300DE43BC /* VideoCapture.swift in Sources */,
 				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
-				73E3C7FE2CE3AF1A00E2D85C /* yolo11m.mlpackage in Sources */,
-				73E3C7FF2CE3AF1A00E2D85C /* yolo11l.mlpackage in Sources */,
-				73E3C8002CE3AF1A00E2D85C /* yolo11x.mlpackage in Sources */,
-				73E3C8012CE3AF1A00E2D85C /* yolo11s.mlpackage in Sources */,
-				73E3C8022CE3AF1A00E2D85C /* yolo11n.mlpackage in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
 				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
 			);
@@ -352,7 +328,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
-				INFOPLIST_FILE = YOLO/Info.plist;
+				INFOPLIST_FILE = "YOLO-iOS-App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -380,7 +356,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
-				INFOPLIST_FILE = YOLO/Info.plist;
+				INFOPLIST_FILE = "YOLO-iOS-App/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -403,7 +379,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		7BCB411221C3096100BFC4D0 /* Build configuration list for PBXProject "YOLO" */ = {
+		7BCB411221C3096100BFC4D0 /* Build configuration list for PBXProject "YOLO-iOS-App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7BCB412721C3096200BFC4D0 /* Debug */,
@@ -412,7 +388,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7BCB412921C3096200BFC4D0 /* Build configuration list for PBXNativeTarget "YOLO" */ = {
+		7BCB412921C3096200BFC4D0 /* Build configuration list for PBXNativeTarget "YOLO-iOS-App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7BCB412A21C3096200BFC4D0 /* Debug */,

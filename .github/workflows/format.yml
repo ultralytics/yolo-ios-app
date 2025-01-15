@@ -20,7 +20,7 @@ jobs:
         with:
           token: ${{ secrets._GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           labels: true # autolabel issues and PRs
-          python: true # format Python code and docstrings
+          # python: true # format Python code and docstrings
           swift: true # format Swift
           prettier: true # format YAML, JSON, Markdown and CSS
           spelling: true # check spelling

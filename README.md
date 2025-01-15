@@ -59,11 +59,17 @@ If you’d like to integrate YOLO into your own app, check out the Swift Package
 [**Example Apps**](https://github.com/ultralytics/yolo-ios-app/tree/integrate-package/Example-Apps)
 
 ## ✨ Highlights
+
 **Real-Time Inference**
+
 Achieve high-speed, high-accuracy object detection on iPhones and iPads using CoreML models.
+
 **Multi OS Support**
+
 The Swift Package supports iOS, iPadOS, and macOS.
+
 **Flexible Tasks**
+
 Supports object detection, with segmentation, classification, and pose estimation in the pipeline.
 
 ## 💡 Contribute

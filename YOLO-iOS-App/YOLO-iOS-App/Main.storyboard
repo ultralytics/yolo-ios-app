@@ -53,15 +53,6 @@
                                 <rect key="frame" x="178" y="405" width="37" height="37"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                             </activityIndicatorView>
-                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" insetsLayoutMarginsFromSafeArea="NO" text="1.00x" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vlL-Ye-WgQ" userLabel="zoom">
-                                <rect key="frame" x="166" y="736" width="60" height="20"/>
-                                <accessibility key="accessibilityConfiguration">
-                                    <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
-                                </accessibility>
-                                <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
-                                <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
                                 <rect key="frame" x="5" y="751" width="100" height="14"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -100,7 +91,6 @@
                             <constraint firstItem="ShC-gv-PaQ" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="mEk-Gz-JJe"/>
                             <constraint firstItem="q1Z-jK-UQS" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" multiplier="0.475352" id="oNB-Ef-CH0"/>
                             <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="onI-er-Sda"/>
-                            <constraint firstItem="vlL-Ye-WgQ" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="tnc-kB-JNh"/>
                             <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="zJN-OL-7hd"/>
                         </constraints>
                         <variation key="heightClass=compact-widthClass=regular">
@@ -119,7 +109,6 @@
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelVersion" destination="OCe-bb-RWv" id="MoL-rU-F2n"/>
-                        <outlet property="labelZoom" destination="vlL-Ye-WgQ" id="OIv-03-1de"/>
                         <outlet property="segmentedControl" destination="9cm-Nq-b3N" id="RqH-Ft-fGI"/>
                         <outlet property="yoloView" destination="ShC-gv-PaQ" id="X4o-si-9fj"/>
                     </connections>

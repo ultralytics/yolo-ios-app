@@ -17,17 +17,12 @@ import CoreMedia
 import UIKit
 import YOLO
 
-var mlModel = try! yolo11m(configuration: .init()).model
-
 class ViewController: UIViewController {
     @IBOutlet weak var yoloView: YOLOView!
     @IBOutlet var View0: UIView!
     @IBOutlet var segmentedControl: UISegmentedControl!
-    @IBOutlet var playButtonOutlet: UIBarButtonItem!
-    @IBOutlet var pauseButtonOutlet: UIBarButtonItem!
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var labelFPS: UILabel!
-    @IBOutlet weak var labelZoom: UILabel!
     @IBOutlet weak var labelVersion: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet weak var focus: UIImageView!
@@ -101,7 +96,7 @@ class ViewController: UIViewController {
 
                 }
             } else {
-                print("撮影に失敗またはエラー")
+                print("error capturing photo")
             }
         }
     }

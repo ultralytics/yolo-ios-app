@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		633BC6FB22EDE73D00821BCA /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 633BC6FA22EDE73D00821BCA /* Settings.bundle */; };
-		636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636166E9251443B20054FA7E /* ThresholdProvider.swift */; };
 		636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFC9C21E62DD300DE43BC /* ViewController.swift */; };
 		636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFCA721E62DD300DE43BC /* AppDelegate.swift */; };
 		636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 636EFCB821E62E3900DE43BC /* Assets.xcassets */; };
@@ -16,7 +15,11 @@
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		73220ED32D373C2E00A94B92 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73220ED22D373C2E00A94B92 /* YOLO */; };
-		8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */; };
+		73220EE32D37B1BF00A94B92 /* yolo11l.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73220EDE2D37B1BF00A94B92 /* yolo11l.mlpackage */; };
+		73220EE42D37B1BF00A94B92 /* yolo11s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73220EE12D37B1BF00A94B92 /* yolo11s.mlpackage */; };
+		73220EE52D37B1BF00A94B92 /* yolo11m.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73220EDF2D37B1BF00A94B92 /* yolo11m.mlpackage */; };
+		73220EE62D37B1BF00A94B92 /* yolo11n.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73220EE02D37B1BF00A94B92 /* yolo11n.mlpackage */; };
+		73220EE72D37B1BF00A94B92 /* yolo11x.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 73220EE22D37B1BF00A94B92 /* yolo11x.mlpackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,12 +28,15 @@
 		6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ultralytics_yolo_logotype.png; sourceTree = "<group>"; };
 		632892DF22EB3DB100A12D9C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.info; path = Info.plist; sourceTree = "<group>"; };
 		633BC6FA22EDE73D00821BCA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
-		636166E9251443B20054FA7E /* ThresholdProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThresholdProvider.swift; sourceTree = "<group>"; };
 		636EFC9C21E62DD300DE43BC /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		73220EDE2D37B1BF00A94B92 /* yolo11l.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11l.mlpackage; sourceTree = "<group>"; };
+		73220EDF2D37B1BF00A94B92 /* yolo11m.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11m.mlpackage; sourceTree = "<group>"; };
+		73220EE02D37B1BF00A94B92 /* yolo11n.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11n.mlpackage; sourceTree = "<group>"; };
+		73220EE12D37B1BF00A94B92 /* yolo11s.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11s.mlpackage; sourceTree = "<group>"; };
+		73220EE22D37B1BF00A94B92 /* yolo11x.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = yolo11x.mlpackage; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLO-iOS-App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YOLO-iOS-App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoundingBoxView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,20 +51,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		636166E72514438D0054FA7E /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-				636166E9251443B20054FA7E /* ThresholdProvider.swift */,
-				8EDAA633C1F2B50286D16008 /* BoundingBoxView.swift */,
-			);
-			path = Utilities;
-			sourceTree = "<group>";
-		};
 		636EFC9B21E62DD300DE43BC /* YOLO-iOS-App */ = {
 			isa = PBXGroup;
 			children = (
 				63A946D8271800E20001C3ED /* Models */,
-				636166E72514438D0054FA7E /* Utilities */,
 				636EFCA721E62DD300DE43BC /* AppDelegate.swift */,
 				636EFC9C21E62DD300DE43BC /* ViewController.swift */,
 				6323C44D22186177008AE681 /* LaunchScreen.storyboard */,
@@ -74,6 +70,11 @@
 		63A946D8271800E20001C3ED /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				73220EDE2D37B1BF00A94B92 /* yolo11l.mlpackage */,
+				73220EDF2D37B1BF00A94B92 /* yolo11m.mlpackage */,
+				73220EE02D37B1BF00A94B92 /* yolo11n.mlpackage */,
+				73220EE12D37B1BF00A94B92 /* yolo11s.mlpackage */,
+				73220EE22D37B1BF00A94B92 /* yolo11x.mlpackage */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -193,10 +194,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				636166EA251443B20054FA7E /* ThresholdProvider.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
+				73220EE32D37B1BF00A94B92 /* yolo11l.mlpackage in Sources */,
+				73220EE42D37B1BF00A94B92 /* yolo11s.mlpackage in Sources */,
+				73220EE52D37B1BF00A94B92 /* yolo11m.mlpackage in Sources */,
+				73220EE62D37B1BF00A94B92 /* yolo11n.mlpackage in Sources */,
+				73220EE72D37B1BF00A94B92 /* yolo11x.mlpackage in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
-				8EDAA33950796844333D60A7 /* BoundingBoxView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -6,17 +6,18 @@ protocol ResultsListener: AnyObject {
 }
 
 protocol InferenceTimeListener: AnyObject {
-    func on(inferenceTime: Double)
+    func on(inferenceTime: Double,fpsRate: Double)
 }
-
-protocol FpsRateListener: AnyObject {
-    func on(fpsRate: Double)
-}
+//
+//protocol FpsRateListener: AnyObject {
+//    func on(fpsRate: Double)
+//}
 
 protocol Predictor{
-    func predict(sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?, onInferenceTime: InferenceTimeListener?, onFpsRate: FpsRateListener?)
+    func predict(sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?, onInferenceTime: InferenceTimeListener?)
     func predictOnImage(image: CIImage) -> YOLOResult
     var labels: [String] { get set }
+    var isUpdating: Bool { get set }
 }
 
 enum PredictorError: Error{

@@ -6,6 +6,7 @@ import Vision
 @MainActor
 protocol VideoCaptureDelegate: AnyObject {
     func onPredict(result: YOLOResult)
+    func onInferenceTime(speed: Double, fps: Double)
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice {
@@ -24,7 +25,7 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice {
 }
 
 class VideoCapture: NSObject,@unchecked Sendable {
-    var predictor:Predictor?
+    var predictor:Predictor!
     var previewLayer: AVCaptureVideoPreviewLayer?
     weak var delegate: VideoCaptureDelegate?
     var captureDevice: AVCaptureDevice?
@@ -34,6 +35,7 @@ class VideoCapture: NSObject,@unchecked Sendable {
     var photoOutput = AVCapturePhotoOutput()
     let cameraQueue = DispatchQueue(label: "camera-queue")
     var lastCapturedPhoto: UIImage? = nil
+    
     private var currentBuffer: CVPixelBuffer?
 
     func setUp(sessionPreset: AVCaptureSession.Preset = .hd1280x720,
@@ -160,7 +162,7 @@ class VideoCapture: NSObject,@unchecked Sendable {
 //                imageOrientation = .up
 //            }
             
-            predictor.predict(sampleBuffer: sampleBuffer, onResultsListener: self, onInferenceTime: self, onFpsRate: self)
+            predictor.predict(sampleBuffer: sampleBuffer, onResultsListener: self, onInferenceTime: self)
             currentBuffer = nil
         }
     }
@@ -198,22 +200,19 @@ extension VideoCapture: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension VideoCapture: ResultsListener, InferenceTimeListener, FpsRateListener {
+extension VideoCapture: ResultsListener, InferenceTimeListener {
+    func on(inferenceTime: Double, fpsRate: Double) {
+        DispatchQueue.main.async {
+            self.delegate?.onInferenceTime(speed: inferenceTime, fps: fpsRate)
+        }
+    }
+    
     
     func on(result: YOLOResult) {
         DispatchQueue.main.async {
             self.delegate?.onPredict(result: result)
         }
     }
-    
-    func on(inferenceTime: Double) {
-        
-    }
-    
-    func on(fpsRate: Double) {
-        
-    }
-    
 }
 
 

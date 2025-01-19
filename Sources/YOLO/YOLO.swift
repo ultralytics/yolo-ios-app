@@ -4,7 +4,6 @@ import SwiftUI
 
 public class YOLO {
     var predictor: Predictor!
-    var yoloView: YOLOView?
     
     public init(_ modelPathOrName: String, task: YOLOTask) {
         var modelURL: URL?
@@ -30,7 +29,9 @@ public class YOLO {
         }
 
         switch task {
-        case .detect:
+        case .segment:
+            predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+        default:
             predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
         }
     }
@@ -38,10 +39,10 @@ public class YOLO {
     public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
         let ciImage = CIImage(image: uiImage)!
         var result = predictor.predictOnImage(image: ciImage)
-        if returnAnnotatedImage {
-            let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-            result.annotatedImage = annotatedImage
-        }
+//        if returnAnnotatedImage {
+//            let annotatedImage = drawYOLODetections(on: ciImage, result: result)
+//            result.annotatedImage = annotatedImage
+//        }
         return result
     }
     

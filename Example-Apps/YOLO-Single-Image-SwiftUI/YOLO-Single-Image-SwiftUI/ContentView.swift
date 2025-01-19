@@ -7,7 +7,7 @@ struct ContentView: View {
     @State private var inputImage: UIImage?
     @State private var yoloResult: YOLOResult?
     
-    let yolo = YOLO("yolo11n", task: .detect)
+    let yolo = YOLO("yolov8n-seg", task: .segment)
     
     var body: some View {
         VStack {
@@ -45,7 +45,6 @@ struct ContentView: View {
                     inputImage = correctOrientationUIImage
                     
                     yoloResult = yolo(correctOrientationUIImage)
-                    
                 }
             }
         }

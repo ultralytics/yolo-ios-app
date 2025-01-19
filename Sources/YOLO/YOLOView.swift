@@ -4,18 +4,37 @@ import AVFoundation
 
 @MainActor
 public class YOLOView: UIView, VideoCaptureDelegate{
+    func onInferenceTime(speed: Double, fps: Double) {
+        DispatchQueue.main.async {
+            self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
+        }
+    }
     
     func onPredict(result: YOLOResult) {
+        
         showBoxes(predictions: result)
+        onDetection?(result)
         let speed = result.speed
         var fps: Double = 0
         if let fpsResult = result.fps {
             fps = fpsResult
         }
         DispatchQueue.main.async {
-            self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
+            if let maskImage = result.masks?.combinedMask {
+                self.removeAllMaskSubLayers()
+
+                // CALayerにスケーリングして貼る (maskLayer.bounds.size に合わせる)
+                let maskLayer = CALayer()
+                maskLayer.frame = self.overlayLayer.bounds  // 例: 画面プレビューに合わせたサイズ
+                maskLayer.contents = maskImage   // 160x160 → ビューサイズに拡大描画
+                maskLayer.opacity = 0.5
+
+                self.overlayLayer.addSublayer(maskLayer)
+                self.videoCapture.predictor.isUpdating = false
+            } else {
+                self.videoCapture.predictor.isUpdating = false
+            }
         }
-        onDetection?(result)
     }
     
     var onDetection: ((YOLOResult) -> Void)?
@@ -29,7 +48,6 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     var t3 = CACurrentMediaTime()  // FPS start
     var t4 = 0.0  // FPS dt smoothed
     var task = YOLOTask.detect
-    var predictor: Predictor!
     var colors: [String: UIColor] = [:]
     var modelName: String = ""
     var classes: [String] = []
@@ -50,6 +68,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     public var switchCameraButton = UIButton()
     public var toolbar = UIView()
     let selection = UISelectionFeedbackGenerator()
+    private var overlayLayer = CALayer()
 
     private let minimumZoom: CGFloat = 1.0
     private let maximumZoom: CGFloat = 10.0
@@ -70,6 +89,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             self.setupUI()
             self.videoCapture.delegate = self
             start(position: .back)
+            setupOverlayLayer()
         }
     
     required init?(coder: NSCoder) {
@@ -85,6 +105,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             setupUI()
             videoCapture.delegate = self
             start(position: .back)
+            setupOverlayLayer()
         }
     }
     
@@ -117,8 +138,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
         
         modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
+        var predictor: Predictor
         switch task {
-        case .detect:
+        case .segment:
+            predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+        default:
             predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
         }
         videoCapture.predictor = predictor
@@ -142,6 +166,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                             box.addToLayer(previewLayer)
                         }
                     }
+                    self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
                     // Once everything is set up, we can start capturing live video.
                     self.videoCapture.start()
                     
@@ -167,7 +192,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         
         // Retrieve class labels directly from the CoreML model's class labels, if available.
         if task == .detect {
-            classes = predictor.labels
+            classes = videoCapture.predictor.labels
             // Assign random colors to the classes.
             var count = 0
             for label in classes {
@@ -181,6 +206,38 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                 }
             }
         }
+    }
+    
+    func setupOverlayLayer() {
+      let width = self.bounds.width
+      let height = self.bounds.height
+
+      var ratio: CGFloat = 1.0
+      if videoCapture.captureSession.sessionPreset == .photo {
+        ratio = (4.0 / 3.0)
+      } else {
+        ratio = (16.0 / 9.0)
+      }
+      var offSet = CGFloat.zero
+      var margin = CGFloat.zero
+      if self.bounds.width < self.bounds.height {
+        offSet = height / ratio
+        margin = (offSet - self.bounds.width) / 2
+        self.overlayLayer.frame = CGRect(
+          x: -margin, y: 0, width: offSet, height: self.bounds.height)
+      } else {
+        offSet = width / ratio
+        margin = (offSet - self.bounds.height) / 2
+        self.overlayLayer.frame = CGRect(
+          x: 0, y: -margin, width: self.bounds.width, height: offSet)
+      }
+    }
+    
+    func removeAllMaskSubLayers() {
+        self.overlayLayer.sublayers?.forEach { layer in
+        layer.removeFromSuperlayer()
+      }
+      self.overlayLayer.sublayers = nil
     }
     
     func showBoxes(predictions: YOLOResult) {
@@ -200,6 +257,8 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         switch task {
         case .detect:
             resultCount = predictions.boxes.count
+        default:
+            resultCount = predictions.boxes.count
         }
         self.labelSliderNumItems.text = String(resultCount) + " items (max " + String(Int(sliderNumItems.value)) + ")"
         for i in 0..<boundingBoxViews.count {
@@ -211,7 +270,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                 var alpha: CGFloat = 0.9
                 var bestClass = ""
                 switch task {
-                case .detect:
+                default:
                     let prediction = predictions.boxes[i]
                     rect = CGRect(x: prediction.xywhn.minX, y: 1-prediction.xywhn.maxY, width: prediction.xywhn.width, height: prediction.xywhn.height)
                     
@@ -289,7 +348,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         labelName.font = UIFont.preferredFont(forTextStyle: .title1)
         self.addSubview(labelName)
         
-        labelFPS.text = "Label"
+        labelFPS.text = String(format: "%.1f FPS - %.1f ms", 0.0, 0.0) 
         labelFPS.textAlignment = .center
         labelFPS.textColor = .black
         labelFPS.font = UIFont.preferredFont(forTextStyle: .body)
@@ -373,6 +432,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     }
     
     public override func layoutSubviews() {
+        setupOverlayLayer()
         let isLandscape = bounds.width > bounds.height
         activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
         if isLandscape {

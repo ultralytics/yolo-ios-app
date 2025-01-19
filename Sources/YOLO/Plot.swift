@@ -1,6 +1,8 @@
 import Foundation
 import UIKit
 import CoreImage
+import CoreML
+import Accelerate
 
 let ultralyticsColors: [UIColor] = [
     UIColor(red: 4 / 255, green: 42 / 255, blue: 255 / 255, alpha: 0.6),
@@ -81,4 +83,219 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
     let drawnImage = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
     UIGraphicsEndImageContext()
     return drawnImage
+}
+
+func generateCombinedMaskImage(
+    detectedObjects: [(CGRect, Int, Float, MLMultiArray)],
+    protos: MLMultiArray,   // shape: [1, C, H, W]
+    inputWidth: Int,
+    inputHeight: Int,
+    threshold: Float = 0.5,
+    returnIndividualMasks: Bool = true
+) -> (CGImage?, [[[Float]]]?)? {
+    // 1) protos形状チェック
+    let maskHeight = protos.shape[2].intValue // 例: 160
+    let maskWidth  = protos.shape[3].intValue // 例: 160
+    let maskChannels = protos.shape[1].intValue // 例: 32
+    guard
+        protos.shape.count == 4,
+        protos.shape[0].intValue == 1,
+        maskHeight > 0,
+        maskWidth > 0,
+        maskChannels > 0
+    else {
+        print("Invalid protos shape!")
+        return nil
+    }
+
+    let protosPointer = protos.dataPointer.assumingMemoryBound(to: Float.self)
+    let HW = maskHeight * maskWidth
+    let N = detectedObjects.count
+
+    // 2) 行列A: (N, C) を一括で用意 (オブジェクト数 x マスクチャネル)
+    var coeffsArray = [Float](repeating: 0, count: N * maskChannels)
+    for i in 0..<N {
+        let (_, _, _, coeffsMLArray) = detectedObjects[i]
+        let coeffsPtr = coeffsMLArray.dataPointer.assumingMemoryBound(to: Float.self)
+        // 行列Aのi行目: coeffsArray[i*C .. i*C + C-1] に書き込み
+        for c in 0..<maskChannels {
+            coeffsArray[i * maskChannels + c] = coeffsPtr[c]
+        }
+    }
+
+    // 3) 行列B: (C, HW) は protosPointer をそのまま使用
+    //    memory layout が [1, C, H, W] => (C, H, W) => (C, HW) となる。行方向C, 列方向HW
+    //    vDSP_mmul は連続メモリを2Dとして扱うだけなのでOK。
+
+    // 4) 行列C(出力): (N, HW) を確保 => combinedMask
+    //    フラット形状で N*HW の要素をもつ1次元配列
+    var combinedMask = [Float](repeating: 0, count: N * HW)
+
+    // 5) vDSP_mmulで一括演算: (N x C) * (C x HW) => (N x HW)
+    coeffsArray.withUnsafeBufferPointer { Abuf in
+        combinedMask.withUnsafeMutableBufferPointer { Cbuf in
+            vDSP_mmul(
+                Abuf.baseAddress!, 1,        // A
+                protosPointer, 1,           // B
+                Cbuf.baseAddress!, 1,       // C
+                vDSP_Length(N),
+                vDSP_Length(HW),
+                vDSP_Length(maskChannels)
+            )
+        }
+    }
+
+    // 6) スコア順ソート (合成時の描画順を制御)
+    //    => (originalIndex, box, classID, score)
+    let indexedObjects: [(Int, CGRect, Int, Float)] =
+        detectedObjects.enumerated().map { (i, obj) in (i, obj.0, obj.1, obj.2) }
+    let sortedObjects = indexedObjects.sorted { $0.3 < $1.3 } // score昇順
+
+    // 7) RGBAバッファ (160x160)
+    var mergedPixels = [UInt8](repeating: 0, count: HW * 4)
+    let scaleX = Float(maskWidth)  / Float(inputWidth)
+    let scaleY = Float(maskHeight) / Float(inputHeight)
+
+    // 8) 個別の確率マップを保持するかどうか
+    var probabilityMasks: [[[Float]]]? = nil
+    if returnIndividualMasks {
+        probabilityMasks = Array(
+            repeating: Array(
+                repeating: [Float](repeating: 0.0, count: maskWidth),
+                count: maskHeight
+            ),
+            count: N
+        )
+    }
+
+    // 9) ソート順に従い合成
+    for (originalIndex, box, classID, score) in sortedObjects {
+        // boundingBoxをマスク座標系に変換
+        let minX = Int(Float(box.minX) * scaleX)
+        let minY = Int(Float(box.minY) * scaleY)
+        let maxX = Int(Float(box.maxX) * scaleX)
+        let maxY = Int(Float(box.maxY) * scaleY)
+
+        let boxX1 = max(0, min(minX, maskWidth - 1))
+        let boxX2 = max(0, min(maxX, maskWidth - 1))
+        let boxY1 = max(0, min(minY, maskHeight - 1))
+        let boxY2 = max(0, min(maxY, maskHeight - 1))
+
+        // オブジェクト originalIndex のマスク => combinedMask[originalIndex*HW ..< (originalIndex+1)*HW]
+        // フラット配列の先頭
+        let startIdx = originalIndex * HW
+
+        // クラス色の取得
+        let _colorIndex = classID % ultralyticsColors.count
+        let color = ultralyticsColors[_colorIndex].toRGBComponents()!
+        let r = UInt8(color.red)
+        let g = UInt8(color.green)
+        let b = UInt8(color.blue)
+
+        // ピクセルループ: box範囲のみ
+        for y in boxY1...boxY2 {
+            for x in boxX1...boxX2 {
+                let px = y * maskWidth + x
+                let maskVal = combinedMask[startIdx + px]
+                if maskVal > threshold {
+                    let pixIndex = px * 4
+                    mergedPixels[pixIndex + 0] = r
+                    mergedPixels[pixIndex + 1] = g
+                    mergedPixels[pixIndex + 2] = b
+                    mergedPixels[pixIndex + 3] = 255
+                }
+            }
+        }
+    }
+
+    if returnIndividualMasks, var masksArray = probabilityMasks {
+        for i in 0..<N {
+            let startIdx = i * HW
+            for k in 0..<HW {
+                let row = k / maskWidth
+                let col = k % maskWidth
+                masksArray[i][row][col] = combinedMask[startIdx + k]
+            }
+        }
+        probabilityMasks = masksArray
+    }
+
+    // 11) RGBAバッファ -> CGImage
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+    let totalBytes = mergedPixels.count
+
+    guard let providerRef = CGDataProvider(data: NSData(bytes: &mergedPixels, length: totalBytes)) else {
+        return nil
+    }
+    guard let mergedCGImage = CGImage(
+        width: maskWidth,
+        height: maskHeight,
+        bitsPerComponent: 8,
+        bitsPerPixel: 32,
+        bytesPerRow: maskWidth * 4,
+        space: colorSpace,
+        bitmapInfo: bitmapInfo,
+        provider: providerRef,
+        decode: nil,
+        shouldInterpolate: false,
+        intent: .defaultIntent
+    ) else {
+        return nil
+    }
+
+    return (mergedCGImage, probabilityMasks)
+}
+
+func composeImageWithMask(
+    baseImage: CGImage,
+    maskImage: CGImage
+) -> UIImage? {
+    let width = baseImage.width
+    let height = baseImage.height
+    
+    guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+    guard let context = CGContext(
+        data: nil,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: width * 4,
+        space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else {
+        return nil
+    }
+    
+    let baseRect = CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height))
+    context.draw(baseImage, in: baseRect)
+    
+    context.saveGState()
+    context.setAlpha(0.5)
+    context.draw(maskImage, in: baseRect)
+    context.restoreGState()
+
+    guard let composedImage = context.makeImage() else {return UIImage(cgImage: baseImage)}
+    return UIImage(cgImage: composedImage)
+}
+
+
+extension UIColor {
+  func toRGBComponents() -> (red: UInt8, green: UInt8, blue: UInt8)? {
+    var red: CGFloat = 0
+    var green: CGFloat = 0
+    var blue: CGFloat = 0
+    var alpha: CGFloat = 0
+
+    let success = self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+    if success {
+      let redUInt8 = UInt8(red * 255.0)
+      let greenUInt8 = UInt8(green * 255.0)
+      let blueUInt8 = UInt8(blue * 255.0)
+      return (red: redUInt8, green: greenUInt8, blue: blueUInt8)
+    } else {
+      return nil
+    }
+  }
 }

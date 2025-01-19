@@ -11,7 +11,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        model = YOLO("yolo11n", task: .detect)
+        model = YOLO("yolov8n-seg", task: .segment)
         
         setupView()
     }

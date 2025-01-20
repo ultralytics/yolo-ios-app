@@ -14,26 +14,25 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         
         showBoxes(predictions: result)
         onDetection?(result)
-        let speed = result.speed
-        var fps: Double = 0
-        if let fpsResult = result.fps {
-            fps = fpsResult
-        }
-        DispatchQueue.main.async {
-            if let maskImage = result.masks?.combinedMask {
-                self.removeAllMaskSubLayers()
-
-                // CALayerにスケーリングして貼る (maskLayer.bounds.size に合わせる)
-                let maskLayer = CALayer()
-                maskLayer.frame = self.overlayLayer.bounds  // 例: 画面プレビューに合わせたサイズ
-                maskLayer.contents = maskImage   // 160x160 → ビューサイズに拡大描画
-                maskLayer.opacity = 0.5
-
-                self.overlayLayer.addSublayer(maskLayer)
-                self.videoCapture.predictor.isUpdating = false
-            } else {
-                self.videoCapture.predictor.isUpdating = false
+        
+        if task == .segment {
+            DispatchQueue.main.async {
+                if let maskImage = result.masks?.combinedMask {
+                    self.removeAllMaskSubLayers()
+                    
+                    let maskLayer = CALayer()
+                    maskLayer.frame = self.overlayLayer.bounds
+                    maskLayer.contents = maskImage
+                    maskLayer.opacity = 0.5
+                    
+                    self.overlayLayer.addSublayer(maskLayer)
+                    self.videoCapture.predictor.isUpdating = false
+                } else {
+                    self.videoCapture.predictor.isUpdating = false
+                }
             }
+        } else if task == .classify {
+            self.overlayYOLOClassificationsCALayer(on: self, result: result)
         }
     }
     
@@ -69,14 +68,14 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     public var toolbar = UIView()
     let selection = UISelectionFeedbackGenerator()
     private var overlayLayer = CALayer()
-
+    
     private let minimumZoom: CGFloat = 1.0
     private let maximumZoom: CGFloat = 10.0
     private var lastZoomFactor: CGFloat = 1.0
     
     public var capturedImage: UIImage?
     private var photoCaptureCompletion: ((UIImage?) -> Void)?
-
+    
     public init(
         frame: CGRect,
         modelPathOrName: String,
@@ -96,7 +95,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         self.videoCapture = VideoCapture()
         super.init(coder: coder)
     }
-
+    
     public override func awakeFromNib() {
         super.awakeFromNib()
         Task { @MainActor in
@@ -110,11 +109,12 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     }
     
     public func setModel(modelPathOrName: String,
-                            task: YOLOTask) {
+                         task: YOLOTask) {
         activityIndicator.startAnimating()
         boundingBoxViews.forEach { box in
             box.hide()
         }
+        self.task = task
         var modelURL: URL?
         
         let lowercasedPath = modelPathOrName.lowercased()
@@ -140,6 +140,8 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
         var predictor: Predictor
         switch task {
+        case .classify:
+            predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
         case .segment:
             predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
         default:
@@ -209,35 +211,35 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     }
     
     func setupOverlayLayer() {
-      let width = self.bounds.width
-      let height = self.bounds.height
-
-      var ratio: CGFloat = 1.0
-      if videoCapture.captureSession.sessionPreset == .photo {
-        ratio = (4.0 / 3.0)
-      } else {
-        ratio = (16.0 / 9.0)
-      }
-      var offSet = CGFloat.zero
-      var margin = CGFloat.zero
-      if self.bounds.width < self.bounds.height {
-        offSet = height / ratio
-        margin = (offSet - self.bounds.width) / 2
-        self.overlayLayer.frame = CGRect(
-          x: -margin, y: 0, width: offSet, height: self.bounds.height)
-      } else {
-        offSet = width / ratio
-        margin = (offSet - self.bounds.height) / 2
-        self.overlayLayer.frame = CGRect(
-          x: 0, y: -margin, width: self.bounds.width, height: offSet)
-      }
+        let width = self.bounds.width
+        let height = self.bounds.height
+        
+        var ratio: CGFloat = 1.0
+        if videoCapture.captureSession.sessionPreset == .photo {
+            ratio = (4.0 / 3.0)
+        } else {
+            ratio = (16.0 / 9.0)
+        }
+        var offSet = CGFloat.zero
+        var margin = CGFloat.zero
+        if self.bounds.width < self.bounds.height {
+            offSet = height / ratio
+            margin = (offSet - self.bounds.width) / 2
+            self.overlayLayer.frame = CGRect(
+                x: -margin, y: 0, width: offSet, height: self.bounds.height)
+        } else {
+            offSet = width / ratio
+            margin = (offSet - self.bounds.height) / 2
+            self.overlayLayer.frame = CGRect(
+                x: 0, y: -margin, width: self.bounds.width, height: offSet)
+        }
     }
     
     func removeAllMaskSubLayers() {
         self.overlayLayer.sublayers?.forEach { layer in
-        layer.removeFromSuperlayer()
-      }
-      self.overlayLayer.sublayers = nil
+            layer.removeFromSuperlayer()
+        }
+        self.overlayLayer.sublayers = nil
     }
     
     func showBoxes(predictions: YOLOResult) {
@@ -340,6 +342,61 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
     }
     
+    func overlayYOLOClassificationsCALayer(on view: UIView, result: YOLOResult) {
+        
+        if let sublayers = view.layer.sublayers {
+            for layer in sublayers where layer.name == "YOLOOverlayLayer" {
+                layer.removeFromSuperlayer()
+            }
+        }
+        
+        let overlayLayer = CALayer()
+        overlayLayer.frame = view.bounds
+        overlayLayer.name = "YOLOOverlayLayer"
+        
+        guard let top1 = result.probs?.top1,
+              let top1Conf = result.probs?.top1Conf else {
+            return
+        }
+        
+        var colorIndex = 0
+        if let index = result.names.firstIndex(of: top1) {
+            colorIndex = index % ultralyticsColors.count
+        }
+        let color = ultralyticsColors[colorIndex]
+        
+        let confidencePercent = round(top1Conf * 1000) / 10
+        let labelText = " \(top1) \(confidencePercent)% "
+        
+        let textLayer = CATextLayer()
+        textLayer.contentsScale = UIScreen.main.scale  // Retina対応
+        textLayer.alignmentMode = .left
+        let fontSize = self.bounds.height * 0.02
+        textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+        textLayer.fontSize = fontSize
+        textLayer.foregroundColor = UIColor.white.cgColor
+        textLayer.backgroundColor = color.cgColor
+        textLayer.cornerRadius = 4
+        textLayer.masksToBounds = true
+        
+        textLayer.string = labelText
+        let textAttributes: [NSAttributedString.Key: Any] = [
+            .font : UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+        ]
+        let textSize = (labelText as NSString).size(withAttributes: textAttributes)
+        let x: CGFloat = 10
+        let y: CGFloat = self.center.y - textSize.height
+        let width: CGFloat = textSize.width + 10
+        let height: CGFloat = textSize.height + 4
+        
+        textLayer.frame = CGRect(x: x, y: y, width: width, height: height)
+        
+        overlayLayer.addSublayer(textLayer)
+        
+        view.layer.addSublayer(overlayLayer)
+    }
+    
+    
     private func setupUI() {
         labelName.text = modelName
         labelName.textAlignment = .center
@@ -348,7 +405,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         labelName.font = UIFont.preferredFont(forTextStyle: .title1)
         self.addSubview(labelName)
         
-        labelFPS.text = String(format: "%.1f FPS - %.1f ms", 0.0, 0.0) 
+        labelFPS.text = String(format: "%.1f FPS - %.1f ms", 0.0, 0.0)
         labelFPS.textAlignment = .center
         labelFPS.textColor = .black
         labelFPS.font = UIFont.preferredFont(forTextStyle: .body)
@@ -387,7 +444,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         labelSliderIoU.textColor = .black
         labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
         self.addSubview(labelSliderIoU)
-
+        
         sliderIoU.minimumValue = 0
         sliderIoU.maximumValue = 1
         sliderIoU.value = 0.45
@@ -399,7 +456,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         self.labelSliderNumItems.text = "0 items (max " + String(Int(sliderNumItems.value)) + ")"
         self.labelSliderConf.text = "0.25 Confidence Threshold"
         self.labelSliderIoU.text = "0.45 IoU Threshold"
-
+        
         labelZoom.text = "1.00x"
         labelZoom.textColor = .black
         labelZoom.font = UIFont.systemFont(ofSize: 14)
@@ -408,7 +465,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         self.addSubview(labelZoom)
         
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-
+        
         
         playButton.setImage(UIImage(systemName: "play.fill", withConfiguration: config), for: .normal)
         playButton.tintColor = .systemGray
@@ -427,7 +484,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         toolbar.addSubview(playButton)
         toolbar.addSubview(pauseButton)
         toolbar.addSubview(switchCameraButton)
-
+        
         self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
     }
     
@@ -440,7 +497,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             playButton.tintColor = .darkGray
             pauseButton.tintColor = .darkGray
             switchCameraButton.tintColor = .darkGray
-
+            
             let width = bounds.width
             let height = bounds.height
             
@@ -471,7 +528,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                 width: sliderWidth,
                 height: sliderHeight
             )
-
+            
             sliderNumItems.frame = CGRect(
                 x: width * 0.1,
                 y: labelSliderNumItems.frame.maxY + 10,
@@ -527,7 +584,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             playButton.tintColor = .systemGray
             pauseButton.tintColor = .systemGray
             switchCameraButton.tintColor = .systemGray
-
+            
             let width = bounds.width
             let height = bounds.height
             
@@ -610,7 +667,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             pauseButton.frame = CGRect(x: playButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
             switchCameraButton.frame = CGRect(x: pauseButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
         }
-
+        
         self.videoCapture.previewLayer?.frame = self.bounds
     }
     
@@ -632,7 +689,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         case .landscapeLeft:
             orientation = .landscapeRight
         default:
-          return
+            return
         }
         videoCapture.updateVideoOrientation(orientation:orientation)
         
@@ -660,36 +717,36 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     
     @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
         guard let device = videoCapture.captureDevice else { return }
-
-      // Return zoom value between the minimum and maximum zoom values
-      func minMaxZoom(_ factor: CGFloat) -> CGFloat {
-        return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
-      }
-
-      func update(scale factor: CGFloat) {
-        do {
-          try device.lockForConfiguration()
-          defer {
-            device.unlockForConfiguration()
-          }
-          device.videoZoomFactor = factor
-        } catch {
-          print("\(error.localizedDescription)")
+        
+        // Return zoom value between the minimum and maximum zoom values
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
         }
-      }
-
-      let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
-      switch pinch.state {
-      case .began, .changed:
-        update(scale: newScaleFactor)
-        self.labelZoom.text = String(format: "%.2fx", newScaleFactor)
-        self.labelZoom.font = UIFont.preferredFont(forTextStyle: .title2)
-      case .ended:
-        lastZoomFactor = minMaxZoom(newScaleFactor)
-        update(scale: lastZoomFactor)
-        self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
-      default: break
-      }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer {
+                    device.unlockForConfiguration()
+                }
+                device.videoZoomFactor = factor
+            } catch {
+                print("\(error.localizedDescription)")
+            }
+        }
+        
+        let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
+        switch pinch.state {
+        case .began, .changed:
+            update(scale: newScaleFactor)
+            self.labelZoom.text = String(format: "%.2fx", newScaleFactor)
+            self.labelZoom.font = UIFont.preferredFont(forTextStyle: .title2)
+        case .ended:
+            lastZoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: lastZoomFactor)
+            self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
+        default: break
+        }
     }
     
     @objc func playTapped() {
@@ -733,7 +790,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         case .landscapeLeft:
             orientation = .landscapeRight
         default:
-          return
+            return
         }
         self.videoCapture.updateVideoOrientation(orientation: orientation)
         
@@ -745,73 +802,73 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         let settings = AVCapturePhotoSettings()
         usleep(20_000)  // short 10 ms delay to allow camera to focus
         self.videoCapture.photoOutput.capturePhoto(
-          with: settings, delegate: self as AVCapturePhotoCaptureDelegate
+            with: settings, delegate: self as AVCapturePhotoCaptureDelegate
         )
     }
-
+    
 }
 
 extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
     public func photoOutput(
-    _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
-  ) {
-    if let error = error {
-      print("error occurred : \(error.localizedDescription)")
-    }
-    if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
-        intent: .defaultIntent)
-      var isCameraFront = false
-      if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
-        currentInput.device.position == .front
-      {
-        isCameraFront = true
-      }
-      var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
-      switch UIDevice.current.orientation {
-      case .landscapeLeft:
-        orientation = isCameraFront ? .downMirrored : .up
-      case .landscapeRight:
-        orientation = isCameraFront ? .upMirrored : .down
-      default:
-        break
-      }
-      var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
-      if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
-        let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
-      {
-        image = UIImage(cgImage: cgImage)
-      }
-      let imageView = UIImageView(image: image)
-      imageView.contentMode = .scaleAspectFill
-      imageView.frame = self.frame
-      let imageLayer = imageView.layer
-      self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
-
-        var tempViews = [UIView]()
-        let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
-        for info in boundingBoxInfos where !info.isHidden {
-            let boxView = createBoxView(from: info)
-            boxView.frame = info.rect
+        _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
+    ) {
+        if let error = error {
+            print("error occurred : \(error.localizedDescription)")
+        }
+        if let dataImage = photo.fileDataRepresentation() {
+            let dataProvider = CGDataProvider(data: dataImage as CFData)
+            let cgImageRef: CGImage! = CGImage(
+                jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
+                intent: .defaultIntent)
+            var isCameraFront = false
+            if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
+               currentInput.device.position == .front
+            {
+                isCameraFront = true
+            }
+            var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
+            switch UIDevice.current.orientation {
+            case .landscapeLeft:
+                orientation = isCameraFront ? .downMirrored : .up
+            case .landscapeRight:
+                orientation = isCameraFront ? .upMirrored : .down
+            default:
+                break
+            }
+            var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
+            if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
+               let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
+            {
+                image = UIImage(cgImage: cgImage)
+            }
+            let imageView = UIImageView(image: image)
+            imageView.contentMode = .scaleAspectFill
+            imageView.frame = self.frame
+            let imageLayer = imageView.layer
+            self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
             
-            self.addSubview(boxView)
-            tempViews.append(boxView)
+            var tempViews = [UIView]()
+            let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
+            for info in boundingBoxInfos where !info.isHidden {
+                let boxView = createBoxView(from: info)
+                boxView.frame = info.rect
+                
+                self.addSubview(boxView)
+                tempViews.append(boxView)
+            }
+            let bounds = UIScreen.main.bounds
+            UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
+            self.drawHierarchy(in: bounds, afterScreenUpdates: true)
+            let img = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            imageLayer.removeFromSuperlayer()
+            for v in tempViews {
+                v.removeFromSuperview()
+            }
+            photoCaptureCompletion?(img)
+            photoCaptureCompletion = nil
+        } else {
+            print("AVCapturePhotoCaptureDelegate Error")
         }
-      let bounds = UIScreen.main.bounds
-      UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
-      self.drawHierarchy(in: bounds, afterScreenUpdates: true)
-      let img = UIGraphicsGetImageFromCurrentImageContext()
-      UIGraphicsEndImageContext()
-      imageLayer.removeFromSuperlayer()
-        for v in tempViews {
-            v.removeFromSuperview()
-        }
-      photoCaptureCompletion?(img)
-        photoCaptureCompletion = nil
-    } else {
-      print("AVCapturePhotoCaptureDelegate Error")
     }
-  }
 }

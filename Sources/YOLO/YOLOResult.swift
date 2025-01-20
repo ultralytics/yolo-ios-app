@@ -6,12 +6,12 @@ public struct YOLOResult:@unchecked Sendable  {
     public let orig_shape: CGSize
     public let boxes: [Box]
     public var masks: Masks?
+    public var probs: Probs?
     public var annotatedImage: UIImage?
     public var speed: Double
     public var fps: Double?
     public var originalImage: UIImage?
-//    public var speed: Float
-//    let masks: [CGImage]
+    public var names: [String]
 //    let keypoints: [Keypoint]
 }
 
@@ -26,6 +26,13 @@ public struct Box:@unchecked Sendable  {
 public struct Masks:@unchecked Sendable  {
     public let masks: [[[Float]]]
     public let combinedMask: CGImage?
+}
+
+public struct Probs:@unchecked Sendable  {
+    public var top1: String
+    public var top5: [String]
+    public var top1Conf: Float
+    public var top5Confs: [Float]
 }
 
 public struct Keypoint {

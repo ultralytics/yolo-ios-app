@@ -43,7 +43,7 @@ class ObjectDetector: BasePredictor {
 
                 self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000,fpsRate: 1 / self.t4)  // t2 seconds to ms
 //                self.currentOnFpsRateListener?.on(fpsRate: 1 / self.t4)
-                let result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4)
+                let result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
 
                 self.currentOnResultsListener?.on(result: result)
 
@@ -53,7 +53,7 @@ class ObjectDetector: BasePredictor {
     override func predictOnImage(image: CIImage) -> YOLOResult {
         let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
         guard let request = visionRequest else {
-            let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0)
+            let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
             return emptyResult
         }
         var boxes = [Box]()
@@ -61,6 +61,7 @@ class ObjectDetector: BasePredictor {
         let imageWidth = image.extent.width
         let imageHeight = image.extent.height
         self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+        let start = Date()
         
         do {
             try requestHandler.perform([request])
@@ -84,7 +85,9 @@ class ObjectDetector: BasePredictor {
         } catch {
             print(error)
         }
-        let result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: t1)
+        let speed = Date().timeIntervalSince(start)
+    
+        let result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: t1, names: labels)
         return result
     }
 }

@@ -279,6 +279,66 @@ func composeImageWithMask(
     return UIImage(cgImage: composedImage)
 }
 
+public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {
+    let context = CIContext(options: nil)
+    guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+        return UIImage()
+    }
+    let width = cgImage.width
+    let height = cgImage.height
+    let imageSize = CGSize(width: width, height: height)
+    UIGraphicsBeginImageContextWithOptions(imageSize, false, 1.0)
+    guard let drawContext = UIGraphicsGetCurrentContext() else {
+        UIGraphicsEndImageContext()
+        return UIImage()
+    }
+    drawContext.saveGState()
+    drawContext.translateBy(x: 0, y: CGFloat(height))
+    drawContext.scaleBy(x: 1, y: -1)
+    drawContext.draw(cgImage, in: CGRect(origin: .zero, size: imageSize))
+    drawContext.restoreGState()
+    guard let top5 = result.probs?.top5 else {
+        return UIImage(ciImage: ciImage)
+    }
+    for (i,candidate) in top5.enumerated() {
+        var colorIndex = 0
+        if let index = result.names.firstIndex(of: candidate) {
+            colorIndex = index % ultralyticsColors.count
+        }
+        let color = ultralyticsColors[colorIndex]
+        let lineWidth = CGFloat(width) * 0.01
+        drawContext.setStrokeColor(color.cgColor)
+        drawContext.setLineWidth(lineWidth)
+        let confidencePercent = round(result.probs!.top5Confs[i]*1000)/10
+        let labelText = " \(candidate) \(confidencePercent)% "
+        let fontSize = CGFloat(width)*0.03
+        let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.white
+        ]
+        let textSize = labelText.size(withAttributes: attrs)
+        let labelWidth = textSize.width + 10
+        let labelHeight = textSize.height + 4
+        var labelRect = CGRect(
+            x: fontSize,
+            y: fontSize + (fontSize*1.5*CGFloat(i)),
+            width: labelWidth,
+            height: labelHeight
+        )
+
+        drawContext.setFillColor(color.cgColor)
+        drawContext.fill(labelRect)
+        let textPoint = CGPoint(
+            x: labelRect.origin.x + 5,
+            y: labelRect.origin.y + (labelHeight - textSize.height) / 2
+        )
+        labelText.draw(at: textPoint, withAttributes: attrs)
+    }
+    let drawnImage = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
+    UIGraphicsEndImageContext()
+    return drawnImage
+}
 
 extension UIColor {
   func toRGBComponents() -> (red: UInt8, green: UInt8, blue: UInt8)? {

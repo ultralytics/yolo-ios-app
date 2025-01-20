@@ -14,7 +14,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                 let masks = results[0].featureValue.multiArrayValue
                 let pred = results[1].featureValue.multiArrayValue
                 
-                let detectedObjects = postProcessSegment(feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
+            let detectedObjects = postProcessSegment(feature: pred!, confidenceThreshold: Float(confidenceThreshold), iouThreshold: Float(iouThreshold))
                 var boxes: [Box] = []
                 var alphas = [CGFloat]()
                 
@@ -56,7 +56,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                         return
                     }
                     var maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
-                    let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: maskResults, speed: self.t2, fps: 1 / self.t4)
+                    let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: maskResults, speed: self.t2, fps: 1 / self.t4, names: self.labels)
                     self.updateTime()
                     self.currentOnResultsListener?.on(result: result)
                 }
@@ -78,7 +78,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     override func predictOnImage(image: CIImage) -> YOLOResult {
         let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
         guard let request = visionRequest else {
-            let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0)
+            let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
             return emptyResult
         }
         var boxes = [Box]()
@@ -86,13 +86,13 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let imageWidth = image.extent.width
         let imageHeight = image.extent.height
         self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-        var result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+        var result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
 
         do {
             try requestHandler.perform([request])
             if let results = request.results as? [VNCoreMLFeatureValueObservation] {
                 //                DispatchQueue.main.async { [self] in
-                guard results.count == 2 else { return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)}
+                guard results.count == 2 else { return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)}
                 let masks = results[0].featureValue.multiArrayValue
                 let pred = results[1].featureValue.multiArrayValue
                 let a = Date()
@@ -126,7 +126,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                     threshold: 0.5
                     
                 ) as? (CGImage?, [[[Float]]]) else {
-                    return YOLOResult(orig_shape: inputSize, boxes: boxes,masks: nil, annotatedImage: nil, speed: 0)
+                    return YOLOResult(orig_shape: inputSize, boxes: boxes,masks: nil, annotatedImage: nil, speed: 0, names: labels)
                 }
                 let cgImage = CIContext().createCGImage(image, from: image.extent)!
                 var annotatedImage = composeImageWithMask(baseImage: cgImage, maskImage: procceessedMasks.0!)
@@ -136,7 +136,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                 }
                 self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
                 self.t3 = CACurrentMediaTime()
-                result = YOLOResult(orig_shape: inputSize, boxes: boxes,masks: maskResults, annotatedImage: annotatedImage, speed: self.t2, fps: 1 / self.t4)
+                result = YOLOResult(orig_shape: inputSize, boxes: boxes,masks: maskResults, annotatedImage: annotatedImage, speed: self.t2, fps: 1 / self.t4, names: labels)
                 annotatedImage = drawYOLODetections(on: CIImage(image: annotatedImage!)!, result: result)
                 result.annotatedImage = annotatedImage
                 return result

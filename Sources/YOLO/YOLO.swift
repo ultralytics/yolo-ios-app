@@ -29,6 +29,8 @@ public class YOLO {
         }
 
         switch task {
+        case .classify:
+            predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
         case .segment:
             predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
         default:
@@ -74,7 +76,7 @@ public class YOLO {
               let data = try? Data(contentsOf: url),
               let uiImage = UIImage(data: data)
         else {
-            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
         }
         return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
     }
@@ -87,7 +89,7 @@ public class YOLO {
               let data = try? Data(contentsOf: remoteURL),
               let uiImage = UIImage(data: data)
         else {
-            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
         }
         return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
     }
@@ -100,7 +102,7 @@ public class YOLO {
         guard let data = try? Data(contentsOf: fileURL),
               let uiImage = UIImage(data: data)
         else {
-            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
         }
         return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
     }
@@ -112,7 +114,7 @@ public class YOLO {
     ) -> YOLOResult {
         let renderer = ImageRenderer(content: swiftUIImage)
         guard let uiImage = renderer.uiImage else {
-            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+            return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
         }
         return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
     }

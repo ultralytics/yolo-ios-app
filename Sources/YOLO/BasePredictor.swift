@@ -142,7 +142,7 @@ public class BasePredictor : Predictor {
     }
     
     func predictOnImage(image: CIImage) -> YOLOResult {
-        return YOLOResult(orig_shape: .zero, boxes: [], speed: 0)
+        return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
 
     func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {

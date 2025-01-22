@@ -7,6 +7,7 @@ public struct YOLOResult:@unchecked Sendable  {
     public let boxes: [Box]
     public var masks: Masks?
     public var probs: Probs?
+    public var keypointsList: [Keypoints] = []
     public var annotatedImage: UIImage?
     public var speed: Double
     public var fps: Double?
@@ -35,7 +36,8 @@ public struct Probs:@unchecked Sendable  {
     public var top5Confs: [Float]
 }
 
-public struct Keypoint {
-    public let position: CGPoint
-    public let confidence: Float
+public struct Keypoints {
+    public let xyn: [(x:Float, y:Float)]
+    public let xy: [(x:Float, y:Float)]
+    public let conf: [Float]
 }

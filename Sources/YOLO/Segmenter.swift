@@ -5,7 +5,6 @@ import UIKit
 
 class Segmenter: BasePredictor, @unchecked Sendable {
     var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
-    var imageSize: CGSize = .zero
     
     override func processObservations(for request: VNRequest, error: Error?) {
         if let results = request.results as? [VNCoreMLFeatureValueObservation] {

@@ -33,6 +33,17 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             }
         } else if task == .classify {
             self.overlayYOLOClassificationsCALayer(on: self, result: result)
+        } else if task == .pose {
+            self.removeAllMaskSubLayers()
+            var keypointList = [[(x:Float, y:Float)]]()
+            var confsList = [[Float]]()
+            
+            for keypoint in result.keypointsList {
+                keypointList.append(keypoint.xyn)
+                confsList.append(keypoint.conf)
+            }
+            
+            self.drawKeypoints(keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,  on: self.overlayLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
         }
     }
     
@@ -144,6 +155,8 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
         case .segment:
             predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+        case .pose:
+            predictor = PoseEstimater(unwrappedModelURL: unwrappedModelURL)
         default:
             predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
         }
@@ -271,16 +284,28 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                 var confidence: CGFloat = 0
                 var alpha: CGFloat = 0.9
                 var bestClass = ""
+                
                 switch task {
-                default:
+                case .detect:
                     let prediction = predictions.boxes[i]
                     rect = CGRect(x: prediction.xywhn.minX, y: 1-prediction.xywhn.maxY, width: prediction.xywhn.width, height: prediction.xywhn.height)
-                    
+                    bestClass = prediction.cls
+                    confidence = CGFloat(prediction.conf)
+                    let colorIndex = prediction.index % ultralyticsColors.count
+                    boxColor = ultralyticsColors[colorIndex]
+                    label = String(format: "%@ %.1f", bestClass, confidence * 100)
+                    alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+                default:
+                    let prediction = predictions.boxes[i]
+                    let clsIndex = prediction.index
+                    rect = prediction.xywhn
                     bestClass = prediction.cls
                     confidence = CGFloat(prediction.conf)
                     label = String(format: "%@ %.1f", bestClass, confidence * 100)
-                    boxColor = colors[bestClass] ?? UIColor.white
+                    let colorIndex = prediction.index % ultralyticsColors.count
+                    boxColor = ultralyticsColors[colorIndex]
                     alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+                    
                 }
                 var displayRect = rect
                 switch UIDevice.current.orientation {
@@ -396,6 +421,126 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         view.layer.addSublayer(overlayLayer)
     }
     
+    func drawKeypoints(
+        keypointsList: [[(x:Float,y:Float)]],
+        confsList:[[Float]],
+        boundingBoxes: [Box],
+        on layer: CALayer,
+        imageViewSize: CGSize,
+        originalImageSize: CGSize,
+        radius: CGFloat = 5,
+        confThreshold: Float = 0.25,
+        drawSkeleton: Bool = true
+    ) {
+        for (i, keypoints) in keypointsList.enumerated() {
+            
+            drawSinglePersonKeypoints(
+                keypoints: keypoints, confs: confsList[i], boundingBox: boundingBoxes[i],
+                on: layer,
+                imageViewSize: imageViewSize,
+                originalImageSize: originalImageSize,
+                radius: radius,
+                confThreshold: confThreshold,
+                drawSkeleton: drawSkeleton
+            )
+        }
+    }
+    
+    func drawSinglePersonKeypoints(
+        keypoints: [(x:Float,y:Float)],
+        confs:[Float],
+        boundingBox: Box,
+        on layer: CALayer,
+        imageViewSize: CGSize,
+        originalImageSize: CGSize,
+        radius: CGFloat,
+        confThreshold: Float,
+        drawSkeleton: Bool
+    ) {
+        //      guard keypoints.count == 17 else {
+        //        print("Keypoints array must have 51 elements.")
+        //        return
+        //      }
+        
+        //      let scaleXToOriginal = Float(originalImageSize.width / 640)
+        //      let scaleYToOriginal = Float(originalImageSize.height / 640)
+        
+        let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
+        let scaleYToView = Float(imageViewSize.height / originalImageSize.height)
+        
+        var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
+        
+        for i in 0..<17 {
+            let x = keypoints[i].x * Float(imageViewSize.width)
+            let y = keypoints[i].y * Float(imageViewSize.height)
+            let conf = confs[i]
+            
+            let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+            let box = boundingBox
+            
+            if conf >= confThreshold
+                && box.xywhn.contains(CGPoint(x: CGFloat(keypoints[i].x), y: CGFloat(keypoints[i].y)))
+            {
+                points[i] = (point, conf)
+                
+                drawCircle(on: layer, at: point, radius: radius, color: kptColorIndices[i])
+            }
+        }
+        
+        if drawSkeleton {
+            for (index, bone) in skeleton.enumerated() {
+                let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
+                
+                guard startIdx < points.count, endIdx < points.count else {
+                    print("Invalid skeleton indices: \(startIdx), \(endIdx)")
+                    continue
+                }
+                
+                let startPoint = points[startIdx].0
+                let endPoint = points[endIdx].0
+                let startConf = points[startIdx].1
+                let endConf = points[endIdx].1
+                
+                if startConf >= confThreshold && endConf >= confThreshold {
+                    drawLine(on: layer, from: startPoint, to: endPoint, color: limbColorIndices[index])
+                }
+            }
+        }
+    }
+    
+    func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color index: Int) {
+        let circleLayer = CAShapeLayer()
+        circleLayer.path =
+        UIBezierPath(
+            arcCenter: point,
+            radius: radius,
+            startAngle: 0,
+            endAngle: .pi * 2,
+            clockwise: true
+        ).cgPath
+        
+        let color = posePalette[index].map { $0 / 255.0 }
+        circleLayer.fillColor =
+        UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+        
+        layer.addSublayer(circleLayer)
+    }
+    
+    func drawLine(on layer: CALayer, from start: CGPoint, to end: CGPoint, color index: Int) {
+        let lineLayer = CAShapeLayer()
+        let path = UIBezierPath()
+        path.move(to: start)
+        path.addLine(to: end)
+        
+        lineLayer.path = path.cgPath
+        lineLayer.lineWidth = 2
+        
+        let color = posePalette[index].map { $0 / 255.0 }
+        lineLayer.strokeColor =
+        UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+        
+        layer.addSublayer(lineLayer)
+    }
     
     private func setupUI() {
         labelName.text = modelName

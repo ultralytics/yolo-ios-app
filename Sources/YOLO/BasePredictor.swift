@@ -6,12 +6,12 @@ public class BasePredictor : Predictor {
     var detector: VNCoreMLModel!
     var visionRequest: VNCoreMLRequest?
     public var labels = [String]()
-    public var modelInputSize : (width: Int, height: Int) = (0,0)
     var currentBuffer: CVPixelBuffer?
     weak var currentOnResultsListener: ResultsListener?
     weak var currentOnInferenceTimeListener: InferenceTimeListener?
-//    weak var currentOnFpsRateListener: FpsRateListener?
     var inputSize: CGSize!
+    var modelInputSize : (width: Int, height: Int) = (0,0)
+
     var t0 = 0.0  // inference start
     var t1 = 0.0  // inference dt
     var t2 = 0.0  // inference dt smoothed

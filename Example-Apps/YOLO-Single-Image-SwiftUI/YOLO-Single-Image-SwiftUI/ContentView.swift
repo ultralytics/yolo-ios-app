@@ -7,7 +7,7 @@ struct ContentView: View {
     @State private var inputImage: UIImage?
     @State private var yoloResult: YOLOResult?
     
-    let yolo = YOLO("yolov8n-seg", task: .segment)
+    let yolo = YOLO("yolov8n-pose", task: .pose)
     
     var body: some View {
         VStack {

@@ -3,6 +3,7 @@ import UIKit
 import CoreImage
 import CoreML
 import Accelerate
+import QuartzCore
 
 let ultralyticsColors: [UIColor] = [
     UIColor(red: 4 / 255, green: 42 / 255, blue: 255 / 255, alpha: 0.6),
@@ -407,4 +408,326 @@ extension UIColor {
       return nil
     }
   }
+}
+
+func drawKeypoints(
+    keypointsList: [[(x:Float,y:Float)]],
+    confsList:[[Float]],
+    boundingBoxes: [Box],
+    on layer: CALayer,
+    imageViewSize: CGSize,
+    originalImageSize: CGSize,
+    radius: CGFloat = 5,
+    confThreshold: Float = 0.25,
+    drawSkeleton: Bool = true
+) {
+    let _radius = max(originalImageSize.width, originalImageSize.height) / 300
+    for (i, keypoints) in keypointsList.enumerated() {
+        drawSinglePersonKeypoints(
+            keypoints: keypoints, confs: confsList[i], boundingBox: boundingBoxes[i],
+            on: layer,
+            imageViewSize: imageViewSize,
+            originalImageSize: originalImageSize,
+            radius: _radius,
+            confThreshold: confThreshold,
+            drawSkeleton: drawSkeleton
+        )
+    }
+}
+
+func drawSinglePersonKeypoints(
+    keypoints: [(x:Float,y:Float)],
+    confs:[Float],
+    boundingBox: Box,
+    on layer: CALayer,
+    imageViewSize: CGSize,
+    originalImageSize: CGSize,
+    radius: CGFloat,
+    confThreshold: Float,
+    drawSkeleton: Bool
+) {
+    //      guard keypoints.count == 17 else {
+    //        print("Keypoints array must have 51 elements.")
+    //        return
+    //      }
+    let lineWidth = radius * 0.4
+    let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
+    let scaleYToView = Float(imageViewSize.height / originalImageSize.height)
+    
+    var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
+    
+    for i in 0..<17 {
+        let x = keypoints[i].x * Float(imageViewSize.width)
+        let y = keypoints[i].y * Float(imageViewSize.height)
+        let conf = confs[i]
+        
+        let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+        let box = boundingBox
+        
+        if conf >= confThreshold
+            && box.xywhn.contains(CGPoint(x: CGFloat(keypoints[i].x), y: CGFloat(keypoints[i].y)))
+        {
+            points[i] = (point, conf)
+            
+            drawCircle(on: layer, at: point, radius: radius, color: kptColorIndices[i])
+        }
+    }
+    
+    if drawSkeleton {
+        for (index, bone) in skeleton.enumerated() {
+            let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
+            
+            guard startIdx < points.count, endIdx < points.count else {
+                print("Invalid skeleton indices: \(startIdx), \(endIdx)")
+                continue
+            }
+            
+            let startPoint = points[startIdx].0
+            let endPoint = points[endIdx].0
+            let startConf = points[startIdx].1
+            let endConf = points[endIdx].1
+            
+            if startConf >= confThreshold && endConf >= confThreshold {
+                drawLine(on: layer, from: startPoint, to: endPoint, color: limbColorIndices[index], lineWidth: lineWidth)
+            }
+        }
+    }
+}
+
+func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color index: Int) {
+    let circleLayer = CAShapeLayer()
+    circleLayer.path =
+    UIBezierPath(
+        arcCenter: point,
+        radius: radius,
+        startAngle: 0,
+        endAngle: .pi * 2,
+        clockwise: true
+    ).cgPath
+    
+    let color = posePalette[index].map { $0 / 255.0 }
+    circleLayer.fillColor =
+    UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+    
+    layer.addSublayer(circleLayer)
+}
+
+func drawLine(on layer: CALayer, from start: CGPoint, to end: CGPoint, color index: Int, lineWidth: CGFloat = 2) {
+    let lineLayer = CAShapeLayer()
+    let path = UIBezierPath()
+    path.move(to: start)
+    path.addLine(to: end)
+    
+    lineLayer.path = path.cgPath
+    lineLayer.lineWidth = lineWidth
+    
+    let color = posePalette[index].map { $0 / 255.0 }
+    lineLayer.strokeColor =
+    UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+    
+    layer.addSublayer(lineLayer)
+}
+
+func drawPoseOnCIImage(
+    ciImage: CIImage,
+    keypointsList: [[(x:Float,y:Float)]],
+    confsList: [[Float]],
+    boundingBoxes: [Box],
+    originalImageSize: CGSize, // 元画像のサイズ(モデルに合わせて)
+    radius: CGFloat = 5,
+    confThreshold: Float = 0.25,
+    drawSkeleton: Bool = true
+) -> UIImage?
+{
+    let _radius = max(originalImageSize.width, originalImageSize.height) / 300
+    let context = CIContext(options: nil)
+    guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+        return nil
+    }
+    
+    let renderedWidth  = cgImage.width
+    let renderedHeight = cgImage.height
+    let renderedSize   = CGSize(width: renderedWidth, height: renderedHeight)
+    
+    // 2. UIGraphicsコンテキストを生成し、元画像(CIImage→CGImage)を描画
+    UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
+    guard let currentContext = UIGraphicsGetCurrentContext() else {
+        return nil
+    }
+    
+    // ベース画像を描画
+    // (CGImageをUIKitのUIImageに変換してから描画)
+    UIImage(cgImage: cgImage).draw(in: CGRect(origin: .zero, size: renderedSize))
+    
+    // 3. 既存のCALayerを利用した描画ロジックを再利用する
+    //    - 一時的にCALayerを作り、そこに既存のdrawKeypointsを呼び出して
+    //      最終的に layer.render(in:) でコンテキストへ合成
+
+    let rootLayer = CALayer()
+    rootLayer.frame = CGRect(origin: .zero, size: renderedSize)
+    
+    // ここでは "imageViewSize" ＝ 実際に描画したい最終サイズ として
+    // "renderedSize" を渡す
+    drawKeypoints(
+        keypointsList: keypointsList,
+        confsList: confsList,
+        boundingBoxes: boundingBoxes,
+        on: rootLayer,
+        imageViewSize: renderedSize,
+        originalImageSize: originalImageSize, // 推論時の元画像サイズ
+        radius: _radius,
+        confThreshold: confThreshold,
+        drawSkeleton: drawSkeleton
+    )
+    
+    // rootLayer をコンテキストに合成
+    rootLayer.render(in: currentContext)
+    
+    // 4. 描画した結果を UIImage として取得
+    let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return finalImage
+}
+
+
+/// 使い回し用のレイヤーを保持する構造体例
+/// OBB の枠線を描画する CAShapeLayer + オプションの CATextLayer を束ねる
+class OBBShapeLayerBundle {
+    let shapeLayer = CAShapeLayer()
+    let textLayer = CATextLayer()
+    
+    init() {
+        // 初期設定
+        shapeLayer.strokeColor = UIColor.red.cgColor
+        shapeLayer.fillColor   = UIColor.clear.cgColor
+        
+        textLayer.fontSize = 14
+        textLayer.alignmentMode = .left
+        textLayer.foregroundColor = UIColor.white.cgColor
+        textLayer.cornerRadius = 3
+        textLayer.masksToBounds = true
+        textLayer.actions = [
+            "contents": NSNull(),  // 文字列変更(string)の内部でcontents更新の場合
+            "string": NSNull(),    // 文字列変更
+            "position": NSNull(),  // 位置変更
+            "bounds": NSNull()     // サイズ変更 (frame更新はbounds + position)
+        ]
+
+        // shapeLayer も不要なら同様に:
+        shapeLayer.actions = [
+            "strokeColor": NSNull(),
+            "fillColor": NSNull(),
+            "path": NSNull(),
+            "position": NSNull(),
+            "bounds": NSNull()
+        ]        // shapeLayer のサブレイヤーとして textLayer を付けるなど好きに構成できる
+        // (ここではメインCALayerに同時にaddする例でもOK)
+    }
+}
+
+/// 描画担当クラス (例)
+class OBBRenderer {
+    
+    /// 使い回し用プール
+    private var layerPool: [OBBShapeLayerBundle] = []
+    /// このフレームで使用したレイヤー数
+    private var usedLayerCount = 0
+    
+    /// レイヤーを使い回す時に呼ぶ関数
+    private func getLayerBundle(for parentLayer: CALayer) -> OBBShapeLayerBundle {
+        if usedLayerCount < layerPool.count {
+            // 既存のプールを再利用
+            let bundle = layerPool[usedLayerCount]
+            bundle.shapeLayer.isHidden = false
+            bundle.textLayer.isHidden = false
+            usedLayerCount += 1
+            return bundle
+        } else {
+            // プールに無ければ新規生成
+            let newBundle = OBBShapeLayerBundle()
+            layerPool.append(newBundle)
+            usedLayerCount += 1
+            
+            // 初回だけ、親に addSublayer しておく
+            parentLayer.addSublayer(newBundle.shapeLayer)
+            parentLayer.addSublayer(newBundle.textLayer)
+            return newBundle
+        }
+    }
+    
+    /// 毎フレーム呼び出して、OBBやテキストを更新する
+    /// - Parameters:
+    ///   - obbDetections: (OBB, score, cls)配列
+    ///   - layer: 親CALayer。例: cameraView.layer など
+    ///   - imageViewSize: 表示領域サイズ
+    ///   - originalImageSize: 画像やモデルの元サイズ
+    ///   - color: 線の色 (実際はクラスごとに変化させたいならループ内で変更)
+    ///   - lineWidth: 線の太さ
+    func drawObbDetectionsWithReuse(
+        obbDetections: [OBBResult],
+        on layer: CALayer,
+        imageViewSize: CGSize,
+        originalImageSize: CGSize,
+        lineWidth: CGFloat = 2.0
+    ) {
+        // 1) 今フレームで使用しているレイヤー数を0にリセット
+        usedLayerCount = 0
+        
+        // 2) 必要な数だけ再利用 or 追加生成し、枠線・テキストを更新
+        let scaleX = imageViewSize.width
+        let scaleY = imageViewSize.height
+        
+        for detection in obbDetections {
+            let bundle = getLayerBundle(for: layer)
+            
+            let shapeLayer = bundle.shapeLayer
+            let textLayer  = bundle.textLayer
+            let index = detection.index % ultralyticsColors.count
+            let color = ultralyticsColors[index]
+            // - CAShapeLayerの更新
+            //   cornersは4頂点。toPolygon()が既に画像座標の場合はそのまま使う
+            let corners = detection.box.toPolygon()
+            let path = UIBezierPath()
+            for (i, corner) in corners.enumerated() {
+                let px = corner.x * scaleX
+                let py = corner.y * scaleY
+                if i == 0 {
+                    path.move(to: CGPoint(x: px, y: py))
+                } else {
+                    path.addLine(to: CGPoint(x: px, y: py))
+                }
+            }
+            path.close()
+            
+            shapeLayer.path = path.cgPath
+            shapeLayer.strokeColor = color.cgColor
+            shapeLayer.fillColor   = UIColor.clear.cgColor
+            shapeLayer.lineWidth   = lineWidth
+            shapeLayer.isHidden    = false
+            
+
+            if let first = corners.first {
+                textLayer.backgroundColor = color.withAlphaComponent(0.6).cgColor
+                let px = first.x * scaleX
+                let py = first.y * scaleY
+                textLayer.isHidden = false
+                textLayer.string = detection.cls + String(format: " %.2f", detection.confidence)
+                
+                let labelSize = CGSize(width: 100, height: 20)
+                textLayer.frame = CGRect(
+                    x: px,
+                    y: py - labelSize.height,
+                    width: labelSize.width,
+                    height: labelSize.height
+                )
+            }
+        }
+        
+        for i in usedLayerCount..<layerPool.count {
+            let bundle = layerPool[i]
+            bundle.shapeLayer.isHidden = true
+            bundle.textLayer.isHidden  = true
+        }
+    }
 }

@@ -33,6 +33,9 @@ public class YOLO {
             predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
         case .segment:
             predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+        case .pose:
+            predictor = PoseEstimater(unwrappedModelURL: unwrappedModelURL)
+
         default:
             predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
         }

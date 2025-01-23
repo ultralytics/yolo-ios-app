@@ -4,8 +4,8 @@ import YOLO
 struct ContentView: View {
     var body: some View {
         YOLOCamera(
-            modelPathOrName: "yolov8n-pose",
-            task: .pose,
+            modelPathOrName: "yolo11n-obb",
+            task: .obb,
             cameraPosition: .back
         )
         .ignoresSafeArea()

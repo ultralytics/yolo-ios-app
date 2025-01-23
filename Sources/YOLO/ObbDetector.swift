@@ -9,7 +9,6 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
         if let results = request.results as? [VNCoreMLFeatureValueObservation] {
             
             if let prediction = results.first?.featureValue.multiArrayValue {
-                print(prediction.shape)
                 let nmsResults = postProcessOBB(
                     feature: prediction,        // your MLMultiArray
                     confidenceThreshold: 0.25,
@@ -42,22 +41,50 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
         
     }
     
+    override func predictOnImage(image: CIImage) -> YOLOResult {
+        let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
+        guard let request = visionRequest else {
+            let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+            return emptyResult
+        }
+        let imageWidth = image.extent.width
+        let imageHeight = image.extent.height
+        self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+        var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+        
+        do {
+            try requestHandler.perform([request])
+            
+            if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+                
+                if let prediction = results.first?.featureValue.multiArrayValue {
+                    let nmsResults = postProcessOBB(
+                        feature: prediction,        // your MLMultiArray
+                        confidenceThreshold: 0.25,
+                        iouThreshold: 0.45
+                    )
+                    
+                    var obbResults: [OBBResult] = []
+                    for result in nmsResults {
+                        let box    = result.box
+                        let score  = result.score
+                        let clsIdx = labels[result.cls]
+                        let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
+                        obbResults.append(obbResult)
+                    }
+                    let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
+                    updateTime()
+                    return YOLOResult(orig_shape: inputSize, boxes: [], masks: nil, probs: nil, keypointsList:[],obb: obbResults, annotatedImage: annotatedImage, speed: self.t2, fps: 1 / self.t4, originalImage: nil, names: labels)
+                }
+            }
+        } catch {
+            print(error)
+        }
+        return result
+    }
+    
     fileprivate let lockQueue = DispatchQueue(label: "com.example.obbLock")
 
-    /// モデル出力が
-    ///   shape = [1, (4 + numClasses + 1), numAnchors]
-    /// で、順序が
-    ///   [cx, cy, w, h, classScores..., angle]
-    /// の場合の例。
-    ///
-    /// - parameter feature: 形状 [1, (4 + nc + 1), numAnchors] の MLMultiArray
-    /// - parameter confidenceThreshold: スコアのしきい値
-    /// - parameter iouThreshold: NMSで使うIoUしきい値
-    /// - parameter numClasses: クラス数 (classScoresの数)
-    ///
-    /// - returns: (box:OBB, score:Float, cls:Int) の配列
-    /// Post-processing for OBB detection.
-    /// (Same function signature, but uses a faster version of NMS internally.)
     func postProcessOBB(
         feature: MLMultiArray,
         confidenceThreshold: Float,
@@ -66,7 +93,6 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
 
         let shape1 = feature.shape[1].intValue
         let numAnchors = feature.shape[2].intValue
-        // numClassesを自動計算 (4 座標 + 1 angle を除外)
         let numClasses = shape1 - 5  // (4 + numClasses + 1) = shape1
 
         let pointer = feature.dataPointer.bindMemory(to: Float.self,

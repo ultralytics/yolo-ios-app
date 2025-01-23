@@ -731,3 +731,73 @@ class OBBRenderer {
         }
     }
 }
+
+func drawOBBsOnCIImage(
+    ciImage: CIImage,
+    obbDetections: [OBBResult],
+    targetSize: CGSize? = nil
+) -> UIImage? {
+    
+    let context = CIContext(options: nil)
+    let extent = ciImage.extent
+    guard let cgImage = context.createCGImage(ciImage, from: extent) else {
+        print("Failed to create CGImage from CIImage")
+        return nil
+    }
+    
+    let lineWidth: CGFloat = max(extent.width, extent.height) / 500
+    let fontSize = max(extent.width, extent.height) / 70
+    let outputSize = targetSize ?? CGSize(width: extent.width, height: extent.height)
+    
+    UIGraphicsBeginImageContextWithOptions(outputSize, false, 1.0)
+    guard let cgContext = UIGraphicsGetCurrentContext() else {
+        UIGraphicsEndImageContext()
+        return nil
+    }
+    
+    let baseImage = UIImage(cgImage: cgImage)
+    baseImage.draw(in: CGRect(origin: .zero, size: outputSize))
+    cgContext.setLineWidth(lineWidth)
+    
+    for detection in obbDetections {
+        let colorIndex = detection.index % ultralyticsColors.count
+        let color = ultralyticsColors[colorIndex]
+        cgContext.setStrokeColor(color.cgColor)
+
+        let corners = detection.box.toPolygon()
+        
+        cgContext.beginPath()
+        for (i, corner) in corners.enumerated() {
+            let px = corner.x * outputSize.width
+            let py = corner.y * outputSize.height
+            if i == 0 {
+                cgContext.move(to: CGPoint(x: px, y: py))
+            } else {
+                cgContext.addLine(to: CGPoint(x: px, y: py))
+            }
+        }
+        cgContext.closePath()
+        cgContext.strokePath()
+        
+        let labelText = "\(detection.cls) \(String(format: "%.2f", detection.confidence))%"
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: fontSize),
+            .foregroundColor: UIColor.white,
+            .backgroundColor: color.withAlphaComponent(0.7)
+        ]
+        let textSize = (labelText as NSString).size(withAttributes: attrs)
+        let corner0 = corners[0]
+        let labelX = corner0.x * outputSize.width
+        let labelY = corner0.y * outputSize.height - textSize.height
+        
+        (labelText as NSString).draw(
+            at: CGPoint(x: labelX, y: labelY),
+            withAttributes: attrs
+        )
+    }
+    
+    let drawnImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return drawnImage
+}

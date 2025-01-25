@@ -18,14 +18,23 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         if task == .segment {
             DispatchQueue.main.async {
                 if let maskImage = result.masks?.combinedMask {
-                    self.removeAllMaskSubLayers()
+                    self.setupMaskLayerIfNeeded()
                     
-                    let maskLayer = CALayer()
-                    maskLayer.frame = self.overlayLayer.bounds
-                    maskLayer.contents = maskImage
-                    maskLayer.opacity = 0.5
+                    guard let maskLayer = self.maskLayer else { return }
                     
-                    self.overlayLayer.addSublayer(maskLayer)
+                        // マスクが取得できた場合はレイヤを表示して画像をセット
+                        maskLayer.isHidden = false
+                        maskLayer.frame = self.overlayLayer.bounds
+                        maskLayer.contents = maskImage
+
+//                    self.removeAllMaskSubLayers()
+//                    
+//                    let maskLayer = CALayer()
+//                    maskLayer.frame = self.overlayLayer.bounds
+//                    maskLayer.contents = maskImage
+//                    maskLayer.opacity = 0.5
+//                    
+//                    self.overlayLayer.addSublayer(maskLayer)
                     self.videoCapture.predictor.isUpdating = false
                 } else {
                     self.videoCapture.predictor.isUpdating = false
@@ -88,6 +97,8 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     public var toolbar = UIView()
     let selection = UISelectionFeedbackGenerator()
     private var overlayLayer = CALayer()
+    private var maskLayer: CALayer?
+
     let obbRenderer = OBBRenderer()
 
     private let minimumZoom: CGFloat = 1.0
@@ -314,6 +325,21 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             margin = (offSet - self.bounds.height) / 2
             self.overlayLayer.frame = CGRect(
                 x: 0, y: -margin, width: self.bounds.width, height: offSet)
+        }
+    }
+    
+    func setupMaskLayerIfNeeded() {
+        // まだ生成していない場合に一度だけ生成し、overlayLayerに追加する
+        if maskLayer == nil {
+            let layer = CALayer()
+            layer.frame = self.overlayLayer.bounds
+            layer.opacity = 0.5
+            // 必要に応じて contentsGravity や backgroundColor 等を指定
+            // layer.contentsGravity = .resizeAspectFill
+            // layer.backgroundColor = UIColor.clear.cgColor
+            
+            self.overlayLayer.addSublayer(layer)
+            self.maskLayer = layer
         }
     }
     

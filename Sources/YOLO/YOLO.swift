@@ -28,18 +28,66 @@ public class YOLO {
             fatalError(PredictorError.modelFileNotFound.localizedDescription)
         }
 
+        func handleSuccess(predictor: Predictor) {
+//            completion?(.success(()))
+        }
+        
+        // Common failure handling for all tasks
+        func handleFailure(_ error: Error) {
+            print("Failed to load model with error: \(error)")
+//            completion?(.failure(error))
+        }
+        
         switch task {
         case .classify:
-            predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
+            Classifier.create(unwrappedModelURL: unwrappedModelURL) { result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .segment:
-            predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+            Segmenter.create(unwrappedModelURL: unwrappedModelURL) { result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .pose:
-            predictor = PoseEstimater(unwrappedModelURL: unwrappedModelURL)
+            PoseEstimater.create(unwrappedModelURL: unwrappedModelURL) { result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .obb:
-            predictor = ObbDetector(unwrappedModelURL: unwrappedModelURL)
-
+            ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         default:
-            predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
+            ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
         }
     }
     

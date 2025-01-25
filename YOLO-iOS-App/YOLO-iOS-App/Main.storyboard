@@ -39,11 +39,11 @@
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
                                 <rect key="frame" x="19" y="102" width="355" height="32"/>
                                 <segments>
-                                    <segment title="YOLO11n" width="69"/>
-                                    <segment title="YOLO11s" width="69"/>
-                                    <segment title="YOLO11m" width="75"/>
-                                    <segment title="YOLO11l" width="69"/>
-                                    <segment title="YOLO11x" width="69"/>
+                                    <segment title="detect" width="69"/>
+                                    <segment title="classify" width="69"/>
+                                    <segment title="segment" width="75"/>
+                                    <segment title="pose" width="69"/>
+                                    <segment title="obb" width="69"/>
                                 </segments>
                                 <connections>
                                     <action selector="indexChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="3y2-Ij-sA7"/>

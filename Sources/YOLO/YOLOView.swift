@@ -129,18 +129,24 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
     }
     
-    public func setModel(modelPathOrName: String,
-                         task: YOLOTask) {
+    public func setModel(
+        modelPathOrName: String,
+        task: YOLOTask,
+        completion: ((Result<Void, Error>) -> Void)? = nil
+    ) {
         activityIndicator.startAnimating()
         boundingBoxViews.forEach { box in
             box.hide()
         }
+        removeClassificationLayers()
+        removeAllMaskSubLayers()
         self.task = task
-        var modelURL: URL?
         
+        var modelURL: URL?
         let lowercasedPath = modelPathOrName.lowercased()
         let fileManager = FileManager.default
         
+        // Determine model URL
         if lowercasedPath.hasSuffix(".mlmodel") || lowercasedPath.hasSuffix(".mlpackage") {
             let possibleURL = URL(fileURLWithPath: modelPathOrName)
             if fileManager.fileExists(atPath: possibleURL.path) {
@@ -155,28 +161,79 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
         
         guard let unwrappedModelURL = modelURL else {
-            fatalError(PredictorError.modelFileNotFound.localizedDescription)
+            let error = PredictorError.modelFileNotFound
+            fatalError(error.localizedDescription)
         }
         
         modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
-        var predictor: Predictor
+        
+        // Common success handling for all tasks
+        func handleSuccess(predictor: Predictor) {
+            self.videoCapture.predictor = predictor
+            self.activityIndicator.stopAnimating()
+            self.labelName.text = modelName
+            completion?(.success(()))
+        }
+        
+        // Common failure handling for all tasks
+        func handleFailure(_ error: Error) {
+            print("Failed to load model with error: \(error)")
+            self.activityIndicator.stopAnimating()
+            completion?(.failure(error))
+        }
+        
         switch task {
         case .classify:
-            predictor = Classifier(unwrappedModelURL: unwrappedModelURL)
+            Classifier.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .segment:
-            predictor = Segmenter(unwrappedModelURL: unwrappedModelURL)
+            Segmenter.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .pose:
-            predictor = PoseEstimater(unwrappedModelURL: unwrappedModelURL)
+            PoseEstimater.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         case .obb:
-            predictor = ObbDetector(unwrappedModelURL: unwrappedModelURL)
+            ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
+            
         default:
-            predictor = ObjectDetector(unwrappedModelURL: unwrappedModelURL)
+            ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+                switch result {
+                case .success(let predictor):
+                    handleSuccess(predictor: predictor)
+                case .failure(let error):
+                    handleFailure(error)
+                }
+            }
         }
-        videoCapture.predictor = predictor
-        setUpBoundingBoxViews()
-        activityIndicator.stopAnimating()
     }
-    
     
     private func start(position: AVCaptureDevice.Position){
         if !busy {
@@ -218,21 +275,21 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
         
         // Retrieve class labels directly from the CoreML model's class labels, if available.
-        if task == .detect {
-            classes = videoCapture.predictor.labels
+//        if task == .detect {
+//            classes = videoCapture.predictor.labels
             // Assign random colors to the classes.
-            var count = 0
-            for label in classes {
-                let color = ultralyticsColors[count]
-                count += 1
-                if count > 19 {
-                    count = 0
-                }
-                if colors[label] == nil {  // if key not in dict
-                    colors[label] = color
-                }
-            }
-        }
+//            var count = 0
+//            for label in classes {
+//                let color = ultralyticsColors[count]
+//                count += 1
+//                if count > 19 {
+//                    count = 0
+//                }
+//                if colors[label] == nil {  // if key not in dict
+//                    colors[label] = color
+//                }
+//            }
+//        }
     }
     
     func setupOverlayLayer() {
@@ -281,12 +338,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         
         var resultCount = 0
         
-        switch task {
-        case .detect:
-            resultCount = predictions.boxes.count
-        default:
-            resultCount = predictions.boxes.count
-        }
+        resultCount = predictions.boxes.count
         self.labelSliderNumItems.text = String(resultCount) + " items (max " + String(Int(sliderNumItems.value)) + ")"
         for i in 0..<boundingBoxViews.count {
             if i < (resultCount) && i < 50 {
@@ -379,13 +431,17 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
     }
     
-    func overlayYOLOClassificationsCALayer(on view: UIView, result: YOLOResult) {
-        
-        if let sublayers = view.layer.sublayers {
+    func removeClassificationLayers() {
+        if let sublayers = self.layer.sublayers {
             for layer in sublayers where layer.name == "YOLOOverlayLayer" {
                 layer.removeFromSuperlayer()
             }
         }
+    }
+    
+    func overlayYOLOClassificationsCALayer(on view: UIView, result: YOLOResult) {
+        
+        removeClassificationLayers()
         
         let overlayLayer = CALayer()
         overlayLayer.frame = view.bounds

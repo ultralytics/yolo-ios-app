@@ -898,7 +898,6 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             with: settings, delegate: self as AVCapturePhotoCaptureDelegate
         )
     }
-    
 }
 
 extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {

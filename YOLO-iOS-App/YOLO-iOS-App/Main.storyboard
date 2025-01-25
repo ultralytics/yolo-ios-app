@@ -98,9 +98,6 @@
                                 <include reference="4VU-KS-qnX"/>
                             </mask>
                         </variation>
-                        <connections>
-                            <outletCollection property="gestureRecognizers" destination="lf1-rc-A2P" appends="YES" id="is6-5B-Ndt"/>
-                        </connections>
                     </view>
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
@@ -109,6 +106,7 @@
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelVersion" destination="OCe-bb-RWv" id="MoL-rU-F2n"/>
+                        <outlet property="logoImage" destination="EZE-r4-WFr" id="k6G-jf-qS7"/>
                         <outlet property="segmentedControl" destination="9cm-Nq-b3N" id="RqH-Ft-fGI"/>
                         <outlet property="yoloView" destination="ShC-gv-PaQ" id="X4o-si-9fj"/>
                     </connections>

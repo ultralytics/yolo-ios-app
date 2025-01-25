@@ -10,6 +10,7 @@ import CoreML
 import CoreMedia
 import UIKit
 import YOLO
+import ReplayKit
 
 class ViewController: UIViewController {
 
@@ -21,8 +22,10 @@ class ViewController: UIViewController {
     @IBOutlet weak var labelVersion: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet weak var focus: UIImageView!
+    @IBOutlet weak var logoImage: UIImageView!
     
     var shareButton = UIButton()
+    var recordButton = UIButton()
     let selection = UISelectionFeedbackGenerator()
     
     private let tasks: [(name: String, folder: String)] = [
@@ -83,7 +86,7 @@ class ViewController: UIViewController {
         }
         
         setupTableView()
-        setupShareButton()
+        setupButtons()
     }
     
     // セグメントコントロールを初期化
@@ -221,6 +224,19 @@ class ViewController: UIViewController {
         guard tasks.indices.contains(index) else { return }
         
         let newTask = tasks[index].name
+        
+        if modelsForTask[newTask]!.isEmpty {
+            let alert = UIAlertController(title: "\(newTask)Models not found", message: "Please add coreml models for \(newTask) to the \(newTask)Models directory in the Xcode project", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { _ in
+                alert.dismiss(animated: true)
+            }))
+            self.present(alert, animated: true)
+            sender.selectedSegmentIndex = tasks.firstIndex(where: { name, _ in
+                name == currentTask
+            })!
+            return
+        }
+        
         currentTask = newTask
         currentModels = modelsForTask[currentTask] ?? []
         
@@ -239,10 +255,9 @@ class ViewController: UIViewController {
             modelTableView.isHidden = true
         }
         tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
-        print(tableViewBGView.frame)
     }
     
-    @IBAction func logoButton(_ sender: Any) {
+    @objc func logoButton() {
         selection.selectionChanged()
         if let link = URL(string: "https://www.ultralytics.com") {
             UIApplication.shared.open(link)
@@ -256,6 +271,7 @@ class ViewController: UIViewController {
         modelTableView.backgroundColor = .clear
         // セル同士の区切り線を非表示
         modelTableView.separatorStyle = .none
+        modelTableView.isScrollEnabled = false
         tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
         tableViewBGView.layer.cornerRadius = 8
         tableViewBGView.clipsToBounds = true
@@ -264,23 +280,22 @@ class ViewController: UIViewController {
         view.addSubview(modelTableView)
         modelTableView.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate([
-            modelTableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 25),
-            // TableView の右端を segmentedControl の右端に揃える
-            modelTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
-            // 左端は「幅を全体の40%」→ 元のコードと同様
-            modelTableView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.4),
-            modelTableView.heightAnchor.constraint(equalToConstant: 200)
-        ])
         tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
 
     }
     
-    private func setupShareButton() {
+    private func setupButtons() {
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
         shareButton.setImage(UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
         shareButton.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
         view.addSubview(shareButton)
+        
+        recordButton.setImage(UIImage(systemName: "video", withConfiguration: config), for: .normal)
+        recordButton.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
+        view.addSubview(recordButton)
+
+        logoImage.isUserInteractionEnabled = true
+        logoImage.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(logoButton)))
     }
     
     override func viewDidLayoutSubviews() {
@@ -288,8 +303,15 @@ class ViewController: UIViewController {
         
         if view.bounds.width > view.bounds.height {
             shareButton.tintColor = .darkGray
+            recordButton.tintColor = .darkGray
+            let tableViewWidth = view.bounds.width * 0.2
+            modelTableView.frame = CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
         } else {
             shareButton.tintColor = .systemGray
+            recordButton.tintColor = .systemGray
+            let tableViewWidth = view.bounds.width * 0.4
+            modelTableView.frame = CGRect(x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25, width: tableViewWidth, height: 200)
+
         }
         
         shareButton.frame = CGRect(
@@ -298,6 +320,13 @@ class ViewController: UIViewController {
             width: 49.5,
             height: 49.5
         )
+        recordButton.frame = CGRect(
+            x: shareButton.frame.minX - 49.5,
+            y: view.bounds.maxY - 66,
+            width: 49.5,
+            height: 49.5
+        )
+        tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
     }
     
     @objc func shareButtonTapped() {
@@ -314,6 +343,37 @@ class ViewController: UIViewController {
                 }
             } else {
                 print("error capturing photo")
+            }
+        }
+    }
+    
+    @objc func recordScreen() {
+        let recorder = RPScreenRecorder.shared()
+        recorder.isMicrophoneEnabled = true
+        
+        if !recorder.isRecording {
+            recordButton.tintColor = .red
+            recorder.startRecording() { error in
+                if let error = error {
+                    print("Screen recording start error: \(error)")
+                } else {
+                    print("Started screen recording.")
+                }
+            }
+        } else {
+            if view.bounds.width > view.bounds.height {
+                recordButton.tintColor = .darkGray
+            } else {
+                recordButton.tintColor = .systemGray
+            }
+            recorder.stopRecording { previewVC, error in
+                if let error = error {
+                    print("Stop recording error: \(error)")
+                }
+                if let previewVC = previewVC {
+                    previewVC.previewControllerDelegate = self
+                    self.present(previewVC, animated: true, completion: nil)
+                }
             }
         }
     }
@@ -384,5 +444,11 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
             let insetRect = cell.bounds.insetBy(dx: 4, dy: 4)
             selectedBGView.frame = insetRect
         }
+    }
+}
+
+extension ViewController:RPPreviewViewControllerDelegate {
+    func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
+        previewController.dismiss(animated: true)
     }
 }

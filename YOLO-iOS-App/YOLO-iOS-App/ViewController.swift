@@ -1,16 +1,10 @@
-//
-//  ViewController.swift
-//  YOLOTest
-//
-//  Created by Example on 2025/01/25.
-//
-
 import AVFoundation
 import CoreML
 import CoreMedia
 import UIKit
 import YOLO
 import ReplayKit
+import AudioToolbox
 
 class ViewController: UIViewController {
 
@@ -36,23 +30,17 @@ class ViewController: UIViewController {
         ("Obb",      "ObbModels"),
     ]
     
-    // タスク名 -> [モデルファイル名] の対応を保持
     private var modelsForTask: [String: [String]] = [:]
     
-    // 現在のタスク
     private var currentTask: String = ""
-    // 現在読み込んでいるモデル名（ファイル名）
     private var currentModelName: String = ""
     
-    // 現在のタスクに対応するモデル一覧を保持する
     private var currentModels: [String] = []
     private var isLoadingModel = false
 
-    // 右半分に表示する TableView
     private let modelTableView: UITableView = {
         let table = UITableView()
-        table.isHidden = true // デフォルトは非表示にしておく
-        // TableView 自体を角丸に
+        table.isHidden = true
         table.layer.cornerRadius = 8
         table.clipsToBounds = true
         return table
@@ -66,7 +54,6 @@ class ViewController: UIViewController {
         setupTaskSegmentedControl()
         loadModelsForAllTasks()
         
-        // 最初のタスク＆モデルを自動選択状態に
         if tasks.indices.contains(0) {
             segmentedControl.selectedSegmentIndex = 0
             currentTask = tasks[0].name
@@ -77,7 +64,6 @@ class ViewController: UIViewController {
                 modelTableView.isHidden = false
                 modelTableView.reloadData()
                 
-                // reloadData 直後に選択状態を反映
                 DispatchQueue.main.async {
                     let firstIndex = IndexPath(row: 0, section: 0)
                     self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
@@ -89,7 +75,6 @@ class ViewController: UIViewController {
         setupButtons()
     }
     
-    // セグメントコントロールを初期化
     private func setupTaskSegmentedControl() {
         segmentedControl.removeAllSegments()
         for (index, taskInfo) in tasks.enumerated() {
@@ -97,7 +82,6 @@ class ViewController: UIViewController {
         }
     }
     
-    // 各タスクフォルダからモデルファイル名一覧を取得して保持
     private func loadModelsForAllTasks() {
         for taskInfo in tasks {
             let taskName = taskInfo.name
@@ -107,7 +91,6 @@ class ViewController: UIViewController {
         }
     }
     
-    // 指定フォルダの中にある .mlmodel と .mlpackage のファイル名を取得
     private func getModelFiles(in folderName: String) -> [String] {
         var result: [String] = []
         
@@ -132,7 +115,6 @@ class ViewController: UIViewController {
         return result.sorted()
     }
     
-    // 指定タスクの最初のモデルを読み込む
     private func loadFirstModel(for task: String) {
         guard let models = modelsForTask[task], !models.isEmpty else {
             print("No models found for task: \(task)")
@@ -141,7 +123,6 @@ class ViewController: UIViewController {
         let firstModel = models[0]
         loadModel(named: firstModel, forTask: task)
         
-        // TableView 上でも最初の行を選択状態にする（画面表示後に選択が反映されるようにするため、あとでDispatchQueue.main.asyncでも再度実行）
         let firstIndex = IndexPath(row: 0, section: 0)
         modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
     }
@@ -217,7 +198,6 @@ class ViewController: UIViewController {
     }
     
     @IBAction func indexChanged(_ sender: UISegmentedControl) {
-        // セグメント選択時にもフィードバック
         selection.selectionChanged()
         
         let index = sender.selectedSegmentIndex
@@ -241,7 +221,6 @@ class ViewController: UIViewController {
         currentModels = modelsForTask[currentTask] ?? []
         
         if !currentModels.isEmpty {
-            // タスク変更時も最初のモデルをロード
             loadModel(named: currentModels[0], forTask: currentTask)
             modelTableView.isHidden = false
             modelTableView.reloadData()
@@ -269,7 +248,6 @@ class ViewController: UIViewController {
         modelTableView.dataSource = self
         modelTableView.register(UITableViewCell.self, forCellReuseIdentifier: "ModelCell")
         modelTableView.backgroundColor = .clear
-        // セル同士の区切り線を非表示
         modelTableView.separatorStyle = .none
         modelTableView.isScrollEnabled = false
         tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
@@ -352,6 +330,7 @@ class ViewController: UIViewController {
         recorder.isMicrophoneEnabled = true
         
         if !recorder.isRecording {
+            AudioServicesPlaySystemSound(1117)
             recordButton.tintColor = .red
             recorder.startRecording() { error in
                 if let error = error {
@@ -361,6 +340,7 @@ class ViewController: UIViewController {
                 }
             }
         } else {
+            AudioServicesPlaySystemSound(1118)
             if view.bounds.width > view.bounds.height {
                 recordButton.tintColor = .darkGray
             } else {
@@ -382,34 +362,27 @@ class ViewController: UIViewController {
 // MARK: - UITableViewDataSource, UITableViewDelegate
 extension ViewController: UITableViewDataSource, UITableViewDelegate {
     
-    // セルの数
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return currentModels.count
     }
     
-    // セルの高さを固定して（文字サイズに合わせてやや小さめに）
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 30
     }
     
-    // セルの中身
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         let cell = tableView.dequeueReusableCell(withIdentifier: "ModelCell", for: indexPath)
         
-        // 拡張子を削除して表示
         let fileName = currentModels[indexPath.row]
         let displayName = (fileName as NSString).deletingPathExtension
         
-        // テキストを Heavy に & 中央揃え
         cell.textLabel?.textAlignment = .center
         cell.textLabel?.text = displayName
         cell.textLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         
-        // TableView全体を角丸にしたので、セルの背景は透明に
         cell.backgroundColor = .clear
         
-        // 選択時のバックグラウンドビューを作成（セルより少し小さく + 角丸）
         let selectedBGView = UIView()
         selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
         selectedBGView.layer.cornerRadius = 8
@@ -417,30 +390,23 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
         selectedBGView.frame = CGRect(x: 2, y:2, width: cell.contentView.bounds.width - 4, height: cell.contentView.bounds.height - 4)
         cell.selectedBackgroundView = selectedBGView
         
-        // selectionStyle は .default のままにして、選択演出あり
         cell.selectionStyle = .default
         
         return cell
     }
     
-    // セルをタップしたときの処理
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedModel = currentModels[indexPath.row]
         
-        // セル選択時にもフィードバック
         selection.selectionChanged()
         
-        // モデルをロード
         loadModel(named: selectedModel, forTask: currentTask)
     }
     
-    // セルが描画される直前に呼ばれる
-    // 選択背景をセル本体より少し小さく見せるために frame を調整
     func tableView(_ tableView: UITableView,
                    willDisplay cell: UITableViewCell,
                    forRowAt indexPath: IndexPath) {
         if let selectedBGView = cell.selectedBackgroundView {
-            // 例えば左右/上下に4ptずつ内側にオフセット
             let insetRect = cell.bounds.insetBy(dx: 4, dy: 4)
             selectedBGView.frame = insetRect
         }

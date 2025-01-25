@@ -29,7 +29,7 @@ public class YOLO {
         }
 
         func handleSuccess(predictor: Predictor) {
-//            completion?(.success(()))
+            self.predictor = predictor
         }
         
         // Common failure handling for all tasks

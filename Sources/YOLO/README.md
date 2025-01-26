@@ -6,8 +6,8 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
- - [YOLO Class (Inference)](yolo-class)
- - [YOLOCamera / YOLOView (Real-Time Camera Inference)](yolocamera--yoloview)
+    - [YOLO Class (Inference)](#yolo-class)
+    - [YOLOCamera / YOLOView (Real-Time Camera Inference)](#yolocamera--yoloview)
 - [Contributing](contributing)
 - [License](license)
 

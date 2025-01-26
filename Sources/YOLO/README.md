@@ -1,6 +1,6 @@
 <a href="https://www.ultralytics.com/" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
-# 🚀 Ultralytics YOLO Package:Simple, Powerful YOLO Integration in Swift
+# YOLO Package:Simple, Powerful YOLO Integration in Swift
 
 YOLO Package is a Swift package that makes it easy to integrate Core ML-exported YOLO models into your app. It supports multiple tasks such as Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. With minimal code, you can add YOLO-based features to your app and even use real-time inference with camera streams in both SwiftUI and UIKit
 
@@ -16,8 +16,11 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 ## Features
 
 ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code in Swift.
+
 ✅ **Multiple Task Support**: Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
+
 ✅ **SwiftUI / UIKit Integration**: Pre-built view components for real-time camera inference.
+
 ✅ **Lightweight & Extensible**: Installs quickly via Swift Package Manager with no extra dependencies.
 
 ## Requirements
@@ -30,8 +33,11 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 | watchOS  | 6.0+           | Limited use cases due to hardware constraints |
 
 -** Swift 5.7+**
+
 Built and managed via Swift Package Manager.
+
 -** Xcode 14.0+**
+
 Required to leverage Core ML and the latest Swift Concurrency features.
 
 ## Installation

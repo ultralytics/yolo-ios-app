@@ -6,8 +6,8 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
- - [YOLO Class (Inference)](yolo-class-inference)
- - [YOLOCamera / YOLOView (Real-Time Camera Inference)](yolocamera-yoloview-real-time-camera-inference)
+ - [YOLO Class (Inference)](yolo-class)
+ - [YOLOCamera / YOLOView (Real-Time Camera Inference)](yolocamera--yoloview)
 - [Contributing](contributing)
 - [License](license)
 
@@ -65,7 +65,9 @@ Once added, YOLOSwift will be automatically integrated into your project
 ## Usage
 YOLO Package primarily provides two main components: the **YOLO class** and **YOLOCamera / YOLOView**.
 
-### YOLO Class (Inference)
+### YOLO Class
+**(Inference)**
+
 Use the YOLO class for inference on static images, image files, or other UIImage inputs. It supports tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. Simply provide a valid YOLOv8 model (either .mlmodelc or a local path/string).
 
 ```
@@ -96,7 +98,9 @@ struct ContentView: View {
 }
 ```
 
-### YOLOCamera / YOLOView (Real-Time Camera Inference)
+### YOLOCamera / YOLOView
+**(Real-Time Camera Inference)**
+
 YOLO Package also provides SwiftUI and UIKit components for real-time inference on camera streams. Simply add these views to your layout, and the camera input + on-device model inference will be handled automatically.
 
 SwiftUI Example

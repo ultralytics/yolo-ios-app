@@ -32,11 +32,11 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 | tvOS     | 13.0+          | Consider performance with Core ML on tvOS|
 | watchOS  | 6.0+           | Limited use cases due to hardware constraints |
 
--** Swift 5.7+**
+** Swift 5.7+**
 
 Built and managed via Swift Package Manager.
 
--** Xcode 14.0+**
+** Xcode 14.0+**
 
 Required to leverage Core ML and the latest Swift Concurrency features.
 

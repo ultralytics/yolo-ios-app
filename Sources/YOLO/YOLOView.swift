@@ -158,7 +158,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         let fileManager = FileManager.default
         
         // Determine model URL
-        if lowercasedPath.hasSuffix(".mlmodel") || lowercasedPath.hasSuffix(".mlpackage") {
+        if lowercasedPath.hasSuffix(".mlmodel") || lowercasedPath.hasSuffix(".mlpackage") || lowercasedPath.hasSuffix(".mlmodelc") {
             let possibleURL = URL(fileURLWithPath: modelPathOrName)
             if fileManager.fileExists(atPath: possibleURL.path) {
                 modelURL = possibleURL

@@ -149,3 +149,5 @@ To export a YOLO model to CoreML in Python you can use the following code:
        # Export the PyTorch model to CoreML INT8 format with NMS layers
        model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
    ```
+   
+   Note: CoreMLTools' NMS is only applicable to detection models, so models for segment, pose, and obb tasks need to write NMS in Swift. This library includes NMS for these tasks.

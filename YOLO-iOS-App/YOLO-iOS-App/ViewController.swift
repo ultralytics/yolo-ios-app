@@ -22,6 +22,14 @@ class ViewController: UIViewController {
     var recordButton = UIButton()
     let selection = UISelectionFeedbackGenerator()
     
+    // 進捗表示用のプログレスバー
+    private let downloadProgressView: UIProgressView = {
+        let pv = UIProgressView(progressViewStyle: .default)
+        pv.progress = 0.0
+        pv.isHidden = true
+        return pv
+    }()
+    
     private let tasks: [(name: String, folder: String)] = [
         ("Detect",   "DetectModels"),
         ("Segment",  "SegmentModels"),
@@ -30,12 +38,15 @@ class ViewController: UIViewController {
         ("Obb",      "ObbModels"),
     ]
     
+    /// バンドルから読み込んだファイル一覧
     private var modelsForTask: [String: [String]] = [:]
+    
+    /// テーブル表示用: バンドルモデル + リモートモデル
+    private var currentModels: [ModelEntry] = []
     
     private var currentTask: String = ""
     private var currentModelName: String = ""
     
-    private var currentModels: [String] = []
     private var isLoadingModel = false
 
     private let modelTableView: UITableView = {
@@ -54,27 +65,39 @@ class ViewController: UIViewController {
         setupTaskSegmentedControl()
         loadModelsForAllTasks()
         
+        // 初期タスクをDetect(0番目)に
         if tasks.indices.contains(0) {
             segmentedControl.selectedSegmentIndex = 0
             currentTask = tasks[0].name
-            loadFirstModel(for: currentTask)
-            currentModels = modelsForTask[currentTask] ?? []
             
-            if !currentModels.isEmpty {
-                modelTableView.isHidden = false
-                modelTableView.reloadData()
-                
-                DispatchQueue.main.async {
-                    let firstIndex = IndexPath(row: 0, section: 0)
-                    self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-                }
-            }
+            // テーブル用のデータを作り直し、最初のモデルをロード
+            reloadModelEntriesAndLoadFirst(for: currentTask)
         }
         
         setupTableView()
         setupButtons()
+        
+        // プログレスバーを画面に追加
+        downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(downloadProgressView)
+        
+        NSLayoutConstraint.activate([
+            downloadProgressView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            downloadProgressView.topAnchor.constraint(equalTo: activityIndicator.bottomAnchor, constant: 8),
+            downloadProgressView.widthAnchor.constraint(equalToConstant: 200),
+            downloadProgressView.heightAnchor.constraint(equalToConstant: 2)
+        ])
+        
+        // ModelDownloadManager のダウンロード進捗コールバックを設定
+        ModelDownloadManager.shared.progressHandler = { [weak self] progress in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.downloadProgressView.progress = Float(progress)
+            }
+        }
     }
     
+    /// タスク用のセグメントコントロール初期化
     private func setupTaskSegmentedControl() {
         segmentedControl.removeAllSegments()
         for (index, taskInfo) in tasks.enumerated() {
@@ -82,6 +105,7 @@ class ViewController: UIViewController {
         }
     }
     
+    /// 全タスクのバンドル内モデルをあらかじめ読み込む
     private func loadModelsForAllTasks() {
         for taskInfo in tasks {
             let taskName = taskInfo.name
@@ -91,6 +115,7 @@ class ViewController: UIViewController {
         }
     }
     
+    /// バンドル内の {folderName} ディレクトリをスキャンし、mlmodel / mlpackage だけリスト化
     private func getModelFiles(in folderName: String) -> [String] {
         var result: [String] = []
         
@@ -115,64 +140,185 @@ class ViewController: UIViewController {
         return result.sorted()
     }
     
-    private func loadFirstModel(for task: String) {
-        guard let models = modelsForTask[task], !models.isEmpty else {
-            print("No models found for task: \(task)")
-            return
-        }
-        let firstModel = models[0]
-        loadModel(named: firstModel, forTask: task)
+    /// 現在のタスクに応じて、バンドルモデル & リモートモデルをまとめて currentModels を組み立て、
+    /// 最初のモデルをロードする
+    private func reloadModelEntriesAndLoadFirst(for taskName: String) {
+        currentModels = makeModelEntries(for: taskName)
         
-        let firstIndex = IndexPath(row: 0, section: 0)
-        modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
+        if !currentModels.isEmpty {
+            modelTableView.isHidden = false
+            modelTableView.reloadData()
+            
+            // とりあえず先頭のモデルをロード
+            DispatchQueue.main.async {
+                let firstIndex = IndexPath(row: 0, section: 0)
+                self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
+                let firstModel = self.currentModels[0]
+                self.loadModel(entry: firstModel, forTask: taskName)
+            }
+        } else {
+            print("No models found for task: \(taskName)")
+            modelTableView.isHidden = true
+        }
     }
     
-    private func loadModel(named modelName: String, forTask task: String) {
+    /// タスクに応じて、バンドル内モデル一覧 + リモートモデル一覧 を `[ModelEntry]` に変換
+    private func makeModelEntries(for taskName: String) -> [ModelEntry] {
+        // 1) バンドル内モデル
+        let localFileNames = modelsForTask[taskName] ?? []
+        let localEntries = localFileNames.map { fileName -> ModelEntry in
+            let display = (fileName as NSString).deletingPathExtension
+            return ModelEntry(
+                displayName: display,
+                identifier: fileName,
+                isLocalBundle: true,
+                isRemote: false,
+                remoteURL: nil
+            )
+        }
+        
+        // 2) リモートモデル一覧
+        // 例: remoteModelsInfo は [String: [(String, URL)]] で定義してある想定
+        let remoteList = remoteModelsInfo[taskName] ?? []
+        let remoteEntries = remoteList.map { (modelName, url) -> ModelEntry in
+            ModelEntry(
+                displayName: modelName,
+                identifier: modelName, // ダウンロード時のキーに使う (拡張子は付けない)
+                isLocalBundle: false,
+                isRemote: true,
+                remoteURL: url
+            )
+        }
+        
+        // バンドルモデルを先頭に、リモートモデルを後に連結
+        return localEntries + remoteEntries
+    }
+    
+    /// バンドル or リモートモデルをロード (リモートの場合、未ダウンロードならダウンロード→ロード)
+    private func loadModel(entry: ModelEntry, forTask task: String) {
         guard !isLoadingModel else {
             print("Model is already loading. Please wait.")
             return
         }
         isLoadingModel = true
         
-        activityIndicator.startAnimating()
+        // UIロック＆インジケータ開始
+        self.activityIndicator.startAnimating()
+        self.downloadProgressView.progress = 0.0
+        self.downloadProgressView.isHidden = true
         self.view.isUserInteractionEnabled = false
-        modelTableView.isUserInteractionEnabled = false
+        self.modelTableView.isUserInteractionEnabled = false
         
-        print("Start loading model: \(modelName)")
+        print("Start loading model: \(entry.displayName)")
         
-        DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
-            let yoloTask = self.convertTaskNameToYOLOTask(task)
-
-            guard let modelFolder = self.tasks.first(where: { $0.name == task })?.folder,
-                  let folderURL = Bundle.main.url(forResource: modelFolder, withExtension: nil) else {
-                DispatchQueue.main.async {
-                    self.finishLoadingModel(success: false, modelName: modelName)
-                }
-                return
-            }
-            
-            let modelURL = folderURL.appendingPathComponent(modelName)
-            
-            DispatchQueue.main.async {
-                self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
-                    switch result {
-                    case .success():
-                        self.finishLoadingModel(success: true, modelName: modelName)
-                    case .failure(let error):
-                        print(error)
-                        self.finishLoadingModel(success: false, modelName: modelName)
+        if entry.isLocalBundle {
+            // -------------------------------
+            // バンドル内モデルをそのままロード
+            // -------------------------------
+            DispatchQueue.global().async { [weak self] in
+                guard let self = self else { return }
+                let yoloTask = self.convertTaskNameToYOLOTask(task)
+                
+                guard let folderURL = self.tasks.first(where: { $0.name == task })?.folder,
+                      let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) else {
+                    DispatchQueue.main.async {
+                        self.finishLoadingModel(success: false, modelName: entry.displayName)
                     }
+                    return
+                }
+                
+                let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+                DispatchQueue.main.async {
+                    // YOLOViewへのセット
+                    self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
+                        switch result {
+                        case .success():
+                            self.finishLoadingModel(success: true, modelName: entry.displayName)
+                        case .failure(let error):
+                            print(error)
+                            self.finishLoadingModel(success: false, modelName: entry.displayName)
+                        }
+                    }
+                }
+            }
+        } else {
+            // -------------------------------
+            // リモートモデルの場合
+            // -------------------------------
+            let yoloTask = self.convertTaskNameToYOLOTask(task)
+            
+            // `key` はキャッシュ用の「識別子」(拡張子なし)
+            let key = entry.identifier  // "yolov8n", "yolov8m-seg", etc.
+
+            if ModelCacheManager.shared.isModelDownloaded(key: key) {
+                // 既にダウンロード済みならそのままロード
+                loadCachedModelAndSetToYOLOView(key: key, yoloTask: yoloTask, displayName: entry.displayName)
+            } else {
+                // ダウンロード開始
+                guard let remoteURL = entry.remoteURL else {
+                    self.finishLoadingModel(success: false, modelName: entry.displayName)
+                    return
+                }
+                
+                // プログレスバーを表示
+                self.downloadProgressView.progress = 0.0
+                self.downloadProgressView.isHidden = false
+                
+                // ここで fileName に `remoteURL.lastPathComponent` を用いることで
+                // 例:  remoteURL.lastPathComponent -> "yolov8n.mlpackage.zip"
+                // ローカル保存先も "yolov8n.mlpackage.zip" となり ZIP 解凍可能
+                let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
+                
+                ModelCacheManager.shared.loadModel(
+                    from: localZipFileName,   // ダウンロード先ファイル名
+                    remoteURL: remoteURL,
+                    key: key
+                ) { [weak self] mlModel, loadedKey in
+                    guard let self = self else { return }
+                    if mlModel == nil {
+                        // ダウンロード or コンパイル失敗
+                        self.finishLoadingModel(success: false, modelName: entry.displayName)
+                        return
+                    }
+                    // ダウンロード成功 → YOLOViewへセット
+                    self.loadCachedModelAndSetToYOLOView(key: loadedKey,
+                                                         yoloTask: yoloTask,
+                                                         displayName: entry.displayName)
                 }
             }
         }
     }
     
+    /// 既にダウンロード＆コンパイル済みのモデル (Documents/*.mlmodelc) を読み込み、YOLOViewへセット
+    private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
+        // Documents/key.mlmodelc が存在しているはず
+        let localModelURL = ModelCacheManager.shared.getDocumentsDirectory()
+            .appendingPathComponent(key)
+            .appendingPathExtension("mlmodelc")
+        
+        DispatchQueue.main.async {
+            self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
+                switch result {
+                case .success():
+                    self.finishLoadingModel(success: true, modelName: displayName)
+                case .failure(let error):
+                    print(error)
+                    self.finishLoadingModel(success: false, modelName: displayName)
+                }
+            }
+        }
+    }
+    
+    /// モデルロード完了後の処理 (UIの再有効化等)
     private func finishLoadingModel(success: Bool, modelName: String) {
-        self.activityIndicator.stopAnimating()
-        self.view.isUserInteractionEnabled = true
-        self.modelTableView.isUserInteractionEnabled = true
-        self.isLoadingModel = false
+        DispatchQueue.main.async {
+            self.activityIndicator.stopAnimating()
+            self.downloadProgressView.isHidden = true
+            self.view.isUserInteractionEnabled = true
+            self.modelTableView.isUserInteractionEnabled = true
+            self.isLoadingModel = false
+            self.modelTableView.reloadData()
+        }
         
         if success {
             print("Finished loading model: \(modelName)")
@@ -197,6 +343,7 @@ class ViewController: UIViewController {
         selection.selectionChanged()
     }
     
+    /// タスクのセグメントを切り替えた
     @IBAction func indexChanged(_ sender: UISegmentedControl) {
         selection.selectionChanged()
         
@@ -205,35 +352,37 @@ class ViewController: UIViewController {
         
         let newTask = tasks[index].name
         
-        if modelsForTask[newTask]!.isEmpty {
-            let alert = UIAlertController(title: "\(newTask)Models not found", message: "Please add coreml models for \(newTask) to the \(newTask)Models directory in the Xcode project", preferredStyle: .alert)
+        // バンドルモデルが存在しないタスクの場合はアラート
+        if (modelsForTask[newTask]?.isEmpty ?? true) && (remoteModelsInfo[newTask]?.isEmpty ?? true) {
+            let alert = UIAlertController(
+                title: "\(newTask) Models not found",
+                message: "Please add or define models for \(newTask).",
+                preferredStyle: .alert
+            )
             alert.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { _ in
                 alert.dismiss(animated: true)
             }))
             self.present(alert, animated: true)
-            sender.selectedSegmentIndex = tasks.firstIndex(where: { name, _ in
-                name == currentTask
-            })!
+            
+            // セグメントを元に戻す
+            if let oldIndex = tasks.firstIndex(where: { $0.name == currentTask }) {
+                sender.selectedSegmentIndex = oldIndex
+            }
             return
         }
         
         currentTask = newTask
-        currentModels = modelsForTask[currentTask] ?? []
         
-        if !currentModels.isEmpty {
-            loadModel(named: currentModels[0], forTask: currentTask)
-            modelTableView.isHidden = false
-            modelTableView.reloadData()
-            
-            DispatchQueue.main.async {
-                let firstIndex = IndexPath(row: 0, section: 0)
-                self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-            }
-        } else {
-            print("No models available for task: \(currentTask)")
-            modelTableView.isHidden = true
-        }
-        tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
+        // 表示内容を更新して先頭モデルをロード
+        reloadModelEntriesAndLoadFirst(for: currentTask)
+        
+        // 背景枠のサイズ更新
+        tableViewBGView.frame = CGRect(
+            x: modelTableView.frame.minX-1,
+            y: modelTableView.frame.minY-1,
+            width: modelTableView.frame.width+2,
+            height: CGFloat(currentModels.count*30+2)
+        )
     }
     
     @objc func logoButton() {
@@ -250,16 +399,21 @@ class ViewController: UIViewController {
         modelTableView.backgroundColor = .clear
         modelTableView.separatorStyle = .none
         modelTableView.isScrollEnabled = false
+        
         tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
         tableViewBGView.layer.cornerRadius = 8
         tableViewBGView.clipsToBounds = true
-        view.addSubview(tableViewBGView)
-
-        view.addSubview(modelTableView)
-        modelTableView.translatesAutoresizingMaskIntoConstraints = false
         
-        tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
-
+        view.addSubview(tableViewBGView)
+        view.addSubview(modelTableView)
+        
+        modelTableView.translatesAutoresizingMaskIntoConstraints = false
+        tableViewBGView.frame = CGRect(
+            x: modelTableView.frame.minX-1,
+            y: modelTableView.frame.minY-1,
+            width: modelTableView.frame.width+2,
+            height: CGFloat(currentModels.count*30+2)
+        )
     }
     
     private func setupButtons() {
@@ -288,8 +442,10 @@ class ViewController: UIViewController {
             shareButton.tintColor = .systemGray
             recordButton.tintColor = .systemGray
             let tableViewWidth = view.bounds.width * 0.4
-            modelTableView.frame = CGRect(x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25, width: tableViewWidth, height: 200)
-
+            modelTableView.frame = CGRect(x: view.bounds.width - tableViewWidth - 8,
+                                          y: segmentedControl.frame.maxY + 25,
+                                          width: tableViewWidth,
+                                          height: 200)
         }
         
         shareButton.frame = CGRect(
@@ -304,7 +460,13 @@ class ViewController: UIViewController {
             width: 49.5,
             height: 49.5
         )
-        tableViewBGView.frame = CGRect(x: modelTableView.frame.minX-1, y: modelTableView.frame.minY-1, width: modelTableView.frame.width+2, height: CGFloat(modelsForTask[currentTask]!.count*30+2))
+        
+        tableViewBGView.frame = CGRect(
+            x: modelTableView.frame.minX-1,
+            y: modelTableView.frame.minY-1,
+            width: modelTableView.frame.width+2,
+            height: CGFloat(currentModels.count*30+2)
+        )
     }
     
     @objc func shareButtonTapped() {
@@ -373,34 +535,48 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         let cell = tableView.dequeueReusableCell(withIdentifier: "ModelCell", for: indexPath)
-        
-        let fileName = currentModels[indexPath.row]
-        let displayName = (fileName as NSString).deletingPathExtension
+        let entry = currentModels[indexPath.row]
         
         cell.textLabel?.textAlignment = .center
-        cell.textLabel?.text = displayName
+        cell.textLabel?.text = entry.displayName
         cell.textLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        
         cell.backgroundColor = .clear
         
+        // ダウンロードアイコン（icloud.and.arrow.down）をアクセサリに表示
+        // ただし isRemote かつ 未ダウンロード時のみ
+        if entry.isRemote {
+            let isDownloaded = ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+            if !isDownloaded {
+                cell.accessoryView = UIImageView(image: UIImage(systemName: "icloud.and.arrow.down"))
+            } else {
+                cell.accessoryView = nil
+            }
+        } else {
+            cell.accessoryView = nil
+        }
+        
+        // セル選択時の背景
         let selectedBGView = UIView()
         selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
         selectedBGView.layer.cornerRadius = 8
         selectedBGView.layer.masksToBounds = true
-        selectedBGView.frame = CGRect(x: 2, y:2, width: cell.contentView.bounds.width - 4, height: cell.contentView.bounds.height - 4)
+        selectedBGView.frame = CGRect(
+            x: 2, y: 2,
+            width: cell.contentView.bounds.width - 4,
+            height: cell.contentView.bounds.height - 4
+        )
         cell.selectedBackgroundView = selectedBGView
         
         cell.selectionStyle = .default
-        
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let selectedModel = currentModels[indexPath.row]
-        
         selection.selectionChanged()
+        let selectedEntry = currentModels[indexPath.row]
         
-        loadModel(named: selectedModel, forTask: currentTask)
+        // バンドル or リモートモデルをロード
+        loadModel(entry: selectedEntry, forTask: currentTask)
     }
     
     func tableView(_ tableView: UITableView,
@@ -413,7 +589,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     }
 }
 
-extension ViewController:RPPreviewViewControllerDelegate {
+extension ViewController: RPPreviewViewControllerDelegate {
     func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
         previewController.dismiss(animated: true)
     }

@@ -65,37 +65,20 @@ Once added, YOLOSwift will be automatically integrated into your project
 ## Usage
 YOLO Package primarily provides two main components: the **YOLO class** and **YOLOCamera / YOLOView**.
 
+### Import
+
+```
+import YOLO
+```
+
 ### YOLO Class
 **(Inference)**
 
 Use the YOLO class for inference on static images, image files, or other UIImage inputs. It supports tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. Simply provide a valid YOLOv8 model (either .mlmodelc or a local path/string).
 
 ```
-import YOLOSwift
-import SwiftUI
-
-struct ContentView: View {
-    // Initialize the YOLO class with the model name (or path) and the desired task
-    let yolo = YOLO("yolov8n", task: .detect)
-
-    var body: some View {
-        VStack {
-            Text("Image Inference Example")
-                .font(.headline)
-                .padding()
-
-            if let image = UIImage(named: "sampleImage") {
-                // Perform inference in just one line
-                let result = yolo(image)
-                // result contains bounding boxes, confidence scores, etc.
-                // You can display or process these as needed.
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-            }
-        }
-    }
-}
+let model = YOLO("yolo11n", task: .detect) # bundle file name, local path
+let result = model(image) # SwifUIImage, UIImage, CIImage, CGImage, bundle name, local path, remote URL
 ```
 
 ### YOLOCamera / YOLOView

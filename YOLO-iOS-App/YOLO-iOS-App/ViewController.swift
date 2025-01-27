@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var labelFPS: UILabel!
     @IBOutlet weak var labelVersion: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-    @IBOutlet weak var focus: UIImageView!
+    @IBOutlet weak var forcus: UIImageView!
     @IBOutlet weak var logoImage: UIImageView!
     
     var shareButton = UIButton()
@@ -229,6 +229,8 @@ class ViewController: UIViewController {
                 
                 let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
                 DispatchQueue.main.async {
+                    self.downloadProgressLabel.isHidden = false
+                    self.downloadProgressLabel.text = "Loading \(entry.displayName)"
                     self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
                         switch result {
                         case .success():
@@ -283,6 +285,8 @@ class ViewController: UIViewController {
             .appendingPathExtension("mlmodelc")
         
         DispatchQueue.main.async {
+            self.downloadProgressLabel.isHidden = false
+            self.downloadProgressLabel.text = "Loading \(displayName)"
             self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
                 switch result {
                 case .success():
@@ -301,8 +305,8 @@ class ViewController: UIViewController {
             self.downloadProgressView.isHidden = true
             
             self.downloadProgressLabel.isHidden = true
-            self.downloadProgressLabel.isHidden = false
-            self.downloadProgressLabel.text = "Loading \(modelName)"
+//            self.downloadProgressLabel.isHidden = false
+//            self.downloadProgressLabel.text = "Loading \(modelName)"
 
             self.view.isUserInteractionEnabled = true
             self.modelTableView.isUserInteractionEnabled = true
@@ -318,7 +322,7 @@ class ViewController: UIViewController {
                 print("Finished loading model: \(modelName)")
                 self.currentModelName = modelName
                 
-                self.downloadProgressLabel.text = "Switched to \(modelName)"
+                self.downloadProgressLabel.text = "Finished loading model \(modelName)"
                 self.downloadProgressLabel.isHidden = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     self.downloadProgressLabel.isHidden = true

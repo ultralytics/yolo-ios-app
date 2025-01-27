@@ -614,15 +614,13 @@ class OBBShapeLayerBundle {
             "bounds": NSNull()     // サイズ変更 (frame更新はbounds + position)
         ]
 
-        // shapeLayer も不要なら同様に:
         shapeLayer.actions = [
             "strokeColor": NSNull(),
             "fillColor": NSNull(),
             "path": NSNull(),
             "position": NSNull(),
             "bounds": NSNull()
-        ]        // shapeLayer のサブレイヤーとして textLayer を付けるなど好きに構成できる
-        // (ここではメインCALayerに同時にaddする例でもOK)
+        ]
     }
 }
 
@@ -664,17 +662,15 @@ class OBBRenderer {
     ///   - originalImageSize: 画像やモデルの元サイズ
     ///   - color: 線の色 (実際はクラスごとに変化させたいならループ内で変更)
     ///   - lineWidth: 線の太さ
-    func drawObbDetectionsWithReuse(
+    @MainActor func drawObbDetectionsWithReuse(
         obbDetections: [OBBResult],
         on layer: CALayer,
         imageViewSize: CGSize,
         originalImageSize: CGSize,
         lineWidth: CGFloat = 2.0
     ) {
-        // 1) 今フレームで使用しているレイヤー数を0にリセット
         usedLayerCount = 0
         
-        // 2) 必要な数だけ再利用 or 追加生成し、枠線・テキストを更新
         let scaleX = imageViewSize.width
         let scaleY = imageViewSize.height
         
@@ -682,11 +678,12 @@ class OBBRenderer {
             let bundle = getLayerBundle(for: layer)
             
             let shapeLayer = bundle.shapeLayer
+            
             let textLayer  = bundle.textLayer
             let index = detection.index % ultralyticsColors.count
             let color = ultralyticsColors[index]
-            // - CAShapeLayerの更新
-            //   cornersは4頂点。toPolygon()が既に画像座標の場合はそのまま使う
+
+            // OBB(四角形)のパスを作成
             let corners = detection.box.toPolygon()
             let path = UIBezierPath()
             for (i, corner) in corners.enumerated() {
@@ -700,30 +697,53 @@ class OBBRenderer {
             }
             path.close()
             
+            // shapeLayer設定
             shapeLayer.path = path.cgPath
             shapeLayer.strokeColor = color.cgColor
             shapeLayer.fillColor   = UIColor.clear.cgColor
             shapeLayer.lineWidth   = lineWidth
             shapeLayer.isHidden    = false
             
+            // 文字列 (クラス名 + confidence)
+            let text = detection.cls + String(format: " %.2f", detection.confidence)
+            // 計算するフォントを用意（UIFont）
+            let font = UIFont.systemFont(ofSize: textLayer.fontSize)
+            
+            // 文字サイズを事前に計算
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font
+            ]
+            let textSize = (text as NSString).size(withAttributes: attributes)
 
-            if let first = corners.first {
-                textLayer.backgroundColor = color.withAlphaComponent(0.6).cgColor
-                let px = first.x * scaleX
-                let py = first.y * scaleY
-                textLayer.isHidden = false
-                textLayer.string = detection.cls + String(format: " %.2f", detection.confidence)
-                
-                let labelSize = CGSize(width: 100, height: 20)
+            // テキストレイヤーに設定する際は、CATextLayer.font には CGFont をセットする
+            // さらに contentsScale を設定しないと文字がぼやけやすい
+            textLayer.font = CGFont(font.fontName as CFString)
+            textLayer.contentsScale = UIScreen.main.scale
+            textLayer.string = text
+            
+            // ラベルの背景色など
+            textLayer.backgroundColor = color.withAlphaComponent(0.6).cgColor
+            textLayer.isHidden        = false
+            
+            // 余白を少しつけたい場合
+            let horizontalPadding: CGFloat = 10
+            let verticalPadding: CGFloat = 4
+            
+            // corners[0] が左上とは限りませんが、「最初の点の上に表示する」というロジックを踏襲
+            if let firstCorner = corners.first {
+                let px = firstCorner.x * scaleX
+                let py = firstCorner.y * scaleY
+
                 textLayer.frame = CGRect(
                     x: px,
-                    y: py - labelSize.height,
-                    width: labelSize.width,
-                    height: labelSize.height
+                    y: py - textSize.height - verticalPadding,
+                    width: textSize.width + horizontalPadding,
+                    height: textSize.height + verticalPadding
                 )
             }
         }
         
+        // 使わなかったレイヤーを非表示にする
         for i in usedLayerCount..<layerPool.count {
             let bundle = layerPool[i]
             bundle.shapeLayer.isHidden = true

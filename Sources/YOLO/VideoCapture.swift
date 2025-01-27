@@ -35,6 +35,7 @@ class VideoCapture: NSObject,@unchecked Sendable {
     var photoOutput = AVCapturePhotoOutput()
     let cameraQueue = DispatchQueue(label: "camera-queue")
     var lastCapturedPhoto: UIImage? = nil
+    var inferenceOK = true
     
     private var currentBuffer: CVPixelBuffer?
 
@@ -184,6 +185,7 @@ class VideoCapture: NSObject,@unchecked Sendable {
 
 extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard inferenceOK else {return}
         predictOnFrame(sampleBuffer: sampleBuffer)
     }
 }

@@ -21,6 +21,7 @@ class ViewController: UIViewController {
     var shareButton = UIButton()
     var recordButton = UIButton()
     let selection = UISelectionFeedbackGenerator()
+    var firstLoad = true
     
     private let downloadProgressView: UIProgressView = {
         let pv = UIProgressView(progressViewStyle: .default)
@@ -39,12 +40,33 @@ class ViewController: UIViewController {
         return label
     }()
     
+    private var loadingOverlayView: UIView?
+
+    func showLoadingOverlay() {
+        guard loadingOverlayView == nil else { return }
+        let overlay = UIView(frame: view.bounds)
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+                
+        view.addSubview(overlay)
+        loadingOverlayView = overlay
+        view.bringSubviewToFront(downloadProgressView)
+        view.bringSubviewToFront(downloadProgressLabel)
+
+        view.isUserInteractionEnabled = false
+    }
+
+    func hideLoadingOverlay() {
+        loadingOverlayView?.removeFromSuperview()
+        loadingOverlayView = nil
+        view.isUserInteractionEnabled = true
+    }
+    
     private let tasks: [(name: String, folder: String)] = [
-        ("Detect",   "DetectModels"),
-        ("Segment",  "SegmentModels"),
-        ("Classify", "ClassifyModels"),
-        ("Pose",     "PoseModels"),
-        ("Obb",      "ObbModels"),
+        ("Classify", "ClassifyModels"), // index 0
+        ("Segment",  "SegmentModels"),  // index 1
+        ("Detect",   "DetectModels"),   // index 2
+        ("Pose",     "PoseModels"),     // index 3
+        ("Obb",      "ObbModels"),      // index 4
     ]
     
     private var modelsForTask: [String: [String]] = [:]
@@ -74,10 +96,9 @@ class ViewController: UIViewController {
         setupTaskSegmentedControl()
         loadModelsForAllTasks()
         
-        if tasks.indices.contains(0) {
-            segmentedControl.selectedSegmentIndex = 0
-            currentTask = tasks[0].name
-            
+        if tasks.indices.contains(2) {
+            segmentedControl.selectedSegmentIndex = 2
+            currentTask = tasks[2].name
             reloadModelEntriesAndLoadFirst(for: currentTask)
         }
         
@@ -204,6 +225,13 @@ class ViewController: UIViewController {
             return
         }
         isLoadingModel = true
+        yoloView.resetLayers()
+        if !firstLoad {
+            showLoadingOverlay()
+            yoloView.setInferenceFlag(ok: false)
+        } else {
+            firstLoad = false
+        }
         
         self.activityIndicator.startAnimating()
         self.downloadProgressView.progress = 0.0
@@ -317,11 +345,15 @@ class ViewController: UIViewController {
             if let ip = self.selectedIndexPath {
                 self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
             }
-            
+            if !self.firstLoad {
+                self.hideLoadingOverlay()
+            }
+            self.yoloView.setInferenceFlag(ok: true)
+
+
             if success {
                 print("Finished loading model: \(modelName)")
                 self.currentModelName = modelName
-                
                 self.downloadProgressLabel.text = "Finished loading model \(modelName)"
                 self.downloadProgressLabel.isHidden = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {

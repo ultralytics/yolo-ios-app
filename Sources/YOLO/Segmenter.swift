@@ -8,58 +8,57 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     
     override func processObservations(for request: VNRequest, error: Error?) {
         if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-//            DispatchQueue.main.async { [self] in
-                guard results.count == 2 else { return }
-                let masks = results[0].featureValue.multiArrayValue
-                let pred = results[1].featureValue.multiArrayValue
+            //            DispatchQueue.main.async { [self] in
+            guard results.count == 2 else { return }
+            var pred: MLMultiArray
+            var masks: MLMultiArray
+            guard let out0 = results[0].featureValue.multiArrayValue,
+                  let out1 = results[1].featureValue.multiArrayValue else { return }
+            let out0dim = checkShapeDimensions(of: out0)
+            let out1dim = checkShapeDimensions(of: out1)
+            if out0dim == 4 {
+                masks = out0
+                pred = out1
+            } else {
+                masks = out1
+                pred = out0
+            }
+            let detectedObjects = postProcessSegment(feature: pred, confidenceThreshold: Float(confidenceThreshold), iouThreshold: Float(iouThreshold))
+            var boxes: [Box] = []
+            var alphas = [CGFloat]()
+            
+            for p in detectedObjects {
+                let box = p.0
+                let rect = CGRect(
+                    x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+                let confidence = p.2
+                let bestClass = p.1
+                let label = self.labels[bestClass]
+                let xywh = VNImageRectForNormalizedRect(rect, Int(self.inputSize.width), Int(self.inputSize.height))
                 
-            let detectedObjects = postProcessSegment(feature: pred!, confidenceThreshold: Float(confidenceThreshold), iouThreshold: Float(iouThreshold))
-                var boxes: [Box] = []
-                var alphas = [CGFloat]()
-                
-                for p in detectedObjects {
-                    let box = p.0
-                    let rect = CGRect(
-                        x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
-                    let confidence = p.2
-                    let bestClass = p.1
-                    let label = self.labels[bestClass]
-                    let xywh = VNImageRectForNormalizedRect(rect, Int(self.inputSize.width), Int(self.inputSize.height))
+                let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
+                let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+                boxes.append(boxResult)
+                alphas.append(alpha)
+            }
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                guard let procceessedMasks = generateCombinedMaskImage(
+                    detectedObjects: detectedObjects,
+                    protos: masks,
+                    inputWidth: self.modelInputSize.width,
+                    inputHeight: self.modelInputSize.height,
+                    threshold: 0.5
                     
-                    let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
-                    let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-                    boxes.append(boxResult)
-                    alphas.append(alpha)
-                }
-                
-                guard !self.isUpdating else {
-//                    self.updateTime()
-//                    let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: Masks(masks: [], combinedMask: nil), speed: self.t2, fps: 1 / self.t4)
-////
-//                    self.currentOnResultsListener?.on(result: result)
-////
+                ) as? (CGImage?, [[[Float]]]) else {
+                    DispatchQueue.main.async { self.isUpdating = false }
                     return
                 }
-                self.isUpdating = true
-                
-                DispatchQueue.global(qos: .userInitiated).async {
-                    guard let procceessedMasks = generateCombinedMaskImage(
-                        detectedObjects: detectedObjects,
-                        protos: masks!,
-                        inputWidth: self.modelInputSize.width,
-                        inputHeight: self.modelInputSize.height,
-                        threshold: 0.5
-                        
-                    ) as? (CGImage?, [[[Float]]]) else {
-                        DispatchQueue.main.async { self.isUpdating = false }
-                        return
-                    }
-                    var maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
-                    let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: maskResults, speed: self.t2, fps: 1 / self.t4, names: self.labels)
-                    self.updateTime()
-                    self.currentOnResultsListener?.on(result: result)
-                }
-//            }
+                var maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
+                let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: maskResults, speed: self.t2, fps: 1 / self.t4, names: self.labels)
+                self.updateTime()
+                self.currentOnResultsListener?.on(result: result)
+            }
         }
     }
     
@@ -71,7 +70,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         self.t3 = CACurrentMediaTime()
         
         self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-
+        
     }
     
     override func predictOnImage(image: CIImage) -> YOLOResult {
@@ -86,18 +85,29 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let imageHeight = image.extent.height
         self.inputSize = CGSize(width: imageWidth, height: imageHeight)
         var result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
-
+        
         do {
             try requestHandler.perform([request])
             if let results = request.results as? [VNCoreMLFeatureValueObservation] {
                 //                DispatchQueue.main.async { [self] in
                 guard results.count == 2 else { return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)}
-                let masks = results[0].featureValue.multiArrayValue
-                let pred = results[1].featureValue.multiArrayValue
+                var pred: MLMultiArray
+                var masks: MLMultiArray
+                guard let out0 = results[0].featureValue.multiArrayValue,
+                      let out1 = results[1].featureValue.multiArrayValue else { return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)}
+                let out0dim = checkShapeDimensions(of: out0)
+                let out1dim = checkShapeDimensions(of: out1)
+                if out0dim == 4 {
+                    masks = out0
+                    pred = out1
+                } else {
+                    masks = out1
+                    pred = out0
+                }
                 let a = Date()
                 
                 let detectedObjects = postProcessSegment(
-                    feature: pred!, confidenceThreshold: 0.25, iouThreshold: 0.4)
+                    feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
                 var boxes: [Box] = []
                 var colorMasks:[CGImage?] = []
                 var alhaMasks:[CGImage?] = []
@@ -105,21 +115,21 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                 for p in detectedObjects {
                     let box = p.0
                     let rect = CGRect(
-                      x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+                        x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
                     let confidence = p.2
                     let bestClass = p.1
                     let label = labels[bestClass]
                     let xywh = VNImageRectForNormalizedRect(rect, Int(inputSize.width), Int(inputSize.height))
-
+                    
                     let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
                     let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
                     boxes.append(boxResult)
                     alphas.append(alpha)
                 }
-
+                
                 guard let procceessedMasks = generateCombinedMaskImage(
                     detectedObjects: detectedObjects,
-                    protos: masks!,
+                    protos: masks,
                     inputWidth: self.modelInputSize.width,
                     inputHeight: self.modelInputSize.height,
                     threshold: 0.5
@@ -162,7 +172,6 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         
         var results = [(CGRect, Int, Float, MLMultiArray)]()
         
-        // 生ポインタをラップして @unchecked Sendable 扱いにする
         let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
         let pointerWrapper = FloatPointerWrapper(featurePointer)
         
@@ -210,19 +219,16 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                 
                 let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
                 
-                // スレッドセーフに配列 results を更新
                 resultsQueue.async(flags: .barrier) {
                     results.append(result)
                 }
             }
         }
         
-        // 全スレッドが results を更新し終わるのを待つ
         resultsQueue.sync(flags: .barrier) {}
         
         var selectedBoxesAndFeatures = [(CGRect, Int, Float, MLMultiArray)]()
         
-        // クラスごとに NMS
         for classIndex in 0..<numClasses {
             let classResults = results.filter { $0.1 == classIndex }
             if !classResults.isEmpty {
@@ -255,6 +261,13 @@ class Segmenter: BasePredictor, @unchecked Sendable {
             height: box.size.height * yScale)
     }
     
+    func checkShapeDimensions(of multiArray: MLMultiArray) -> Int {
+        let shapeAsInts = multiArray.shape.map { $0.intValue }
+        let dimensionCount = shapeAsInts.count
+        
+        return dimensionCount
+    }
+
 }
 
 final class FloatPointerWrapper:@unchecked Sendable {

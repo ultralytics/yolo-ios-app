@@ -5,7 +5,7 @@ import SwiftUI
 public class YOLO {
     var predictor: Predictor!
     
-    public init(_ modelPathOrName: String, task: YOLOTask) {
+    public init(_ modelPathOrName: String, task: YOLOTask,completion: ((Result<YOLO, Error>) -> Void)? = nil) {
         var modelURL: URL?
         
         let lowercasedPath = modelPathOrName.lowercased()
@@ -25,17 +25,20 @@ public class YOLO {
         }
         
         guard let unwrappedModelURL = modelURL else {
-            fatalError(PredictorError.modelFileNotFound.localizedDescription)
+            completion?(.failure(PredictorError.modelFileNotFound))
+            return
+//            fatalError(PredictorError.modelFileNotFound.localizedDescription)
         }
 
         func handleSuccess(predictor: Predictor) {
             self.predictor = predictor
+            completion?(.success(self))
         }
         
         // Common failure handling for all tasks
         func handleFailure(_ error: Error) {
             print("Failed to load model with error: \(error)")
-//            completion?(.failure(error))
+            completion?(.failure(error))
         }
         
         switch task {

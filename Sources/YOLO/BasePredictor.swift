@@ -31,6 +31,7 @@ public class BasePredictor : Predictor, @unchecked Sendable {
     
     public static func create(
         unwrappedModelURL: URL,
+        isRealTime: Bool = false,
         completion: @escaping (Result<BasePredictor, Error>) -> Void
     ) {
         // Create an instance (synchronously, cheap)
@@ -95,8 +96,9 @@ public class BasePredictor : Predictor, @unchecked Sendable {
                             // The predictor was deallocated — do nothing
                             return
                         }
-
-                        predictor.processObservations(for: request, error: error)
+                        if isRealTime {
+                            predictor.processObservations(for: request, error: error)
+                        }
                     })
                     request.imageCropAndScaleOption = .scaleFill
                     return request

@@ -18,23 +18,13 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         if task == .segment {
             DispatchQueue.main.async {
                 if let maskImage = result.masks?.combinedMask {
-                    self.setupMaskLayerIfNeeded()
                     
                     guard let maskLayer = self.maskLayer else { return }
                     
-                    // マスクが取得できた場合はレイヤを表示して画像をセット
                     maskLayer.isHidden = false
                     maskLayer.frame = self.overlayLayer.bounds
                     maskLayer.contents = maskImage
                     
-                    //                    self.removeAllMaskSubLayers()
-                    //                    
-                    //                    let maskLayer = CALayer()
-                    //                    maskLayer.frame = self.overlayLayer.bounds
-                    //                    maskLayer.contents = maskImage
-                    //                    maskLayer.opacity = 0.5
-                    //                    
-                    //                    self.overlayLayer.addSublayer(maskLayer)
                     self.videoCapture.predictor.isUpdating = false
                 } else {
                     self.videoCapture.predictor.isUpdating = false
@@ -43,7 +33,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         } else if task == .classify {
             self.overlayYOLOClassificationsCALayer(on: self, result: result)
         } else if task == .pose {
-            self.removeAllMaskSubLayers()
+            self.removeAllSubLayers(parentLayer: poseLayer)
             var keypointList = [[(x:Float, y:Float)]]()
             var confsList = [[Float]]()
             
@@ -51,16 +41,18 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                 keypointList.append(keypoint.xyn)
                 confsList.append(keypoint.conf)
             }
-            
-            drawKeypoints(keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,  on: self.overlayLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
+            guard let poseLayer = poseLayer else { return }
+            drawKeypoints(keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,  on: poseLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
         } else if task == .obb {
+//            self.setupObbLayerIfNeeded()
+            guard let obbLayer = self.obbLayer else { return }
             let obbDetections = result.obb
             self.obbRenderer.drawObbDetectionsWithReuse(
                 obbDetections: obbDetections,
-                on: self.overlayLayer,
+                on: obbLayer,
                 imageViewSize: self.overlayLayer.frame.size,
                 originalImageSize: result.orig_shape, // 例
-                lineWidth: 2
+                lineWidth: 3
             )
         }
     }
@@ -98,9 +90,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     let selection = UISelectionFeedbackGenerator()
     private var overlayLayer = CALayer()
     private var maskLayer: CALayer?
+    private var poseLayer: CALayer?
+    private var obbLayer: CALayer?
     
     let obbRenderer = OBBRenderer()
-    
+
     private let minimumZoom: CGFloat = 1.0
     private let maximumZoom: CGFloat = 10.0
     private var lastZoomFactor: CGFloat = 1.0
@@ -150,13 +144,10 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             box.hide()
         }
         removeClassificationLayers()
-        if task == .segment {
-            addMaskSubLayers()
-        } else {
-            removeAllMaskSubLayers()
-        }
+
         self.task = task
-        
+        setupSublayers()
+
         var modelURL: URL?
         let lowercasedPath = modelPathOrName.lowercased()
         let fileManager = FileManager.default
@@ -199,7 +190,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         
         switch task {
         case .classify:
-            Classifier.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+            Classifier.create(unwrappedModelURL: unwrappedModelURL,isRealTime: true) { [weak self] result in
                 switch result {
                 case .success(let predictor):
                     handleSuccess(predictor: predictor)
@@ -209,7 +200,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             }
             
         case .segment:
-            Segmenter.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+            Segmenter.create(unwrappedModelURL: unwrappedModelURL,isRealTime: true) { [weak self] result in
                 switch result {
                 case .success(let predictor):
                     handleSuccess(predictor: predictor)
@@ -219,7 +210,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             }
             
         case .pose:
-            PoseEstimater.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+            PoseEstimater.create(unwrappedModelURL: unwrappedModelURL,isRealTime: true) { [weak self] result in
                 switch result {
                 case .success(let predictor):
                     handleSuccess(predictor: predictor)
@@ -229,9 +220,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             }
             
         case .obb:
-            ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+            ObbDetector.create(unwrappedModelURL: unwrappedModelURL,isRealTime: true) { [weak self] result in
                 switch result {
                 case .success(let predictor):
+                    self?.obbLayer?.isHidden = false
+                    
                     handleSuccess(predictor: predictor)
                 case .failure(let error):
                     handleFailure(error)
@@ -239,7 +232,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             }
             
         default:
-            ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { [weak self] result in
+            ObjectDetector.create(unwrappedModelURL: unwrappedModelURL,isRealTime: true) { [weak self] result in
                 switch result {
                 case .success(let predictor):
                     handleSuccess(predictor: predictor)
@@ -289,22 +282,6 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             boundingBoxViews.append(BoundingBoxView())
         }
         
-        // Retrieve class labels directly from the CoreML model's class labels, if available.
-        //        if task == .detect {
-        //            classes = videoCapture.predictor.labels
-        // Assign random colors to the classes.
-        //            var count = 0
-        //            for label in classes {
-        //                let color = ultralyticsColors[count]
-        //                count += 1
-        //                if count > 19 {
-        //                    count = 0
-        //                }
-        //                if colors[label] == nil {  // if key not in dict
-        //                    colors[label] = color
-        //                }
-        //            }
-        //        }
     }
     
     func setupOverlayLayer() {
@@ -333,11 +310,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     }
     
     func setupMaskLayerIfNeeded() {
-        // まだ生成していない場合に一度だけ生成し、overlayLayerに追加する
         if maskLayer == nil {
             let layer = CALayer()
             layer.frame = self.overlayLayer.bounds
             layer.opacity = 0.5
+            layer.name = "maskLayer"
             // 必要に応じて contentsGravity や backgroundColor 等を指定
             // layer.contentsGravity = .resizeAspectFill
             // layer.backgroundColor = UIColor.clear.cgColor
@@ -346,12 +323,60 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             self.maskLayer = layer
         }
     }
+  
+    func setupPoseLayerIfNeeded() {
+        if poseLayer == nil {
+            let layer = CALayer()
+            layer.frame = self.overlayLayer.bounds
+            layer.opacity = 0.5
+            self.overlayLayer.addSublayer(layer)
+            self.poseLayer = layer
+        }
+    }
     
-    func removeAllMaskSubLayers() {
-        self.overlayLayer.sublayers?.forEach { layer in
+    func setupObbLayerIfNeeded() {
+        if obbLayer == nil {
+            let layer = CALayer()
+            layer.frame = self.overlayLayer.bounds
+            layer.opacity = 0.5
+            self.overlayLayer.addSublayer(layer)
+            self.obbLayer = layer
+        }
+    }
+    
+    public func resetLayers() {
+        removeAllSubLayers(parentLayer: maskLayer)
+        removeAllSubLayers(parentLayer: poseLayer)
+        removeAllSubLayers(parentLayer: overlayLayer)
+
+        maskLayer = nil
+        poseLayer = nil
+        obbLayer?.isHidden = true
+    }
+    
+    func setupSublayers() {
+        resetLayers()
+        
+        switch task {
+        case .segment:
+            setupMaskLayerIfNeeded()
+        case .pose:
+            setupPoseLayerIfNeeded()
+        case .obb:
+            setupObbLayerIfNeeded()
+            overlayLayer.addSublayer(obbLayer!)
+            obbLayer?.isHidden = false
+        default:break
+        }
+    }
+    
+    func removeAllSubLayers(parentLayer:CALayer?) {
+        guard let parentLayer = parentLayer else { return }
+        parentLayer.sublayers?.forEach { layer in
             layer.removeFromSuperlayer()
         }
-        self.overlayLayer.sublayers = nil
+        parentLayer.sublayers = nil
+        parentLayer.contents = nil
     }
     
     func addMaskSubLayers() {
@@ -932,6 +957,10 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         self.videoCapture.photoOutput.capturePhoto(
             with: settings, delegate: self as AVCapturePhotoCaptureDelegate
         )
+    }
+    
+    public func setInferenceFlag(ok: Bool) {
+        videoCapture.inferenceOK = ok
     }
 }
 

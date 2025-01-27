@@ -11,9 +11,16 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        model = YOLO("yolo11m-seg", task: .segment)
+        model = YOLO("yolo11x-seg", task: .segment) { [self] result in
+            switch result {
+            case .success(_):
+                setupView()
+            case .failure(let error):
+                fatalError(error.localizedDescription)
+            }
+        }
         
-        setupView()
+        
     }
 
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {

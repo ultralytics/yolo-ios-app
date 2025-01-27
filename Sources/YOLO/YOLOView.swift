@@ -22,19 +22,19 @@ public class YOLOView: UIView, VideoCaptureDelegate{
                     
                     guard let maskLayer = self.maskLayer else { return }
                     
-                        // マスクが取得できた場合はレイヤを表示して画像をセット
-                        maskLayer.isHidden = false
-                        maskLayer.frame = self.overlayLayer.bounds
-                        maskLayer.contents = maskImage
-
-//                    self.removeAllMaskSubLayers()
-//                    
-//                    let maskLayer = CALayer()
-//                    maskLayer.frame = self.overlayLayer.bounds
-//                    maskLayer.contents = maskImage
-//                    maskLayer.opacity = 0.5
-//                    
-//                    self.overlayLayer.addSublayer(maskLayer)
+                    // マスクが取得できた場合はレイヤを表示して画像をセット
+                    maskLayer.isHidden = false
+                    maskLayer.frame = self.overlayLayer.bounds
+                    maskLayer.contents = maskImage
+                    
+                    //                    self.removeAllMaskSubLayers()
+                    //                    
+                    //                    let maskLayer = CALayer()
+                    //                    maskLayer.frame = self.overlayLayer.bounds
+                    //                    maskLayer.contents = maskImage
+                    //                    maskLayer.opacity = 0.5
+                    //                    
+                    //                    self.overlayLayer.addSublayer(maskLayer)
                     self.videoCapture.predictor.isUpdating = false
                 } else {
                     self.videoCapture.predictor.isUpdating = false
@@ -55,13 +55,13 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             drawKeypoints(keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,  on: self.overlayLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
         } else if task == .obb {
             let obbDetections = result.obb
-                self.obbRenderer.drawObbDetectionsWithReuse(
-                    obbDetections: obbDetections,
-                    on: self.overlayLayer,
-                    imageViewSize: self.overlayLayer.frame.size,
-                    originalImageSize: result.orig_shape, // 例
-                    lineWidth: 2
-                )
+            self.obbRenderer.drawObbDetectionsWithReuse(
+                obbDetections: obbDetections,
+                on: self.overlayLayer,
+                imageViewSize: self.overlayLayer.frame.size,
+                originalImageSize: result.orig_shape, // 例
+                lineWidth: 2
+            )
         }
     }
     
@@ -98,9 +98,9 @@ public class YOLOView: UIView, VideoCaptureDelegate{
     let selection = UISelectionFeedbackGenerator()
     private var overlayLayer = CALayer()
     private var maskLayer: CALayer?
-
+    
     let obbRenderer = OBBRenderer()
-
+    
     private let minimumZoom: CGFloat = 1.0
     private let maximumZoom: CGFloat = 10.0
     private var lastZoomFactor: CGFloat = 1.0
@@ -150,7 +150,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             box.hide()
         }
         removeClassificationLayers()
-        removeAllMaskSubLayers()
+        if task == .segment {
+            addMaskSubLayers()
+        } else {
+            removeAllMaskSubLayers()
+        }
         self.task = task
         
         var modelURL: URL?
@@ -286,21 +290,21 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         }
         
         // Retrieve class labels directly from the CoreML model's class labels, if available.
-//        if task == .detect {
-//            classes = videoCapture.predictor.labels
-            // Assign random colors to the classes.
-//            var count = 0
-//            for label in classes {
-//                let color = ultralyticsColors[count]
-//                count += 1
-//                if count > 19 {
-//                    count = 0
-//                }
-//                if colors[label] == nil {  // if key not in dict
-//                    colors[label] = color
-//                }
-//            }
-//        }
+        //        if task == .detect {
+        //            classes = videoCapture.predictor.labels
+        // Assign random colors to the classes.
+        //            var count = 0
+        //            for label in classes {
+        //                let color = ultralyticsColors[count]
+        //                count += 1
+        //                if count > 19 {
+        //                    count = 0
+        //                }
+        //                if colors[label] == nil {  // if key not in dict
+        //                    colors[label] = color
+        //                }
+        //            }
+        //        }
     }
     
     func setupOverlayLayer() {
@@ -348,6 +352,11 @@ public class YOLOView: UIView, VideoCaptureDelegate{
             layer.removeFromSuperlayer()
         }
         self.overlayLayer.sublayers = nil
+    }
+    
+    func addMaskSubLayers() {
+        guard let maskLayer = maskLayer else { return }
+        self.overlayLayer.addSublayer(maskLayer)
     }
     
     func showBoxes(predictions: YOLOResult) {
@@ -514,7 +523,7 @@ public class YOLOView: UIView, VideoCaptureDelegate{
         
         view.layer.addSublayer(overlayLayer)
     }
-
+    
     
     private func setupUI() {
         labelName.text = modelName

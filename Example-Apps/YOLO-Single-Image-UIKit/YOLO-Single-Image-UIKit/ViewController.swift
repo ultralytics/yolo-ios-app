@@ -11,7 +11,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        model = YOLO("yolo11n-cls", task: .classify)
+        model = YOLO("yolo11m-seg", task: .segment)
         
         setupView()
     }
@@ -68,10 +68,12 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
         view.addSubview(imageView)
         imageView.contentMode = .scaleAspectFit
         
-        pickButton = UIButton(frame: CGRect(x: view.center.x - 50, y: view.bounds.maxY-75, width: 100, height: 50))
+        pickButton = UIButton(frame: CGRect(x: view.center.x - 50, y: view.bounds.maxY-100, width: 100, height: 50))
         pickButton.setTitle("Pick Image", for: .normal)
         pickButton.addTarget(self, action: #selector(presentPhPicker), for: .touchUpInside)
         pickButton.backgroundColor = .systemBlue
+        pickButton.clipsToBounds = true
+        pickButton.layer.cornerRadius = 8
         view.addSubview(pickButton)
     }
 }

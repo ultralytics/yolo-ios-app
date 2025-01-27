@@ -2,23 +2,15 @@ import CoreML
 import Foundation
 import ZIPFoundation
 
-/// テーブルビューに表示する1行分のモデル情報
 struct ModelEntry {
-    /// 表示名 (例: "yolo11n", "CustomModel1" など)
     let displayName: String
     
-    /// 実際にロード・ダウンロードするときのキーやパスに使うID
-    ///   - バンドルモデルならファイル名 (例: "MyCustomModel.mlmodel")
-    ///   - リモートモデルなら "yolo11n", "yolo11n-seg" 等
     let identifier: String
     
-    /// バンドル内モデルかどうか
     let isLocalBundle: Bool
     
-    /// リモートモデルかどうか
     let isRemote: Bool
     
-    /// リモートモデルの場合のダウンロードURL
     let remoteURL: URL?
     
     init(displayName: String,
@@ -43,17 +35,7 @@ class ModelCacheManager {
     private var currentSelectedModelKey: String?
     
     private init() {
-        //        loadBundledModel()
     }
-//    
-//    public func getRemoteURL(for key: String) -> URL? {
-//        for (fileName, url) in fileMappings {
-//            if fileName == key {
-//                return url
-//            }
-//        }
-//        return nil
-//    }
     
     func loadBundledModel() {
         if let url = getModelFileURL(fileName: "yolov8m"),
@@ -310,7 +292,6 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
                     totalBytesWritten: Int64,
                     totalBytesExpectedToWrite: Int64) {
         let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
-        // ViewController側でUIProgressViewを更新するため、ハンドラーを呼び出す
         DispatchQueue.main.async {
             self.progressHandler?(progress)
         }
@@ -374,19 +355,15 @@ extension URL {
 }
 
 func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
-    // ZIPファイルをArchiveとして開く
     let archive = try Archive(url: sourceURL, accessMode: .read)
 
-    // 解凍先フォルダを作る
     if !FileManager.default.fileExists(atPath: destinationURL.path) {
         try FileManager.default.createDirectory(at: destinationURL,
                                                 withIntermediateDirectories: true,
                                                 attributes: nil)
     }
 
-    // アーカイブ内の全エントリを列挙
     for entry in archive {
-        // __MACOSX や 先頭に "._" が付くファイルはスキップ
         if entry.path.hasPrefix("__MACOSX") {
             continue
         }
@@ -394,10 +371,8 @@ func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
             continue
         }
 
-        // 実際に展開する先のパス
         let entryDestinationURL = destinationURL.appendingPathComponent(entry.path)
 
-        // 親ディレクトリを作成
         let parentDir = entryDestinationURL.deletingLastPathComponent()
         if !FileManager.default.fileExists(atPath: parentDir.path) {
             try FileManager.default.createDirectory(at: parentDir,
@@ -405,7 +380,6 @@ func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
                                                     attributes: nil)
         }
         
-        // エントリを解凍
         try archive.extract(entry, to: entryDestinationURL)
     }
 }

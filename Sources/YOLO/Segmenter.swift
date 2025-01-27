@@ -32,15 +32,15 @@ class Segmenter: BasePredictor, @unchecked Sendable {
                     alphas.append(alpha)
                 }
                 
-//                guard !self.isUpdating else {
+                guard !self.isUpdating else {
 //                    self.updateTime()
 //                    let result = YOLOResult(orig_shape: self.inputSize, boxes: boxes,masks: Masks(masks: [], combinedMask: nil), speed: self.t2, fps: 1 / self.t4)
-//
+////
 //                    self.currentOnResultsListener?.on(result: result)
-//
-//                    return
-//                }
-//                self.isUpdating = true
+////
+                    return
+                }
+                self.isUpdating = true
                 
                 DispatchQueue.global(qos: .userInitiated).async {
                     guard let procceessedMasks = generateCombinedMaskImage(

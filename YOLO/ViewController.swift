@@ -17,7 +17,12 @@ import CoreMedia
 import UIKit
 import Vision
 
-var mlModel = try! yolo11m(configuration: .init()).model
+var mlModel = try! yolo11m(configuration: mlmodelConfig).model
+var mlmodelConfig: MLModelConfiguration = {
+  let config = MLModelConfiguration()
+  config.setValue(1, forKey: "experimentalMLE5EngineUsage")
+  return config
+}()
 
 class ViewController: UIViewController {
   @IBOutlet var videoPreview: UIView!
@@ -140,24 +145,23 @@ class ViewController: UIViewController {
   @IBAction func indexChanged(_ sender: Any) {
     selection.selectionChanged()
     activityIndicator.startAnimating()
-
     /// Switch model
     switch segmentedControl.selectedSegmentIndex {
     case 0:
       self.labelName.text = "YOLO11n"
-      mlModel = try! yolo11n(configuration: .init()).model
+      mlModel = try! yolo11n(configuration: mlmodelConfig).model
     case 1:
       self.labelName.text = "YOLO11s"
-      mlModel = try! yolo11s(configuration: .init()).model
+      mlModel = try! yolo11n(configuration: mlmodelConfig).model
     case 2:
       self.labelName.text = "YOLO11m"
-      mlModel = try! yolo11m(configuration: .init()).model
+      mlModel = try! yolo11n(configuration: mlmodelConfig).model
     case 3:
       self.labelName.text = "YOLO11l"
-      mlModel = try! yolo11l(configuration: .init()).model
+      mlModel = try! yolo11n(configuration: mlmodelConfig).model
     case 4:
       self.labelName.text = "YOLO11x"
-      mlModel = try! yolo11x(configuration: .init()).model
+      mlModel = try! yolo11n(configuration: mlmodelConfig).model
     default:
       break
     }

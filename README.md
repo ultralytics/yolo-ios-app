@@ -38,7 +38,7 @@ Ensure you have the following before you start:
 
 - **Xcode:** The Ultralytics YOLO iOS App requires Xcode installed on your macOS machine. Download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
 
-- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios/ios-18/) or later.
+- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios/ios-18/) or later. Note: custom, fine-tuned models can only work on iPhone or iPad running **iOS 17.0** or later.
 
 - **An Apple Developer Account:** A free Apple Developer account will suffice for device testing. Sign up [here](https://developer.apple.com/) if you haven't already.
 
@@ -62,7 +62,7 @@ Ensure you have the following before you start:
 
 3. **Add YOLO11 Models to the Project:**
 
-   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLO11 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
+   Since the YOLO CoreML models are not versionned in this repository, you'll need to create them by exporting CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLO11 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
 
    ```python
    from ultralytics import YOLO

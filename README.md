@@ -62,16 +62,16 @@ Ensure you have the following before you start:
 
 3. **Add YOLO11 Models to the Project:**
 
-   Since the YOLO CoreML models are not versionned in this repository, you'll need to either:
-   
+   Since the YOLO CoreML models are not versioned in this repository, you'll need to either:
+
    1. Create them by exporting your trained models to CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`).
 
       ```python
       from ultralytics import YOLO
 
       # Load a trained YOLO11 PyTorch model
-      model = YOLO(f"path/to/your/trained/model.pt")
-      
+      model = YOLO("path/to/your/trained/model.pt")
+
       # Export the PyTorch model to CoreML INT8 format with NMS layers
       # The imgsz property may be adjusted when you export a trained model
       model.export(format="coreml", int8=True, nms=True, imgsz=640)
@@ -84,13 +84,13 @@ Ensure you have the following before you start:
 
       # Loop through all YOLO11 model sizes and exclude any trained models from the loop
       for size in ("n", "s", "m", "l", "x"):
-         # Load a base YOLO11 PyTorch model
-         model = YOLO(f"yolo11{size}.pt")
-         
-         # Export the PyTorch model to CoreML INT8 format with NMS layers
-         model.export(format="coreml", int8=True, nms=True)
+          # Load a base YOLO11 PyTorch model
+          model = YOLO(f"yolo11{size}.pt")
+
+          # Export the PyTorch model to CoreML INT8 format with NMS layers
+          model.export(format="coreml", int8=True, nms=True)
       ```
-   
+
    You should have 5 YOLO11 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
 
 4. **Run the Ultralytics YOLO iOS App:**

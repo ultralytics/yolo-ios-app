@@ -20,11 +20,11 @@ import Vision
 var mlModel = try! yolo11m(configuration: mlmodelConfig).model
 var mlmodelConfig: MLModelConfiguration = {
   let config = MLModelConfiguration()
-    
-    if #available(iOS 17.0, *) {
-      config.setValue(1, forKey: "experimentalMLE5EngineUsage")
-    }
-  
+
+  if #available(iOS 17.0, *) {
+    config.setValue(1, forKey: "experimentalMLE5EngineUsage")
+  }
+
   return config
 }()
 

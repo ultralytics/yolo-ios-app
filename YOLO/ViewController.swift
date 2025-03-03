@@ -1,7 +1,7 @@
 //  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
 //  Main View Controller for Ultralytics YOLO App
-//  This file is part of the Ultralytics YOLO app, enabling real-time object detection using YOLOv8 models on iOS devices.
+//  This file is part of the Ultralytics YOLO app, enabling real-time object detection using YOLO11 models on iOS devices.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
@@ -17,7 +17,16 @@ import CoreMedia
 import UIKit
 import Vision
 
-var mlModel = try! yolov8m(configuration: .init()).model
+var mlModel = try! yolo11m(configuration: mlmodelConfig).model
+var mlmodelConfig: MLModelConfiguration = {
+  let config = MLModelConfiguration()
+
+  if #available(iOS 17.0, *) {
+    config.setValue(1, forKey: "experimentalMLE5EngineUsage")
+  }
+
+  return config
+}()
 
 class ViewController: UIViewController {
   @IBOutlet var videoPreview: UIView!
@@ -55,6 +64,9 @@ class ViewController: UIViewController {
   var t3 = CACurrentMediaTime()  // FPS start
   var t4 = 0.0  // FPS dt smoothed
   // var cameraOutput: AVCapturePhotoOutput!
+  var longSide: CGFloat = 3
+  var shortSide: CGFloat = 4
+  var frameSizeCaptured = false
 
   // Developer mode
   let developerMode = UserDefaults.standard.bool(forKey: "developer_mode")  // developer mode selected in settings
@@ -75,9 +87,6 @@ class ViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    toolBar.setBackgroundImage(UIImage(), forToolbarPosition: .any, barMetrics: .default)
-    toolBar.setShadowImage(UIImage(), forToolbarPosition: .any)
-
     slider.value = 30
     setLabels()
     setUpBoundingBoxViews()
@@ -117,8 +126,8 @@ class ViewController: UIViewController {
       labelSliderIoULandScape.isHidden = true
       sliderIoULandScape.isHidden = true
     }
-//    self.videoCapture.previewLayer?.frame = CGRect(
-//      x: 0, y: 0, width: size.width, height: size.height)
+    self.videoCapture.previewLayer?.frame = CGRect(
+      x: 0, y: 0, width: size.width, height: size.height)
 
   }
 
@@ -130,6 +139,7 @@ class ViewController: UIViewController {
 
   @objc func orientationDidChange() {
     videoCapture.updateVideoOrientation()
+    //      frameSizeCaptured = false
   }
 
   @IBAction func vibrate(_ sender: Any) {
@@ -143,20 +153,20 @@ class ViewController: UIViewController {
     /// Switch model
     switch segmentedControl.selectedSegmentIndex {
     case 0:
-      self.labelName.text = "YOLOv8n"
-      mlModel = try! yolov8n(configuration: .init()).model
+      self.labelName.text = "YOLO11n"
+      mlModel = try! yolo11n(configuration: .init()).model
     case 1:
-      self.labelName.text = "YOLOv8s"
-      mlModel = try! yolov8s(configuration: .init()).model
+      self.labelName.text = "YOLO11s"
+      mlModel = try! yolo11s(configuration: .init()).model
     case 2:
-      self.labelName.text = "YOLOv8m"
-      mlModel = try! yolov8m(configuration: .init()).model
+      self.labelName.text = "YOLO11m"
+      mlModel = try! yolo11m(configuration: .init()).model
     case 3:
-      self.labelName.text = "YOLOv8l"
-      mlModel = try! yolov8l(configuration: .init()).model
+      self.labelName.text = "YOLO11l"
+      mlModel = try! yolo11l(configuration: .init()).model
     case 4:
-      self.labelName.text = "YOLOv8x"
-      mlModel = try! yolov8x(configuration: .init()).model
+      self.labelName.text = "YOLO11x"
+      mlModel = try! yolo11x(configuration: .init()).model
     default:
       break
     }
@@ -166,7 +176,7 @@ class ViewController: UIViewController {
   }
 
   func setModel() {
-      
+
     /// VNCoreMLModel
     detector = try! VNCoreMLModel(for: mlModel)
     detector.featureProvider = ThresholdProvider()
@@ -225,7 +235,7 @@ class ViewController: UIViewController {
   }
 
   func setLabels() {
-    self.labelName.text = "YOLOv8m"
+    self.labelName.text = "YOLO11m"
     self.labelVersion.text = "Version " + UserDefaults.standard.string(forKey: "app_version")!
   }
 
@@ -243,20 +253,26 @@ class ViewController: UIViewController {
     pauseButtonOutlet.isEnabled = false
   }
 
-  @IBAction func switchCameraTapped(_ sender: Any) {
-    self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    // let newCameraDevice = currentInput?.device == .builtInWideAngleCamera ? getCamera(with: .front) : getCamera(with: .back)
-
-    let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)!
-    guard let videoInput1 = try? AVCaptureDeviceInput(device: device) else {
-      return
-    }
-
-    self.videoCapture.captureSession.addInput(videoInput1)
-    self.videoCapture.captureSession.commitConfiguration()
-  }
+//  @IBAction func switchCameraTapped(_ sender: Any) {
+//    self.videoCapture.captureSession.beginConfiguration()
+//    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
+//    self.videoCapture.captureSession.removeInput(currentInput!)
+//    guard let currentPosition = currentInput?.device.position else { return }
+//
+//    let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
+//
+//    let newCameraDevice = bestCaptureDevice(for: nextCameraPosition)
+//
+//    guard let videoInput1 = try? AVCaptureDeviceInput(device: newCameraDevice) else {
+//      return
+//    }
+//
+//    self.videoCapture.captureSession.addInput(videoInput1)
+//    self.videoCapture.updateVideoOrientation()
+//
+//    self.videoCapture.captureSession.commitConfiguration()
+//
+//  }
 
   // share image
   @IBAction func shareButton(_ sender: Any) {
@@ -282,29 +298,51 @@ class ViewController: UIViewController {
   let maxBoundingBoxViews = 100
   var boundingBoxViews = [BoundingBoxView]()
   var colors: [String: UIColor] = [:]
+  let ultralyticsColorsolors: [UIColor] = [
+    UIColor(red: 4 / 255, green: 42 / 255, blue: 255 / 255, alpha: 0.6),  // #042AFF
+    UIColor(red: 11 / 255, green: 219 / 255, blue: 235 / 255, alpha: 0.6),  // #0BDBEB
+    UIColor(red: 243 / 255, green: 243 / 255, blue: 243 / 255, alpha: 0.6),  // #F3F3F3
+    UIColor(red: 0 / 255, green: 223 / 255, blue: 183 / 255, alpha: 0.6),  // #00DFB7
+    UIColor(red: 17 / 255, green: 31 / 255, blue: 104 / 255, alpha: 0.6),  // #111F68
+    UIColor(red: 255 / 255, green: 111 / 255, blue: 221 / 255, alpha: 0.6),  // #FF6FDD
+    UIColor(red: 255 / 255, green: 68 / 255, blue: 79 / 255, alpha: 0.6),  // #FF444F
+    UIColor(red: 204 / 255, green: 237 / 255, blue: 0 / 255, alpha: 0.6),  // #CCED00
+    UIColor(red: 0 / 255, green: 243 / 255, blue: 68 / 255, alpha: 0.6),  // #00F344
+    UIColor(red: 189 / 255, green: 0 / 255, blue: 255 / 255, alpha: 0.6),  // #BD00FF
+    UIColor(red: 0 / 255, green: 180 / 255, blue: 255 / 255, alpha: 0.6),  // #00B4FF
+    UIColor(red: 221 / 255, green: 0 / 255, blue: 186 / 255, alpha: 0.6),  // #DD00BA
+    UIColor(red: 0 / 255, green: 255 / 255, blue: 255 / 255, alpha: 0.6),  // #00FFFF
+    UIColor(red: 38 / 255, green: 192 / 255, blue: 0 / 255, alpha: 0.6),  // #26C000
+    UIColor(red: 1 / 255, green: 255 / 255, blue: 179 / 255, alpha: 0.6),  // #01FFB3
+    UIColor(red: 125 / 255, green: 36 / 255, blue: 255 / 255, alpha: 0.6),  // #7D24FF
+    UIColor(red: 123 / 255, green: 0 / 255, blue: 104 / 255, alpha: 0.6),  // #7B0068
+    UIColor(red: 255 / 255, green: 27 / 255, blue: 108 / 255, alpha: 0.6),  // #FF1B6C
+    UIColor(red: 252 / 255, green: 109 / 255, blue: 47 / 255, alpha: 0.6),  // #FC6D2F
+    UIColor(red: 162 / 255, green: 255 / 255, blue: 11 / 255, alpha: 0.6),  // #A2FF0B
+  ]
 
-  func setUpBoundingBoxViews() {
-    // Ensure all bounding box views are initialized up to the maximum allowed.
-    while boundingBoxViews.count < maxBoundingBoxViews {
-      boundingBoxViews.append(BoundingBoxView())
+    func setUpBoundingBoxViews() {
+        // Ensure all bounding box views are initialized up to the maximum allowed.
+        while boundingBoxViews.count < maxBoundingBoxViews {
+            boundingBoxViews.append(BoundingBoxView())
+        }
+
+        // Retrieve class labels directly from the CoreML model's class labels, if available.
+        guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
+            fatalError("Class labels are missing from the model description")
+        }
+
+        // Assign random colors to the classes.
+        for label in classLabels {
+            colors[label] = UIColor(
+                red: CGFloat.random(in: 0...1),
+                green: CGFloat.random(in: 0...1),
+                blue: CGFloat.random(in: 0...1),
+                alpha: 0.6
+            )
+        }
     }
 
-    // Retrieve class labels directly from the CoreML model's class labels, if available.
-    guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
-      fatalError("Class labels are missing from the model description")
-    }
-
-    // Assign random colors to the classes.
-    for label in classLabels {
-      if colors[label] == nil {  // if key not in dict
-        colors[label] = UIColor(
-          red: CGFloat.random(in: 0...1),
-          green: CGFloat.random(in: 0...1),
-          blue: CGFloat.random(in: 0...1),
-          alpha: 0.6)
-      }
-    }
-  }
 
   func startVideo() {
     videoCapture = VideoCapture()
@@ -333,7 +371,13 @@ class ViewController: UIViewController {
   func predict(sampleBuffer: CMSampleBuffer) {
     if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
       currentBuffer = pixelBuffer
-
+      if !frameSizeCaptured {
+        let frameWidth = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+        let frameHeight = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+        longSide = max(frameWidth, frameHeight)
+        shortSide = min(frameWidth, frameHeight)
+        frameSizeCaptured = true
+      }
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
       // so in most cases Vision needs to rotate it for the model to work as expected.
@@ -451,62 +495,53 @@ class ViewController: UIViewController {
     }
   }
 
-    func show(predictions: [VNRecognizedObjectObservation]) {
-      let width = videoPreview.bounds.width
-      let height = videoPreview.bounds.height
-      var str = ""
+  func show(predictions: [VNRecognizedObjectObservation]) {
+    var str = ""
+    // date
+    let date = Date()
+    let calendar = Calendar.current
+    let hour = calendar.component(.hour, from: date)
+    let minutes = calendar.component(.minute, from: date)
+    let seconds = calendar.component(.second, from: date)
+    let nanoseconds = calendar.component(.nanosecond, from: date)
+    let sec_day =
+      Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9  // seconds in the day
 
+    self.labelSlider.text =
+      String(predictions.count) + " items (max " + String(Int(slider.value)) + ")"
+    let width = videoPreview.bounds.width  // 375 pix
+    let height = videoPreview.bounds.height  // 812 pix
+
+    if UIDevice.current.orientation == .portrait {
+
+      // ratio = videoPreview AR divided by sessionPreset AR
       var ratio: CGFloat = 1.0
-
       if videoCapture.captureSession.sessionPreset == .photo {
-        ratio = (height / width) / (4.0 / 3.0)
+        ratio = (height / width) / (4.0 / 3.0)  // .photo
       } else {
-        ratio = (height / width) / (16.0 / 9.0)
+        ratio = (height / width) / (16.0 / 9.0)  // .hd4K3840x2160, .hd1920x1080, .hd1280x720 etc.
       }
 
-      let date = Date()
-      let calendar = Calendar.current
-      let hour = calendar.component(.hour, from: date)
-      let minutes = calendar.component(.minute, from: date)
-      let seconds = calendar.component(.second, from: date)
-      let nanoseconds = calendar.component(.nanosecond, from: date)
-      let sec_day = Double(hour) * 3600.0 + Double(minutes) * 60.0 + Double(seconds) + Double(nanoseconds) / 1E9
-
-      var resultCount = 0
-
-      resultCount = predictions.count
-      self.labelSlider.text = String(resultCount) + " items (max " + String(Int(slider.value)) + ")"
       for i in 0..<boundingBoxViews.count {
-        if i < (resultCount) && i < Int(slider.value) {
-          var rect = CGRect.zero
-          var label = ""
-          var boxColor: UIColor = .white
-          var confidence: CGFloat = 0
-          var alpha: CGFloat = 0.9
-          var bestClass = ""
+        if i < predictions.count && i < Int(slider.value) {
           let prediction = predictions[i]
-          rect = prediction.boundingBox
-          bestClass = prediction.labels[0].identifier
-          confidence = CGFloat(prediction.labels[0].confidence)
-          label = String(format: "%@ %.1f", bestClass, confidence * 100)
-          boxColor = colors[bestClass] ?? UIColor.white
-          alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-          var displayRect = rect
+
+          var rect = prediction.boundingBox  // normalized xywh, origin lower left
           switch UIDevice.current.orientation {
           case .portraitUpsideDown:
-            displayRect = CGRect(
+            rect = CGRect(
               x: 1.0 - rect.origin.x - rect.width,
               y: 1.0 - rect.origin.y - rect.height,
               width: rect.width,
               height: rect.height)
           case .landscapeLeft:
-            displayRect = CGRect(
+            rect = CGRect(
               x: rect.origin.x,
               y: rect.origin.y,
               width: rect.width,
               height: rect.height)
           case .landscapeRight:
-            displayRect = CGRect(
+            rect = CGRect(
               x: rect.origin.x,
               y: rect.origin.y,
               width: rect.width,
@@ -516,25 +551,39 @@ class ViewController: UIViewController {
             fallthrough
           default: break
           }
-          if ratio >= 1 {
-            let offset = (1 - ratio) * (0.5 - displayRect.minX)
+
+          if ratio >= 1 {  // iPhone ratio = 1.218
+            let offset = (1 - ratio) * (0.5 - rect.minX)
             let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-            displayRect = displayRect.applying(transform)
-
-            displayRect.size.width *= ratio
-          } else {
-            let offset = (ratio - 1) * (0.5 - displayRect.maxY)
+            rect = rect.applying(transform)
+            rect.size.width *= ratio
+          } else {  // iPad ratio = 0.75
+            let offset = (ratio - 1) * (0.5 - rect.maxY)
             let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-            displayRect = displayRect.applying(transform)
-
+            rect = rect.applying(transform)
             ratio = (height / width) / (3.0 / 4.0)
-            displayRect.size.height /= ratio
+            rect.size.height /= ratio
           }
-          displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
 
-          boundingBoxViews[i].show(frame: displayRect, label: label, color: boxColor, alpha: alpha)
+          // Scale normalized to pixels [375, 812] [width, height]
+          rect = VNImageRectForNormalizedRect(rect, Int(width), Int(height))
+
+          // The labels array is a list of VNClassificationObservation objects,
+          // with the highest scoring class first in the list.
+          let bestClass = prediction.labels[0].identifier
+          let confidence = prediction.labels[0].confidence
+          // print(confidence, rect)  // debug (confidence, xywh) with xywh origin top left (pixels)
+          let label = String(format: "%@ %.1f", bestClass, confidence * 100)
+          let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+          // Show the bounding box.
+          boundingBoxViews[i].show(
+            frame: rect,
+            label: label,
+            color: colors[bestClass] ?? UIColor.white,
+            alpha: alpha)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
 
           if developerMode {
+            // Write
             if save_detections {
               str += String(
                 format: "%.3f %.3f %.3f %@ %.2f %.1f %.1f %.1f %.1f\n",
@@ -542,27 +591,76 @@ class ViewController: UIViewController {
                 rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
             }
           }
-
         } else {
           boundingBoxViews[i].hide()
         }
       }
+    } else {
+      let frameAspectRatio = longSide / shortSide
+      let viewAspectRatio = width / height
+      var scaleX: CGFloat = 1.0
+      var scaleY: CGFloat = 1.0
+      var offsetX: CGFloat = 0.0
+      var offsetY: CGFloat = 0.0
 
-      // Write
-      if developerMode {
-        if save_detections {
-          saveText(text: str, file: "detections.txt")  // Write stats for each detection
-        }
-        if save_frames {
-          str = String(
-            format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
-            sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
-            self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
-          saveText(text: str, file: "frames.txt")  // Write stats for each image
+      if frameAspectRatio > viewAspectRatio {
+        scaleY = height / shortSide
+        scaleX = scaleY
+        offsetX = (longSide * scaleX - width) / 2
+      } else {
+        scaleX = width / longSide
+        scaleY = scaleX
+        offsetY = (shortSide * scaleY - height) / 2
+      }
+
+      for i in 0..<boundingBoxViews.count {
+        if i < predictions.count {
+          let prediction = predictions[i]
+
+          var rect = prediction.boundingBox
+
+          rect.origin.x = rect.origin.x * longSide * scaleX - offsetX
+          rect.origin.y =
+            height
+            - (rect.origin.y * shortSide * scaleY - offsetY + rect.size.height * shortSide * scaleY)
+          rect.size.width *= longSide * scaleX
+          rect.size.height *= shortSide * scaleY
+
+          let bestClass = prediction.labels[0].identifier
+          let confidence = prediction.labels[0].confidence
+
+          let label = String(format: "%@ %.1f", bestClass, confidence * 100)
+          let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+          // Show the bounding box.
+          boundingBoxViews[i].show(
+            frame: rect,
+            label: label,
+            color: colors[bestClass] ?? UIColor.white,
+            alpha: alpha)  // alpha 0 (transparent) to 1 (opaque) for conf threshold 0.2 to 1.0)
+        } else {
+          boundingBoxViews[i].hide()
         }
       }
     }
+    // Write
+    if developerMode {
+      if save_detections {
+        saveText(text: str, file: "detections.txt")  // Write stats for each detection
+      }
+      if save_frames {
+        str = String(
+          format: "%.3f %.3f %.3f %.3f %.1f %.1f %.1f\n",
+          sec_day, freeSpace(), memoryUsage(), UIDevice.current.batteryLevel,
+          self.t1 * 1000, self.t2 * 1000, 1 / self.t4)
+        saveText(text: str, file: "frames.txt")  // Write stats for each image
+      }
+    }
 
+    // Debug
+    // print(str)
+    // print(UIDevice.current.identifierForVendor!)
+    // saveImage()
+  }
 
   // Pinch to Zoom Start ---------------------------------------------------------------------------------------------
   let minimumZoom: CGFloat = 1.0
@@ -623,12 +721,18 @@ extension ViewController: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      var orientation = CGImagePropertyOrientation.right
+      var isCameraFront = false
+      if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
+        currentInput.device.position == .front
+      {
+        isCameraFront = true
+      }
+      var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
       switch UIDevice.current.orientation {
       case .landscapeLeft:
-        orientation = .up
+        orientation = isCameraFront ? .downMirrored : .up
       case .landscapeRight:
-        orientation = .down
+        orientation = isCameraFront ? .upMirrored : .down
       default:
         break
       }

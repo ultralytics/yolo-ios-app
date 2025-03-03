@@ -48,11 +48,11 @@
                             <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
                                 <rect key="frame" x="248.66666666666663" y="43" width="355" height="32"/>
                                 <segments>
-                                    <segment title="YOLOv8n" width="69"/>
-                                    <segment title="YOLOv8s" width="69"/>
-                                    <segment title="YOLOv8m" width="75"/>
-                                    <segment title="YOLOv8l" width="69"/>
-                                    <segment title="YOLOv8x" width="69"/>
+                                    <segment title="YOLO11n" width="69"/>
+                                    <segment title="YOLO11s" width="69"/>
+                                    <segment title="YOLO11m" width="75"/>
+                                    <segment title="YOLO11l" width="69"/>
+                                    <segment title="YOLO11x" width="69"/>
                                 </segments>
                                 <connections>
                                     <action selector="indexChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="3y2-Ij-sA7"/>
@@ -158,6 +158,12 @@
                                     <barButtonItem springLoaded="YES" systemItem="action" id="4Wt-da-Ok2">
                                         <connections>
                                             <action selector="shareButton:" destination="BYZ-38-t0r" id="t5S-8x-M27"/>
+                                        </connections>
+                                    </barButtonItem>
+                                    <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="vzs-nM-KXr"/>
+                                    <barButtonItem image="camera.rotate" catalog="system" springLoaded="YES" id="tPm-bz-9sp">
+                                        <connections>
+                                            <action selector="switchCameraTapped:" destination="BYZ-38-t0r" id="Jtd-Ds-swh"/>
                                         </connections>
                                     </barButtonItem>
                                     <barButtonItem enabled="NO" width="20" systemItem="fixedSpace" id="JO8-jv-HRS"/>
@@ -324,7 +330,7 @@
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
                         <outlet property="activityIndicator" destination="lOR-xu-27i" id="RHs-yl-MIU"/>
-                        <outlet property="forcus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
+                        <outlet property="focus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelSlider" destination="Ytf-30-5R8" id="wW5-66-erL"/>
@@ -359,6 +365,7 @@
     <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
     <resources>
         <image name="Focus" width="414" height="414"/>
+        <image name="camera.rotate" catalog="system" width="128" height="93"/>
         <image name="ultralytics_yolo_logotype.png" width="1406" height="394"/>
         <systemColor name="groupTableViewBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

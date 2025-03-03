@@ -1,10 +1,10 @@
-<a href="https://ultralytics.com" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
+<a href="https://www.ultralytics.com/" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
 # 🚀 Ultralytics YOLO iOS App
 
-[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml) <a href="https://ultralytics.com/discord"><img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue"></a> <a href="https://community.ultralytics.com"><img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue"></a>
+[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml) <a href="https://discord.com/invite/ultralytics"><img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue"></a> <a href="https://community.ultralytics.com/"><img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue"></a> <a href="https://reddit.com/r/ultralytics"><img alt="Ultralytics Reddit" src="https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue"></a>
 
-Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetection/id1452689527) GitHub repository! 📖 Leveraging Ultralytics' advanced [YOLOv8 object detection models](https://github.com/ultralytics/ultralytics), this app transforms your iOS device into an intelligent detection tool. Explore our guide to get started with the Ultralytics YOLO iOS App and discover the world in a new and exciting way.
+Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetection/id1452689527) GitHub repository! 📖 Leveraging Ultralytics' advanced [YOLO11 object detection models](https://github.com/ultralytics/ultralytics), this app transforms your iOS device into an intelligent detection tool. Explore our guide to get started with the Ultralytics YOLO iOS App and discover the world in a new and exciting way.
 
 <div align="center">
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="https://github.com/ultralytics/ultralytics/assets/26833433/fd3c8a92-fec0-4253-b4ac-ee94f5ced3fb" alt="Ultralytics YOLO iOS App previews"></a>
@@ -21,7 +21,7 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://ultralytics.com/bilibili"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-bilibili.png" width="3%" alt="Ultralytics BiliBili"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://ultralytics.com/discord"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
+  <a href="https://discord.com/invite/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
   <br>
   <br>
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" style="text-decoration:none;">
@@ -38,7 +38,7 @@ Ensure you have the following before you start:
 
 - **Xcode:** The Ultralytics YOLO iOS App requires Xcode installed on your macOS machine. Download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
 
-- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios) or later.
+- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios/ios-18/) or later. Note: trained models can only work on iPhone or iPad running **iOS 17.0** or later.
 
 - **An Apple Developer Account:** A free Apple Developer account will suffice for device testing. Sign up [here](https://developer.apple.com/) if you haven't already.
 
@@ -60,21 +60,38 @@ Ensure you have the following before you start:
 
    In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
 
-3. **Add YOLOv8 Models to the Project:**
+3. **Add YOLO11 Models to the Project:**
 
-   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLOv8 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
+   Since the YOLO CoreML models are not versioned in this repository, you'll need to either:
 
-   ```python
-   from ultralytics import YOLO
+   1. Create them by exporting your trained models to CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`).
 
-   # Loop through all YOLOv8 model sizes
-   for size in ("n", "s", "m", "l", "x"):
-       # Load a YOLOv8 PyTorch model
-       model = YOLO(f"yolov8{size}.pt")
+      ```python
+      from ultralytics import YOLO
 
-       # Export the PyTorch model to CoreML INT8 format with NMS layers
-       model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-   ```
+      # Load a trained YOLO11 PyTorch model
+      model = YOLO("path/to/your/trained/model.pt")
+
+      # Export the PyTorch model to CoreML INT8 format with NMS layers
+      # The imgsz property may be adjusted when you export a trained model
+      model.export(format="coreml", int8=True, nms=True, imgsz=640)
+      ```
+
+   2. Download the base models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases).
+
+      ```python
+      from ultralytics import YOLO
+
+      # Loop through all YOLO11 model sizes and exclude any trained models from the loop
+      for size in ("n", "s", "m", "l", "x"):
+          # Load a base YOLO11 PyTorch model
+          model = YOLO(f"yolo11{size}.pt")
+
+          # Export the PyTorch model to CoreML INT8 format with NMS layers
+          model.export(format="coreml", int8=True, nms=True)
+      ```
+
+   You should have 5 YOLO11 models in total. Place these in the `YOLO/Models` directory as seen in the Xcode screenshot below.
 
 4. **Run the Ultralytics YOLO iOS App:**
 
@@ -89,11 +106,11 @@ Ensure you have the following before you start:
 The Ultralytics YOLO iOS App is designed to be intuitive:
 
 - **Real-Time Detection:** Launch the app and aim your camera at objects to detect them instantly.
-- **Multiple AI Models:** Select from a range of Ultralytics YOLOv8 models, from YOLOv8n 'nano' to YOLOv8x 'x-large'.
+- **Multiple AI Models:** Select from a range of Ultralytics YOLO11 models, from YOLO11n 'nano' to YOLO11x 'x-large'.
 
 ## 💡 Contribute
 
-We warmly welcome your contributions to Ultralytics' open-source projects! Your support and contributions significantly impact. Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing), and share your feedback through our [Survey](https://ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). A massive thank you 🙏 to everyone who contributes!
+We warmly welcome your contributions to Ultralytics' open-source projects! Your support and contributions significantly impact. Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing/), and share your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). A massive thank you 🙏 to everyone who contributes!
 
 <a href="https://github.com/ultralytics/yolov5/graphs/contributors">
 <img width="100%" src="https://github.com/ultralytics/assets/raw/main/im/image-contributors.png" alt="Ultralytics open-source contributors"></a>
@@ -102,14 +119,14 @@ We warmly welcome your contributions to Ultralytics' open-source projects! Your 
 
 Ultralytics offers two licensing options:
 
-- **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/licenses/) open-source license, perfect for academics, researchers, and enthusiasts. It encourages sharing knowledge and collaboration. See the [LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE) file for details.
+- **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/license) open-source license, perfect for academics, researchers, and enthusiasts. It encourages sharing knowledge and collaboration. See the [LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE) file for details.
 
-- **Enterprise License**: Designed for commercial use, this license permits integrating Ultralytics software into proprietary products and services. For commercial use, please contact us through [Ultralytics Licensing](https://ultralytics.com/license).
+- **Enterprise License**: Designed for commercial use, this license permits integrating Ultralytics software into proprietary products and services. For commercial use, please contact us through [Ultralytics Licensing](https://www.ultralytics.com/license).
 
 ## 🤝 Contact
 
 - Submit Ultralytics bug reports and feature requests via [GitHub Issues](https://github.com/ultralytics/yolo-ios-app/issues).
-- Join our [Discord](https://ultralytics.com/discord) for assistance, questions, and discussions with the community and team!
+- Join our [Discord](https://discord.com/invite/ultralytics) for assistance, questions, and discussions with the community and team!
 
 <br>
 <div align="center">
@@ -125,5 +142,5 @@ Ultralytics offers two licensing options:
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://ultralytics.com/bilibili"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-bilibili.png" width="3%" alt="Ultralytics BiliBili"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://ultralytics.com/discord"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
+  <a href="https://discord.com/invite/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
 </div>

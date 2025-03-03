@@ -49,7 +49,7 @@ class ViewController: UIViewController {
   @IBOutlet weak var labelSliderIoU: UILabel!
   @IBOutlet weak var labelSliderIoULandScape: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var forcus: UIImageView!
+  @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var toolBar: UIToolbar!
 
   let selection = UISelectionFeedbackGenerator()
@@ -274,6 +274,7 @@ class ViewController: UIViewController {
 //
 //  }
 
+
   // share image
   @IBAction func shareButton(_ sender: Any) {
     selection.selectionChanged()
@@ -326,6 +327,7 @@ class ViewController: UIViewController {
         while boundingBoxViews.count < maxBoundingBoxViews {
             boundingBoxViews.append(BoundingBoxView())
         }
+
 
         // Retrieve class labels directly from the CoreML model's class labels, if available.
         guard let classLabels = mlModel.modelDescription.classLabels as? [String] else {
@@ -521,6 +523,7 @@ class ViewController: UIViewController {
       } else {
         ratio = (height / width) / (16.0 / 9.0)  // .hd4K3840x2160, .hd1920x1080, .hd1280x720 etc.
       }
+
 
       for i in 0..<boundingBoxViews.count {
         if i < predictions.count && i < Int(slider.value) {

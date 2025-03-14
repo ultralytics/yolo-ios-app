@@ -41,11 +41,11 @@ A primary iOS application that allows easy real-time object detection on iOS dev
 A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
 Easily integrate YOLO models into your app with a single line of code:
 
-```
+```swift
 let result = model(uiImage)
 ```
 
-```
+```swift
 var body: some View {
     YOLOCamera(
         modelPathOrName: "yolo11n-seg",

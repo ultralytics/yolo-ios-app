@@ -71,7 +71,7 @@ Ensure you have the following before you start:
    for size in ("n", "s", "m", "l", "x"):
        # Load a YOLO11 PyTorch model
        model = YOLO(f"yolo11{size}.pt")
-       
+
        # model = YOLO(f"yolo11{size}-seg.pt") # segment model
        # model = YOLO(f"yolo11{size}-cls.pt") # classify model
        # model = YOLO(f"yolo11{size}-pose.pt") # pose model

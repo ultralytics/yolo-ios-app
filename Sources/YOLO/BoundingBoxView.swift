@@ -81,106 +81,106 @@ class BoundingBoxView {
 }
 
 struct BoundingBoxInfo {
-    var rect: CGRect
-    var strokeColor: UIColor
-    var strokeWidth: CGFloat
-    var cornerRadius: CGFloat
-    var alpha: CGFloat
-    var labelText: String
-    var labelFont: UIFont
-    var labelTextColor: UIColor
-    var labelBackgroundColor: UIColor
-    var isHidden: Bool
+  var rect: CGRect
+  var strokeColor: UIColor
+  var strokeWidth: CGFloat
+  var cornerRadius: CGFloat
+  var alpha: CGFloat
+  var labelText: String
+  var labelFont: UIFont
+  var labelTextColor: UIColor
+  var labelBackgroundColor: UIColor
+  var isHidden: Bool
 }
 
 @MainActor
 func createBoxView(from info: BoundingBoxInfo) -> UIView {
-    let boxView = UIView()
-    boxView.layer.borderColor = info.strokeColor.withAlphaComponent(info.alpha).cgColor
-    boxView.layer.borderWidth = info.strokeWidth
-    boxView.layer.cornerRadius = info.cornerRadius
-    boxView.backgroundColor = .clear
-    
-    let label = UILabel()
-    label.text = info.labelText
-    label.font = info.labelFont
-    label.textColor = info.labelTextColor.withAlphaComponent(info.alpha)
-    label.backgroundColor = info.labelBackgroundColor.withAlphaComponent(info.alpha)
-    label.sizeToFit()
-    
-    let labelHeight = label.bounds.height
-    label.frame.origin = CGPoint(x: 0, y: -labelHeight - 4)
-    label.frame.size.width = max(label.frame.size.width, boxView.bounds.width)
-    
-    boxView.addSubview(label)
-    
-    return boxView
+  let boxView = UIView()
+  boxView.layer.borderColor = info.strokeColor.withAlphaComponent(info.alpha).cgColor
+  boxView.layer.borderWidth = info.strokeWidth
+  boxView.layer.cornerRadius = info.cornerRadius
+  boxView.backgroundColor = .clear
+
+  let label = UILabel()
+  label.text = info.labelText
+  label.font = info.labelFont
+  label.textColor = info.labelTextColor.withAlphaComponent(info.alpha)
+  label.backgroundColor = info.labelBackgroundColor.withAlphaComponent(info.alpha)
+  label.sizeToFit()
+
+  let labelHeight = label.bounds.height
+  label.frame.origin = CGPoint(x: 0, y: -labelHeight - 4)
+  label.frame.size.width = max(label.frame.size.width, boxView.bounds.width)
+
+  boxView.addSubview(label)
+
+  return boxView
 }
 
 @MainActor
 func makeBoundingBoxInfos(from boxViews: [BoundingBoxView]) -> [BoundingBoxInfo] {
-    var results = [BoundingBoxInfo]()
-    
-    for box in boxViews {
-        let shapeLayer = box.shapeLayer
-        let textLayer = box.textLayer
-        
-        let hidden = (shapeLayer.isHidden && textLayer.isHidden)
-        if !hidden {
-            // 1) バウンディングボックスのCGRect（shapeLayer.path から取得）
-            //    shapeLayer.path が nil であれば .zero とする
-            let boundingRect: CGRect
-            if let path = shapeLayer.path {
-                boundingRect = path.boundingBox
-            } else {
-                boundingRect = .zero
-            }
-            
-            // 2) 枠線色・透明度
-            let strokeCGColor = shapeLayer.strokeColor ?? UIColor.clear.cgColor
-            let strokeUI = UIColor(cgColor: strokeCGColor)
-            // strokeUI から alphaを抜き出す（strokeUI.cgColor.alpha でもOK）
-            let strokeAlpha = strokeUI.cgColor.alpha
-            
-            // 3) ライン幅
-            let lineWidth = shapeLayer.lineWidth
-            
-            // 4) 角丸 (BoundingBoxViewで固定値 6.0 を使っているため、合わせる)
-            let cornerRadius: CGFloat = 6.0
-            
-            // 5) テキストレイヤーからラベル文字を取得
-            let labelString = (textLayer.string as? String) ?? ""
-            
-            // テキストレイヤーの backgroundColor
-            let labelBGCG = textLayer.backgroundColor ?? UIColor.clear.cgColor
-            let labelBG = UIColor(cgColor: labelBGCG)
-            
-            // テキストの前景色
-            let fgCG = textLayer.foregroundColor ?? UIColor.white.cgColor
-            let labelTextColor = UIColor(cgColor: fgCG)
-            
-            let fontSize = textLayer.fontSize
-            let fontName = "Avenir"
-            let labelFont = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
-            
-            let finalAlpha = strokeAlpha  // shapeLayerベース
-            
-            let info = BoundingBoxInfo(
-                rect: boundingRect,
-                strokeColor: strokeUI.withAlphaComponent(finalAlpha),
-                strokeWidth: lineWidth,
-                cornerRadius: cornerRadius,
-                alpha: finalAlpha,
-                labelText: labelString,
-                labelFont: labelFont,
-                labelTextColor: labelTextColor.withAlphaComponent(finalAlpha),
-                labelBackgroundColor: labelBG.withAlphaComponent(finalAlpha),
-                isHidden: hidden
-            )
-            results.append(info)
-        }
+  var results = [BoundingBoxInfo]()
+
+  for box in boxViews {
+    let shapeLayer = box.shapeLayer
+    let textLayer = box.textLayer
+
+    let hidden = (shapeLayer.isHidden && textLayer.isHidden)
+    if !hidden {
+      // 1) バウンディングボックスのCGRect（shapeLayer.path から取得）
+      //    shapeLayer.path が nil であれば .zero とする
+      let boundingRect: CGRect
+      if let path = shapeLayer.path {
+        boundingRect = path.boundingBox
+      } else {
+        boundingRect = .zero
+      }
+
+      // 2) 枠線色・透明度
+      let strokeCGColor = shapeLayer.strokeColor ?? UIColor.clear.cgColor
+      let strokeUI = UIColor(cgColor: strokeCGColor)
+      // strokeUI から alphaを抜き出す（strokeUI.cgColor.alpha でもOK）
+      let strokeAlpha = strokeUI.cgColor.alpha
+
+      // 3) ライン幅
+      let lineWidth = shapeLayer.lineWidth
+
+      // 4) 角丸 (BoundingBoxViewで固定値 6.0 を使っているため、合わせる)
+      let cornerRadius: CGFloat = 6.0
+
+      // 5) テキストレイヤーからラベル文字を取得
+      let labelString = (textLayer.string as? String) ?? ""
+
+      // テキストレイヤーの backgroundColor
+      let labelBGCG = textLayer.backgroundColor ?? UIColor.clear.cgColor
+      let labelBG = UIColor(cgColor: labelBGCG)
+
+      // テキストの前景色
+      let fgCG = textLayer.foregroundColor ?? UIColor.white.cgColor
+      let labelTextColor = UIColor(cgColor: fgCG)
+
+      let fontSize = textLayer.fontSize
+      let fontName = "Avenir"
+      let labelFont = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
+
+      let finalAlpha = strokeAlpha  // shapeLayerベース
+
+      let info = BoundingBoxInfo(
+        rect: boundingRect,
+        strokeColor: strokeUI.withAlphaComponent(finalAlpha),
+        strokeWidth: lineWidth,
+        cornerRadius: cornerRadius,
+        alpha: finalAlpha,
+        labelText: labelString,
+        labelFont: labelFont,
+        labelTextColor: labelTextColor.withAlphaComponent(finalAlpha),
+        labelBackgroundColor: labelBG.withAlphaComponent(finalAlpha),
+        isHidden: hidden
+      )
+      results.append(info)
     }
-    
-    return results
-        
+  }
+
+  return results
+
 }

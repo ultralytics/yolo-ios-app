@@ -1,10 +1,10 @@
 <a href="https://www.ultralytics.com/" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
-# 🚀 Ultralytics YOLO for iOS: App and Swift Package
+# 🚀 Ultralytics YOLO iOS App
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml) <a href="https://discord.com/invite/ultralytics"><img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue"></a> <a href="https://community.ultralytics.com/"><img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue"></a> <a href="https://reddit.com/r/ultralytics"><img alt="Ultralytics Reddit" src="https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue"></a>
 
-Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetection/id1452689527) GitHub repository! 📖 Leveraging Ultralytics' advanced [YOLO11 models](https://github.com/ultralytics/ultralytics), this repositry transforms your iOS device into an intelligent detection tool. Explore our guide to get started with the Ultralytics YOLO iOS App and discover the world in a new and exciting way.
+The Yolo-iOS-App is designed to make it easy to try out the YOLO model [YOLO11 object detection models](https://github.com/ultralytics/ultralytics) on your Apple device.
 
 <div align="center">
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="https://github.com/ultralytics/ultralytics/assets/26833433/fd3c8a92-fec0-4253-b4ac-ee94f5ced3fb" alt="Ultralytics YOLO iOS App previews"></a>
@@ -28,59 +28,74 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 
-## 📂 Content
+## 🛠 Quickstart: Setting Up the Ultralytics YOLO iOS App
 
-This repository is a comprehensive project that includes:
+Getting started with the Ultralytics YOLO iOS App is straightforward. Follow these steps to install the app on your iOS device.
 
-### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/YOLO-iOS-App)
+### Prerequisites
 
-A primary iOS application that allows easy real-time object detection on iOS devices. Simply drag and drop your custom model to use it in the app.
-    
-### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Sources/YOLO)
+Ensure you have the following before you start:
 
-A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
-Easily integrate YOLO models into your app with a single line of code:
+- **Xcode:** The Ultralytics YOLO iOS App requires Xcode installed on your macOS machine. Download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
 
-```
-let result = model(uiImage)
-```
+- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios/ios-18/) or later.
 
-```
-var body: some View {
-    YOLOCamera(
-        modelPathOrName: "yolo11n-seg",
-        task: .segment,
-        cameraPosition: .back
-    )
-    .ignoresSafeArea()
-}
-```
+- **An Apple Developer Account:** A free Apple Developer account will suffice for device testing. Sign up [here](https://developer.apple.com/) if you haven't already.
 
-## 🛠 Quickstart Guide
+### Installation
 
-If you’re new to YOLO on mobile or just want to test your own model, we recommend starting with the main YOLO-iOS-App.
+1. **Clone the Repository:**
 
-[**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/YOLO-iOS-App)
+   ```sh
+   git clone https://github.com/ultralytics/yolo-ios-app.git
+   ```
 
-If you’d like to integrate YOLO into your own app, check out the Swift Package and example usage.
+2. **Open the Project in Xcode:**
 
-[**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Sources/YOLO)
+   Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
 
-[**Example Apps**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Example-Apps)
+   <p align="center">
+   <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
+   </p>
 
-## ✨ Highlights
+   In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
 
-**Real-Time Inference**
+3. **Add YOLO11 Models to the Project:**
 
-Achieve high-speed, high-accuracy object detection on iPhones and iPads using CoreML models.
+   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLO11 models in total. Place these in the `YOLO/{TaskName}Models` directory as seen in the Xcode screenshot below.
 
-**Multi OS Support**
+   ```python
+   from ultralytics import YOLO
 
-The Swift Package supports iOS, iPadOS, and macOS.
+   # Loop through all YOLO11 model sizes
+   for size in ("n", "s", "m", "l", "x"):
+       # Load a YOLO11 PyTorch model
+       model = YOLO(f"yolo11{size}.pt")
+       
+       # model = YOLO(f"yolo11{size}-seg.pt") # segment model
+       # model = YOLO(f"yolo11{size}-cls.pt") # classify model
+       # model = YOLO(f"yolo11{size}-pose.pt") # pose model
+       # model = YOLO(f"yolo11{size}-obb.pt") # obb model
 
-**Flexible Tasks**
+       # Export the PyTorch model to CoreML INT8 format with NMS layers
+       model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+   ```
 
-Supports object detection, with segmentation, classification, pose estimation and oriented bouding box detection in the pipeline.
+4. **Run the Ultralytics YOLO iOS App:**
+
+   Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
+
+   <p align="center">
+   <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
+   </p>
+
+## 🚀 Usage
+
+The Ultralytics YOLO iOS App is designed to be intuitive:
+
+- **Real-Time Detection:** Launch the app and aim your camera at objects to detect them instantly.
+- **Frexible Tasks** Select the task you want to use, such as detect, segment, pause, etc.
+- **Multiple AI Models:** Select from a range of Ultralytics YOLO11 models, from YOLO11n 'nano' to YOLO11x 'x-large'. You can also deploy and use custom models that you have trained and exported.
 
 ## 💡 Contribute
 

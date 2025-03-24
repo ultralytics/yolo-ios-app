@@ -21,7 +21,7 @@ class ViewController: UIViewController {
 
   /// The YOLO view that handles camera capture, model inference, and visualization.
   var yoloView: YOLOView!
-  
+
   override func viewDidLoad() {
     super.viewDidLoad()
     // Initialize YOLOView with a segmentation model

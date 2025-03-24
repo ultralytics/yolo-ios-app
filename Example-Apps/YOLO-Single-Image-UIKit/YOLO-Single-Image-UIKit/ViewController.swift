@@ -22,10 +22,10 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
 
   /// The YOLO model instance used for inference.
   var model: YOLO!
-  
+
   /// The image view that displays the original and annotated images.
   var imageView: UIImageView!
-  
+
   /// The button that triggers the photo picker interface.
   var pickButton: UIButton!
 

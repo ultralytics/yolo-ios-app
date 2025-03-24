@@ -8,7 +8,7 @@
 //  or segmentation, it focuses on identifying the primary subject of an image rather than locating
 //  objects within it. The class processes model outputs to extract classification probabilities,
 //  identifying the top predicted class and confidence score. It supports multiple output formats
-//  from Vision framework requests, handling both VNCoreMLFeatureValueObservation and 
+//  from Vision framework requests, handling both VNCoreMLFeatureValueObservation and
 //  VNClassificationObservation result types. The implementation extracts both the top prediction
 //  and the top 5 predictions with their confidence scores, enabling rich user feedback.
 

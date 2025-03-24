@@ -1,7 +1,22 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, implementing image classification functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The Classifier class implements image classification using YOLO models. Unlike object detection
+//  or segmentation, it focuses on identifying the primary subject of an image rather than locating
+//  objects within it. The class processes model outputs to extract classification probabilities,
+//  identifying the top predicted class and confidence score. It supports multiple output formats
+//  from Vision framework requests, handling both VNCoreMLFeatureValueObservation and 
+//  VNClassificationObservation result types. The implementation extracts both the top prediction
+//  and the top 5 predictions with their confidence scores, enabling rich user feedback.
+
 import Foundation
 import UIKit
 import Vision
 
+/// Specialized predictor for YOLO classification models that identify the subject of an image.
 class Classifier: BasePredictor {
 
   override func setConfidenceThreshold(confidence: Double) {

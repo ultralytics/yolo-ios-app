@@ -3,10 +3,16 @@
 //  YOLO-RealTime-UIKit
 //
 //  Created by 間嶋大輔 on 2025/01/08.
+//  License: MIT
 //
 
 import UIKit
 
+/// Manages scene-specific lifecycle events and UI state for the application.
+///
+/// The SceneDelegate handles state transitions for a single scene instance of the app,
+/// supporting iOS 13's ability to have multiple scenes of the same app open simultaneously.
+/// It manages the window hierarchy and responds to scene state changes.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
   var window: UIWindow?

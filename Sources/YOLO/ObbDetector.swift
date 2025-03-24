@@ -1,8 +1,23 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, implementing oriented bounding box detection.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The ObbDetector class provides functionality for detecting objects with oriented (rotated)
+//  bounding boxes. Unlike standard object detection that uses axis-aligned boxes, this implementation
+//  handles objects at arbitrary orientations by predicting the center, width, height, and rotation
+//  angle of each bounding box. The class includes specialized algorithms for non-maximum suppression
+//  of oriented boxes, computing polygon intersections using the Sutherland-Hodgman algorithm, and
+//  efficient IoU calculations. These optimizations enable real-time performance even when dealing
+//  with the computational complexity of rotated geometry operations.
+
 import Accelerate
 import Foundation
 import UIKit
 import Vision
 
+/// Specialized predictor for YOLO models that detect objects using oriented (rotated) bounding boxes.
 class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {

@@ -1,7 +1,22 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO app, handling machine learning model management.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The ModelDownloadManager and related classes provide a complete system for managing YOLO models.
+//  This includes downloading models from remote URLs, caching loaded models in memory, handling model
+//  extraction from ZIP archives, and managing the lifecycle of models on the device. The implementation
+//  includes progress tracking for downloads, prioritization of download tasks, and memory management
+//  for loaded models to ensure optimal performance on resource-constrained devices. These utilities
+//  allow the application to dynamically load models based on user selection while maintaining a responsive
+//  user experience.
+
 import CoreML
 import Foundation
 import ZIPFoundation
 
+/// A structure representing a YOLO model with metadata for display and loading.
 struct ModelEntry {
   let displayName: String
 

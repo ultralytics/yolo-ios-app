@@ -1,8 +1,23 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, implementing instance segmentation functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The Segmenter class extends BasePredictor to provide instance segmentation capabilities.
+//  Instance segmentation not only detects objects but also identifies the precise pixels
+//  belonging to each object. The class processes complex model outputs including prototype masks
+//  and detection results, performs non-maximum suppression to filter detections, and combines
+//  results into visualizable mask images. It leverages the Accelerate framework for efficient
+//  matrix operations and includes parallel processing to optimize performance on mobile devices.
+//  The results include both bounding boxes and pixel-level masks that can be overlaid on images.
+
 import Accelerate
 import Foundation
 import UIKit
 import Vision
 
+/// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 class Segmenter: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 

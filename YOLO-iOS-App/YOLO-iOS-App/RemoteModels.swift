@@ -1,5 +1,19 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO app, defining remotely available YOLO models.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The RemoteModels file defines a registry of downloadable YOLO models available for each task type.
+//  It provides a structured mapping between task categories (detection, segmentation, classification, etc.)
+//  and the available models with their remote download URLs. These models are presented to users in the
+//  application interface, allowing them to download and use additional models beyond those bundled with
+//  the application. The dictionary structure enables easy filtering of models by task type and provides
+//  all necessary information for the ModelDownloadManager to retrieve and install the models.
+
 import Foundation
 
+/// A dictionary mapping task names to available remote models with their download URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = [
   "Detect": [
     //        ("yolo11n",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip")!),

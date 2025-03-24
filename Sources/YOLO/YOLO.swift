@@ -1,7 +1,21 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, providing the main entry point for using YOLO models.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The YOLO class serves as the primary interface for loading and using YOLO machine learning models.
+//  It supports a variety of input formats including UIImage, CIImage, CGImage, and resource files.
+//  The class handles model loading, format conversion, and inference execution, offering a simple yet
+//  powerful API through Swift's callable object pattern. Users can load models from local bundles or
+//  file paths and perform inference with a single function call syntax, making integration into iOS
+//  applications straightforward.
+
 import Foundation
 import SwiftUI
 import UIKit
 
+/// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
 public class YOLO {
   var predictor: Predictor!
 

@@ -1,7 +1,21 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, defining data structures for model inference results.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The YOLOResult and related structures define the data models for storing and processing
+//  the output from YOLO model inference. This includes bounding boxes for object detection,
+//  masks for segmentation, probability distributions for classification, keypoints for pose estimation,
+//  and oriented bounding boxes for rotated object detection. These structures maintain the
+//  results in a consistent format across different tasks, making it easier to process and
+//  visualize the information in the application's UI components.
+
 import CoreGraphics
 import Foundation
 import UIKit
 
+/// Represents the complete results from a YOLO model inference, containing task-specific outputs.
 public struct YOLOResult: @unchecked Sendable {
   public let orig_shape: CGSize
   public let boxes: [Box]

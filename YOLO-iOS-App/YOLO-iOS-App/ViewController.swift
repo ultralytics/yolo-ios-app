@@ -1,3 +1,16 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO app, providing the main user interface for model selection and visualization.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The ViewController serves as the primary interface for users to interact with YOLO models.
+//  It provides the ability to select different models, tasks (detection, segmentation, classification, etc.),
+//  and visualize results in real-time. The controller manages the loading of local and remote models,
+//  handles UI updates during model loading and inference, and provides functionality for capturing
+//  and sharing detection results. Advanced features include screen recording, model download progress
+//  tracking, and adaptive UI layout for different device orientations.
+
 import AVFoundation
 import AudioToolbox
 import CoreML
@@ -6,6 +19,7 @@ import ReplayKit
 import UIKit
 import YOLO
 
+/// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController {
 
   @IBOutlet weak var yoloView: YOLOView!

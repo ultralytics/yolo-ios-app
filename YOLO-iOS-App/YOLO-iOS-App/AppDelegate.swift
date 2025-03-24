@@ -1,6 +1,6 @@
 //  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  This file is part of the Ultralytics YOLO app, enabling YOLOv8 model previews on iOS devices.
+//  This file is part of the Ultralytics YOLO app, enabling YOLO11 model previews on iOS devices.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //

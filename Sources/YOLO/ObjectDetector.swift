@@ -1,7 +1,22 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, implementing object detection functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The ObjectDetector class provides specialized functionality for detecting objects in images
+//  using YOLO models. It processes Vision framework results to extract bounding boxes, class labels,
+//  and confidence scores from model predictions. The class handles both real-time frame processing
+//  and single image analysis, converting the Vision API's normalized coordinates to image coordinates,
+//  and packaging the results in the standardized YOLOResult format. It includes performance monitoring
+//  for inference time and frame rate, and offers runtime adjustable parameters such as confidence
+//  threshold and IoU threshold for non-maximum suppression.
+
 import Foundation
 import UIKit
 import Vision
 
+/// Specialized predictor for YOLO object detection models that identifies and localizes objects in images.
 class ObjectDetector: BasePredictor {
 
   override func setConfidenceThreshold(confidence: Double) {

@@ -1,8 +1,23 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, implementing human pose estimation functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The PoseEstimater class extends the BasePredictor to provide human pose and keypoint detection.
+//  It processes model outputs to identify human subjects and their body keypoints (joints such as
+//  eyes, shoulders, elbows, wrists, hips, knees, ankles, etc.). The class converts the model's raw
+//  output into structured data representing each detected person's bounding box and associated
+//  keypoints with their confidence scores. This implementation supports both real-time processing
+//  for camera feeds and single image analysis, producing visualizable results that can be overlaid
+//  on the source image to show the detected pose skeleton.
+
 import Accelerate
 import Foundation
 import UIKit
 import Vision
 
+/// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
 class PoseEstimater: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 

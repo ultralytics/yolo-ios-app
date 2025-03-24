@@ -3,10 +3,16 @@
 //  YOLO-Single-Image-UIKit
 //
 //  Created by 間嶋大輔 on 2025/01/02.
+//  License: MIT
 //
 
 import UIKit
 
+/// The application delegate class responsible for managing the application's lifecycle.
+///
+/// This class handles application-level events such as launch, termination, and state transitions.
+/// It's the primary entry point for the YOLO single image processing UIKit example app that demonstrates
+/// using YOLO models on images from the photo library.
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 

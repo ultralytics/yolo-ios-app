@@ -1,3 +1,17 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, providing visualization utilities.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The Plot module provides visualization utilities for rendering YOLO model results.
+//  It includes functions for drawing bounding boxes, segmentation masks, pose keypoints,
+//  classification results, and oriented bounding boxes on images. The module implements
+//  specialized rendering algorithms for each type of prediction, handles color management
+//  for different classes, and supports both static image and real-time visualization scenarios.
+//  Each visualization function is optimized for the specific task to provide clear and
+//  informative visual feedback to users with minimal performance impact.
+
 import Accelerate
 import CoreImage
 import CoreML

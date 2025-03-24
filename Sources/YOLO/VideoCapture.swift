@@ -1,8 +1,22 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, managing camera capture for real-time inference.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The VideoCapture component manages the camera and video processing pipeline for real-time
+//  object detection. It handles setting up the AVCaptureSession, managing camera devices,
+//  configuring camera properties like focus and exposure, and processing video frames for
+//  model inference. The class delivers capture frames to the predictor component for real-time
+//  analysis and returns results through delegate callbacks. It also supports camera controls
+//  such as switching between front and back cameras, zooming, and capturing still photos.
+
 import AVFoundation
 import CoreVideo
 import UIKit
 import Vision
 
+/// Protocol for receiving video capture frame processing results.
 @MainActor
 protocol VideoCaptureDelegate: AnyObject {
   func onPredict(result: YOLOResult)

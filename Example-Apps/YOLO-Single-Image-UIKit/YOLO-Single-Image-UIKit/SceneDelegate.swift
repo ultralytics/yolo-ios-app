@@ -3,10 +3,17 @@
 //  YOLO-Single-Image-UIKit
 //
 //  Created by 間嶋大輔 on 2025/01/02.
+//  License: MIT
 //
 
 import UIKit
 
+/// Manages scene-specific lifecycle events and UI state for the application.
+///
+/// The SceneDelegate handles state transitions for a single scene instance of the app,
+/// supporting iOS 13's ability to have multiple scenes of the same app open simultaneously.
+/// It manages the window hierarchy and responds to scene state changes for the YOLO
+/// single image processing example app.
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
   var window: UIWindow?

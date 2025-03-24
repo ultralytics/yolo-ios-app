@@ -1,7 +1,22 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, providing the base infrastructure for model prediction.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The BasePredictor class is the foundation for all task-specific predictors in the YOLO framework.
+//  It manages the loading and initialization of CoreML models, handling common operations such as
+//  model loading, class label extraction, and inference timing. The class provides an asynchronous
+//  model loading mechanism that runs on background threads and includes support for configuring
+//  model parameters like confidence thresholds and IoU thresholds. Specific task implementations
+//  (detection, segmentation, classification, etc.) inherit from this base class and override
+//  the prediction-specific methods.
+
 import Foundation
 import UIKit
 import Vision
 
+/// Base class for all YOLO model predictors, handling common model loading and inference logic.
 public class BasePredictor: Predictor, @unchecked Sendable {
   private(set) var isModelLoaded: Bool = false
   var detector: VNCoreMLModel!

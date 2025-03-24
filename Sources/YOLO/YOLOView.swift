@@ -1,7 +1,21 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+//
+//  This file is part of the Ultralytics YOLO Package, providing the core UI component for real-time object detection.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The YOLOView class is the primary UI component for displaying real-time YOLO model results.
+//  It handles camera setup, model loading, video frame processing, rendering of detection results,
+//  and user interactions such as pinch-to-zoom. The view can display bounding boxes, masks for segmentation,
+//  pose estimation keypoints, and oriented bounding boxes depending on the active task. It includes
+//  UI elements for controlling inference settings such as confidence threshold and IoU threshold,
+//  and provides functionality for capturing photos with detection results overlaid.
+
 import AVFoundation
 import UIKit
 import Vision
 
+/// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
 @MainActor
 public class YOLOView: UIView, VideoCaptureDelegate {
   func onInferenceTime(speed: Double, fps: Double) {

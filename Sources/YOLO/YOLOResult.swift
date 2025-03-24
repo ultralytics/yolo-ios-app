@@ -30,34 +30,34 @@ import UIKit
 public struct YOLOResult: @unchecked Sendable {
   /// The original dimensions of the input image that was processed.
   public let orig_shape: CGSize
-  
+
   /// Array of detected bounding boxes with class information and confidence scores.
   public let boxes: [Box]
-  
+
   /// Optional segmentation masks for instance segmentation results.
   public var masks: Masks?
-  
+
   /// Optional probability distribution for classification results.
   public var probs: Probs?
-  
+
   /// Array of keypoint sets for pose estimation results.
   public var keypointsList: [Keypoints] = []
-  
+
   /// Array of oriented bounding box results for rotated object detection.
   public var obb: [OBBResult] = []
-  
+
   /// Image with detection visualizations overlaid on the original input.
   public var annotatedImage: UIImage?
-  
+
   /// Time taken (in seconds) to perform the inference operation.
   public var speed: Double
-  
+
   /// Optional frames per second rate for real-time processing.
   public var fps: Double?
-  
+
   /// The original input image that was processed.
   public var originalImage: UIImage?
-  
+
   /// Array of class label names used by the model.
   public var names: [String]
   //    let keypoints: [Keypoint]
@@ -73,16 +73,16 @@ public struct YOLOResult: @unchecked Sendable {
 public struct Box: @unchecked Sendable {
   /// The index of the class in the model's class list.
   public let index: Int
-  
+
   /// The class label (category name) of the detected object.
   public let cls: String
-  
+
   /// The confidence score (0.0 to 1.0) for the detection.
   public let conf: Float
-  
+
   /// The bounding box in image coordinates (x, y, width, height).
   public let xywh: CGRect
-  
+
   /// The bounding box in normalized coordinates (0.0 to 1.0).
   public let xywhn: CGRect
 }
@@ -96,7 +96,7 @@ public struct Box: @unchecked Sendable {
 public struct Masks: @unchecked Sendable {
   /// The raw mask data as a 3D array [instance][height][width] with float values.
   public let masks: [[[Float]]]
-  
+
   /// Pre-rendered combined mask image for visualization.
   public let combinedMask: CGImage?
 }
@@ -110,13 +110,13 @@ public struct Masks: @unchecked Sendable {
 public struct Probs: @unchecked Sendable {
   /// The class label with the highest confidence score.
   public var top1: String
-  
+
   /// The top 5 class labels by confidence score.
   public var top5: [String]
-  
+
   /// The confidence score (0.0 to 1.0) for the top prediction.
   public var top1Conf: Float
-  
+
   /// The confidence scores (0.0 to 1.0) for the top 5 predictions.
   public var top5Confs: [Float]
 }
@@ -128,10 +128,10 @@ public struct Probs: @unchecked Sendable {
 public struct Keypoints {
   /// The keypoint coordinates in normalized space (0.0 to 1.0).
   public let xyn: [(x: Float, y: Float)]
-  
+
   /// The keypoint coordinates in image space (pixels).
   public let xy: [(x: Float, y: Float)]
-  
+
   /// The confidence scores (0.0 to 1.0) for each keypoint.
   public let conf: [Float]
 }
@@ -143,13 +143,13 @@ public struct Keypoints {
 public struct OBBResult {
   /// The oriented bounding box parameters.
   var box: OBB
-  
+
   /// The confidence score (0.0 to 1.0) for the detection.
   var confidence: Float
-  
+
   /// The class label (category name) of the detected object.
   var cls: String
-  
+
   /// The index of the class in the model's class list.
   var index: Int
 }
@@ -162,16 +162,16 @@ public struct OBBResult {
 public struct OBB {
   /// The x-coordinate of the center of the box.
   public var cx: Float
-  
+
   /// The y-coordinate of the center of the box.
   public var cy: Float
-  
+
   /// The width of the box.
   public var w: Float
-  
+
   /// The height of the box.
   public var h: Float
-  
+
   /// The rotation angle of the box in radians.
   public var angle: Float
 

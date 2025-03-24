@@ -29,46 +29,46 @@ import Vision
 public class BasePredictor: Predictor, @unchecked Sendable {
   /// Flag indicating if the model has been successfully loaded and is ready for inference.
   private(set) var isModelLoaded: Bool = false
-  
+
   /// The Vision CoreML model used for inference operations.
   var detector: VNCoreMLModel!
-  
+
   /// The Vision request that processes images using the CoreML model.
   var visionRequest: VNCoreMLRequest?
-  
+
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
-  
+
   /// The current pixel buffer being processed (used for camera frame processing).
   var currentBuffer: CVPixelBuffer?
-  
+
   /// The current listener to receive prediction results.
   weak var currentOnResultsListener: ResultsListener?
-  
+
   /// The current listener to receive inference timing information.
   weak var currentOnInferenceTimeListener: InferenceTimeListener?
-  
+
   /// The size of the input image or camera frame.
   var inputSize: CGSize!
-  
+
   /// The required input dimensions for the model (width and height in pixels).
   var modelInputSize: (width: Int, height: Int) = (0, 0)
 
   /// Timestamp for the start of inference (used for performance measurement).
   var t0 = 0.0  // inference start
-  
+
   /// Duration of a single inference operation.
   var t1 = 0.0  // inference dt
-  
+
   /// Smoothed inference duration (averaged over recent operations).
   var t2 = 0.0  // inference dt smoothed
-  
+
   /// Timestamp for FPS calculation start (used for performance measurement).
   var t3 = CACurrentMediaTime()  // FPS start
-  
+
   /// Smoothed frames per second measurement (averaged over recent frames).
   var t4 = 0.0  // FPS dt smoothed
-  
+
   /// Flag indicating whether the predictor is currently processing an update.
   public var isUpdating: Bool = false
 
@@ -247,7 +247,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///
   /// Only detections with confidence scores above this threshold will be included in results.
   var confidenceThreshold = 0.25
-  
+
   /// Sets the confidence threshold for filtering results.
   ///
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
@@ -259,7 +259,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///
   /// Used to filter overlapping detections during non-maximum suppression.
   var iouThreshold = 0.4
-  
+
   /// Sets the IoU threshold for non-maximum suppression.
   ///
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
@@ -271,7 +271,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///
   /// Limits the number of detection items in the final results to prevent overwhelming processing.
   var numItemsThreshold = 30
-  
+
   /// Sets the maximum number of detection items to include in results.
   ///
   /// - Parameter numItems: The maximum number of items to include.

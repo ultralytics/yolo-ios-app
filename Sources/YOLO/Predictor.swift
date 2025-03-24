@@ -21,7 +21,7 @@ import Vision
 protocol ResultsListener: AnyObject {
   /// Called when a new prediction result is available.
   ///
-  /// - Parameter result: The processed YOLO model prediction result, containing detections, 
+  /// - Parameter result: The processed YOLO model prediction result, containing detections,
   ///   segmentation masks, or other task-specific outputs.
   func on(result: YOLOResult)
 }
@@ -58,16 +58,16 @@ protocol Predictor {
   func predict(
     sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
     onInferenceTime: InferenceTimeListener?)
-  
+
   /// Processes a static image and returns results synchronously.
   ///
   /// - Parameter image: The CIImage to process.
   /// - Returns: A YOLOResult containing the prediction outputs.
   func predictOnImage(image: CIImage) -> YOLOResult
-  
+
   /// The class labels used by the model for categorizing detections.
   var labels: [String] { get set }
-  
+
   /// Flag indicating whether the predictor is currently processing an update.
   var isUpdating: Bool { get set }
 }
@@ -79,13 +79,13 @@ protocol Predictor {
 enum PredictorError: Error {
   /// The requested task type is not supported or invalid.
   case invalidTask
-  
+
   /// No class labels were found for the model.
   case noLabelsFound
-  
+
   /// The provided URL for model or resource loading is invalid.
   case invalidUrl
-  
+
   /// The model file could not be found at the specified location.
   case modelFileNotFound
 }

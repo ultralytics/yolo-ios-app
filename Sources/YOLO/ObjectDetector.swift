@@ -17,20 +17,49 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO object detection models that identifies and localizes objects in images.
+///
+/// This class processes the outputs from YOLO object detection models, extracting bounding boxes,
+/// class labels, and confidence scores. It handles both real-time camera feed processing and
+/// single image analysis, converting the normalized coordinates from the Vision framework
+/// to image coordinates and applying non-maximum suppression to filter duplicative detections.
+///
+/// - Note: Object detection models output rectangular bounding boxes around detected objects.
+/// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
 class ObjectDetector: BasePredictor {
 
+  /// Sets the confidence threshold and updates the model's feature provider.
+  ///
+  /// This overridden method ensures that when the confidence threshold is changed,
+  /// the Vision model's feature provider is also updated to use the new value.
+  ///
+  /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
     detector.featureProvider = ThresholdProvider(
       iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 
+  /// Sets the IoU threshold and updates the model's feature provider.
+  ///
+  /// This overridden method ensures that when the IoU threshold is changed,
+  /// the Vision model's feature provider is also updated to use the new value.
+  ///
+  /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
     detector.featureProvider = ThresholdProvider(
       iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 
+  /// Processes the results from the Vision framework's object detection request.
+  ///
+  /// This method extracts bounding boxes, class labels, and confidence scores from the
+  /// Vision object detection results, converts coordinates to the original image space,
+  /// and notifies listeners with the structured detection results.
+  ///
+  /// - Parameters:
+  ///   - request: The completed Vision request containing object detection results.
+  ///   - error: Any error that occurred during the Vision request.
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNRecognizedObjectObservation] {
       var boxes = [Box]()
@@ -72,6 +101,14 @@ class ObjectDetector: BasePredictor {
     }
   }
 
+  /// Processes a static image and returns object detection results.
+  ///
+  /// This method performs object detection on a static image and returns the
+  /// detection results synchronously. It handles the entire inference pipeline
+  /// from setting up the Vision request to processing the detection results.
+  ///
+  /// - Parameter image: The CIImage to analyze for object detection.
+  /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
   override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {

@@ -62,24 +62,27 @@ Ensure you have the following before you start:
 
 3. **Add YOLO11 Models to the Project:**
 
-   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). You should have 5 YOLO11 models in total. Place these in the `YOLO/{TaskName}Models` directory as seen in the Xcode screenshot below.
+   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place these in the `YOLO/{TaskName}Models` directory as seen in the Xcode screenshot below.
 
-   ```python
-   from ultralytics import YOLO
+```
+from ultralytics import YOLO
+# Export for all YOLO11 model sizes
+for size in ("n", "s", "m", "l", "x"):
+    # Load a YOLO11 PyTorch model
+    model = YOLO(f"yolo11{size}.pt")
+    
+    # Export the PyTorch model to CoreML INT8 format (with NMS layers)
+    model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+    
+    # You can specify different task models as follows:
+    # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
+    # model = YOLO(f"yolo11{size}-cls.pt")   # classification
+    # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
+    # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
 
-   # Loop through all YOLO11 model sizes
-   for size in ("n", "s", "m", "l", "x"):
-       # Load a YOLO11 PyTorch model
-       model = YOLO(f"yolo11{size}.pt")
-
-       # model = YOLO(f"yolo11{size}-seg.pt") # segment model
-       # model = YOLO(f"yolo11{size}-cls.pt") # classify model
-       # model = YOLO(f"yolo11{size}-pose.pt") # pose model
-       # model = YOLO(f"yolo11{size}-obb.pt") # obb model
-
-       # Export the PyTorch model to CoreML INT8 format with NMS layers
-       model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-   ```
+    # Export the PyTorch model to CoreML INT8 format (without NMS layers)
+    # model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
+```
 
 4. **Run the Ultralytics YOLO iOS App:**
 

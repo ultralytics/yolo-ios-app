@@ -32,11 +32,11 @@ Welcome to the [Ultralytics YOLO iOS App](https://apps.apple.com/us/app/idetecti
 
 This repository is a comprehensive project that includes:
 
-### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/YOLO-iOS-App)
+### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLO-iOS-App)
 
 A primary iOS application that allows easy real-time object detection on iOS devices. Simply drag and drop your custom model to use it in the app.
 
-### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Sources/YOLO)
+### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
 A lightweight library for iOS, iPadOS, and macOS that simplifies working with YOLO-based models like YOLO11.
 Easily integrate YOLO models into your app with a single line of code:
@@ -60,13 +60,13 @@ var body: some View {
 
 If you’re new to YOLO on mobile or just want to test your own model, we recommend starting with the main YOLO-iOS-App.
 
-[**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/YOLO-iOS-App)
+[**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLO-iOS-App)
 
 If you’d like to integrate YOLO into your own app, check out the Swift Package and example usage.
 
-[**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Sources/YOLO)
+[**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
-[**Example Apps**](https://github.com/ultralytics/yolo-ios-app/tree/develop/Example-Apps)
+[**Example Apps**](https://github.com/ultralytics/yolo-ios-app/tree/main/Example-Apps)
 
 ## ✨ Highlights
 

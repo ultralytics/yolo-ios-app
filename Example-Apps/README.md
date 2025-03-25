@@ -30,6 +30,43 @@ A simple sample app for real-time camera inference using UIKit.
 
 3. Drag and drop the YOLO CoreML model file you want to use into your Xcode bundle.
 
+   ### How to Obtain YOLO CoreML Models
+
+   You can obtain YOLO CoreML models using either of the following methods:
+
+   - **Download from GitHub Release Assets**  
+     You can download the CoreML INT8 models directly from the official YOLO GitHub release page.  
+     Place the downloaded models into your Xcode project directory.
+
+   - **Export using Python**  
+     You can also export CoreML INT8 models yourself using the ultralytics Python package.
+
+     ```bash
+     pip install ultralytics
+     ```
+
+     Then, run the following Python script to export the desired models:
+
+     ```python
+     from ultralytics import YOLO
+     # Export for all YOLO11 model sizes
+     for size in ("n", "s", "m", "l", "x"):
+         # Load a YOLO11 PyTorch model
+         model = YOLO(f"yolo11{size}.pt")
+
+         # Export the PyTorch model to CoreML INT8 format (with NMS layers)
+         model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+
+         # You can specify different task models as follows:
+         # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
+         # model = YOLO(f"yolo11{size}-cls.pt")   # classification
+         # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
+         # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
+
+         # Export the PyTorch model to CoreML INT8 format (without NMS layers)
+         model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
+     ```
+
 4. Select your account from Signing & Capabilities.
 
 5. Build the app on a real device by clicking the Run button in Xcode.
@@ -39,48 +76,6 @@ A simple sample app for real-time camera inference using UIKit.
 The real-time inference app cannot be run on a simulator because it uses a camera.
 
 The sample app uses local packages, so if you open multiple sample apps at the same time, the app may not be able to find the local packages. Open them one at a time.
-
-## How to Obtain YOLO CoreML Models
-
-You can obtain YOLO CoreML models using either of the following methods:
-
-### Download from GitHub Release Assets
-
-You can download the CoreML INT8 models directly from the official YOLO GitHub release page.
-
-Download YOLO CoreML Models (GitHub)
-
-Place the downloaded models into your Xcode project directory.
-
-### Export using Python
-
-You can also export CoreML INT8 models yourself using the ultralytics Python package.
-
-First, install the required package:
-
-pip install ultralytics
-
-Then, run the following Python script to export the desired models:
-
-```
-from ultralytics import YOLO
-# Export for all YOLO11 model sizes
-for size in ("n", "s", "m", "l", "x"):
-    # Load a YOLO11 PyTorch model
-    model = YOLO(f"yolo11{size}.pt")
-
-    # Export the PyTorch model to CoreML INT8 format (with NMS layers)
-    model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-
-    # You can specify different task models as follows:
-    # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
-    # model = YOLO(f"yolo11{size}-cls.pt")   # classification
-    # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
-    # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
-
-    # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-    model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
-```
 
 ## Testing
 

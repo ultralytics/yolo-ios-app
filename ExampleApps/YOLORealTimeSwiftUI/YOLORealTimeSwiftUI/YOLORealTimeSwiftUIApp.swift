@@ -22,7 +22,7 @@ import SwiftUI
 /// - Note: This app requires camera permissions in Info.plist and at least iOS 16.0 to run.
 /// - Important: The camera requires user permission, which will be requested at runtime.
 @main
-struct YOLO_RealTime_SwiftUIApp: App {
+struct YOLORealTimeSwiftUIApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()

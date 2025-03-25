@@ -11,7 +11,7 @@ import Vision
 import XCTest
 
 @testable import YOLO
-@testable import YOLO_RealTime_SwiftUI
+@testable import YOLORealTimeSwiftUI
 
 /// Unit tests for the YOLO RealTime SwiftUI example application.
 ///
@@ -21,7 +21,7 @@ import XCTest
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests require the YOLO11 OBB model to be available in the project.
-struct YOLO_RealTime_SwiftUITests {
+struct YOLORealTimeSwiftUITests {
 
   // Flag to skip model-dependent tests if model is not available
   static let SKIP_MODEL_TESTS = true

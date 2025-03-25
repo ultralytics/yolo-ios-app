@@ -1,6 +1,6 @@
 # YOLO Package Examples
 
-Here are examples of how to use YOLOPackage in an Xcode project that demonstrate how to use YOLO CoreML in your app for Detect, Segment, Classify, Pose, and Obb tasks.
+Here are examples of how to use YOLO Package in an Xcode project that demonstrate how to use YOLO CoreML in your app for Detect, Segment, Classify, Pose, and Obb tasks.
 
 ## Examples
 

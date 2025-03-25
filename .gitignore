@@ -240,3 +240,4 @@ crashlytics-build.properties
 fabric.properties
 .swiftpm/xcode/xcuserdata/
 Tests/YOLOTests/Resources/*.mlpackage
+*.xcuserdatad/

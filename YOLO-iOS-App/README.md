@@ -97,6 +97,38 @@ The Ultralytics YOLO iOS App is designed to be intuitive:
 - **Frexible Tasks** Select the task you want to use, such as detect, segment, pause, etc.
 - **Multiple AI Models:** Select from a range of Ultralytics YOLO11 models, from YOLO11n 'nano' to YOLO11x 'x-large'. You can also deploy and use custom models that you have trained and exported.
 
+## 🧪 Testing
+
+The YOLO iOS App includes comprehensive testing to ensure reliability:
+
+### Model Testing
+
+The app has been designed with testability in mind. Tests can be run with or without CoreML models:
+
+- When `SKIP_MODEL_TESTS = true`, all tests not requiring models will run successfully
+- To run full test suite, set `SKIP_MODEL_TESTS = false` and add model files to the project
+
+### Required Models for Testing
+
+To enable full test coverage, you'll need:
+
+- **Detection model**: `yolo11n.mlpackage`
+- **Segmentation model**: `yolo11n-seg.mlpackage`
+- **Pose estimation model**: `yolo11n-pose.mlpackage` 
+- **OBB model**: `yolo11n-obb.mlpackage`
+- **Classification model**: `yolo11n-cls.mlpackage`
+
+These files should be placed in the appropriate model directories within the project.
+
+### Running Tests
+
+1. Open the Xcode project
+2. Select the test navigator tab
+3. Choose which tests to run (individual tests or full test suite)
+4. Press the Run button to execute tests
+
+See the test files in each example app directory for specific test implementations.
+
 ## 💡 Contribute
 
 We warmly welcome your contributions to Ultralytics' open-source projects! Your support and contributions significantly impact. Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing/), and share your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). A massive thank you 🙏 to everyone who contributes!

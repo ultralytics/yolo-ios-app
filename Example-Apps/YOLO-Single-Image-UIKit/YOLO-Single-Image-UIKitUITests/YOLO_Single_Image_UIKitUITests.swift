@@ -39,13 +39,7 @@ final class YOLO_Single_Image_UIKitUITests: XCTestCase {
     // Use XCTAssert and related functions to verify your tests produce the correct results.
   }
 
-  @MainActor
-  func testLaunchPerformance() throws {
-    if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
-      // This measures how long it takes to launch your application.
-      measure(metrics: [XCTApplicationLaunchMetric()]) {
-        XCUIApplication().launch()
-      }
-    }
-  }
+  // Remove performance test from this file as it's already handled in LaunchTests
+  // The error occurred because performance tests need to be in their own class with
+  // special configuration. LaunchTests already handle this correctly.
 }

@@ -1,10 +1,14 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  ViewController.swift
-//  YOLO-RealTime-UIKit
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a UIKit example for real-time object detection.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Created by Ultralytics
-//  License: MIT
-//
+//  The ViewController demonstrates how to implement real-time object detection using YOLO models in UIKit.
+//  It provides a camera interface that continuously detects objects in the camera feed using the YOLO framework.
+//  The example shows how to initialize the YOLO model for detection, set up a camera preview, and display
+//  detection results in real-time with bounding boxes and labels.
+
 
 import UIKit
 import YOLO
@@ -26,7 +30,7 @@ class ViewController: UIViewController {
     super.viewDidLoad()
     // Initialize YOLOView with a segmentation model
     // You can change the model or task type to use detection, classification, etc.
-    yoloView = YOLOView(frame: view.bounds, modelPathOrName: "yolo11m-seg", task: .segment)
+      yoloView = YOLOView(frame: view.bounds, modelPathOrName: "yolo11n", task: .detect)
     view.addSubview(yoloView)
   }
 }

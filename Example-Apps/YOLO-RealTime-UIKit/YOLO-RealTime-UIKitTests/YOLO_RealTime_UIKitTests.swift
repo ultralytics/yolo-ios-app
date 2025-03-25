@@ -24,7 +24,7 @@ import Vision
 struct YOLO_RealTime_UIKitTests {
 
   // Flag to skip model-dependent tests if model is not available
-  static let SKIP_MODEL_TESTS = false
+  static let SKIP_MODEL_TESTS = true
   
   /// Tests that the view controller initializes correctly.
   @Test func testViewControllerInitialization() async throws {

@@ -1,10 +1,10 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  SceneDelegate.swift
-//  YOLO-RealTime-UIKit
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing the scene delegate for the real-time UIKit example.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Created by 間嶋大輔 on 2025/01/08.
-//  License: MIT
-//
+//  The SceneDelegate manages the scene lifecycle and configures the user interface environment.
 
 import UIKit
 

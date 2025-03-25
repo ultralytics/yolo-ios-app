@@ -1,10 +1,13 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  ViewController.swift
-//  YOLO-Single-Image-UIKit
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a UIKit example for single image object detection.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Created by Ultralytics
-//  License: MIT
-//
+//  The ViewController demonstrates how to implement static image analysis using YOLO models in UIKit.
+//  It provides a user interface for selecting images from the device's photo library and displays
+//  both the original and processed images with detection results. The example shows how to initialize
+//  a YOLO model for segmentation, handle image orientation correction, and run inference on selected images.
 
 import PhotosUI
 import UIKit
@@ -35,7 +38,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
 
     // Initialize YOLO model with a segmentation task
     // You can change the model or task type to use detection, classification, etc.
-    model = YOLO("yolo11x-seg", task: .segment) { [self] result in
+    model = YOLO("yolo11n-seg", task: .segment) { [self] result in
       switch result {
       case .success(_):
         setupView()

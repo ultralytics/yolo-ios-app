@@ -1,9 +1,10 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  YOLO_Single_Image_SwiftUIUITestsLaunchTests.swift
-//  YOLO-Single-Image-SwiftUIUITests
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing launch tests for the SwiftUI single image example.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Created by 間嶋大輔 on 2025/01/08.
-//
+//  The launch tests measure application startup performance and capture screenshots of the initial interface.
 
 import XCTest
 

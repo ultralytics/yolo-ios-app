@@ -51,4 +51,15 @@ These tests verify:
 - Image selection functionality
 - Inference results handling
 
-Some tests will be skipped if the required model files are not available. Set `SKIP_MODEL_TESTS = false` in the test file to run model-dependent tests once you've added the required model files.
+#### Running Tests Without Models
+
+By default, `SKIP_MODEL_TESTS` is set to `true`, which allows running tests without requiring model files. This skips tests that depend on actual model inference but still verifies basic functionality of the application. This is ideal for CI environments or when you don't have the model files available.
+
+#### Running Tests With Models
+
+If you want to run the full test suite including model-dependent tests:
+1. Add the required model files to the main application target as described above
+2. Set `SKIP_MODEL_TESTS = false` in the test file
+3. Run the tests again
+
+This approach ensures the tests can verify both basic functionality and model integration without requiring large model files for basic testing.

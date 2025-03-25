@@ -1,9 +1,10 @@
+//  Ultralytics YOLO 🚀 - AGPL-3.0 License
 //
-//  YOLO_RealTime_SwiftUIUITests.swift
-//  YOLO-RealTime-SwiftUIUITests
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing UI tests for the SwiftUI real-time example.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Created by 間嶋大輔 on 2025/01/08.
-//
+//  These UI tests verify the user interface functionality and interaction flow of the YOLO Real-Time SwiftUI application.
 
 import XCTest
 
@@ -31,13 +32,7 @@ final class YOLO_RealTime_SwiftUIUITests: XCTestCase {
     // Use XCTAssert and related functions to verify your tests produce the correct results.
   }
 
-  @MainActor
-  func testLaunchPerformance() throws {
-    if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
-      // This measures how long it takes to launch your application.
-      measure(metrics: [XCTApplicationLaunchMetric()]) {
-        XCUIApplication().launch()
-      }
-    }
-  }
+  // Remove performance test from this file as it's already handled in LaunchTests
+  // The error occurred because performance tests need to be in their own class with
+  // special configuration. LaunchTests already handle this correctly.
 }

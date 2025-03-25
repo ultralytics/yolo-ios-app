@@ -240,4 +240,8 @@ crashlytics-build.properties
 fabric.properties
 .swiftpm/xcode/xcuserdata/
 Tests/YOLOTests/Resources/*.mlpackage
+<<<<<<< HEAD
 CLAUDE.md
+=======
+CLAUDE.md
+>>>>>>> 53a15b4 (remove mlpackage)

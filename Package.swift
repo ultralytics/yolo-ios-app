@@ -21,7 +21,10 @@ let package = Package(
       name: "YOLO"),
     .testTarget(
       name: "YOLOTests",
-      dependencies: ["YOLO"]
+      dependencies: ["YOLO"],
+      resources: [
+        .process("Resources")
+      ]
     ),
   ]
 )

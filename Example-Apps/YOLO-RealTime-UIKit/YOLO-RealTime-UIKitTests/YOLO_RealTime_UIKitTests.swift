@@ -24,7 +24,7 @@ import Vision
 struct YOLO_RealTime_UIKitTests {
 
   // Flag to skip model-dependent tests if model is not available
-  static let SKIP_MODEL_TESTS = true
+  static let SKIP_MODEL_TESTS = false
   
   /// Tests that the view controller initializes correctly.
   @Test func testViewControllerInitialization() async throws {
@@ -156,36 +156,41 @@ struct YOLO_RealTime_UIKitTests {
     #expect(true, "This test documents a design limitation")
   }
   
-  /// Tests that play/pause button actions work correctly.
-  @Test func testPlayPauseButtons() async throws {
+  /// Tests the basic button functionality of play/pause controls.
+  /// - Note: This test can only be run when a valid model is available.
+  @Test func testPlayPauseButtonsFunctionality() async throws {
+    // Skip this test if no model is available
     if YOLO_RealTime_UIKitTests.SKIP_MODEL_TESTS {
-      #warning("Skipping testPlayPauseButtons as model is not prepared")
+      #warning("Skipping button functionality test as model is not prepared")
       return
     }
     
+    // Create YOLOView with valid model
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-      let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
-    // Allow some time for initialization to complete
+    // Allow initialization to complete
     try await Task.sleep(for: .seconds(0.5))
     
-    // Test initial state (pause should be enabled, play disabled)
-      await #expect(yoloView.playButton.isEnabled == false)
-      await #expect(yoloView.pauseButton.isEnabled == true)
+    // Verify default button states
+    #expect(yoloView.playButton.isEnabled == false)
+    #expect(yoloView.pauseButton.isEnabled == true)
     
-    // Simulate tapping the pause button
-    yoloView.perform(Selector(("pauseTapped")))
+    // Test pause button action
+    yoloView.pauseButton.sendActions(for: .touchUpInside)
+    try await Task.sleep(for: .seconds(0.1))
     
-    // Now play should be enabled and pause disabled
-      await #expect(yoloView.playButton.isEnabled == true)
-      await #expect(yoloView.pauseButton.isEnabled == false)
+    // Verify button states changed appropriately
+    #expect(yoloView.playButton.isEnabled == true)
+    #expect(yoloView.pauseButton.isEnabled == false)
     
-    // Simulate tapping the play button
-    yoloView.perform(Selector(("playTapped")))
+    // Test play button action
+    yoloView.playButton.sendActions(for: .touchUpInside)
+    try await Task.sleep(for: .seconds(0.1))
     
-    // Now play should be disabled and pause enabled again
-      await #expect(yoloView.playButton.isEnabled == false)
-      await #expect(yoloView.pauseButton.isEnabled == true)
+    // Verify button states returned to original state
+    #expect(yoloView.playButton.isEnabled == false)
+    #expect(yoloView.pauseButton.isEnabled == true)
   }
 }
 

@@ -8,7 +8,7 @@
 
 import XCTest
 
-final class YOLO_Single_Image_SwiftUIUITests: XCTestCase {
+final class YOLOSingleImageSwiftUIUITests: XCTestCase {
 
   override func setUpWithError() throws {
     // Put setup code here. This method is called before the invocation of each test method in the class.

@@ -420,7 +420,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUI";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -451,7 +451,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUI";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUI;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -469,7 +469,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -488,7 +488,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -505,12 +505,12 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUIUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUIUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLORealTimeSwiftUI";
+				TEST_TARGET_NAME = YOLORealTimeSwiftUI;
 			};
 			name = Debug;
 		};
@@ -522,12 +522,12 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUIUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeSwiftUIUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLORealTimeSwiftUI";
+				TEST_TARGET_NAME = YOLORealTimeSwiftUI;
 			};
 			name = Release;
 		};
@@ -575,7 +575,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		7314328B2D36176800919FF7 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../..";
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 

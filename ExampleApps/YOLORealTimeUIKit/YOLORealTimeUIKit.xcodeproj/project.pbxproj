@@ -18,50 +18,50 @@
 			containerPortal = 73B032362D2E5CCD0003DB69 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 73B0323D2D2E5CCD0003DB69;
-			remoteInfo = "YOLO-RealTime-UIKit";
+			remoteInfo = YOLORealTimeUIKit;
 		};
 		73B0325F2D2E5CD00003DB69 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 73B032362D2E5CCD0003DB69 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 73B0323D2D2E5CCD0003DB69;
-			remoteInfo = "YOLO-RealTime-UIKit";
+			remoteInfo = YOLORealTimeUIKit;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		73B0323E2D2E5CCE0003DB69 /* YOLO-RealTime-UIKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YOLO-RealTime-UIKit.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		73B032542D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YOLO-RealTime-UIKitTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		73B0325E2D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YOLO-RealTime-UIKitUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B0323E2D2E5CCE0003DB69 /* YOLORealTimeUIKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLORealTimeUIKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B032542D2E5CD00003DB69 /* YOLORealTimeUIKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLORealTimeUIKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B0325E2D2E5CD00003DB69 /* YOLORealTimeUIKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLORealTimeUIKitUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		73B032662D2E5CD00003DB69 /* Exceptions for "YOLO-RealTime-UIKit" folder in "YOLO-RealTime-UIKit" target */ = {
+		73B032662D2E5CD00003DB69 /* Exceptions for "YOLORealTimeUIKit" folder in "YOLORealTimeUIKit" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 73B0323D2D2E5CCD0003DB69 /* YOLO-RealTime-UIKit */;
+			target = 73B0323D2D2E5CCD0003DB69 /* YOLORealTimeUIKit */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		73B032402D2E5CCE0003DB69 /* YOLO-RealTime-UIKit */ = {
+		73B032402D2E5CCE0003DB69 /* YOLORealTimeUIKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				73B032662D2E5CD00003DB69 /* Exceptions for "YOLO-RealTime-UIKit" folder in "YOLO-RealTime-UIKit" target */,
+				73B032662D2E5CD00003DB69 /* Exceptions for "YOLORealTimeUIKit" folder in "YOLORealTimeUIKit" target */,
 			);
-			path = "YOLO-RealTime-UIKit";
+			path = YOLORealTimeUIKit;
 			sourceTree = "<group>";
 		};
-		73B032572D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests */ = {
+		73B032572D2E5CD00003DB69 /* YOLORealTimeUIKitTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "YOLO-RealTime-UIKitTests";
+			path = YOLORealTimeUIKitTests;
 			sourceTree = "<group>";
 		};
-		73B032612D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests */ = {
+		73B032612D2E5CD00003DB69 /* YOLORealTimeUIKitUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "YOLO-RealTime-UIKitUITests";
+			path = YOLORealTimeUIKitUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -97,9 +97,9 @@
 		73B032352D2E5CCD0003DB69 = {
 			isa = PBXGroup;
 			children = (
-				73B032402D2E5CCE0003DB69 /* YOLO-RealTime-UIKit */,
-				73B032572D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests */,
-				73B032612D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests */,
+				73B032402D2E5CCE0003DB69 /* YOLORealTimeUIKit */,
+				73B032572D2E5CD00003DB69 /* YOLORealTimeUIKitTests */,
+				73B032612D2E5CD00003DB69 /* YOLORealTimeUIKitUITests */,
 				73B0323F2D2E5CCE0003DB69 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -107,9 +107,9 @@
 		73B0323F2D2E5CCE0003DB69 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				73B0323E2D2E5CCE0003DB69 /* YOLO-RealTime-UIKit.app */,
-				73B032542D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests.xctest */,
-				73B0325E2D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests.xctest */,
+				73B0323E2D2E5CCE0003DB69 /* YOLORealTimeUIKit.app */,
+				73B032542D2E5CD00003DB69 /* YOLORealTimeUIKitTests.xctest */,
+				73B0325E2D2E5CD00003DB69 /* YOLORealTimeUIKitUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -117,9 +117,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		73B0323D2D2E5CCD0003DB69 /* YOLO-RealTime-UIKit */ = {
+		73B0323D2D2E5CCD0003DB69 /* YOLORealTimeUIKit */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B032672D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKit" */;
+			buildConfigurationList = 73B032672D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKit" */;
 			buildPhases = (
 				73B0323A2D2E5CCD0003DB69 /* Sources */,
 				73B0323B2D2E5CCD0003DB69 /* Frameworks */,
@@ -130,21 +130,21 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				73B032402D2E5CCE0003DB69 /* YOLO-RealTime-UIKit */,
+				73B032402D2E5CCE0003DB69 /* YOLORealTimeUIKit */,
 			);
-			name = "YOLO-RealTime-UIKit";
+			name = YOLORealTimeUIKit;
 			packageProductDependencies = (
 				731432B12D361B6500919FF7 /* YOLO */,
 				731432DC2D361C0F00919FF7 /* YOLO */,
 				73A42F382D361CEC00330ED6 /* YOLO */,
 			);
-			productName = "YOLO-RealTime-UIKit";
-			productReference = 73B0323E2D2E5CCE0003DB69 /* YOLO-RealTime-UIKit.app */;
+			productName = YOLORealTimeUIKit;
+			productReference = 73B0323E2D2E5CCE0003DB69 /* YOLORealTimeUIKit.app */;
 			productType = "com.apple.product-type.application";
 		};
-		73B032532D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests */ = {
+		73B032532D2E5CD00003DB69 /* YOLORealTimeUIKitTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B0326C2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKitTests" */;
+			buildConfigurationList = 73B0326C2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKitTests" */;
 			buildPhases = (
 				73B032502D2E5CD00003DB69 /* Sources */,
 				73B032512D2E5CD00003DB69 /* Frameworks */,
@@ -156,18 +156,18 @@
 				73B032562D2E5CD00003DB69 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				73B032572D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests */,
+				73B032572D2E5CD00003DB69 /* YOLORealTimeUIKitTests */,
 			);
-			name = "YOLO-RealTime-UIKitTests";
+			name = YOLORealTimeUIKitTests;
 			packageProductDependencies = (
 			);
-			productName = "YOLO-RealTime-UIKitTests";
-			productReference = 73B032542D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests.xctest */;
+			productName = YOLORealTimeUIKitTests;
+			productReference = 73B032542D2E5CD00003DB69 /* YOLORealTimeUIKitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		73B0325D2D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests */ = {
+		73B0325D2D2E5CD00003DB69 /* YOLORealTimeUIKitUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B0326F2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKitUITests" */;
+			buildConfigurationList = 73B0326F2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKitUITests" */;
 			buildPhases = (
 				73B0325A2D2E5CD00003DB69 /* Sources */,
 				73B0325B2D2E5CD00003DB69 /* Frameworks */,
@@ -179,13 +179,13 @@
 				73B032602D2E5CD00003DB69 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				73B032612D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests */,
+				73B032612D2E5CD00003DB69 /* YOLORealTimeUIKitUITests */,
 			);
-			name = "YOLO-RealTime-UIKitUITests";
+			name = YOLORealTimeUIKitUITests;
 			packageProductDependencies = (
 			);
-			productName = "YOLO-RealTime-UIKitUITests";
-			productReference = 73B0325E2D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests.xctest */;
+			productName = YOLORealTimeUIKitUITests;
+			productReference = 73B0325E2D2E5CD00003DB69 /* YOLORealTimeUIKitUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -211,7 +211,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 73B032392D2E5CCD0003DB69 /* Build configuration list for PBXProject "YOLO-RealTime-UIKit" */;
+			buildConfigurationList = 73B032392D2E5CCD0003DB69 /* Build configuration list for PBXProject "YOLORealTimeUIKit" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -228,9 +228,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				73B0323D2D2E5CCD0003DB69 /* YOLO-RealTime-UIKit */,
-				73B032532D2E5CD00003DB69 /* YOLO-RealTime-UIKitTests */,
-				73B0325D2D2E5CD00003DB69 /* YOLO-RealTime-UIKitUITests */,
+				73B0323D2D2E5CCD0003DB69 /* YOLORealTimeUIKit */,
+				73B032532D2E5CD00003DB69 /* YOLORealTimeUIKitTests */,
+				73B0325D2D2E5CD00003DB69 /* YOLORealTimeUIKitUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -286,12 +286,12 @@
 /* Begin PBXTargetDependency section */
 		73B032562D2E5CD00003DB69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 73B0323D2D2E5CCD0003DB69 /* YOLO-RealTime-UIKit */;
+			target = 73B0323D2D2E5CCD0003DB69 /* YOLORealTimeUIKit */;
 			targetProxy = 73B032552D2E5CD00003DB69 /* PBXContainerItemProxy */;
 		};
 		73B032602D2E5CD00003DB69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 73B0323D2D2E5CCD0003DB69 /* YOLO-RealTime-UIKit */;
+			target = 73B0323D2D2E5CCD0003DB69 /* YOLORealTimeUIKit */;
 			targetProxy = 73B0325F2D2E5CD00003DB69 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -306,7 +306,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "YOLO-RealTime-UIKit/Info.plist";
+				INFOPLIST_FILE = YOLORealTimeUIKit/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -319,7 +319,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKit";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -336,7 +336,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "YOLO-RealTime-UIKit/Info.plist";
+				INFOPLIST_FILE = YOLORealTimeUIKit/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -349,7 +349,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKit";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -486,12 +486,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKitTests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKitTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLO-RealTime-UIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLO-RealTime-UIKit";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLORealTimeUIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLORealTimeUIKit";
 			};
 			name = Debug;
 		};
@@ -505,12 +505,12 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKitTests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKitTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLO-RealTime-UIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLO-RealTime-UIKit";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLORealTimeUIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLORealTimeUIKit";
 			};
 			name = Release;
 		};
@@ -522,12 +522,12 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKitUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKitUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLO-RealTime-UIKit";
+				TEST_TARGET_NAME = YOLORealTimeUIKit;
 			};
 			name = Debug;
 		};
@@ -539,19 +539,19 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-RealTime-UIKitUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = app.com.YOLORealTimeUIKitUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLO-RealTime-UIKit";
+				TEST_TARGET_NAME = YOLORealTimeUIKit;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		73B032392D2E5CCD0003DB69 /* Build configuration list for PBXProject "YOLO-RealTime-UIKit" */ = {
+		73B032392D2E5CCD0003DB69 /* Build configuration list for PBXProject "YOLORealTimeUIKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				73B0326A2D2E5CD00003DB69 /* Debug */,
@@ -560,7 +560,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B032672D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKit" */ = {
+		73B032672D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				73B032682D2E5CD00003DB69 /* Debug */,
@@ -569,7 +569,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B0326C2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKitTests" */ = {
+		73B0326C2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKitTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				73B0326D2D2E5CD00003DB69 /* Debug */,
@@ -578,7 +578,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B0326F2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLO-RealTime-UIKitUITests" */ = {
+		73B0326F2D2E5CD00003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeUIKitUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				73B032702D2E5CD00003DB69 /* Debug */,

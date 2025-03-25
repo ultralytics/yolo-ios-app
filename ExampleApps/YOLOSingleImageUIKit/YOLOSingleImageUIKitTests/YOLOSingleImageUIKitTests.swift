@@ -11,7 +11,7 @@ import UIKit
 import XCTest
 
 @testable import YOLO
-@testable import YOLO_Single_Image_UIKit
+@testable import YOLOSingleImageUIKit
 
 /// Unit tests for the YOLO Single Image UIKit example application.
 ///
@@ -21,7 +21,7 @@ import XCTest
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests may require the YOLO11 segmentation model to be available.
-struct YOLO_Single_Image_UIKitTests {
+struct YOLOSingleImageUIKitTests {
 
   // Flag to skip model-dependent tests if model is not available
   static let SKIP_MODEL_TESTS = false
@@ -106,7 +106,7 @@ struct YOLO_Single_Image_UIKitTests {
 
   /// Tests the model inference with a test image.
   @Test func testModelInference() async throws {
-    if YOLO_Single_Image_UIKitTests.SKIP_MODEL_TESTS {
+    if YOLOSingleImageUIKitTests.SKIP_MODEL_TESTS {
       #warning("Skipping testModelInference as model is not prepared")
       return
     }

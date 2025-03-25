@@ -8,7 +8,7 @@
 
 import XCTest
 
-final class YOLO_Single_Image_SwiftUIUITestsLaunchTests: XCTestCase {
+final class YOLOSingleImageSwiftUIUITestsLaunchTests: XCTestCase {
 
   override class var runsForEachTargetApplicationUIConfiguration: Bool {
     true

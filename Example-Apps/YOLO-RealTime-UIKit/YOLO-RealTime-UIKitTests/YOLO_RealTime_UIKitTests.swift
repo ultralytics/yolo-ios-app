@@ -43,14 +43,20 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
-    #expect(yoloView.task == .detect)
+    // Allow some time for initialization to complete
+    try await Task.sleep(for: .seconds(0.5))
+    
+    #expect(await yoloView.task == .detect)
     #expect(yoloView.frame == frame)
     
     // Test that the video capture session is properly initialized
-    let videoCapture = getPrivateProperty(from: yoloView, named: "videoCapture") as! VideoCapture
-    #expect(videoCapture.captureSession != nil)
+    if let videoCapture = Mirror(reflecting: yoloView).children.first(where: { $0.label == "videoCapture" })?.value as? VideoCapture {
+      #expect(videoCapture.captureSession != nil)
+    } else {
+      XCTFail("Could not access videoCapture property")
+    }
   }
   
   /// Tests UI control initialization and functionality.
@@ -61,7 +67,10 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    
+    // Allow some time for initialization to complete
+    try await Task.sleep(for: .seconds(0.5))
     
     // Test slider initialization
     #expect(yoloView.sliderConf.minimumValue == 0)
@@ -98,17 +107,24 @@ struct YOLO_RealTime_UIKitTests {
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
     let yoloView = YOLOView(frame: frame, modelPathOrName: "non_existent_model", task: .detect)
     
+    // Allow some time for initialization to complete
+    try await Task.sleep(for: .seconds(0.5))
+    
     // Access the bounding box views via reflection
-    let boundingBoxViews = getPrivateProperty(from: yoloView, named: "boundingBoxViews") as? [BoundingBoxView]
-    
-    // Verify that bounding box views are initialized
-    #expect(boundingBoxViews != nil)
-    #expect(boundingBoxViews?.isEmpty == false)
-    
-    // Check the maximum number of bounding box views
-    let maxBoundingBoxViews = getPrivateProperty(from: yoloView, named: "maxBoundingBoxViews") as? Int
-    #expect(maxBoundingBoxViews == 100)
-    #expect(boundingBoxViews?.count == maxBoundingBoxViews)
+    if let boundingBoxViews = Mirror(reflecting: yoloView).children.first(where: { $0.label == "boundingBoxViews" })?.value as? [BoundingBoxView] {
+      // Verify that bounding box views are initialized
+      #expect(!boundingBoxViews.isEmpty)
+      
+      // Check the maximum number of bounding box views
+      if let maxBoundingBoxViews = Mirror(reflecting: yoloView).children.first(where: { $0.label == "maxBoundingBoxViews" })?.value as? Int {
+        #expect(maxBoundingBoxViews == 100)
+        #expect(boundingBoxViews.count == maxBoundingBoxViews)
+      } else {
+        XCTFail("Could not access maxBoundingBoxViews property")
+      }
+    } else {
+      XCTFail("Could not access boundingBoxViews property")
+    }
   }
   
   /// Tests error handling for invalid model paths.
@@ -137,7 +153,10 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    
+    // Allow some time for initialization to complete
+    try await Task.sleep(for: .seconds(0.5))
     
     // Test initial state (pause should be enabled, play disabled)
     #expect(yoloView.playButton.isEnabled == false)
@@ -159,11 +178,4 @@ struct YOLO_RealTime_UIKitTests {
   }
 }
 
-/// Helper function to get private properties using reflection.
-private func getPrivateProperty<T, U>(from object: T, named propertyName: String) -> U? {
-    let mirror = Mirror(reflecting: object)
-    for child in mirror.children where child.label == propertyName {
-        return child.value as? U
-    }
-    return nil
-}
+// getPrivateProperty function is no longer used, functionality replaced with direct Mirror access

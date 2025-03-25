@@ -25,7 +25,23 @@ model = YOLO("yolo11x-seg.pt")
 model.export(format="coreml")
 ```
 
-3. Place the generated `.mlpackage` file in your Xcode project
+### Adding Model Files to the Project
+
+**IMPORTANT**: The model file must be added to the **main application target** (YOLO-Single-Image-UIKit), not just the test target.
+
+Follow these steps to add the model file correctly:
+1. Drag and drop `yolo11x-seg.mlpackage` into your Xcode project
+2. In the dialog that appears, ensure the following:
+   - Check the "YOLO-Single-Image-UIKit" target (main app target)
+   - You can also check the "YOLO-Single-Image-UIKitTests" target, but this alone is not sufficient
+   - Select "Create folder references" option (blue folder icon)
+3. Click "Finish" to add the model
+
+For best organization, place the model file in a "Models" group in your project.
+
+![Adding model to target](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
+
+The YOLO framework looks for models in the main application bundle (Bundle.main), so models must be included in the main target for tests to work properly.
 
 ### Testing Strategy
 
@@ -35,4 +51,4 @@ These tests verify:
 - Inference results validation
 - UI component functionality
 
-Some tests will be skipped if the required model files are not available.
+Some tests will be skipped if the required model files are not available. Set `SKIP_MODEL_TESTS = false` in the test file to run model-dependent tests once you've added the required model files.

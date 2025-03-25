@@ -173,24 +173,24 @@ struct YOLO_RealTime_UIKitTests {
     try await Task.sleep(for: .seconds(0.5))
     
     // Verify default button states
-    #expect(yoloView.playButton.isEnabled == false)
-    #expect(yoloView.pauseButton.isEnabled == true)
+    #expect(await yoloView.playButton.isEnabled == false)
+    #expect(await yoloView.pauseButton.isEnabled == true)
     
     // Test pause button action
-    yoloView.pauseButton.sendActions(for: .touchUpInside)
+    await yoloView.pauseButton.sendActions(for: .touchUpInside)
     try await Task.sleep(for: .seconds(0.1))
     
     // Verify button states changed appropriately
-    #expect(yoloView.playButton.isEnabled == true)
-    #expect(yoloView.pauseButton.isEnabled == false)
+    #expect(await yoloView.playButton.isEnabled == true)
+    #expect(await yoloView.pauseButton.isEnabled == false)
     
     // Test play button action
-    yoloView.playButton.sendActions(for: .touchUpInside)
+    await yoloView.playButton.sendActions(for: .touchUpInside)
     try await Task.sleep(for: .seconds(0.1))
     
     // Verify button states returned to original state
-    #expect(yoloView.playButton.isEnabled == false)
-    #expect(yoloView.pauseButton.isEnabled == true)
+    #expect(await yoloView.playButton.isEnabled == false)
+    #expect(await yoloView.pauseButton.isEnabled == true)
   }
 }
 

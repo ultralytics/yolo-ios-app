@@ -156,7 +156,7 @@ func generateCombinedMaskImage(
   threshold: Float = 0.5,
   returnIndividualMasks: Bool = true
 ) -> (CGImage?, [[[Float]]]?)? {
-  // 1) protos形状チェック
+  // 1) Check protos shape
   let maskHeight = protos.shape[2].intValue  // 例: 160
   let maskWidth = protos.shape[3].intValue  // 例: 160
   let maskChannels = protos.shape[1].intValue  // 例: 32
@@ -175,26 +175,26 @@ func generateCombinedMaskImage(
   let HW = maskHeight * maskWidth
   let N = detectedObjects.count
 
-  // 2) 行列A: (N, C) を一括で用意 (オブジェクト数 x マスクチャネル)
+  // 2) Prepare matrix A: (N, C) at once (number of objects x mask channels)
   var coeffsArray = [Float](repeating: 0, count: N * maskChannels)
   for i in 0..<N {
     let (_, _, _, coeffsMLArray) = detectedObjects[i]
     let coeffsPtr = coeffsMLArray.dataPointer.assumingMemoryBound(to: Float.self)
-    // 行列Aのi行目: coeffsArray[i*C .. i*C + C-1] に書き込み
+    // Row i of matrix A: write to coeffsArray[i*C .. i*C + C-1]
     for c in 0..<maskChannels {
       coeffsArray[i * maskChannels + c] = coeffsPtr[c]
     }
   }
 
-  // 3) 行列B: (C, HW) は protosPointer をそのまま使用
-  //    memory layout が [1, C, H, W] => (C, H, W) => (C, HW) となる。行方向C, 列方向HW
-  //    vDSP_mmul は連続メモリを2Dとして扱うだけなのでOK。
+  // 3) Matrix B: (C, HW) uses protosPointer directly
+  //    Memory layout is [1, C, H, W] => (C, H, W) => (C, HW). Rows: C, Columns: HW
+  //    vDSP_mmul simply treats contiguous memory as 2D, so this is OK.
 
-  // 4) 行列C(出力): (N, HW) を確保 => combinedMask
-  //    フラット形状で N*HW の要素をもつ1次元配列
+  // 4) Matrix C (output): (N, HW) allocate => combinedMask
+  //    A flat 1D array with N*HW elements
   var combinedMask = [Float](repeating: 0, count: N * HW)
 
-  // 5) vDSP_mmulで一括演算: (N x C) * (C x HW) => (N x HW)
+  // 5) Batch computation with vDSP_mmul: (N x C) * (C x HW) => (N x HW)
   coeffsArray.withUnsafeBufferPointer { Abuf in
     combinedMask.withUnsafeMutableBufferPointer { Cbuf in
       vDSP_mmul(
@@ -208,18 +208,18 @@ func generateCombinedMaskImage(
     }
   }
 
-  // 6) スコア順ソート (合成時の描画順を制御)
+  // 6) Sort by score (to control drawing order during composition)
   //    => (originalIndex, box, classID, score)
   let indexedObjects: [(Int, CGRect, Int, Float)] =
     detectedObjects.enumerated().map { (i, obj) in (i, obj.0, obj.1, obj.2) }
-  let sortedObjects = indexedObjects.sorted { $0.3 < $1.3 }  // score昇順
+  let sortedObjects = indexedObjects.sorted { $0.3 < $1.3 }  // ascending by score
 
-  // 7) RGBAバッファ (160x160)
+  // 7) RGBA buffer (160x160)
   var mergedPixels = [UInt8](repeating: 0, count: HW * 4)
   let scaleX = Float(maskWidth) / Float(inputWidth)
   let scaleY = Float(maskHeight) / Float(inputHeight)
 
-  // 8) 個別の確率マップを保持するかどうか
+  // 8) Whether to keep individual probability maps
   var probabilityMasks: [[[Float]]]? = nil
   if returnIndividualMasks {
     probabilityMasks = Array(
@@ -231,9 +231,9 @@ func generateCombinedMaskImage(
     )
   }
 
-  // 9) ソート順に従い合成
+  // 9) Compose according to sort order
   for (originalIndex, box, classID, score) in sortedObjects {
-    // boundingBoxをマスク座標系に変換
+    // Convert boundingBox to mask coordinate system
     let minX = Int(Float(box.minX) * scaleX)
     let minY = Int(Float(box.minY) * scaleY)
     let maxX = Int(Float(box.maxX) * scaleX)
@@ -244,18 +244,16 @@ func generateCombinedMaskImage(
     let boxY1 = max(0, min(minY, maskHeight - 1))
     let boxY2 = max(0, min(maxY, maskHeight - 1))
 
-    // オブジェクト originalIndex のマスク => combinedMask[originalIndex*HW ..< (originalIndex+1)*HW]
-    // フラット配列の先頭
     let startIdx = originalIndex * HW
 
-    // クラス色の取得
+    // Get class color
     let _colorIndex = classID % ultralyticsColors.count
     let color = ultralyticsColors[_colorIndex].toRGBComponents()!
     let r = UInt8(color.red)
     let g = UInt8(color.green)
     let b = UInt8(color.blue)
 
-    // ピクセルループ: box範囲のみ
+    // Pixel loop: box range only
     for y in boxY1...boxY2 {
       for x in boxX1...boxX2 {
         let px = y * maskWidth + x
@@ -283,7 +281,7 @@ func generateCombinedMaskImage(
     probabilityMasks = masksArray
   }
 
-  // 11) RGBAバッファ -> CGImage
+  // 11) RGBA buffer -> CGImage
   let colorSpace = CGColorSpaceCreateDeviceRGB()
   let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
   let totalBytes = mergedPixels.count
@@ -555,7 +553,7 @@ func drawPoseOnCIImage(
   keypointsList: [[(x: Float, y: Float)]],
   confsList: [[Float]],
   boundingBoxes: [Box],
-  originalImageSize: CGSize,  // 元画像のサイズ(モデルに合わせて)
+  originalImageSize: CGSize,
   radius: CGFloat = 5,
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
@@ -570,32 +568,23 @@ func drawPoseOnCIImage(
   let renderedHeight = cgImage.height
   let renderedSize = CGSize(width: renderedWidth, height: renderedHeight)
 
-  // 2. UIGraphicsコンテキストを生成し、元画像(CIImage→CGImage)を描画
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
   guard let currentContext = UIGraphicsGetCurrentContext() else {
     return nil
   }
 
-  // ベース画像を描画
-  // (CGImageをUIKitのUIImageに変換してから描画)
   UIImage(cgImage: cgImage).draw(in: CGRect(origin: .zero, size: renderedSize))
-
-  // 3. 既存のCALayerを利用した描画ロジックを再利用する
-  //    - 一時的にCALayerを作り、そこに既存のdrawKeypointsを呼び出して
-  //      最終的に layer.render(in:) でコンテキストへ合成
 
   let rootLayer = CALayer()
   rootLayer.frame = CGRect(origin: .zero, size: renderedSize)
 
-  // ここでは "imageViewSize" ＝ 実際に描画したい最終サイズ として
-  // "renderedSize" を渡す
   drawKeypoints(
     keypointsList: keypointsList,
     confsList: confsList,
     boundingBoxes: boundingBoxes,
     on: rootLayer,
     imageViewSize: renderedSize,
-    originalImageSize: originalImageSize,  // 推論時の元画像サイズ
+    originalImageSize: originalImageSize,
     radius: _radius,
     confThreshold: confThreshold,
     drawSkeleton: drawSkeleton
@@ -611,14 +600,11 @@ func drawPoseOnCIImage(
   return finalImage
 }
 
-/// 使い回し用のレイヤーを保持する構造体例
-/// OBB の枠線を描画する CAShapeLayer + オプションの CATextLayer を束ねる
 class OBBShapeLayerBundle {
   let shapeLayer = CAShapeLayer()
   let textLayer = CATextLayer()
 
   init() {
-    // 初期設定
     shapeLayer.strokeColor = UIColor.red.cgColor
     shapeLayer.fillColor = UIColor.clear.cgColor
 
@@ -628,10 +614,10 @@ class OBBShapeLayerBundle {
     textLayer.cornerRadius = 3
     textLayer.masksToBounds = true
     textLayer.actions = [
-      "contents": NSNull(),  // 文字列変更(string)の内部でcontents更新の場合
-      "string": NSNull(),  // 文字列変更
-      "position": NSNull(),  // 位置変更
-      "bounds": NSNull(),  // サイズ変更 (frame更新はbounds + position)
+      "contents": NSNull(),
+      "string": NSNull(),
+      "position": NSNull(),
+      "bounds": NSNull(),
     ]
 
     shapeLayer.actions = [
@@ -644,44 +630,29 @@ class OBBShapeLayerBundle {
   }
 }
 
-/// 描画担当クラス (例)
 class OBBRenderer {
 
-  /// 使い回し用プール
   private var layerPool: [OBBShapeLayerBundle] = []
-  /// このフレームで使用したレイヤー数
   private var usedLayerCount = 0
 
-  /// レイヤーを使い回す時に呼ぶ関数
   private func getLayerBundle(for parentLayer: CALayer) -> OBBShapeLayerBundle {
     if usedLayerCount < layerPool.count {
-      // 既存のプールを再利用
       let bundle = layerPool[usedLayerCount]
       bundle.shapeLayer.isHidden = false
       bundle.textLayer.isHidden = false
       usedLayerCount += 1
       return bundle
     } else {
-      // プールに無ければ新規生成
       let newBundle = OBBShapeLayerBundle()
       layerPool.append(newBundle)
       usedLayerCount += 1
 
-      // 初回だけ、親に addSublayer しておく
       parentLayer.addSublayer(newBundle.shapeLayer)
       parentLayer.addSublayer(newBundle.textLayer)
       return newBundle
     }
   }
 
-  /// 毎フレーム呼び出して、OBBやテキストを更新する
-  /// - Parameters:
-  ///   - obbDetections: (OBB, score, cls)配列
-  ///   - layer: 親CALayer。例: cameraView.layer など
-  ///   - imageViewSize: 表示領域サイズ
-  ///   - originalImageSize: 画像やモデルの元サイズ
-  ///   - color: 線の色 (実際はクラスごとに変化させたいならループ内で変更)
-  ///   - lineWidth: 線の太さ
   @MainActor func drawObbDetectionsWithReuse(
     obbDetections: [OBBResult],
     on layer: CALayer,
@@ -703,7 +674,6 @@ class OBBRenderer {
       let index = detection.index % ultralyticsColors.count
       let color = ultralyticsColors[index]
 
-      // OBB(四角形)のパスを作成
       let corners = detection.box.toPolygon()
       let path = UIBezierPath()
       for (i, corner) in corners.enumerated() {
@@ -717,39 +687,30 @@ class OBBRenderer {
       }
       path.close()
 
-      // shapeLayer設定
       shapeLayer.path = path.cgPath
       shapeLayer.strokeColor = color.cgColor
       shapeLayer.fillColor = UIColor.clear.cgColor
       shapeLayer.lineWidth = lineWidth
       shapeLayer.isHidden = false
 
-      // 文字列 (クラス名 + confidence)
       let text = detection.cls + String(format: " %.2f", detection.confidence)
-      // 計算するフォントを用意（UIFont）
       let font = UIFont.systemFont(ofSize: textLayer.fontSize)
 
-      // 文字サイズを事前に計算
       let attributes: [NSAttributedString.Key: Any] = [
         .font: font
       ]
       let textSize = (text as NSString).size(withAttributes: attributes)
 
-      // テキストレイヤーに設定する際は、CATextLayer.font には CGFont をセットする
-      // さらに contentsScale を設定しないと文字がぼやけやすい
       textLayer.font = CGFont(font.fontName as CFString)
       textLayer.contentsScale = UIScreen.main.scale
       textLayer.string = text
 
-      // ラベルの背景色など
       textLayer.backgroundColor = color.withAlphaComponent(0.6).cgColor
       textLayer.isHidden = false
 
-      // 余白を少しつけたい場合
       let horizontalPadding: CGFloat = 10
       let verticalPadding: CGFloat = 4
 
-      // corners[0] が左上とは限りませんが、「最初の点の上に表示する」というロジックを踏襲
       if let firstCorner = corners.first {
         let px = firstCorner.x * scaleX
         let py = firstCorner.y * scaleY
@@ -763,7 +724,6 @@ class OBBRenderer {
       }
     }
 
-    // 使わなかったレイヤーを非表示にする
     for i in usedLayerCount..<layerPool.count {
       let bundle = layerPool[i]
       bundle.shapeLayer.isHidden = true

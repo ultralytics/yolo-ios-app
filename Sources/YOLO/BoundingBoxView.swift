@@ -127,8 +127,8 @@ func makeBoundingBoxInfos(from boxViews: [BoundingBoxView]) -> [BoundingBoxInfo]
 
     let hidden = (shapeLayer.isHidden && textLayer.isHidden)
     if !hidden {
-      // 1) バウンディングボックスのCGRect（shapeLayer.path から取得）
-      //    shapeLayer.path が nil であれば .zero とする
+      // 1) Get the bounding box CGRect from shapeLayer.path
+      //    If shapeLayer.path is nil, use .zero
       let boundingRect: CGRect
       if let path = shapeLayer.path {
         boundingRect = path.boundingBox
@@ -136,26 +136,26 @@ func makeBoundingBoxInfos(from boxViews: [BoundingBoxView]) -> [BoundingBoxInfo]
         boundingRect = .zero
       }
 
-      // 2) 枠線色・透明度
+      // 2) Border color and opacity
       let strokeCGColor = shapeLayer.strokeColor ?? UIColor.clear.cgColor
       let strokeUI = UIColor(cgColor: strokeCGColor)
-      // strokeUI から alphaを抜き出す（strokeUI.cgColor.alpha でもOK）
+      // Extract alpha from strokeUI (strokeUI.cgColor.alpha also works)
       let strokeAlpha = strokeUI.cgColor.alpha
 
-      // 3) ライン幅
+      // 3) Line width
       let lineWidth = shapeLayer.lineWidth
 
-      // 4) 角丸 (BoundingBoxViewで固定値 6.0 を使っているため、合わせる)
+      // 4) Corner radius (using fixed value 6.0 to match BoundingBoxView)
       let cornerRadius: CGFloat = 6.0
 
-      // 5) テキストレイヤーからラベル文字を取得
+      // 5) Get label text from text layer
       let labelString = (textLayer.string as? String) ?? ""
 
-      // テキストレイヤーの backgroundColor
+      // Text layer background color
       let labelBGCG = textLayer.backgroundColor ?? UIColor.clear.cgColor
       let labelBG = UIColor(cgColor: labelBGCG)
 
-      // テキストの前景色
+      // Text foreground color
       let fgCG = textLayer.foregroundColor ?? UIColor.white.cgColor
       let labelTextColor = UIColor(cgColor: fgCG)
 

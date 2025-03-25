@@ -212,7 +212,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-      // ここで pointerWrapper を使う
+      // Use pointerWrapper here
       let x = pointerWrapper.pointer[j]
       let y = pointerWrapper.pointer[numAnchors + j]
       let width = pointerWrapper.pointer[2 * numAnchors + j]
@@ -225,7 +225,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
       let boundingBox = CGRect(x: boxX, y: boxY, width: boxWidth, height: boxHeight)
 
-      // クラス確率
+      // Class probabilities
       var classProbs = [Float](repeating: 0, count: numClasses)
       classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
         vDSP_mtrans(

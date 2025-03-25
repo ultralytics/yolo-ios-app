@@ -1,17 +1,17 @@
-# テストリソースディレクトリ
+# Test Resources Directory
 
-このディレクトリには、YOLOのテストに必要なモデルファイルを配置します。
+Place model files needed for YOLO tests in this directory.
 
-## 必要なモデルファイル
+## Required Model Files
 
-テストを実行するには、以下のCoreMLモデルファイルをこのディレクトリに配置してください：
+To run the tests, place the following CoreML model files in this directory:
 
-- `yolo11n.mlpackage` - 検出モデル
-- `yolo11n-seg.mlpackage` - セグメンテーションモデル
-- `yolo11n-cls.mlpackage` - 分類モデル
-- `yolo11n-pose.mlpackage` - ポーズ推定モデル
-- `yolo11n-obb.mlpackage` - 向き付き境界ボックスモデル
+- `yolo11n.mlpackage` - Detection model
+- `yolo11n-seg.mlpackage` - Segmentation model
+- `yolo11n-cls.mlpackage` - Classification model
+- `yolo11n-pose.mlpackage` - Pose estimation model
+- `yolo11n-obb.mlpackage` - Oriented bounding box model
 
-## モデルファイルの取得方法
+## How to Obtain Model Files
 
-詳細な取得方法については、`Tests/YOLOTests/README.md`を参照してください。
+For detailed instructions on how to acquire these files, please refer to `Tests/YOLOTests/README.md`.

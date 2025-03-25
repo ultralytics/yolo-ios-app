@@ -1,99 +1,99 @@
-# YOLOテスト実行ガイド
+# YOLO Test Guide
 
-このディレクトリには、YOLOフレームワークの包括的なテストが含まれています。テストを実行するには、必要なモデルファイルをダウンロードして配置する必要があります。
+This directory contains comprehensive tests for the YOLO framework. To run these tests, you need to download and place the required model files.
 
-## テスト前の準備
+## Preparation Before Testing
 
-### 1. テストリソースディレクトリを確認
+### 1. Check the Test Resource Directory
 
-以下のディレクトリが存在することを確認してください：
+Ensure the following directory exists:
 
 ```
 Tests/YOLOTests/Resources/
 ```
 
-存在しない場合は作成してください：
+If it doesn't exist, create it:
 
 ```bash
 mkdir -p Tests/YOLOTests/Resources/
 ```
 
-### 2. 必要なモデルファイルを取得
+### 2. Obtain the Required Model Files
 
-テストに必要な以下のCoreMLモデルファイルを準備してください：
+Prepare the following CoreML model files needed for testing:
 
-- `yolo11n.mlpackage` - 検出モデル
-- `yolo11n-seg.mlpackage` - セグメンテーションモデル
-- `yolo11n-cls.mlpackage` - 分類モデル
-- `yolo11n-pose.mlpackage` - ポーズ推定モデル
-- `yolo11n-obb.mlpackage` - 向き付き境界ボックスモデル
+- `yolo11n.mlpackage` - Detection model
+- `yolo11n-seg.mlpackage` - Segmentation model
+- `yolo11n-cls.mlpackage` - Classification model
+- `yolo11n-pose.mlpackage` - Pose estimation model
+- `yolo11n-obb.mlpackage` - Oriented bounding box model
 
-### 3. モデルファイルの取得方法
+### 3. Methods to Acquire Model Files
 
-#### 方法1: 公式サイトからダウンロード
+#### Method 1: Download from the Official Source
 
-1. [Ultralytics GitHub](https://github.com/ultralytics/ultralytics) からモデルをダウンロード
-2. Python環境で以下のコードを実行して、CoreML形式に変換：
+1. Download models from [Ultralytics GitHub](https://github.com/ultralytics/ultralytics)
+2. Convert to CoreML format by running the following code in a Python environment:
 
 ```python
 from ultralytics import YOLO
 
-# 検出モデル
+# Detection model
 model = YOLO("yolo11n.pt")
-model.export(format="coreml")
+model.export(format="coreml", nms=True)
 
-# セグメンテーションモデル
+# Segmentation model
 model = YOLO("yolo11n-seg.pt")
 model.export(format="coreml")
 
-# 分類モデル
+# Classification model
 model = YOLO("yolo11n-cls.pt")
 model.export(format="coreml")
 
-# ポーズ推定モデル
+# Pose estimation model
 model = YOLO("yolo11n-pose.pt")
 model.export(format="coreml")
 
-# 向き付き境界ボックスモデル
+# OBB (Oriented Bounding Box) model
 model = YOLO("yolo11n-obb.pt")
 model.export(format="coreml")
 ```
 
-#### 方法2: Ultralyticsのサンプルモデルを使用
+#### Method 2: Use Ultralytics Sample Models
 
-Ultralyticsの[モデルハブ](https://docs.ultralytics.com/models/)からモデルをダウンロードし、変換することもできます。
+You can also download models from Ultralytics [Model Hub](https://docs.ultralytics.com/models/) and convert them.
 
-### 4. モデルファイルの配置
+### 4. Place the Model Files
 
-変換した`.mlpackage`ファイルを`Tests/YOLOTests/Resources/`ディレクトリに配置してください。
+Place the converted `.mlpackage` files in the `Tests/YOLOTests/Resources/` directory.
 
-## テストの実行
+## Running the Tests
 
-テストの準備ができたら、SwiftPMを使用してテストを実行できます：
+Once preparation is complete, you can run the tests using SwiftPM:
 
 ```bash
 swift test
 ```
 
-または、Xcodeでプロジェクトを開いてテストを実行します：
+Alternatively, open the project in Xcode and run the tests:
 
-1. Package.swiftを開く
-2. Product > Test (⌘U)を選択
+1. Open Package.swift
+2. Select Product > Test (⌘U)
 
-## トラブルシューティング
+## Troubleshooting
 
-### モデルファイルが見つからない場合
+### When Model Files Are Not Found
 
-テストエラーで「Test model file not found」というメッセージが表示される場合：
+If you see a "Test model file not found" error message:
 
-1. モデルファイルが正しいパスに配置されているか確認
-2. モデルファイル名と拡張子が正確か確認（例: `yolo11n.mlpackage`）
-3. Package.swiftのリソース設定が正しいか確認
+1. Check that model files are placed in the correct path
+2. Verify model filenames and extensions are accurate (e.g., `yolo11n.mlpackage`)
+3. Ensure resource settings in Package.swift are correct
 
-### 他の問題
+### Other Issues
 
-テスト実行中に問題が発生した場合は、以下を確認してください：
+If you encounter problems during test execution, check the following:
 
-1. Swift Package Managerのバージョンが互換性があるか
-2. 必要なiOSバージョン（iOS 16.0以上）をサポートしているか
-3. CoreMLおよびVisionフレームワークが利用可能か
+1. Compatibility of your Swift Package Manager version
+2. Support for the required iOS version (iOS 16.0 or above)
+3. Availability of CoreML and Vision frameworks

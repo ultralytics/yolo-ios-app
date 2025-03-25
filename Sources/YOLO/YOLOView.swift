@@ -343,7 +343,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       layer.frame = self.overlayLayer.bounds
       layer.opacity = 0.5
       layer.name = "maskLayer"
-      // 必要に応じて contentsGravity や backgroundColor 等を指定
+      // Specify contentsGravity or backgroundColor as needed
       // layer.contentsGravity = .resizeAspectFill
       // layer.backgroundColor = UIColor.clear.cgColor
 
@@ -557,7 +557,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           switch task {
           case .detect:
             let prediction = predictions.boxes[i]
-            // detectタスクの場合は、いままで通り「y を 1 - maxY」で反転
+            // For the detect task, invert y using "1 - maxY" as before
             rect = CGRect(
               x: prediction.xywhn.minX,
               y: 1 - prediction.xywhn.maxY,
@@ -569,7 +569,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
           default:
             let prediction = predictions.boxes[i]
-            // ここを detect と同じように y を反転する
             rect = CGRect(
               x: prediction.xywhn.minX,
               y: 1 - prediction.xywhn.maxY,
@@ -580,13 +579,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
             confidence = CGFloat(prediction.conf)
           }
 
-          // ラベルや色の設定は共通でOK
           let colorIndex = predictions.boxes[i].index % ultralyticsColors.count
           boxColor = ultralyticsColors[colorIndex]
           label = String(format: "%@ %.1f", bestClass, confidence * 100)
           alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
 
-          // 以下はスケーリング・オフセット処理 (もともとのままでOK)
           rect.origin.x = rect.origin.x * videoCapture.longSide * scaleX - offsetX
           rect.origin.y =
             height

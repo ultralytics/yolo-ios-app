@@ -327,7 +327,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       }
     }
 
-    // 入力仕様がImageの場合
     if let imageConstraint = inputDescription.imageConstraint {
       let width = Int(imageConstraint.pixelsWide)
       let height = Int(imageConstraint.pixelsHigh)

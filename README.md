@@ -82,6 +82,35 @@ The Swift Package supports iOS, iPadOS, and macOS.
 
 Supports object detection, with segmentation, classification, pose estimation and oriented bounding box detection in the pipeline.
 
+## 🧪 Testing
+
+The repository includes comprehensive unit tests for both the YOLO Swift Package and the example applications. These tests ensure the reliability and stability of the codebase.
+
+### Running Tests
+
+Tests require CoreML model files which are not included in the repository due to their large size. To run the tests:
+
+1. Set `SKIP_MODEL_TESTS = false` in the test files you want to run with model testing enabled
+2. Download the required CoreML models from [Ultralytics](https://github.com/ultralytics/ultralytics)
+3. Convert them to CoreML format using the Ultralytics Python library
+4. Add the `.mlpackage` files to your Xcode project
+5. Run the tests using Xcode's test navigator
+
+If you don't have the model files, you can still run the tests with `SKIP_MODEL_TESTS = true`, which will skip model-dependent tests.
+
+### Test Coverage
+
+- **YOLO Swift Package**: Core functionality tests for object detection, segmentation, pose estimation, etc.
+- **Example Apps**: Tests for each example application, verifying UI components, model integration, and real-time inference.
+
+### Test Documentation
+
+Each test directory includes a README.md with specific instructions for testing that component, including:
+- Required model files
+- How to obtain and convert models
+- Testing strategy
+- Test case explanations
+
 ## 💡 Contribute
 
 We warmly welcome your contributions to Ultralytics' open-source projects! Your support and contributions significantly impact. Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing/), and share your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). A massive thank you 🙏 to everyone who contributes!

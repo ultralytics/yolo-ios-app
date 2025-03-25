@@ -49,6 +49,7 @@ A simple sample app for real-time camera inference using UIKit.
 
      ```python
      from ultralytics import YOLO
+
      # Export for all YOLO11 model sizes
      for size in ("n", "s", "m", "l", "x"):
          # Load a YOLO11 PyTorch model
@@ -64,7 +65,9 @@ A simple sample app for real-time camera inference using UIKit.
          # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
 
          # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-         model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
+         model.export(
+             format="coreml", int8=True, imgsz=[640, 384]
+         )  # For use with the package, do not add NMS to any models other than detection.
      ```
 
 4. Select your account from Signing & Capabilities.

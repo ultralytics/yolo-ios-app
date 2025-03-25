@@ -43,15 +43,14 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     #expect(yoloView.task == .detect)
     #expect(yoloView.frame == frame)
     
     // Test that the video capture session is properly initialized
-    let videoCapture = getPrivateProperty(from: yoloView, named: "videoCapture") as? VideoCapture
-    #expect(videoCapture != nil)
-    #expect(videoCapture?.captureSession != nil)
+    let videoCapture = getPrivateProperty(from: yoloView, named: "videoCapture") as! VideoCapture
+    #expect(videoCapture.captureSession != nil)
   }
   
   /// Tests UI control initialization and functionality.
@@ -62,7 +61,7 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     // Test slider initialization
     #expect(yoloView.sliderConf.minimumValue == 0)
@@ -127,7 +126,7 @@ struct YOLO_RealTime_UIKitTests {
     try await Task.sleep(for: .seconds(0.5))
     
     expectation.fulfill()
-    await fulfillment(of: [expectation], timeout: 1.0)
+    await XCTestCase().wait(for: [expectation], timeout: 1.0)
   }
   
   /// Tests that play/pause button actions work correctly.
@@ -138,7 +137,7 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     // Test initial state (pause should be enabled, play disabled)
     #expect(yoloView.playButton.isEnabled == false)

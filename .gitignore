@@ -47,6 +47,7 @@ DerivedData/
 *.mlmodel
 *.mlarchive
 *.mlprogram
+*.mlpackage
 
 # GitHub Python GitIgnore ----------------------------------------------------------------------------------------------
 # Byte-compiled / optimized / DLL files

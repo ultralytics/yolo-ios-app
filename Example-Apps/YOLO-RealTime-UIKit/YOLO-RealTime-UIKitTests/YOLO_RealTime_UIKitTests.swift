@@ -43,7 +43,7 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-      let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     // Allow some time for initialization to complete
     try await Task.sleep(for: .seconds(0.5))
@@ -67,7 +67,7 @@ struct YOLO_RealTime_UIKitTests {
     }
     
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-      let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     // Allow some time for initialization to complete
     try await Task.sleep(for: .seconds(0.5))
@@ -167,7 +167,7 @@ struct YOLO_RealTime_UIKitTests {
     
     // Create YOLOView with valid model
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
     
     // Allow initialization to complete
     try await Task.sleep(for: .seconds(0.5))

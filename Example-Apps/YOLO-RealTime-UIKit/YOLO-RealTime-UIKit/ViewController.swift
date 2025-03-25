@@ -9,7 +9,6 @@
 //  The example shows how to initialize the YOLO model for detection, set up a camera preview, and display
 //  detection results in real-time with bounding boxes and labels.
 
-
 import UIKit
 import YOLO
 
@@ -30,7 +29,7 @@ class ViewController: UIViewController {
     super.viewDidLoad()
     // Initialize YOLOView with a segmentation model
     // You can change the model or task type to use detection, classification, etc.
-      yoloView = YOLOView(frame: view.bounds, modelPathOrName: "yolo11n", task: .detect)
+    yoloView = YOLOView(frame: view.bounds, modelPathOrName: "yolo11n", task: .detect)
     view.addSubview(yoloView)
   }
 }

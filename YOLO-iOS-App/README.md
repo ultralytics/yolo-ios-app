@@ -114,7 +114,7 @@ To enable full test coverage, you'll need:
 
 - **Detection model**: `yolo11n.mlpackage`
 - **Segmentation model**: `yolo11n-seg.mlpackage`
-- **Pose estimation model**: `yolo11n-pose.mlpackage` 
+- **Pose estimation model**: `yolo11n-pose.mlpackage`
 - **OBB model**: `yolo11n-obb.mlpackage`
 - **Classification model**: `yolo11n-cls.mlpackage`
 

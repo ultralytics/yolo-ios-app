@@ -30,6 +30,7 @@ model.export(format="coreml")
 **IMPORTANT**: The model file must be added to the **main application target** (YOLO-Single-Image-UIKit), not just the test target.
 
 Follow these steps to add the model file correctly:
+
 1. Drag and drop `yolo11x-seg.mlpackage` into your Xcode project
 2. In the dialog that appears, ensure the following:
    - Check the "YOLO-Single-Image-UIKit" target (main app target)
@@ -46,6 +47,7 @@ The YOLO framework looks for models in the main application bundle (Bundle.main)
 ### Testing Strategy
 
 These tests verify:
+
 - Model initialization and loading
 - Image preprocessing and orientation correction
 - Inference results validation
@@ -58,6 +60,7 @@ By default, `SKIP_MODEL_TESTS` is set to `true`, which allows running tests with
 #### Running Tests With Models
 
 If you want to run the full test suite including model-dependent tests:
+
 1. Add the required model files to the main application target as described above
 2. Set `SKIP_MODEL_TESTS = false` in the test file
 3. Run the tests again

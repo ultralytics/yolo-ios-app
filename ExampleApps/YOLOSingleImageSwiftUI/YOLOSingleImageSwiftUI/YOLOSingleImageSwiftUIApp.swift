@@ -1,4 +1,4 @@
-//  Ultralytics YOLO 🚀 - AGPL-3.0 License
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 //
 //  This file is part of the Example Apps of Ultralytics YOLO Package, providing the SwiftUI app entry point for single image object detection.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license

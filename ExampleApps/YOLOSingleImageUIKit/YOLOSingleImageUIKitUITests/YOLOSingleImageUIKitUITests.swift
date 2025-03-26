@@ -15,7 +15,7 @@ import XCTest
 ///
 /// - Note: UI tests launch the actual application and simulate user interaction.
 /// - Important: These tests require a device with camera and photo library permissions.
-final class YOLO_Single_Image_UIKitUITests: XCTestCase {
+final class YOLOSingleImageUIKitUITests: XCTestCase {
 
   override func setUpWithError() throws {
     // Put setup code here. This method is called before the invocation of each test method in the class.

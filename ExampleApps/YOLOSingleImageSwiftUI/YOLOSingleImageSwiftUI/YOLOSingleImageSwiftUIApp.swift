@@ -4,7 +4,7 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLO_Single_Image_SwiftUIApp serves as the main application entry point for the SwiftUI-based
+//  The YOLOSingleImageSwiftUIApp serves as the main application entry point for the SwiftUI-based
 //  single image object detection example. It initializes the application's window group and sets
 //  ContentView as the root view. This structure follows the standard SwiftUI app lifecycle
 //  pattern, where the @main attribute designates this struct as the application's entry point.
@@ -23,7 +23,7 @@ import SwiftUI
 /// - Important: To use this app, you need to include proper privacy descriptions in Info.plist
 ///   for accessing the photo library.
 @main
-struct YOLO_Single_Image_SwiftUIApp: App {
+struct YOLOSingleImageSwiftUIApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()

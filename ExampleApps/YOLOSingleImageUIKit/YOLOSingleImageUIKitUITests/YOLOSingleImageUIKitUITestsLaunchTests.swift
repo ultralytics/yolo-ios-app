@@ -14,7 +14,7 @@ import XCTest
 ///
 /// - Note: These tests run for each target application UI configuration.
 /// - Important: Launch tests are critical for monitoring performance regressions between app versions.
-final class YOLO_Single_Image_UIKitUITestsLaunchTests: XCTestCase {
+final class YOLOSingleImageUIKitUITestsLaunchTests: XCTestCase {
 
   override class var runsForEachTargetApplicationUIConfiguration: Bool {
     true

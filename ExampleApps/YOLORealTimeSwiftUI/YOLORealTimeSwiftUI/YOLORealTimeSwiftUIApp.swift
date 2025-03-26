@@ -4,7 +4,7 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLO_RealTime_SwiftUIApp serves as the main application entry point for the SwiftUI-based
+//  The YOLORealTimeSwiftUIApp serves as the main application entry point for the SwiftUI-based
 //  real-time object detection example. It initializes the application's window group and sets
 //  ContentView as the root view. This structure follows the standard SwiftUI app lifecycle
 //  pattern, where the @main attribute designates this struct as the application's entry point.
@@ -22,7 +22,7 @@ import SwiftUI
 /// - Note: This app requires camera permissions in Info.plist and at least iOS 16.0 to run.
 /// - Important: The camera requires user permission, which will be requested at runtime.
 @main
-struct YOLO_RealTime_SwiftUIApp: App {
+struct YOLORealTimeSwiftUIApp: App {
   var body: some Scene {
     WindowGroup {
       ContentView()

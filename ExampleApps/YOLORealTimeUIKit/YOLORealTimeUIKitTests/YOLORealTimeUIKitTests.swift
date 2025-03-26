@@ -11,7 +11,7 @@ import Vision
 import XCTest
 
 @testable import YOLO
-@testable import YOLO_RealTime_UIKit
+@testable import YOLORealTimeUIKit
 
 /// Unit tests for the YOLO RealTime UIKit example application.
 ///
@@ -21,7 +21,7 @@ import XCTest
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests may require the YOLO11 detection model to be available.
-struct YOLO_RealTime_UIKitTests {
+struct YOLORealTimeUIKitTests {
 
   // Flag to skip model-dependent tests if model is not available
   static let SKIP_MODEL_TESTS = true
@@ -37,7 +37,7 @@ struct YOLO_RealTime_UIKitTests {
 
   /// Tests the YOLOView configuration.
   @Test func testYOLOViewConfiguration() async throws {
-    if YOLO_RealTime_UIKitTests.SKIP_MODEL_TESTS {
+    if YOLORealTimeUIKitTests.SKIP_MODEL_TESTS {
       #warning("Skipping testYOLOViewConfiguration as model is not prepared")
       return
     }
@@ -63,7 +63,7 @@ struct YOLO_RealTime_UIKitTests {
 
   /// Tests UI control initialization and functionality.
   @Test func testUIControls() async throws {
-    if YOLO_RealTime_UIKitTests.SKIP_MODEL_TESTS {
+    if YOLORealTimeUIKitTests.SKIP_MODEL_TESTS {
       #warning("Skipping testUIControls as model is not prepared")
       return
     }
@@ -107,7 +107,7 @@ struct YOLO_RealTime_UIKitTests {
   /// Tests the bounding box view initialization.
   @Test func testBoundingBoxViews() async throws {
     // This test requires a valid model as YOLOView fatally crashes with invalid models
-    if YOLO_RealTime_UIKitTests.SKIP_MODEL_TESTS {
+    if YOLORealTimeUIKitTests.SKIP_MODEL_TESTS {
       #warning("Skipping testBoundingBoxViews as model is not prepared")
       return
     }
@@ -166,7 +166,7 @@ struct YOLO_RealTime_UIKitTests {
   /// - Note: This test can only be run when a valid model is available.
   @Test func testPlayPauseButtonsFunctionality() async throws {
     // Skip this test if no model is available
-    if YOLO_RealTime_UIKitTests.SKIP_MODEL_TESTS {
+    if YOLORealTimeUIKitTests.SKIP_MODEL_TESTS {
       #warning("Skipping button functionality test as model is not prepared")
       return
     }

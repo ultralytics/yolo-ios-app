@@ -11,7 +11,7 @@ import Vision
 import XCTest
 
 @testable import YOLO
-@testable import YOLO_RealTime_SwiftUI
+@testable import YOLORealTimeSwiftUI
 
 /// Unit tests for the YOLO RealTime SwiftUI example application.
 ///
@@ -21,7 +21,7 @@ import XCTest
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests require the YOLO11 OBB model to be available in the project.
-struct YOLO_RealTime_SwiftUITests {
+struct YOLORealTimeSwiftUITests {
 
   // Flag to skip model-dependent tests if model is not available
   static let SKIP_MODEL_TESTS = true
@@ -34,7 +34,7 @@ struct YOLO_RealTime_SwiftUITests {
 
   /// Tests the YOLOCamera component configuration.
   @Test func testYOLOCameraConfiguration() async throws {
-    if YOLO_RealTime_SwiftUITests.SKIP_MODEL_TESTS {
+    if YOLORealTimeSwiftUITests.SKIP_MODEL_TESTS {
       #warning("Skipping testYOLOCameraConfiguration as model is not prepared")
       return
     }
@@ -72,7 +72,7 @@ struct YOLO_RealTime_SwiftUITests {
 
   /// Tests camera position properties.
   @Test func testCameraPosition() async throws {
-    if YOLO_RealTime_SwiftUITests.SKIP_MODEL_TESTS {
+    if YOLORealTimeSwiftUITests.SKIP_MODEL_TESTS {
       #warning("Skipping testCameraPosition as model is not prepared")
       return
     }

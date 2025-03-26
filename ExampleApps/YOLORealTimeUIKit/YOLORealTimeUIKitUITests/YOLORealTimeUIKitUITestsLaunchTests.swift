@@ -8,7 +8,7 @@
 
 import XCTest
 
-final class YOLO_RealTime_UIKitUITestsLaunchTests: XCTestCase {
+final class YOLORealTimeUIKitUITestsLaunchTests: XCTestCase {
 
   override class var runsForEachTargetApplicationUIConfiguration: Bool {
     true

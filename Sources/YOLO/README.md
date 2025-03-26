@@ -1,4 +1,4 @@
-# YOLO Package:Simple, Powerful YOLO Integration in Swift
+# YOLO Package: Simple, Powerful YOLO Integration in Swift
 
 YOLO Package is a Swift package that makes it easy to integrate Core ML-exported YOLO models into your app. It supports multiple tasks such as Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. With minimal code, you can add YOLO-based features to your app and even use real-time inference with camera streams in both SwiftUI and UIKit
 
@@ -13,13 +13,10 @@ YOLO Package is a Swift package that makes it easy to integrate Core ML-exported
 
 ## Features
 
-✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code in Swift.
-
-✅ **Multiple Task Support**: Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
-
-✅ **SwiftUI / UIKit Integration**: Pre-built view components for real-time camera inference.
-
-✅ **Lightweight & Extensible**: Installs quickly via Swift Package Manager with no extra dependencies.
+- ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code in Swift.
+- ✅ **Multiple Task Support**: Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
+- ✅ **SwiftUI / UIKit Integration**: Pre-built view components for real-time camera inference.
+- ✅ **Lightweight & Extensible**: Installs quickly via Swift Package Manager with no extra dependencies.
 
 ## Requirements
 
@@ -44,7 +41,7 @@ Required to leverage Core ML and the latest Swift Concurrency features.
 
 In Xcode, go to File > Add Packages... and enter the URL of this repository:
 
-```
+```swift
 dependencies: [
     .package(url: "https://github.com/ultralytics/yolo-ios-app.git")
 ]
@@ -52,7 +49,7 @@ dependencies: [
 
 Then, specify it in your target:
 
-```
+```swift
 .target(
     name: "YourTarget",
     dependencies: [
@@ -69,7 +66,7 @@ YOLO Package primarily provides two main components: the **YOLO class** and **YO
 
 ### Import
 
-```
+```swift
 import YOLO
 ```
 
@@ -77,9 +74,9 @@ import YOLO
 
 **(Inference)**
 
-Use the YOLO class for inference on static images, image files, or other UIImage inputs. It supports tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. Simply provide a valid YOLOv8 model (either .mlmodelc or a local path/string).
+Use the YOLO class for inference on static images, image files, or other UIImage inputs. It supports tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. Simply provide a valid YOLO model (either .mlmodelc or a local path/string).
 
-```
+```swift
 let model = YOLO("yolo11n", task: .detect) # bundle file name, local path
 let result = model(image) # SwifUIImage, UIImage, CIImage, CGImage, bundle name, local path, remote URL
 ```
@@ -92,7 +89,7 @@ YOLO Package also provides SwiftUI and UIKit components for real-time inference 
 
 SwiftUI Example
 
-```
+```swift
 import YOLOSwift
 import SwiftUI
 
@@ -110,7 +107,7 @@ struct CameraView: View {
 
 UIKit Example
 
-```
+```swift
 import YOLOSwift
 import UIKit
 

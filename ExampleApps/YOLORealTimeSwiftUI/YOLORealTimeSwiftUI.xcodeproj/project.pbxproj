@@ -7,80 +7,67 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		73AA92202D361FB3002397F9 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73AA921F2D361FB3002397F9 /* YOLO */; };
+		7314328D2D36176800919FF7 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 7314328C2D36176800919FF7 /* YOLO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		73B031162D26B09F0003DB69 /* PBXContainerItemProxy */ = {
+		73B032142D2E56130003DB69 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 73B030F72D26B09D0003DB69 /* Project object */;
+			containerPortal = 73B031FB2D2E560D0003DB69 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 73B030FE2D26B09D0003DB69;
-			remoteInfo = "YOLO-Single-Image-UIKit";
+			remoteGlobalIDString = 73B032022D2E560D0003DB69;
+			remoteInfo = YOLORealTimeSwiftUI;
 		};
-		73B031202D26B09F0003DB69 /* PBXContainerItemProxy */ = {
+		73B0321E2D2E56130003DB69 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 73B030F72D26B09D0003DB69 /* Project object */;
+			containerPortal = 73B031FB2D2E560D0003DB69 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 73B030FE2D26B09D0003DB69;
-			remoteInfo = "YOLO-Single-Image-UIKit";
+			remoteGlobalIDString = 73B032022D2E560D0003DB69;
+			remoteInfo = YOLORealTimeSwiftUI;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		73B030FF2D26B09D0003DB69 /* YOLO-Single-Image-UIKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YOLO-Single-Image-UIKit.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		73B031152D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YOLO-Single-Image-UIKitTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		73B0311F2D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YOLO-Single-Image-UIKitUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B032032D2E560D0003DB69 /* YOLORealTimeSwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLORealTimeSwiftUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B032132D2E56130003DB69 /* YOLORealTimeSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLORealTimeSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		73B0321D2D2E56130003DB69 /* YOLORealTimeSwiftUIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOLORealTimeSwiftUIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		73B031272D26B09F0003DB69 /* Exceptions for "YOLO-Single-Image-UIKit" folder in "YOLO-Single-Image-UIKit" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 73B030FE2D26B09D0003DB69 /* YOLO-Single-Image-UIKit */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		73B031012D26B09D0003DB69 /* YOLO-Single-Image-UIKit */ = {
+		73B032052D2E560D0003DB69 /* YOLORealTimeSwiftUI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				73B031272D26B09F0003DB69 /* Exceptions for "YOLO-Single-Image-UIKit" folder in "YOLO-Single-Image-UIKit" target */,
-			);
-			path = "YOLO-Single-Image-UIKit";
+			path = YOLORealTimeSwiftUI;
 			sourceTree = "<group>";
 		};
-		73B031182D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests */ = {
+		73B032162D2E56130003DB69 /* YOLORealTimeSwiftUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "YOLO-Single-Image-UIKitTests";
+			path = YOLORealTimeSwiftUITests;
 			sourceTree = "<group>";
 		};
-		73B031222D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests */ = {
+		73B032202D2E56130003DB69 /* YOLORealTimeSwiftUIUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "YOLO-Single-Image-UIKitUITests";
+			path = YOLORealTimeSwiftUIUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		73B030FC2D26B09D0003DB69 /* Frameworks */ = {
+		73B032002D2E560D0003DB69 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73AA92202D361FB3002397F9 /* YOLO in Frameworks */,
+				7314328D2D36176800919FF7 /* YOLO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B031122D26B09F0003DB69 /* Frameworks */ = {
+		73B032102D2E56130003DB69 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B0311C2D26B09F0003DB69 /* Frameworks */ = {
+		73B0321A2D2E56130003DB69 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -90,22 +77,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		73B030F62D26B09D0003DB69 = {
+		73B031FA2D2E560D0003DB69 = {
 			isa = PBXGroup;
 			children = (
-				73B031012D26B09D0003DB69 /* YOLO-Single-Image-UIKit */,
-				73B031182D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests */,
-				73B031222D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests */,
-				73B031002D26B09D0003DB69 /* Products */,
+				73B032052D2E560D0003DB69 /* YOLORealTimeSwiftUI */,
+				73B032162D2E56130003DB69 /* YOLORealTimeSwiftUITests */,
+				73B032202D2E56130003DB69 /* YOLORealTimeSwiftUIUITests */,
+				73B032042D2E560D0003DB69 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		73B031002D26B09D0003DB69 /* Products */ = {
+		73B032042D2E560D0003DB69 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				73B030FF2D26B09D0003DB69 /* YOLO-Single-Image-UIKit.app */,
-				73B031152D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests.xctest */,
-				73B0311F2D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests.xctest */,
+				73B032032D2E560D0003DB69 /* YOLORealTimeSwiftUI.app */,
+				73B032132D2E56130003DB69 /* YOLORealTimeSwiftUITests.xctest */,
+				73B0321D2D2E56130003DB69 /* YOLORealTimeSwiftUIUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,138 +100,138 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		73B030FE2D26B09D0003DB69 /* YOLO-Single-Image-UIKit */ = {
+		73B032022D2E560D0003DB69 /* YOLORealTimeSwiftUI */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B031282D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKit" */;
+			buildConfigurationList = 73B032272D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUI" */;
 			buildPhases = (
-				73B030FB2D26B09D0003DB69 /* Sources */,
-				73B030FC2D26B09D0003DB69 /* Frameworks */,
-				73B030FD2D26B09D0003DB69 /* Resources */,
+				73B031FF2D2E560D0003DB69 /* Sources */,
+				73B032002D2E560D0003DB69 /* Frameworks */,
+				73B032012D2E560D0003DB69 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				73B031012D26B09D0003DB69 /* YOLO-Single-Image-UIKit */,
+				73B032052D2E560D0003DB69 /* YOLORealTimeSwiftUI */,
 			);
-			name = "YOLO-Single-Image-UIKit";
+			name = YOLORealTimeSwiftUI;
 			packageProductDependencies = (
-				73AA921F2D361FB3002397F9 /* YOLO */,
+				7314328C2D36176800919FF7 /* YOLO */,
 			);
-			productName = "YOLO-Single-Image-UIKit";
-			productReference = 73B030FF2D26B09D0003DB69 /* YOLO-Single-Image-UIKit.app */;
+			productName = YOLORealTimeSwiftUI;
+			productReference = 73B032032D2E560D0003DB69 /* YOLORealTimeSwiftUI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		73B031142D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests */ = {
+		73B032122D2E56130003DB69 /* YOLORealTimeSwiftUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B0312D2D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKitTests" */;
+			buildConfigurationList = 73B0322A2D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUITests" */;
 			buildPhases = (
-				73B031112D26B09F0003DB69 /* Sources */,
-				73B031122D26B09F0003DB69 /* Frameworks */,
-				73B031132D26B09F0003DB69 /* Resources */,
+				73B0320F2D2E56130003DB69 /* Sources */,
+				73B032102D2E56130003DB69 /* Frameworks */,
+				73B032112D2E56130003DB69 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				73B031172D26B09F0003DB69 /* PBXTargetDependency */,
+				73B032152D2E56130003DB69 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				73B031182D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests */,
+				73B032162D2E56130003DB69 /* YOLORealTimeSwiftUITests */,
 			);
-			name = "YOLO-Single-Image-UIKitTests";
+			name = YOLORealTimeSwiftUITests;
 			packageProductDependencies = (
 			);
-			productName = "YOLO-Single-Image-UIKitTests";
-			productReference = 73B031152D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests.xctest */;
+			productName = YOLORealTimeSwiftUITests;
+			productReference = 73B032132D2E56130003DB69 /* YOLORealTimeSwiftUITests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		73B0311E2D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests */ = {
+		73B0321C2D2E56130003DB69 /* YOLORealTimeSwiftUIUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 73B031302D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKitUITests" */;
+			buildConfigurationList = 73B0322D2D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUIUITests" */;
 			buildPhases = (
-				73B0311B2D26B09F0003DB69 /* Sources */,
-				73B0311C2D26B09F0003DB69 /* Frameworks */,
-				73B0311D2D26B09F0003DB69 /* Resources */,
+				73B032192D2E56130003DB69 /* Sources */,
+				73B0321A2D2E56130003DB69 /* Frameworks */,
+				73B0321B2D2E56130003DB69 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				73B031212D26B09F0003DB69 /* PBXTargetDependency */,
+				73B0321F2D2E56130003DB69 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				73B031222D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests */,
+				73B032202D2E56130003DB69 /* YOLORealTimeSwiftUIUITests */,
 			);
-			name = "YOLO-Single-Image-UIKitUITests";
+			name = YOLORealTimeSwiftUIUITests;
 			packageProductDependencies = (
 			);
-			productName = "YOLO-Single-Image-UIKitUITests";
-			productReference = 73B0311F2D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests.xctest */;
+			productName = YOLORealTimeSwiftUIUITests;
+			productReference = 73B0321D2D2E56130003DB69 /* YOLORealTimeSwiftUIUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		73B030F72D26B09D0003DB69 /* Project object */ = {
+		73B031FB2D2E560D0003DB69 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
-					73B030FE2D26B09D0003DB69 = {
+					73B032022D2E560D0003DB69 = {
 						CreatedOnToolsVersion = 16.2;
 					};
-					73B031142D26B09F0003DB69 = {
+					73B032122D2E56130003DB69 = {
 						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 73B030FE2D26B09D0003DB69;
+						TestTargetID = 73B032022D2E560D0003DB69;
 					};
-					73B0311E2D26B09F0003DB69 = {
+					73B0321C2D2E56130003DB69 = {
 						CreatedOnToolsVersion = 16.2;
-						TestTargetID = 73B030FE2D26B09D0003DB69;
+						TestTargetID = 73B032022D2E560D0003DB69;
 					};
 				};
 			};
-			buildConfigurationList = 73B030FA2D26B09D0003DB69 /* Build configuration list for PBXProject "YOLO-Single-Image-UIKit" */;
+			buildConfigurationList = 73B031FE2D2E560D0003DB69 /* Build configuration list for PBXProject "YOLORealTimeSwiftUI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 73B030F62D26B09D0003DB69;
+			mainGroup = 73B031FA2D2E560D0003DB69;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				73AA921E2D361FB3002397F9 /* XCLocalSwiftPackageReference "../../../yolo-ios-app" */,
+				7314328B2D36176800919FF7 /* XCLocalSwiftPackageReference "../.." */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 73B031002D26B09D0003DB69 /* Products */;
+			productRefGroup = 73B032042D2E560D0003DB69 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				73B030FE2D26B09D0003DB69 /* YOLO-Single-Image-UIKit */,
-				73B031142D26B09F0003DB69 /* YOLO-Single-Image-UIKitTests */,
-				73B0311E2D26B09F0003DB69 /* YOLO-Single-Image-UIKitUITests */,
+				73B032022D2E560D0003DB69 /* YOLORealTimeSwiftUI */,
+				73B032122D2E56130003DB69 /* YOLORealTimeSwiftUITests */,
+				73B0321C2D2E56130003DB69 /* YOLORealTimeSwiftUIUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		73B030FD2D26B09D0003DB69 /* Resources */ = {
+		73B032012D2E560D0003DB69 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B031132D26B09F0003DB69 /* Resources */ = {
+		73B032112D2E56130003DB69 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B0311D2D26B09F0003DB69 /* Resources */ = {
+		73B0321B2D2E56130003DB69 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -254,21 +241,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		73B030FB2D26B09D0003DB69 /* Sources */ = {
+		73B031FF2D2E560D0003DB69 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B031112D26B09F0003DB69 /* Sources */ = {
+		73B0320F2D2E56130003DB69 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		73B0311B2D26B09F0003DB69 /* Sources */ = {
+		73B032192D2E56130003DB69 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -278,78 +265,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		73B031172D26B09F0003DB69 /* PBXTargetDependency */ = {
+		73B032152D2E56130003DB69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 73B030FE2D26B09D0003DB69 /* YOLO-Single-Image-UIKit */;
-			targetProxy = 73B031162D26B09F0003DB69 /* PBXContainerItemProxy */;
+			target = 73B032022D2E560D0003DB69 /* YOLORealTimeSwiftUI */;
+			targetProxy = 73B032142D2E56130003DB69 /* PBXContainerItemProxy */;
 		};
-		73B031212D26B09F0003DB69 /* PBXTargetDependency */ = {
+		73B0321F2D2E56130003DB69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 73B030FE2D26B09D0003DB69 /* YOLO-Single-Image-UIKit */;
-			targetProxy = 73B031202D26B09F0003DB69 /* PBXContainerItemProxy */;
+			target = 73B032022D2E560D0003DB69 /* YOLORealTimeSwiftUI */;
+			targetProxy = 73B0321E2D2E56130003DB69 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		73B031292D26B09F0003DB69 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "YOLO-Single-Image-UIKit/Info.plist";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKit";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		73B0312A2D26B09F0003DB69 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "YOLO-Single-Image-UIKit/Info.plist";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKit";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		73B0312B2D26B09F0003DB69 /* Debug */ = {
+		73B032252D2E56130003DB69 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -412,7 +341,7 @@
 			};
 			name = Debug;
 		};
-		73B0312C2D26B09F0003DB69 /* Release */ = {
+		73B032262D2E56130003DB69 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -468,62 +397,107 @@
 			};
 			name = Release;
 		};
-		73B0312E2D26B09F0003DB69 /* Debug */ = {
+		73B032282D2E56130003DB69 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"YOLORealTimeSwiftUI/Preview Content\"";
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKitTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLO-Single-Image-UIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLO-Single-Image-UIKit";
 			};
 			name = Debug;
 		};
-		73B0312F2D26B09F0003DB69 /* Release */ = {
+		73B032292D2E56130003DB69 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"YOLORealTimeSwiftUI/Preview Content\"";
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKitTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUI";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLO-Single-Image-UIKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLO-Single-Image-UIKit";
 			};
 			name = Release;
 		};
-		73B031312D26B09F0003DB69 /* Debug */ = {
+		73B0322B2D2E56130003DB69 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKitUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLO-Single-Image-UIKit";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLORealTimeSwiftUI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLORealTimeSwiftUI";
 			};
 			name = Debug;
 		};
-		73B031322D26B09F0003DB69 /* Release */ = {
+		73B0322C2D2E56130003DB69 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YOLORealTimeSwiftUI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YOLORealTimeSwiftUI";
+			};
+			name = Release;
+		};
+		73B0322E2D2E56130003DB69 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -531,50 +505,67 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLO-Single-Image-UIKitUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUIUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "YOLO-Single-Image-UIKit";
+				TEST_TARGET_NAME = "YOLORealTimeSwiftUI";
+			};
+			name = Debug;
+		};
+		73B0322F2D2E56130003DB69 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.com.YOLORealTimeSwiftUIUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "YOLORealTimeSwiftUI";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		73B030FA2D26B09D0003DB69 /* Build configuration list for PBXProject "YOLO-Single-Image-UIKit" */ = {
+		73B031FE2D2E560D0003DB69 /* Build configuration list for PBXProject "YOLORealTimeSwiftUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				73B0312B2D26B09F0003DB69 /* Debug */,
-				73B0312C2D26B09F0003DB69 /* Release */,
+				73B032252D2E56130003DB69 /* Debug */,
+				73B032262D2E56130003DB69 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B031282D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKit" */ = {
+		73B032272D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				73B031292D26B09F0003DB69 /* Debug */,
-				73B0312A2D26B09F0003DB69 /* Release */,
+				73B032282D2E56130003DB69 /* Debug */,
+				73B032292D2E56130003DB69 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B0312D2D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKitTests" */ = {
+		73B0322A2D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				73B0312E2D26B09F0003DB69 /* Debug */,
-				73B0312F2D26B09F0003DB69 /* Release */,
+				73B0322B2D2E56130003DB69 /* Debug */,
+				73B0322C2D2E56130003DB69 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		73B031302D26B09F0003DB69 /* Build configuration list for PBXNativeTarget "YOLO-Single-Image-UIKitUITests" */ = {
+		73B0322D2D2E56130003DB69 /* Build configuration list for PBXNativeTarget "YOLORealTimeSwiftUIUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				73B031312D26B09F0003DB69 /* Debug */,
-				73B031322D26B09F0003DB69 /* Release */,
+				73B0322E2D2E56130003DB69 /* Debug */,
+				73B0322F2D2E56130003DB69 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -582,18 +573,18 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		73AA921E2D361FB3002397F9 /* XCLocalSwiftPackageReference "../../../yolo-ios-app" */ = {
+		7314328B2D36176800919FF7 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../yolo-ios-app";
+			relativePath = "../..";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		73AA921F2D361FB3002397F9 /* YOLO */ = {
+		7314328C2D36176800919FF7 /* YOLO */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = YOLO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 73B030F72D26B09D0003DB69 /* Project object */;
+	rootObject = 73B031FB2D2E560D0003DB69 /* Project object */;
 }

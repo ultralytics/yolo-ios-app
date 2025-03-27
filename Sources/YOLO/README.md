@@ -90,7 +90,7 @@ YOLO Package also provides SwiftUI and UIKit components for real-time inference 
 SwiftUI Example
 
 ```swift
-import YOLOSwift
+import YOLO
 import SwiftUI
 
 struct CameraView: View {
@@ -108,7 +108,7 @@ struct CameraView: View {
 UIKit Example
 
 ```swift
-import YOLOSwift
+import YOLO
 import UIKit
 
 class CameraViewController: UIViewController {
@@ -149,7 +149,7 @@ pip install ultralytics
 
 Then, run the following Python script to export the desired models:
 
-```
+```python
 from ultralytics import YOLO
 # Export for all YOLO11 model sizes
 for size in ("n", "s", "m", "l", "x"):

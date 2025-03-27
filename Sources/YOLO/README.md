@@ -151,6 +151,7 @@ Then, run the following Python script to export the desired models:
 
 ```python
 from ultralytics import YOLO
+
 # Export for all YOLO11 model sizes
 for size in ("n", "s", "m", "l", "x"):
     # Load a YOLO11 PyTorch model
@@ -166,7 +167,9 @@ for size in ("n", "s", "m", "l", "x"):
     # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
 
     # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-    model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
+    model.export(
+        format="coreml", int8=True, imgsz=[640, 384]
+    )  # For use with the package, do not add NMS to any models other than detection.
 ```
 
 Note: CoreMLTools' NMS is only applicable to detection models, so models for segment, pose, and obb tasks need to write NMS in Swift. This library includes NMS for these tasks.

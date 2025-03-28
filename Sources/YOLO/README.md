@@ -102,7 +102,6 @@ guard let model = try? YOLO(modelFileName: "yolo11n", task: .detect) else {
 //     fatalError("Failed to load YOLO model.")
 // }
 
-
 // --- Inference ---
 // Load an image (replace with your image loading logic)
 guard let image = UIImage(named: "your_image_name") else { // Or load CGImage, CIImage

@@ -47,33 +47,35 @@ Follow these steps to get the examples up and running:
     - **Export Your Own Models:** Use the `ultralytics` Python package to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
       - Install the package:
+
         ```bash
         pip install ultralytics
         ```
+
       - Run a Python script to export:
 
-        ```python
-        from ultralytics import YOLO
-
-        # Example: Export various YOLOv8 models
-        # Replace 'yolov8n.pt' with the specific model you need (e.g., yolov8n-seg.pt)
-        # See https://docs.ultralytics.com/models/ for available models
-
-        # Load a model (Detection, Segmentation, Pose, Classification, OBB)
-        # model = YOLO("yolov8n.pt") # Detection
-        # model = YOLO("yolov8n-seg.pt") # Segmentation
-        # model = YOLO("yolov8n-pose.pt") # Pose
-        model = YOLO("yolov8n-cls.pt")  # Classification
-        # model = YOLO("yolov8n-obb.pt") # Oriented Bounding Boxes
-
-        # Export to Core ML INT8 format
-        # NMS is typically needed only for Detection models when used standalone.
-        # The YOLO package handles NMS internally for other tasks.
-        # Refer to Ultralytics export docs: https://docs.ultralytics.com/modes/export/
-        model.export(format="coreml", int8=True, nms=False, imgsz=640)  # Adjust nms=True for detection if needed
-
-        print(f"Model exported to {model.export_dir}")
-        ```
+         ```python
+         from ultralytics import YOLO
+         
+         # Export for all YOLO11 model sizes
+         for size in ("n", "s", "m", "l", "x"):
+         
+             # Load a YOLO11 PyTorch model
+             model = YOLO(f"yolo11{size}.pt")
+         
+             # Export the PyTorch model to CoreML INT8 format (with NMS layers)
+             model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+         
+             # You can specify different task models as follows:
+             # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
+             # model = YOLO(f"yolo11{size}-cls.pt")   # classification
+             # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
+             # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
+             # Export the PyTorch model to CoreML INT8 format (without NMS layers)
+             model.export(
+                 format="coreml", int8=True, imgsz=[640, 384]
+             )  # For use with the package, do not add NMS to any models other than detection.
+         ```
 
       - Locate the exported `.mlpackage` file in the specified directory and add it to your Xcode project.
 

@@ -2,7 +2,7 @@
 
 # YOLO Swift Package: Simple, Powerful YOLO Integration in Swift
 
-The YOLO Swift Package provides an easy way to integrate [Core ML](https://www.ultralytics.com/glossary/core-ml)-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://www.ultralytics.com/glossary/object-detection), [Instance Segmentation](https://www.ultralytics.com/glossary/instance-segmentation), [Image Classification](https://www.ultralytics.com/glossary/image-classification), [Pose Estimation](https://www.ultralytics.com/glossary/pose-estimation), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
+The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect/), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment/), [Image Classification](https://docs.ultralytics.com/tasks/classify/), [Pose Estimation](https://docs.ultralytics.com/tasks/pose/), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
@@ -35,7 +35,7 @@ The YOLO Swift Package provides an easy way to integrate [Core ML](https://www.u
 | watchOS  | 6.0+            | Limited use cases due to hardware constraints                                                            |
 
 - **Swift 5.7+**: Required for modern language features.
-- **Xcode 14.0+**: Needed to leverage Core ML and the latest Swift Concurrency features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
+- **Xcode 14.0+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/swift_standard_library/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
 
 ## 🚀 Installation
 
@@ -82,9 +82,9 @@ import YOLO
 
 ### YOLO Class (Inference)
 
-Use the `YOLO` class for performing inference on static images (`UIImage`, `CIImage`, `CGImage`), image file paths, or URLs. It supports various tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
+Use the `YOLO` class for performing inference on static images ([`UIImage`](https://developer.apple.com/documentation/uikit/uiimage), `CIImage`, `CGImage`), image file paths, or URLs. It supports various tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
 
-Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format (either a compiled `.mlmodelc` directory included in your app bundle or a path to an uncompiled `.mlmodel` file).
+Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format (either a compiled `.mlmodelc` directory included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle) or a path to an uncompiled `.mlmodel` file).
 
 ```swift
 import YOLO
@@ -180,7 +180,7 @@ class CameraViewController: UIViewController {
     }
 
     func setupCameraView() {
-        // Check for camera permissions
+        // Check for camera permissions using AVFoundation
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             guard let self = self else { return }
             DispatchQueue.main.async {
@@ -226,7 +226,7 @@ class CameraViewController: UIViewController {
 
 With just a few lines of code, you can integrate real-time, YOLO-based inference into your application’s camera feed. For more advanced use cases, explore the customization options available for these components.
 
-## How to Obtain YOLO Core ML Models
+## ⚙️ How to Obtain YOLO Core ML Models
 
 You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) models compatible with this package in Core ML format using two methods:
 
@@ -242,7 +242,7 @@ After downloading, add the `.mlmodel` file or the `.mlmodelc` directory (often w
 
 You can export models to the Core ML format yourself using the `ultralytics` Python package. This gives you more control over the export process, such as choosing different model sizes or export settings.
 
-First, install the `ultralytics` package:
+First, install the `ultralytics` package using [pip](https://pip.pypa.io/en/stable/):
 
 ```bash
 pip install ultralytics
@@ -279,14 +279,14 @@ print("Exported yolo11n-seg.mlmodel without NMS")
 # obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
 ```
 
-For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
+This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
 **Important Note on NMS:** The `nms=True` flag during export adds Core ML's built-in Non-Maximum Suppression layers, which is **only applicable to detection models**. For segmentation, pose estimation, and OBB tasks, export with `nms=False` (or omit the argument). This YOLO Swift Package includes optimized Swift implementations of NMS for these other tasks, which are applied automatically after inference. Using `nms=True` for non-detection models may lead to export errors or incorrect behavior.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/ultralytics/yolo-ios-app). Check the [`contributing`](contributing) guide for more details on how to get involved. We appreciate your help in making this package better! You can also visit the [Ultralytics Docs](https://docs.ultralytics.com/) or join the conversation on [Discord](https://discord.com/invite/ultralytics).
+Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/ultralytics/yolo-ios-app). Check the [`contributing`](contributing) guide for more details on how to get involved. We appreciate your help in making this package better! You can also join the conversation on [Discord](https://discord.com/invite/ultralytics).
 
 ## 📜 License
 
-This project is licensed under the AGPL-3.0 License. See the [`license`](license) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
+This project is licensed under the [AGPL-3.0 License](https://opensource.org/licenses/AGPL-3.0). See the [`license`](license) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).

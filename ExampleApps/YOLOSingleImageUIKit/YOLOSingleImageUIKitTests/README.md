@@ -12,13 +12,13 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute the complete test suite, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11x-seg.mlpackage`: An [Ultralytics YOLO11](../models/yolo11.md) segmentation model.
+- `yolo11x-seg.mlpackage`: An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) segmentation model.
 
-**Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from version control to keep repository size manageable.
+**Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from [version control](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History#_removing_a_file_from_every_commit) to keep repository size manageable.
 
 ### Obtaining the Model File
 
-1.  **Download**: Obtain the base PyTorch YOLO11 model (`yolo11x-seg.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own.
+1.  **Download**: Obtain the base PyTorch YOLO11 model (`yolo11x-seg.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
 2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
 ```python
@@ -57,14 +57,14 @@ These unit tests are designed to verify several key aspects of the application:
 
 - **Model Handling**: Correct initialization and loading of the Core ML model.
 - **Preprocessing**: Accurate image preprocessing steps, including orientation correction.
-- **Inference**: Validation of the inference results against expected outputs (when models are present).
+- **Inference**: Validation of the inference results against expected outputs (when models are present). You can learn more about inference in our [Predict Mode documentation](https://docs.ultralytics.com/modes/predict/).
 - **UI**: Basic functionality checks for relevant UI components.
 
 #### Running Tests Without Models
 
 By default, the test suite is configured to run _without_ requiring the actual model files. This is controlled by the `SKIP_MODEL_TESTS` flag within the test code, which is set to `true`.
 
-- **Benefits**: This allows developers to quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key.
+- **Benefits**: This allows developers to quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key. Check our [CI guide](https://docs.ultralytics.com/help/CI/) for more details.
 - **Limitations**: Tests that specifically depend on running inference with the model will be skipped.
 
 #### Running Tests With Models
@@ -73,10 +73,10 @@ To run the full test suite, including tests that perform actual model inference:
 
 1.  **Add Models**: Ensure you have obtained and added the required `yolo11x-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
 2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
-3.  **Run Tests**: Execute the tests again through Xcode (Product > Test or Command+U).
+3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 
-This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/).
+This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics HUB](https://docs.ultralytics.com/hub/).
 
 ## 🤝 Contributing
 
-Contributions to improve the tests or the example application are welcome! Please see the main [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) for contribution guidelines. Feel free to submit issues or pull requests.
+Contributions to improve the tests or the example application are welcome! Please see the main [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) for contribution guidelines. Feel free to submit [issues](https://github.com/ultralytics/yolo-ios-app/issues) or [pull requests](https://github.com/ultralytics/yolo-ios-app/pulls).

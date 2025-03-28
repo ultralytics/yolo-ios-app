@@ -2,7 +2,7 @@
 
 # YOLO Test Guide
 
-Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the YOLO framework integration within the iOS environment. To execute these tests successfully, you'll need to download and correctly place the required model files first.
+Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the [Ultralytics YOLO](https://docs.ultralytics.com/) framework integration within the iOS environment. To execute these tests successfully, you'll need to download and correctly place the required model files first.
 
 ## 🧪 Preparation Before Testing
 
@@ -26,11 +26,11 @@ mkdir -p Tests/YOLOTests/Resources/
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
-- `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
-- `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
-- `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
-- `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
-- `yolo11n-obb.mlpackage`: Model for [oriented bounding box](https://docs.ultralytics.com/tasks/obb/) detection.
+-   `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
+-   `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
+-   `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
+-   `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
+-   `yolo11n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ### 3. Methods to Acquire Model Files
 
@@ -38,8 +38,8 @@ You can obtain the necessary `.mlpackage` files using one of the following metho
 
 #### Method 1: Download and Convert Official Models
 
-1.  Download the base PyTorch (`.pt`) models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) releases or train your own.
-2.  Convert these models to the Core ML format using the Ultralytics `export` mode. You'll need a [Python](https://www.python.org/) environment with the `ultralytics` package installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart/) for installation).
+1.  Download the base [PyTorch](https://pytorch.org/) (`.pt`) models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) releases or train your own.
+2.  Convert these models to the Core ML format using the Ultralytics [`export` mode](https://docs.ultralytics.com/modes/export/). You'll need a [Python](https://www.python.org/) environment with the `ultralytics` package installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart/) for installation).
 
 ```python
 from ultralytics import YOLO
@@ -67,7 +67,7 @@ model_pose.export(format="coreml")  # Exports yolo11n-pose.mlpackage
 model_obb = YOLO("yolo11n-obb.pt")
 model_obb.export(format="coreml")  # Exports yolo11n-obb.mlpackage
 
-# For more details on export options, see: https://docs.ultralytics.com/modes/export/
+# For more details on export options and formats, see: https://docs.ultralytics.com/modes/export/
 ```
 
 #### Method 2: Use Ultralytics Pre-Exported Models (If Available)
@@ -114,17 +114,17 @@ If you receive an error message indicating that a model file could not be found:
 
 1.  **Verify Path:** Double-check that all required `.mlpackage` files are present directly inside the `Tests/YOLOTests/Resources/` directory.
 2.  **Verify Filenames:** Ensure the filenames exactly match the required names (e.g., `yolo11n.mlpackage`, `yolo11n-seg.mlpackage`, etc.). Check for typos or incorrect extensions.
-3.  **Check `Package.swift`:** Confirm that the `Resources` directory is correctly specified as a resource for the `YOLOTests` target in the `Package.swift` file.
+3.  **Check `Package.swift`:** Confirm that the `Resources` directory is correctly specified as a resource for the `YOLOTests` target in the `Package.swift` file. See the [Swift Package Manager documentation](https://developer.apple.com/documentation/swift_packages/bundling_resources_with_a_swift_package) for details on resource bundling.
 
 ### Other Issues
 
 If tests fail or you encounter other problems:
 
 1.  **SwiftPM Version:** Ensure your installed Swift Package Manager version is compatible with the project requirements.
-2.  **iOS Target:** The project requires [iOS](https://www.apple.com/ios/ios-18/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
-3.  **Framework Availability:** Confirm that the Core ML and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
+2.  **iOS Target:** The project requires [iOS](https://www.apple.com/ios/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
+3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
-5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions.
+5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).
 
 ## Contributing
 

@@ -2,22 +2,22 @@
 
 # YOLO RealTime SwiftUI Tests
 
-This directory contains unit tests for the YOLO RealTime SwiftUI example application, designed to verify its core functionalities using [Xcode's testing framework](https://developer.apple.com/documentation/xctest).
+This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing) for the YOLO RealTime SwiftUI example application. These tests are designed to verify the core functionalities of the app using [Xcode's testing framework](https://developer.apple.com/documentation/xctest).
 
 ## 🧪 Running Tests
 
 ### Prerequisites
 
-To execute the complete test suite, including those involving model inference, you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
+To execute the complete test suite, including tests involving model [inference](https://www.ultralytics.com/glossary/real-time-inference), you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11n-obb.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection.
+- `yolo11n-obb.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
 
 **Note**: This model file is not included in the repository due to its size.
 
 ### Obtaining the Model File
 
-1.  Download pretrained Ultralytics YOLO models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
-2.  Convert the desired PyTorch model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` mode. See the [Export documentation](https://docs.ultralytics.com/modes/export/) for more details.
+1.  Download pretrained Ultralytics YOLO models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics). You can find various models on our [models page](https://docs.ultralytics.com/models/).
+2.  Convert the desired [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` mode. See the [Export documentation](https://docs.ultralytics.com/modes/export/) and our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml/) for more details.
 
 ```python
 from ultralytics import YOLO
@@ -43,7 +43,7 @@ Follow these steps to add the model file correctly within Xcode:
     - Ensure **"Copy items if needed"** is checked.
 3.  Click "Finish".
 
-For better organization, consider placing the model file within a "Models" group in your project structure. Refer to Apple's guide on [adding resources to your project](https://developer.apple.com/documentation/xcode/adding-resources-to-your-project) for more details.
+For better organization, consider placing the model file within a "Models" group in your project structure.
 
 ![Adding model to target](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
 
@@ -54,13 +54,13 @@ The application framework specifically looks for models within the main applicat
 These tests aim to verify several aspects of the application:
 
 - **Model Initialization**: Checks if the Core ML model can be loaded correctly.
-- **Camera Functionality**: Ensures the camera preview starts and functions as expected within the [SwiftUI](https://developer.apple.com/xcode/swiftui/) view.
+- **Camera Functionality**: Ensures the camera preview starts and functions as expected within the [SwiftUI](https://developer.apple.com/xcode/swiftui/) view, using the [Swift programming language](https://developer.apple.com/swift/).
 - **UI Layout**: Verifies basic UI elements are present and responsive.
-- **Inference (Optional)**: Performs basic checks on the model's inference output if the model is available.
+- **Inference (Optional)**: Performs basic checks on the model's inference output, including [bounding box](https://www.ultralytics.com/glossary/bounding-box) predictions, if the model is available.
 
 #### Running Tests Without Models (Default)
 
-By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo11n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in Continuous Integration (CI) environments where managing large model files might be complex.
+By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo11n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) environments where managing large model files might be complex. Check our [Quickstart guide](https://docs.ultralytics.com/quickstart/) for setting up your environment.
 
 #### Running Tests With Models
 
@@ -71,8 +71,8 @@ To run the full test suite, including tests that perform inference:
 3.  Change the flag `SKIP_MODEL_TESTS` to `false`.
 4.  Run the tests using Xcode (Product > Test or `Cmd+U`).
 
-This flexible approach ensures that both core application logic and model integration can be tested effectively, accommodating different development and testing scenarios.
+This flexible approach ensures that both core application logic and [model deployment](https://www.ultralytics.com/glossary/model-deployment) integration can be tested effectively, accommodating different development and testing scenarios. Explore more terms in the [Ultralytics Glossary](https://www.ultralytics.com/glossary/).
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you find issues or have suggestions for improvements, please open an issue or submit a pull request. See the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more details.
+Contributions to improve the tests or the application are welcome! If you find issues or have suggestions for improvements, please open an issue or submit a pull request on the main repository. See the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more details on how to get started.

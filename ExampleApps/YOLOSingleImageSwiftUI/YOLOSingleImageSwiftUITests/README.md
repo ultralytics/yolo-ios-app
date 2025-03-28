@@ -2,7 +2,7 @@
 
 # YOLO Single Image SwiftUI Tests
 
-This directory contains unit tests for the YOLO Single Image SwiftUI example application, designed to ensure the reliability and correctness of the app's features.
+This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing) for the YOLO Single Image SwiftUI example application, designed to ensure the reliability and correctness of the app's features.
 
 ## 🧪 Running Tests
 
@@ -12,14 +12,14 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11n-seg.mlpackage` - An Ultralytics YOLO11 [segmentation model](../tasks/segment.md).
+- `yolo11n-seg.mlpackage` - An [Ultralytics YOLO11](../models/yolo11.md) [segmentation model](../tasks/segment.md).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
 ### Obtaining the Model File
 
-1.  Download pretrained Ultralytics YOLO11 models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
-2.  Convert the PyTorch model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` functionality:
+1.  Download pretrained [Ultralytics YOLO11 models](https://docs.ultralytics.com/models/yolo11/) from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
+2.  Convert the [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` functionality:
 
 ```python
 from ultralytics import YOLO
@@ -35,9 +35,9 @@ For more details on exporting models, refer to the [Ultralytics Export documenta
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The `.mlpackage` model file must be added to the **main application target** (`YOLO-Single-Image-SwiftUI`) in Xcode, not just the test target. The testing framework relies on accessing the model through the main application bundle (`Bundle.main`).
+**IMPORTANT**: The `.mlpackage` model file must be added to the **main application target** (`YOLO-Single-Image-SwiftUI`) in [Xcode](https://developer.apple.com/xcode/), not just the test target. The testing framework relies on accessing the model through the main application bundle (`Bundle.main`).
 
-Follow these steps to add the model file correctly using [Xcode](https://developer.apple.com/xcode/):
+Follow these steps to add the model file correctly using Xcode:
 
 1.  Drag and drop the `yolo11n-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
@@ -50,14 +50,14 @@ For better project organization, consider placing the model file within a "Model
 
 ![Adding model to target in Xcode](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
 
-### Testing Strategy
+## 📊 Testing Strategy
 
-These [unit tests](https://en.wikipedia.org/wiki/Unit_testing) verify several key aspects of the application:
+These unit tests verify several key aspects of the application:
 
 - **Model Initialization**: Checks if the Core ML model loads correctly.
 - **SwiftUI Views**: Ensures that the [SwiftUI](https://developer.apple.com/xcode/swiftui/) views render and handle layout as expected.
 - **Image Selection**: Validates the functionality for selecting images from the device.
-- **Inference Handling**: Tests how the application processes and displays the inference results from the YOLO model.
+- **Inference Handling**: Tests how the application processes and displays the inference results from the [YOLO model](https://docs.ultralytics.com/models/).
 
 #### Running Tests Without Models (CI/Basic Checks)
 
@@ -73,4 +73,4 @@ To run the complete test suite, including tests that perform actual model infere
 
 This comprehensive approach ensures that tests can validate both the fundamental application structure and the critical model integration and inference pathways, while still offering flexibility for environments without the large model files.
 
-We welcome contributions to improve these tests! Please see the [Ultralytics Contributing Guidelines](https://docs.ultralytics.com/help/contributing/) for more information.
+We welcome contributions to improve these tests! Please see the [Ultralytics Contributing Guidelines](https://docs.ultralytics.com/help/contributing/) for more information on how to get involved.

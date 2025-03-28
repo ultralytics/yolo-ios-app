@@ -2,7 +2,7 @@
 
 # YOLO Package Examples
 
-Welcome! This directory contains example Xcode projects demonstrating how to integrate the Ultralytics YOLO Package into your iOS applications. Explore how to leverage [Core ML](https://developer.apple.com/documentation/coreml) models for various computer vision tasks directly on Apple devices.
+Welcome! This directory contains example Xcode projects demonstrating how to integrate the Ultralytics YOLO Package into your iOS applications. Explore how to leverage [Core ML](https://developer.apple.com/documentation/coreml) models for various [computer vision](https://www.ultralytics.com/glossary/computer-vision-cv) tasks directly on Apple devices.
 
 ## 🚀 Examples
 
@@ -10,7 +10,7 @@ We provide several sample apps built with both [SwiftUI](https://developer.apple
 
 ### YOLO-Single-Image-SwiftUI
 
-- A straightforward SwiftUI application demonstrating inference on a single image selected from the user's photo library using an Ultralytics YOLO Core ML model.
+- A straightforward SwiftUI application demonstrating inference on a single image selected from the user's photo library using an [Ultralytics YOLO](https://docs.ultralytics.com/models/) Core ML model.
 
 ### YOLO-Single-Image-UIKit
 
@@ -18,7 +18,7 @@ We provide several sample apps built with both [SwiftUI](https://developer.apple
 
 ### YOLO-RealTime-SwiftUI
 
-- An example SwiftUI app performing real-time object detection, segmentation, or other tasks using the device's camera feed.
+- An example SwiftUI app performing real-time [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, or other tasks using the device's camera feed.
 
 ### YOLO-RealTime-UIKit
 
@@ -41,43 +41,46 @@ Follow these steps to get the examples up and running:
 
     #### Obtaining YOLO Core ML Models
 
-    You have two primary ways to get Ultralytics YOLO models in Core ML format:
+    You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
 
-    - **Download Pre-Exported Models:** Download optimized Core ML INT8 models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases) (or other YOLO versions). Place the downloaded model file into your Xcode project.
-    - **Export Your Own Models:** Use the `ultralytics` Python package to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
+    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
+    - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
-      - Install the package:
+      - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
 
         ```bash
         pip install ultralytics
         ```
 
-      - Run a Python script to export:
+      - Run a Python script to [export](https://docs.ultralytics.com/modes/export/):
 
          ```python
          from ultralytics import YOLO
          
-         # Export for all YOLO11 model sizes
+         # Example: Export for various YOLO11 model sizes
          for size in ("n", "s", "m", "l", "x"):
          
-             # Load a YOLO11 PyTorch model
-             model = YOLO(f"yolo11{size}.pt")
+             # Load a YOLO11 PyTorch model (detection is default)
+             # Find PyTorch models at https://github.com/ultralytics/ultralytics/releases
+             model = YOLO(f"yolo11{size}.pt") 
          
-             # Export the PyTorch model to CoreML INT8 format (with NMS layers)
-             model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+             # Export the PyTorch model to CoreML INT8 format (with NMS layers for detection)
+             # NMS is Non-Maximum Suppression, see https://www.ultralytics.com/glossary/non-maximum-suppression-nms
+             model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384]) 
          
-             # You can specify different task models as follows:
-             # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
-             # model = YOLO(f"yolo11{size}-cls.pt")   # classification
-             # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
-             # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
-             # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-             model.export(
-                 format="coreml", int8=True, imgsz=[640, 384]
-             )  # For use with the package, do not add NMS to any models other than detection.
+             # --- Exporting other task models ---
+             # Load a specific task model, e.g., segmentation
+             # model = YOLO(f"yolo11{size}-seg.pt")   # Segmentation: https://docs.ultralytics.com/tasks/segment/
+             # model = YOLO(f"yolo11{size}-cls.pt")   # Classification: https://docs.ultralytics.com/tasks/classify/
+             # model = YOLO(f"yolo11{size}-pose.pt")  # Pose Estimation: https://docs.ultralytics.com/tasks/pose/
+             # model = YOLO(f"yolo11{size}-obb.pt")   # Oriented Bounding Box: https://docs.ultralytics.com/tasks/obb/
+             
+             # Export other task models to CoreML INT8 format (without NMS layers)
+             # For use with the YOLO package, only add NMS to detection models.
+             # model.export(format="coreml", int8=True, imgsz=[640, 384]) 
          ```
 
-      - Locate the exported `.mlpackage` file in the specified directory and add it to your Xcode project.
+      - Locate the exported `.mlpackage` file in your working directory (or the directory specified in `export`) and add it to your Xcode project. Learn more about [PyTorch](https://pytorch.org/).
 
 4.  **Configure Signing:** In the project settings under "Signing & Capabilities", select your development team.
 
@@ -86,11 +89,11 @@ Follow these steps to get the examples up and running:
 **Important Notes:**
 
 - Real-time examples require a physical device with a camera; they **cannot** be run on the iOS Simulator.
-- The examples use local Swift Package dependencies. Opening multiple example projects simultaneously might cause Xcode to have trouble resolving these packages. Please open and work with one example project at a time.
+- The examples use local Swift Package dependencies defined within the repository. Opening multiple example projects simultaneously might cause Xcode to have trouble resolving these packages. Please open and work with one example project at a time for the best experience.
 
 ## ✅ Testing
 
-Each example app includes unit tests to verify its core functionality. These tests are located within the corresponding `Tests` directory (e.g., `YOLO-Single-Image-SwiftUITests`).
+Each example app includes [unit tests](https://en.wikipedia.org/wiki/Unit_testing) to verify its core functionality. These tests are located within the corresponding `Tests` directory (e.g., `YOLO-Single-Image-SwiftUITests`).
 
 ### Running Tests
 
@@ -101,9 +104,9 @@ Each example app includes unit tests to verify its core functionality. These tes
 
 ### Test Configuration
 
-- **Without Models:** By default, tests are configured to skip model-dependent checks (`SKIP_MODEL_TESTS = true` in the test files). This allows verifying basic UI and logic without needing the potentially large Core ML model files, useful for quick checks and some [CI](https://www.ultralytics.com/glossary/continuous-integration-ci) setups.
+- **Without Models:** By default, tests are configured to skip model-dependent checks (`SKIP_MODEL_TESTS = true` in the test files). This allows verifying basic UI and logic without needing the potentially large Core ML model files, useful for quick checks and some [Continuous Integration (CI)](https://www.ultralytics.com/glossary/continuous-integration-ci) setups.
 - **With Models:** To perform comprehensive testing including model inference:
-  1.  Ensure the required Core ML model(s) are added to the main application target (refer to the specific `README.md` within each test directory for details on required models).
+  1.  Ensure the required Core ML model(s) are added to the main application target (refer to the specific `README.md` within each test directory for details on required models). You can obtain models as described in the [Usage section](#obtaining-yolo-core-ml-models).
   2.  Set `SKIP_MODEL_TESTS = false` within the relevant test file(s).
   3.  Run the tests again.
 
@@ -111,4 +114,4 @@ Please consult the `README.md` file inside each example's `Tests` directory for 
 
 ## 🤝 Contributing
 
-Contributions to enhance these examples or add new ones are welcome! Please see the main [Ultralytics Contribution Guide](https://docs.ultralytics.com/help/contributing/) for guidelines on how to contribute to our open-source projects. Let's build amazing vision AI applications together!
+Contributions to enhance these examples or add new ones are welcome! Please see the main [Ultralytics Contribution Guide](https://docs.ultralytics.com/help/contributing/) for guidelines on how to contribute to our [open-source](https://opensource.org/osd) projects. Let's build amazing [vision AI](https://www.ultralytics.com/glossary/artificial-intelligence-ai) applications together!

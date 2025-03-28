@@ -12,7 +12,7 @@ Follow these instructions to set up and run the tests for the application.
 
 To execute these tests effectively, you will need the following [Apple Core ML](https://developer.apple.com/documentation/coreml) model file:
 
--   `yolo11n.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) [object detection](https://docs.ultralytics.com/tasks/detect/) model.
+- `yolo11n.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) [object detection](https://docs.ultralytics.com/tasks/detect/) model.
 
 **Note**: This model file is not included in the repository due to its potentially [large size](https://git-lfs.com/), which can complicate version control.
 
@@ -40,9 +40,9 @@ Follow these steps to add the model file correctly:
 
 1.  Drag and drop `yolo11n.mlpackage` into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    -   Ensure the checkbox for the "YOLO-RealTime-UIKit" target (the main app target) is checked.
-    -   Optionally, check the "YOLO-RealTime-UIKitTests" target, but remember the main target is crucial.
-    -   Select the "Create folder references" option (indicated by a blue folder icon). This helps maintain project organization.
+    - Ensure the checkbox for the "YOLO-RealTime-UIKit" target (the main app target) is checked.
+    - Optionally, check the "YOLO-RealTime-UIKitTests" target, but remember the main target is crucial.
+    - Select the "Create folder references" option (indicated by a blue folder icon). This helps maintain project organization.
 3.  Click "Finish" to complete the process.
 
 For optimal project structure, consider placing the model file within a dedicated "Models" group in your Xcode project.
@@ -55,10 +55,10 @@ The testing framework relies on accessing models from the main application bundl
 
 These unit tests are designed to verify several key aspects of the application:
 
--   **Model Initialization and Loading**: Ensures models load correctly and are ready for inference.
--   **Camera Session Configuration**: Validates the setup of the [camera session](https://developer.apple.com/documentation/avfoundation/avcapturesession) for real-time video input.
--   **UI Component Functionality**: Tests the behavior and state of [UI components](https://developer.apple.com/documentation/uikit) used in the app.
--   **Real-time Inference Processing**: Checks the pipeline for processing frames and performing [model inference](https://www.ultralytics.com/glossary/real-time-inference).
+- **Model Initialization and Loading**: Ensures models load correctly and are ready for inference.
+- **Camera Session Configuration**: Validates the setup of the [camera session](https://developer.apple.com/documentation/avfoundation/avcapturesession) for real-time video input.
+- **UI Component Functionality**: Tests the behavior and state of [UI components](https://developer.apple.com/documentation/uikit) used in the app.
+- **Real-time Inference Processing**: Checks the pipeline for processing frames and performing [model inference](https://www.ultralytics.com/glossary/real-time-inference).
 
 #### Running Tests Without Models
 

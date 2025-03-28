@@ -26,11 +26,11 @@ mkdir -p Tests/YOLOTests/Resources/
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
--   `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
--   `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
--   `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
--   `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
--   `yolo11n-obb.mlpackage`: Model for [oriented bounding box](https://docs.ultralytics.com/tasks/obb/) detection.
+- `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
+- `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
+- `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
+- `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
+- `yolo11n-obb.mlpackage`: Model for [oriented bounding box](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ### 3. Methods to Acquire Model Files
 
@@ -49,23 +49,23 @@ from ultralytics import YOLO
 
 # Detection model (YOLO11n)
 model_det = YOLO("yolo11n.pt")
-model_det.export(format="coreml", nms=True) # Exports yolo11n.mlpackage
+model_det.export(format="coreml", nms=True)  # Exports yolo11n.mlpackage
 
 # Segmentation model (YOLO11n-Seg)
 model_seg = YOLO("yolo11n-seg.pt")
-model_seg.export(format="coreml") # Exports yolo11n-seg.mlpackage
+model_seg.export(format="coreml")  # Exports yolo11n-seg.mlpackage
 
 # Classification model (YOLO11n-Cls)
 model_cls = YOLO("yolo11n-cls.pt")
-model_cls.export(format="coreml") # Exports yolo11n-cls.mlpackage
+model_cls.export(format="coreml")  # Exports yolo11n-cls.mlpackage
 
 # Pose estimation model (YOLO11n-Pose)
 model_pose = YOLO("yolo11n-pose.pt")
-model_pose.export(format="coreml") # Exports yolo11n-pose.mlpackage
+model_pose.export(format="coreml")  # Exports yolo11n-pose.mlpackage
 
 # OBB (Oriented Bounding Box) model (YOLO11n-OBB)
 model_obb = YOLO("yolo11n-obb.pt")
-model_obb.export(format="coreml") # Exports yolo11n-obb.mlpackage
+model_obb.export(format="coreml")  # Exports yolo11n-obb.mlpackage
 
 # For more details on export options, see: https://docs.ultralytics.com/modes/export/
 ```

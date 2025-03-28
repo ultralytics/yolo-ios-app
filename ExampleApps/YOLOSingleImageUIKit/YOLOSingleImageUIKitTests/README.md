@@ -12,7 +12,7 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute the complete test suite, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
--   `yolo11x-seg.mlpackage`: An [Ultralytics YOLO11](../models/yolo11.md) segmentation model.
+- `yolo11x-seg.mlpackage`: An [Ultralytics YOLO11](../models/yolo11.md) segmentation model.
 
 **Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from version control to keep repository size manageable.
 
@@ -40,9 +40,9 @@ Follow these steps carefully:
 
 1.  Drag and drop the generated `yolo11x-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    -   Ensure the checkbox next to the **`YOLO-Single-Image-UIKit`** target is checked. This is crucial.
-    -   You may optionally check the `YOLO-Single-Image-UIKitTests` target as well, but including it only in the test target is insufficient.
-    -   Select the "Create folder references" option (indicated by a blue folder icon) for better project organization.
+    - Ensure the checkbox next to the **`YOLO-Single-Image-UIKit`** target is checked. This is crucial.
+    - You may optionally check the `YOLO-Single-Image-UIKitTests` target as well, but including it only in the test target is insufficient.
+    - Select the "Create folder references" option (indicated by a blue folder icon) for better project organization.
 3.  Click "Finish".
 
 Consider placing the model file within a "Models" group in your Xcode project for clarity.
@@ -55,17 +55,17 @@ The reason the model must be part of the main application target is that the YOL
 
 These unit tests are designed to verify several key aspects of the application:
 
--   **Model Handling**: Correct initialization and loading of the Core ML model.
--   **Preprocessing**: Accurate image preprocessing steps, including orientation correction.
--   **Inference**: Validation of the inference results against expected outputs (when models are present).
--   **UI**: Basic functionality checks for relevant UI components.
+- **Model Handling**: Correct initialization and loading of the Core ML model.
+- **Preprocessing**: Accurate image preprocessing steps, including orientation correction.
+- **Inference**: Validation of the inference results against expected outputs (when models are present).
+- **UI**: Basic functionality checks for relevant UI components.
 
 #### Running Tests Without Models
 
-By default, the test suite is configured to run *without* requiring the actual model files. This is controlled by the `SKIP_MODEL_TESTS` flag within the test code, which is set to `true`.
+By default, the test suite is configured to run _without_ requiring the actual model files. This is controlled by the `SKIP_MODEL_TESTS` flag within the test code, which is set to `true`.
 
--   **Benefits**: This allows developers to quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key.
--   **Limitations**: Tests that specifically depend on running inference with the model will be skipped.
+- **Benefits**: This allows developers to quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key.
+- **Limitations**: Tests that specifically depend on running inference with the model will be skipped.
 
 #### Running Tests With Models
 

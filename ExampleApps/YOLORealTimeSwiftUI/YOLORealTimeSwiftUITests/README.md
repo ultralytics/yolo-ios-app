@@ -10,7 +10,7 @@ This directory contains unit tests for the YOLO RealTime SwiftUI example applica
 
 To execute the complete test suite, including those involving model inference, you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
--   `yolo11n-obb.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection.
+- `yolo11n-obb.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection.
 
 **Note**: This model file is not included in the repository due to its size.
 
@@ -26,7 +26,7 @@ from ultralytics import YOLO
 model = YOLO("yolo11n-obb.pt")
 
 # Export the model to Core ML format
-model.export(format="coreml") # Creates yolo11n-obb.mlpackage
+model.export(format="coreml")  # Creates yolo11n-obb.mlpackage
 ```
 
 ### Adding Model Files to the Project
@@ -37,10 +37,10 @@ Follow these steps to add the model file correctly within Xcode:
 
 1.  Drag and drop the `yolo11n-obb.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    -   Ensure the **"YOLO-RealTime-SwiftUI"** target checkbox is **checked**.
-    -   Optionally, check the "YOLO-RealTime-SwiftUITests" target, but the main target is essential.
-    -   Select the **"Create folder references"** option (indicated by a blue folder icon). This helps maintain the project structure.
-    -   Ensure **"Copy items if needed"** is checked.
+    - Ensure the **"YOLO-RealTime-SwiftUI"** target checkbox is **checked**.
+    - Optionally, check the "YOLO-RealTime-SwiftUITests" target, but the main target is essential.
+    - Select the **"Create folder references"** option (indicated by a blue folder icon). This helps maintain the project structure.
+    - Ensure **"Copy items if needed"** is checked.
 3.  Click "Finish".
 
 For better organization, consider placing the model file within a "Models" group in your project structure. Refer to Apple's guide on [adding resources to your project](https://developer.apple.com/documentation/xcode/adding-resources-to-your-project) for more details.
@@ -53,10 +53,10 @@ The application framework specifically looks for models within the main applicat
 
 These tests aim to verify several aspects of the application:
 
--   **Model Initialization**: Checks if the Core ML model can be loaded correctly.
--   **Camera Functionality**: Ensures the camera preview starts and functions as expected within the [SwiftUI](https://developer.apple.com/xcode/swiftui/) view.
--   **UI Layout**: Verifies basic UI elements are present and responsive.
--   **Inference (Optional)**: Performs basic checks on the model's inference output if the model is available.
+- **Model Initialization**: Checks if the Core ML model can be loaded correctly.
+- **Camera Functionality**: Ensures the camera preview starts and functions as expected within the [SwiftUI](https://developer.apple.com/xcode/swiftui/) view.
+- **UI Layout**: Verifies basic UI elements are present and responsive.
+- **Inference (Optional)**: Performs basic checks on the model's inference output if the model is available.
 
 #### Running Tests Without Models (Default)
 

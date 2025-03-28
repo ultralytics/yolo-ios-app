@@ -12,7 +12,7 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
--   `yolo11n-seg.mlpackage` - An Ultralytics YOLO11 [segmentation model](../tasks/segment.md).
+- `yolo11n-seg.mlpackage` - An Ultralytics YOLO11 [segmentation model](../tasks/segment.md).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
@@ -28,7 +28,7 @@ from ultralytics import YOLO
 model = YOLO("yolo11n-seg.pt")
 
 # Export the model to Core ML format
-model.export(format="coreml") # Creates yolo11n-seg.mlpackage
+model.export(format="coreml")  # Creates yolo11n-seg.mlpackage
 ```
 
 For more details on exporting models, refer to the [Ultralytics Export documentation](../modes/export.md).
@@ -41,9 +41,9 @@ Follow these steps to add the model file correctly using [Xcode](https://develop
 
 1.  Drag and drop the `yolo11n-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    -   Ensure the checkbox for the **`YOLO-Single-Image-SwiftUI`** target (the main app) is selected.
-    -   You may optionally select the `YOLO-Single-Image-SwiftUITests` target, but the main target is essential.
-    -   Select the "Create folder references" option (this usually shows a blue folder icon).
+    - Ensure the checkbox for the **`YOLO-Single-Image-SwiftUI`** target (the main app) is selected.
+    - You may optionally select the `YOLO-Single-Image-SwiftUITests` target, but the main target is essential.
+    - Select the "Create folder references" option (this usually shows a blue folder icon).
 3.  Click "Finish".
 
 For better project organization, consider placing the model file within a "Models" group in your Xcode project structure.
@@ -54,10 +54,10 @@ For better project organization, consider placing the model file within a "Model
 
 These [unit tests](https://en.wikipedia.org/wiki/Unit_testing) verify several key aspects of the application:
 
--   **Model Initialization**: Checks if the Core ML model loads correctly.
--   **SwiftUI Views**: Ensures that the [SwiftUI](https://developer.apple.com/xcode/swiftui/) views render and handle layout as expected.
--   **Image Selection**: Validates the functionality for selecting images from the device.
--   **Inference Handling**: Tests how the application processes and displays the inference results from the YOLO model.
+- **Model Initialization**: Checks if the Core ML model loads correctly.
+- **SwiftUI Views**: Ensures that the [SwiftUI](https://developer.apple.com/xcode/swiftui/) views render and handle layout as expected.
+- **Image Selection**: Validates the functionality for selecting images from the device.
+- **Inference Handling**: Tests how the application processes and displays the inference results from the YOLO model.
 
 #### Running Tests Without Models (CI/Basic Checks)
 

@@ -27,12 +27,12 @@ The YOLO Swift Package provides an easy way to integrate [Core ML](https://www.u
 
 ## 📋 Requirements
 
-| Platform | Minimum Version | Notes                                                                 |
-| -------- | --------------- | --------------------------------------------------------------------- |
-| iOS      | 13.0+           | Suitable for iPhone / iPad                                            |
-| macOS    | 10.15+          | Camera functionality may depend on hardware availability              |
+| Platform | Minimum Version | Notes                                                                                                    |
+| -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
+| iOS      | 13.0+           | Suitable for iPhone / iPad                                                                               |
+| macOS    | 10.15+          | Camera functionality may depend on hardware availability                                                 |
 | tvOS     | 13.0+           | Consider performance implications of [Core ML](https://developer.apple.com/documentation/coreml) on tvOS |
-| watchOS  | 6.0+            | Limited use cases due to hardware constraints                         |
+| watchOS  | 6.0+            | Limited use cases due to hardware constraints                                                            |
 
 - **Swift 5.7+**: Required for modern language features.
 - **Xcode 14.0+**: Needed to leverage Core ML and the latest Swift Concurrency features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
@@ -256,7 +256,7 @@ from ultralytics import YOLO
 # Example: Export YOLO11 detection models
 for size in ("n", "s", "m", "l", "x"):
     # Load a YOLO11 PyTorch model
-    model = YOLO(f"yolo11{size}.pt") # Assumes you have the .pt file locally or downloads it
+    model = YOLO(f"yolo11{size}.pt")  # Assumes you have the .pt file locally or downloads it
 
     # Export the PyTorch model to CoreML INT8 format (with NMS for detection)
     # imgsz can be adjusted based on expected input size
@@ -265,7 +265,7 @@ for size in ("n", "s", "m", "l", "x"):
 
 # Example: Export a YOLO11 segmentation model (without CoreML NMS)
 seg_model = YOLO("yolo11n-seg.pt")
-seg_model.export(format="coreml", int8=True, imgsz=[640, 384]) # NMS=False (or omitted) for non-detection tasks
+seg_model.export(format="coreml", int8=True, imgsz=[640, 384])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo11n-seg.mlmodel without NMS")
 
 # Similarly for other tasks:
@@ -277,7 +277,6 @@ print("Exported yolo11n-seg.mlmodel without NMS")
 
 # obb_model = YOLO("yolo11n-obb.pt")
 # obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
-
 ```
 
 For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).

@@ -26,11 +26,11 @@ mkdir -p Tests/YOLOTests/Resources/
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
--   `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
--   `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
--   `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
--   `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
--   `yolo11n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
+- `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
+- `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
+- `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
+- `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
+- `yolo11n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ### 3. Methods to Acquire Model Files
 

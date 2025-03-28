@@ -1,10 +1,13 @@
-<a href="https://www.ultralytics.com/" target="_blank"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
+<a href="https://www.ultralytics.com/"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
-# 🚀 Ultralytics YOLO iOS App
+# Ultralytics YOLO iOS App
 
-[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml) <a href="https://discord.com/invite/ultralytics"><img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue"></a> <a href="https://community.ultralytics.com/"><img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue"></a> <a href="https://reddit.com/r/ultralytics"><img alt="Ultralytics Reddit" src="https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue"></a>
+[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
+[![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
+[![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
+[![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-The Yolo-iOS-App is designed to make it easy to try out the YOLO model [YOLO11 object detection models](https://github.com/ultralytics/ultralytics) on your Apple device.
+The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) object detection models directly on your Apple device. Explore real-time detection capabilities with various models.
 
 <div align="center">
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="https://github.com/ultralytics/ultralytics/assets/26833433/fd3c8a92-fec0-4253-b4ac-ee94f5ced3fb" alt="Ultralytics YOLO iOS App previews"></a>
@@ -25,132 +28,147 @@ The Yolo-iOS-App is designed to make it easy to try out the YOLO model [YOLO11 o
   <br>
   <br>
   <a href="https://apps.apple.com/us/app/idetection/id1452689527" style="text-decoration:none;">
-    <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
+    <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Download on the Apple App Store"></a>
 </div>
 
-## 🛠 Quickstart: Setting Up the Ultralytics YOLO iOS App
+## 🛠️ Quickstart: Setting Up the Ultralytics YOLO iOS App
 
-Getting started with the Ultralytics YOLO iOS App is straightforward. Follow these steps to install the app on your iOS device.
+Getting started with the Ultralytics YOLO iOS App is straightforward. Follow these steps to install and run the app on your iOS device.
 
 ### Prerequisites
 
-Ensure you have the following before you start:
+Ensure you have the following before you begin:
 
-- **Xcode:** The Ultralytics YOLO iOS App requires Xcode installed on your macOS machine. Download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-
-- **An iOS Device:** For testing the app, you'll need an iPhone or iPad running [iOS 14.0](https://www.apple.com/ios/ios-18/) or later.
-
-- **An Apple Developer Account:** A free Apple Developer account will suffice for device testing. Sign up [here](https://developer.apple.com/) if you haven't already.
+-   **Xcode:** The app requires [Xcode](https://developer.apple.com/xcode/) installed on your macOS machine. You can download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
+-   **iOS Device:** An iPhone or iPad running [iOS 14.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
+-   **Apple Developer Account:** A free [Apple Developer account](https://developer.apple.com/programs/enroll/) is sufficient for testing on your device.
 
 ### Installation
 
-1. **Clone the Repository:**
+1.  **Clone the Repository:**
+    Use `git` to clone the repository to your local machine.
 
-   ```sh
-   git clone https://github.com/ultralytics/yolo-ios-app.git
-   ```
+    ```sh
+    git clone https://github.com/ultralytics/yolo-ios-app.git
+    cd yolo-ios-app # Navigate into the cloned directory
+    ```
 
-2. **Open the Project in Xcode:**
+2.  **Open the Project in Xcode:**
+    Locate the `YOLO.xcodeproj` file within the cloned directory and open it using Xcode.
 
-   Navigate to the cloned directory and open the `YOLO.xcodeproj` file.
+    <p align="center">
+    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="Xcode project structure showing YOLO.xcodeproj">
+    </p>
 
-   <p align="center">
-   <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="XCode load project screenshot">
-   </p>
+    In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
-   In Xcode, go to the project's target settings and choose your Apple Developer account under the "Signing & Capabilities" tab.
+3.  **Add YOLO11 Models:**
+    You need [CoreML](https://developer.apple.com/documentation/coreml) format models to run inference. Export INT8 quantized CoreML models using the `ultralytics` Python package (install via `pip install ultralytics`) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `YOLO/{TaskName}Models` directory within the Xcode project (e.g., `YOLO/DetectModels`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models.
 
-3. **Add YOLO11 Models to the Project:**
+    ```python
+    from ultralytics import YOLO
 
-   Export CoreML INT8 models using the `ultralytics` Python package (with `pip install ultralytics`), or download them from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place these in the `YOLO/{TaskName}Models` directory as seen in the Xcode screenshot below.
+    # Loop through different YOLO11 model sizes
+    for size in ("n", "s", "m", "l", "x"):
+        # Load a YOLO11 PyTorch model for detection
+        model = YOLO(f"yolo11{size}.pt")
 
-```
-from ultralytics import YOLO
-# Export for all YOLO11 model sizes
-for size in ("n", "s", "m", "l", "x"):
-    # Load a YOLO11 PyTorch model
-    model = YOLO(f"yolo11{size}.pt")
+        # Export the model to CoreML INT8 format with NMS layers (recommended for detection)
+        # Ensure imgsz matches expected input size, e.g., [640, 384] for landscape video
+        model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
 
-    # Export the PyTorch model to CoreML INT8 format (with NMS layers)
-    model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+        # Example exports for other tasks (segmentation, classification, pose, OBB)
+        # Note: For tasks other than detection, export without NMS (nms=False)
+        # Segmentation
+        # seg_model = YOLO(f"yolo11{size}-seg.pt")
+        # seg_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
 
-    # You can specify different task models as follows:
-    # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
-    # model = YOLO(f"yolo11{size}-cls.pt")   # classification
-    # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
-    # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
+        # Classification
+        # cls_model = YOLO(f"yolo11{size}-cls.pt")
+        # cls_model.export(format="coreml", int8=True, nms=False, imgsz=[224, 224]) # Typical classification size
 
-    # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-    # model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
-```
+        # Pose Estimation
+        # pose_model = YOLO(f"yolo11{size}-pose.pt")
+        # pose_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
 
-4. **Run the Ultralytics YOLO iOS App:**
+        # Oriented Bounding Box (OBB)
+        # obb_model = YOLO(f"yolo11{size}-obb.pt")
+        # obb_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
+    ```
 
-   Connect your iOS device and select it as the run target. Press the Run button to install the app on your device.
+4.  **Run the App:**
+    Connect your iOS device via USB. Select your device from the list of run targets in Xcode (next to the stop button). Click the Run button (▶) to build and install the app on your device.
 
-   <p align="center">
-   <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Ultralytics YOLO XCode screenshot">
-   </p>
+    <p align="center">
+    <img width="100%" src="https://github.com/ultralytics/ultralytics/assets/26833433/d2c6a7b7-fa8b-4130-a57f-4241f7a42ff2" alt="Xcode interface showing run target selection and model directories">
+    </p>
 
 ## 🚀 Usage
 
-The Ultralytics YOLO iOS App is designed to be intuitive:
+The Ultralytics YOLO iOS App offers an intuitive user experience:
 
-- **Real-Time Detection:** Launch the app and aim your camera at objects to detect them instantly.
-- **Frexible Tasks** Select the task you want to use, such as detect, segment, pause, etc.
-- **Multiple AI Models:** Select from a range of Ultralytics YOLO11 models, from YOLO11n 'nano' to YOLO11x 'x-large'. You can also deploy and use custom models that you have trained and exported.
+-   **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [segmentation](https://docs.ultralytics.com/tasks/segment/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
+-   **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models.
+-   **Multiple AI Models:** Choose from a range of pre-loaded Ultralytics YOLO11 models, from the lightweight YOLO11n ('nano') to the powerful YOLO11x ('x-large'). You can also deploy and use [custom models](https://docs.ultralytics.com/hub/quickstart/) trained on your own data after exporting them to CoreML format.
 
 ## 🧪 Testing
 
-The YOLO iOS App includes comprehensive testing to ensure reliability:
+The YOLO iOS App includes a suite of unit and integration tests to ensure functionality and reliability.
 
-### Model Testing
+### Model Testing Configuration
 
-The app has been designed with testability in mind. Tests can be run with or without CoreML models:
+The test suite is designed to run with or without the actual CoreML model files:
 
-- When `SKIP_MODEL_TESTS = true`, all tests not requiring models will run successfully
-- To run full test suite, set `SKIP_MODEL_TESTS = false` and add model files to the project
+-   **Without Models:** Set `SKIP_MODEL_TESTS = true` in the test target's build settings. This allows running tests that don't require model inference (e.g., UI tests, utility function tests).
+-   **With Models:** Set `SKIP_MODEL_TESTS = false` and ensure the required model files are added to the project in their respective directories. This enables the full test suite, including inference tests.
 
-### Required Models for Testing
+### Required Models for Full Testing
 
-To enable full test coverage, you'll need:
+To execute the complete test suite, include the following **INT8 quantized CoreML models** in your project:
 
-- **Detection model**: `yolo11n.mlpackage`
-- **Segmentation model**: `yolo11n-seg.mlpackage`
-- **Pose estimation model**: `yolo11n-pose.mlpackage`
-- **OBB model**: `yolo11n-obb.mlpackage`
-- **Classification model**: `yolo11n-cls.mlpackage`
+-   **Detection:** `yolo11n.mlpackage` (in `YOLO/DetectModels`)
+-   **Segmentation:** `yolo11n-seg.mlpackage` (in `YOLO/SegmentModels`)
+-   **Pose Estimation:** `yolo11n-pose.mlpackage` (in `YOLO/PoseModels`)
+-   **OBB Detection:** `yolo11n-obb.mlpackage` (in `YOLO/OBBModels`)
+-   **Classification:** `yolo11n-cls.mlpackage` (in `YOLO/ClassifyModels`)
 
-These files should be placed in the appropriate model directories within the project.
+Export these using the Python script provided earlier or download them from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
 
-### Running Tests
+### Running Tests in Xcode
 
-1. Open the Xcode project
-2. Select the test navigator tab
-3. Choose which tests to run (individual tests or full test suite)
-4. Press the Run button to execute tests
+1.  Open the `YOLO.xcodeproj` project in Xcode.
+2.  Navigate to the Test Navigator tab (diamond icon) in the left sidebar.
+3.  Select the tests you wish to run (e.g., the entire `YOLOTests` suite or individual tests).
+4.  Click the Run button next to your selection to execute the tests.
 
-See the test files in each example app directory for specific test implementations.
+Review the test files within the `YOLOTests` directory for specific implementation details.
 
 ## 💡 Contribute
 
-We warmly welcome your contributions to Ultralytics' open-source projects! Your support and contributions significantly impact. Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing/), and share your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). A massive thank you 🙏 to everyone who contributes!
+Contributions power the open-source community! We welcome your involvement in improving Ultralytics projects. Your efforts, whether reporting bugs, suggesting features, or submitting code, are greatly appreciated.
 
-<a href="https://github.com/ultralytics/yolov5/graphs/contributors">
-<img width="100%" src="https://github.com/ultralytics/assets/raw/main/im/image-contributors.png" alt="Ultralytics open-source contributors"></a>
+-   Check out our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) for detailed instructions.
+-   Share your feedback and insights through our brief [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey).
+-   A big thank you 🙏 to all our contributors!
+
+[![Ultralytics open-source contributors](https://raw.githubusercontent.com/ultralytics/assets/main/im/image-contributors.png)](https://github.com/ultralytics/ultralytics/graphs/contributors)
 
 ## 📄 License
 
-Ultralytics offers two licensing options:
+Ultralytics provides two licensing options to accommodate different use cases:
 
-- **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/license) open-source license, perfect for academics, researchers, and enthusiasts. It encourages sharing knowledge and collaboration. See the [LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE) file for details.
-
-- **Enterprise License**: Designed for commercial use, this license permits integrating Ultralytics software into proprietary products and services. For commercial use, please contact us through [Ultralytics Licensing](https://www.ultralytics.com/license).
+-   **AGPL-3.0 License:** Ideal for students, researchers, and enthusiasts who want to experiment and share their work openly. This [OSI-approved](https://opensource.org/license) license promotes collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for full terms.
+-   **Enterprise License:** Suitable for commercial applications. This license allows integrating Ultralytics software into proprietary products and services without the open-source requirements of AGPL-3.0. If your project requires an Enterprise License, please contact us via [Ultralytics Licensing](https://www.ultralytics.com/license).
 
 ## 🤝 Contact
 
-- Submit Ultralytics bug reports and feature requests via [GitHub Issues](https://github.com/ultralytics/yolo-ios-app/issues).
-- Join our [Discord](https://discord.com/invite/ultralytics) for assistance, questions, and discussions with the community and team!
+For bug reports, feature requests, and contributions related to the YOLO iOS App:
+
+-   Submit issues on [GitHub Issues](https://github.com/ultralytics/yolo-ios-app/issues).
+
+For general questions, support, and discussions about Ultralytics YOLO models and software:
+
+-   Join our vibrant community on [Discord](https://discord.com/invite/ultralytics).
 
 <br>
 <div align="center">

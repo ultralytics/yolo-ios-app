@@ -1,175 +1,293 @@
-# YOLO Package:Simple, Powerful YOLO Integration in Swift
+<a href="https://www.ultralytics.com/"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
-YOLO Package is a Swift package that makes it easy to integrate Core ML-exported YOLO models into your app. It supports multiple tasks such as Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. With minimal code, you can add YOLO-based features to your app and even use real-time inference with camera streams in both SwiftUI and UIKit
+# YOLO Swift Package: Simple, Powerful YOLO Integration in Swift
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [YOLO Class (Inference)](#yolo-class)
-  - [YOLOCamera / YOLOView (Real-Time Camera Inference)](#yolocamera--yoloview)
-- [Contributing](contributing)
-- [License](license)
+The YOLO Swift Package provides an easy way to integrate [Core ML](https://www.ultralytics.com/glossary/core-ml)-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://www.ultralytics.com/glossary/object-detection), [Instance Segmentation](https://www.ultralytics.com/glossary/instance-segmentation), [Image Classification](https://www.ultralytics.com/glossary/image-classification), [Pose Estimation](https://www.ultralytics.com/glossary/pose-estimation), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
 
-## Features
+[![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
+[![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
+[![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
+[![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code in Swift.
+- [✨ Features](#-features)
+- [📋 Requirements](#-requirements)
+- [🚀 Installation](#-installation)
+- [💡 Usage](#-usage)
+  - [YOLO Class (Inference)](#yolo-class-inference)
+  - [YOLOCamera / YOLOView (Real-Time Camera Inference)](#yolocamera--yoloview-real-time-camera-inference)
+- [🤝 Contributing](contributing)
+- [📜 License](license)
 
-✅ **Multiple Task Support**: Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
+## ✨ Features
 
-✅ **SwiftUI / UIKit Integration**: Pre-built view components for real-time camera inference.
+- ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
+- ✅ **Multiple Task Support**: Handles Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
+- ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
+- ✅ **Lightweight & Extensible**: Installs quickly via [Swift Package Manager](https://www.swift.org/package-manager/) with no external dependencies beyond Apple's frameworks.
 
-✅ **Lightweight & Extensible**: Installs quickly via Swift Package Manager with no extra dependencies.
+## 📋 Requirements
 
-## Requirements
+| Platform | Minimum Version | Notes                                                                 |
+| -------- | --------------- | --------------------------------------------------------------------- |
+| iOS      | 13.0+           | Suitable for iPhone / iPad                                            |
+| macOS    | 10.15+          | Camera functionality may depend on hardware availability              |
+| tvOS     | 13.0+           | Consider performance implications of [Core ML](https://developer.apple.com/documentation/coreml) on tvOS |
+| watchOS  | 6.0+            | Limited use cases due to hardware constraints                         |
 
-| Platform | Minimum Version | Notes                                         |
-| -------- | --------------- | --------------------------------------------- |
-| iOS      | 13.0+           | Suitable for iPhone / iPad                    |
-| macOS    | 10.15+          | Camera functionality may be unavailable       |
-| tvOS     | 13.0+           | Consider performance with Core ML on tvOS     |
-| watchOS  | 6.0+            | Limited use cases due to hardware constraints |
+- **Swift 5.7+**: Required for modern language features.
+- **Xcode 14.0+**: Needed to leverage Core ML and the latest Swift Concurrency features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
 
-** Swift 5.7+**
-
-Built and managed via Swift Package Manager.
-
-** Xcode 14.0+**
-
-Required to leverage Core ML and the latest Swift Concurrency features.
-
-## Installation
+## 🚀 Installation
 
 ### Swift Package Manager
 
-In Xcode, go to File > Add Packages... and enter the URL of this repository:
+In Xcode, navigate to `File > Add Packages...` and enter the repository URL:
 
 ```
+https://github.com/ultralytics/yolo-ios-app.git
+```
+
+Select the repository when it appears. Choose the `main` branch or the latest version tag.
+
+Then, add the `YOLO` product to your app's target in the "Frameworks, Libraries, and Embedded Content" section, or specify it in your `Package.swift` file:
+
+```swift
+// In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git")
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", branch: "main") // Or specify a version tag
 ]
-```
 
-Then, specify it in your target:
-
-```
+// In your target's dependencies
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "YOLO", package: "YOLO")
+        .product(name: "YOLO", package: "yolo-ios-app") // Use the package name defined above
     ]
 )
 ```
 
-Once added, YOLOSwift will be automatically integrated into your project
+Once added, the YOLO Swift Package will be automatically integrated into your project.
 
-## Usage
+## 💡 Usage
 
-YOLO Package primarily provides two main components: the **YOLO class** and **YOLOCamera / YOLOView**.
+The YOLO Swift Package primarily provides two main components: the **`YOLO` class** for inference and **`YOLOCamera` / `YOLOView`** for real-time camera integration.
 
 ### Import
 
-```
+Start by importing the package in your Swift files:
+
+```swift
 import YOLO
 ```
 
-### YOLO Class
+### YOLO Class (Inference)
 
-**(Inference)**
+Use the `YOLO` class for performing inference on static images (`UIImage`, `CIImage`, `CGImage`), image file paths, or URLs. It supports various tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
 
-Use the YOLO class for inference on static images, image files, or other UIImage inputs. It supports tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection. Simply provide a valid YOLOv8 model (either .mlmodelc or a local path/string).
+Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format (either a compiled `.mlmodelc` directory included in your app bundle or a path to an uncompiled `.mlmodel` file).
 
+```swift
+import YOLO
+import UIKit // Or AppKit for macOS
+
+// --- Initialization ---
+// Initialize with a model file name included in the app bundle (automatically finds .mlmodelc)
+guard let model = try? YOLO(modelFileName: "yolo11n", task: .detect) else {
+    fatalError("Failed to load YOLO model.")
+}
+
+// Or initialize with a specific path to a .mlmodel file
+// let modelPath = Bundle.main.path(forResource: "yolo11n", ofType: "mlmodel")!
+// guard let model = try? YOLO(modelPath: modelPath, task: .detect) else {
+//     fatalError("Failed to load YOLO model.")
+// }
+
+
+// --- Inference ---
+// Load an image (replace with your image loading logic)
+guard let image = UIImage(named: "your_image_name") else { // Or load CGImage, CIImage
+    fatalError("Failed to load image.")
+}
+
+// Perform inference
+do {
+    let results = try model.predict(source: image) // Can also accept CGImage, CIImage, file path String, or URL
+
+    // Process results based on the task
+    switch model.task {
+    case .detect:
+        // Access detection results (bounding boxes, confidences, classes)
+        for result in results {
+            print("Detected object: \(result.label) with confidence \(result.confidence) at \(result.rect)")
+        }
+    case .segment:
+        // Access segmentation results (masks, bounding boxes, etc.)
+        // Note: Mask processing might require additional steps depending on your needs.
+        for result in results {
+            print("Segmented object: \(result.label) with mask area...") // Access result.mask
+        }
+    // Add cases for .classify, .pose, .obb as needed
+    default:
+        print("Processing results for task: \(model.task)")
+    }
+
+} catch {
+    print("Error performing inference: \(error)")
+}
 ```
-let model = YOLO("yolo11n", task: .detect) # bundle file name, local path
-let result = model(image) # SwifUIImage, UIImage, CIImage, CGImage, bundle name, local path, remote URL
-```
 
-### YOLOCamera / YOLOView
+### YOLOCamera / YOLOView (Real-Time Camera Inference)
 
-**(Real-Time Camera Inference)**
+The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) components for real-time inference using the device's camera stream. Add these views to your layout, and they handle the camera input and on-device model inference automatically.
 
-YOLO Package also provides SwiftUI and UIKit components for real-time inference on camera streams. Simply add these views to your layout, and the camera input + on-device model inference will be handled automatically.
+#### SwiftUI Example
 
-SwiftUI Example
-
-```
-import YOLOSwift
+```swift
+import YOLO // Ensure YOLO is imported
 import SwiftUI
 
 struct CameraView: View {
     var body: some View {
+        // Use YOLOCamera for real-time inference in SwiftUI
         YOLOCamera(
-            modelPathOrName: "yolo11n-seg",
-            task: .segment,
-            cameraPosition: .back
+            modelFileName: "yolo11n-seg", // Model file name in bundle
+            task: .segment,             // Specify the task
+            cameraPosition: .back       // Use the back camera
+            // Optional confidenceThreshold parameter can be added here
         )
-        .edgesIgnoringSafeArea(.all)
+        .edgesIgnoringSafeArea(.all) // Optional: make the view full-screen
+        // Add error handling if needed
+        .onAppear {
+            // Request camera permissions if not already granted
+        }
     }
 }
 ```
 
-UIKit Example
+#### UIKit Example
 
-```
-import YOLOSwift
+```swift
+import YOLO // Ensure YOLO is imported
 import UIKit
+import AVFoundation // Needed for camera permission check
 
 class CameraViewController: UIViewController {
+    var yoloView: YOLOView?
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupCameraView()
+    }
 
-        let yoloView = YOLOView(
-            frame: view.bounds,
-            modelPathOrName: "yolo11n-seg",
-            task: .segment
-        )
-        view.addSubview(yoloView)
+    func setupCameraView() {
+        // Check for camera permissions
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                if granted {
+                    // Initialize YOLOView on the main thread after permission check
+                    self.yoloView = YOLOView(
+                        frame: self.view.bounds,
+                        modelFileName: "yolo11n-seg", // Model file name in bundle
+                        task: .segment,             // Specify the task
+                        cameraPosition: .back       // Use the back camera
+                        // Optional confidenceThreshold parameter can be added here
+                    )
+                    // Handle potential initialization errors
+                    if let yoloView = self.yoloView {
+                        yoloView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                        self.view.addSubview(yoloView)
+                        // Start the camera session if needed (often handled internally by YOLOView)
+                    } else {
+                        print("Error: Failed to initialize YOLOView.")
+                        // Show an error message to the user
+                    }
+                } else {
+                    print("Error: Camera permission denied.")
+                    // Show an error message or guide the user to settings
+                }
+            }
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Stop the camera session when the view disappears (often handled internally)
+        yoloView?.stopSession()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Restart the camera session if needed (often handled internally)
+        yoloView?.startSession()
     }
 }
 ```
 
-In just a few lines of code, you can bring YOLO-based, real-time inference to your application’s camera feed.
+With just a few lines of code, you can integrate real-time, YOLO-based inference into your application’s camera feed. For more advanced use cases, explore the customization options available for these components.
 
-## How to Obtain YOLO CoreML Models
+## How to Obtain YOLO Core ML Models
 
-You can obtain YOLO CoreML models using either of the following methods:
+You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) models compatible with this package in Core ML format using two methods:
 
-### Download from GitHub Release Assets
+### 1. Download Pre-Exported Models
 
-You can download the CoreML INT8 models directly from the official YOLO GitHub release page.
+You can download pre-exported Core ML models (compiled `.mlmodelc` directories or `.mlmodel` files) directly from the Assets section of the [Ultralytics YOLO releases page](https://github.com/ultralytics/ultralytics/releases). Look for files ending in `.mlpackage` or `.mlmodel`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
 
-Download YOLO CoreML Models (GitHub)
+[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/ultralytics/releases)
 
-Place the downloaded models into your Xcode project directory.
+After downloading, add the `.mlmodel` file or the `.mlmodelc` directory (often within an `.mlpackage`) to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
 
-### Export using Python
+### 2. Export Using the Ultralytics Python Package
 
-You can also export CoreML INT8 models yourself using the ultralytics Python package.
+You can export models to the Core ML format yourself using the `ultralytics` Python package. This gives you more control over the export process, such as choosing different model sizes or export settings.
 
-First, install the required package:
+First, install the `ultralytics` package:
 
+```bash
 pip install ultralytics
-
-Then, run the following Python script to export the desired models:
-
 ```
+
+Then, use the following Python script to export your desired [YOLO11](https://docs.ultralytics.com/models/yolo11/) models (or other YOLO versions like [YOLOv8](https://docs.ultralytics.com/models/yolov8/)). The example below exports YOLO11 detection models in various sizes to Core ML INT8 format, including [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) for detection models.
+
+```python
 from ultralytics import YOLO
-# Export for all YOLO11 model sizes
+
+# Example: Export YOLO11 detection models
 for size in ("n", "s", "m", "l", "x"):
     # Load a YOLO11 PyTorch model
-    model = YOLO(f"yolo11{size}.pt")
+    model = YOLO(f"yolo11{size}.pt") # Assumes you have the .pt file locally or downloads it
 
-    # Export the PyTorch model to CoreML INT8 format (with NMS layers)
+    # Export the PyTorch model to CoreML INT8 format (with NMS for detection)
+    # imgsz can be adjusted based on expected input size
     model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+    print(f"Exported yolo11{size}.mlmodel with NMS")
 
-    # You can specify different task models as follows:
-    # model = YOLO(f"yolo11{size}-seg.pt")   # segmentation
-    # model = YOLO(f"yolo11{size}-cls.pt")   # classification
-    # model = YOLO(f"yolo11{size}-pose.pt")  # pose estimation
-    # model = YOLO(f"yolo11{size}-obb.pt")   # oriented bounding box
+# Example: Export a YOLO11 segmentation model (without CoreML NMS)
+seg_model = YOLO("yolo11n-seg.pt")
+seg_model.export(format="coreml", int8=True, imgsz=[640, 384]) # NMS=False (or omitted) for non-detection tasks
+print("Exported yolo11n-seg.mlmodel without NMS")
 
-    # Export the PyTorch model to CoreML INT8 format (without NMS layers)
-    model.export(format="coreml", int8=True, imgsz=[640, 384]) # For use with the package, do not add NMS to any models other than detection.
+# Similarly for other tasks:
+# cls_model = YOLO("yolo11n-cls.pt")
+# cls_model.export(format="coreml", int8=True, imgsz=[224, 224]) # Classification often uses smaller imgsz
+
+# pose_model = YOLO("yolo11n-pose.pt")
+# pose_model.export(format="coreml", int8=True, imgsz=[640, 384])
+
+# obb_model = YOLO("yolo11n-obb.pt")
+# obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
+
 ```
 
-Note: CoreMLTools' NMS is only applicable to detection models, so models for segment, pose, and obb tasks need to write NMS in Swift. This library includes NMS for these tasks.
+For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
+
+**Important Note on NMS:** The `nms=True` flag during export adds Core ML's built-in Non-Maximum Suppression layers, which is **only applicable to detection models**. For segmentation, pose estimation, and OBB tasks, export with `nms=False` (or omit the argument). This YOLO Swift Package includes optimized Swift implementations of NMS for these other tasks, which are applied automatically after inference. Using `nms=True` for non-detection models may lead to export errors or incorrect behavior.
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/ultralytics/yolo-ios-app). Check the [`contributing`](contributing) guide for more details on how to get involved. We appreciate your help in making this package better! You can also visit the [Ultralytics Docs](https://docs.ultralytics.com/) or join the conversation on [Discord](https://discord.com/invite/ultralytics).
+
+## 📜 License
+
+This project is licensed under the AGPL-3.0 License. See the [`license`](license) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).

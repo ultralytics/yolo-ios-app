@@ -145,7 +145,7 @@ do {
 
 The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) components for real-time inference using the device's camera stream. Add these views to your layout, and they handle the camera input and on-device model inference automatically.
 
-***If you use the real-time camera feature, be sure to add "Privacy - Camera Usage Description" to your app's Info.Plist.**
+**\*If you use the real-time camera feature, be sure to add "Privacy - Camera Usage Description" to your app's Info.Plist.**
 
 #### SwiftUI Example
 

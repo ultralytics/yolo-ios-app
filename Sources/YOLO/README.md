@@ -49,7 +49,7 @@ https://github.com/ultralytics/yolo-ios-app.git
 
 Select the repository when it appears. Choose the `main` branch or the latest version tag.
 
-Next, in the Choose Package Products for yolo-ios-app.git popup, specify your app project in Add to Target and click Add package.
+Next, in the "Choose Package Products for yolo-ios-app.git" popup, specify your app project in Add to Target and click Add package.
 
 If the package has been added to your project, you’re successful.
 

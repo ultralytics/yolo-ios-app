@@ -49,7 +49,13 @@ https://github.com/ultralytics/yolo-ios-app.git
 
 Select the repository when it appears. Choose the `main` branch or the latest version tag.
 
-Then, add the `YOLO` product to your app's target in the "Frameworks, Libraries, and Embedded Content" section, or specify it in your `Package.swift` file:
+Next, in the "Choose Package Products for yolo-ios-app.git" popup, specify your app project in Add to Target and click Add package.
+
+If the package has been added to your project, you’re successful.
+
+(Optional)
+
+Or specify the target in your `Package.swift` file:
 
 ```swift
 // In your Package.swift dependencies array
@@ -139,6 +145,8 @@ do {
 
 The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) components for real-time inference using the device's camera stream. Add these views to your layout, and they handle the camera input and on-device model inference automatically.
 
+**\*If you use the real-time camera feature, be sure to add "Privacy - Camera Usage Description" to your app's Info.Plist.**
+
 #### SwiftUI Example
 
 ```swift
@@ -149,7 +157,7 @@ struct CameraView: View {
     var body: some View {
         // Use YOLOCamera for real-time inference in SwiftUI
         YOLOCamera(
-            modelFileName: "yolo11n-seg", // Model file name in bundle
+            modelPathOrName: "yolo11n-seg", // Model file name in bundle
             task: .segment,             // Specify the task
             cameraPosition: .back       // Use the back camera
             // Optional confidenceThreshold parameter can be added here

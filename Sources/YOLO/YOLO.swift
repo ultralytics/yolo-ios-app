@@ -116,10 +116,10 @@ public class YOLO {
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
     let ciImage = CIImage(image: uiImage)!
     var result = predictor.predictOnImage(image: ciImage)
-    //        if returnAnnotatedImage {
-    //            let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //            result.annotatedImage = annotatedImage
-    //        }
+            if returnAnnotatedImage {
+                let annotatedImage = drawYOLODetections(on: ciImage, result: result)
+                result.annotatedImage = annotatedImage
+            }
     return result
   }
 

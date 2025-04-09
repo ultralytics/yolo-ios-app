@@ -33,7 +33,7 @@ class ModelTableViewCell: UITableViewCell {
   
   private let downloadIconImageView: UIImageView = {
     let imageView = UIImageView(image: UIImage(systemName: "icloud.and.arrow.down"))
-    imageView.tintColor = .systemBlue
+    imageView.tintColor = .white
     imageView.contentMode = .scaleAspectFit
     imageView.translatesAutoresizingMaskIntoConstraints = false
     imageView.isHidden = true

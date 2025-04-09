@@ -20,7 +20,7 @@ import UIKit
 import YOLO
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
-class ViewController: UIViewController {
+class ViewController: UIViewController, YOLOViewDelegate {
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet var View0: UIView!
@@ -118,7 +118,11 @@ class ViewController: UIViewController {
 
     setupTableView()
     setupButtons()
-
+    
+    yoloView.delegate = self
+    yoloView.labelName.isHidden = true
+    yoloView.labelFPS.isHidden = true
+      
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
 
@@ -411,6 +415,9 @@ class ViewController: UIViewController {
       if success {
         print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
+          DispatchQueue.main.async {
+              self.labelName.text = processString(modelName)
+          }
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
         self.downloadProgressLabel.isHidden = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -688,5 +695,25 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 extension ViewController: RPPreviewViewControllerDelegate {
   func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
     previewController.dismiss(animated: true)
+  }
+}
+
+// MARK: - YOLOViewDelegate
+extension ViewController {
+  /// パフォーマンス情報（FPSと推論時間）を受け取るメソッド
+  func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
+    // FPSと推論時間をUIに表示
+    labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+  }
+  
+  /// YOLO検出結果を受け取るメソッド
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
+    // ここで検出結果に基づいて追加の処理を行うことができます
+    // 例：特定のオブジェクトが検出された時の処理、数値の記録など
+    // UI更新は必ずメインスレッドで行います
+    DispatchQueue.main.async {
+      // 検出されたオブジェクト数を更新する例
+      // self.labelName.text = "\(result.boxes.count) objects"
+    }
   }
 }

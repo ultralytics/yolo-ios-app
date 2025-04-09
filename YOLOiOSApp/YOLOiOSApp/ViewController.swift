@@ -28,6 +28,10 @@ class ModelTableViewCell: UITableViewCell {
     label.textAlignment = .center
     label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
     label.translatesAutoresizingMaskIntoConstraints = false
+    // テキストが長い場合に自動的にサイズを縮小する設定
+    label.adjustsFontSizeToFitWidth = true
+    label.minimumScaleFactor = 0.7 // 最小で70%まで縮小
+    label.lineBreakMode = .byClipping // 省略記号ではなく切り取り
     return label
   }()
   
@@ -57,17 +61,19 @@ class ModelTableViewCell: UITableViewCell {
     contentView.addSubview(downloadIconImageView)
     
     NSLayoutConstraint.activate([
-      // 中央にラベルを配置
-      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+      // ラベルを中央に配置
+      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor), // X軸方向の中央配置を追加
       modelNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+      // 左端からのマージンを設定
       modelNameLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
-      modelNameLabel.trailingAnchor.constraint(lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -8),
+      // ダウンロードアイコンとの間にマージンを確保
+      modelNameLabel.trailingAnchor.constraint(lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
       
       // ダウンロードアイコンを右端に配置
-      downloadIconImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+      downloadIconImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
       downloadIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-      downloadIconImageView.widthAnchor.constraint(equalToConstant: 20),
-      downloadIconImageView.heightAnchor.constraint(equalToConstant: 20)
+      downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // やや小さくして場所を確保
+      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16)
     ])
     
     // 選択時の背景ビューを設定
@@ -83,7 +89,25 @@ class ModelTableViewCell: UITableViewCell {
     modelNameLabel.text = modelName
     
     // リモートモデルかつダウンロードされていない場合のみアイコンを表示
-    downloadIconImageView.isHidden = !(isRemote && !isDownloaded)
+    let showDownloadIcon = isRemote && !isDownloaded
+    downloadIconImageView.isHidden = !showDownloadIcon
+    
+    // アイコンの表示状態に基づいてテキストの優先度を調整
+    if showDownloadIcon {
+      // アイコンが表示される場合は常に中央揃え
+      modelNameLabel.textAlignment = .center
+      // アイコンがあるスペースを考慮して横幅を調整
+      modelNameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      // 優先度を設定して中央配置が尊重されるようにする
+      modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    } else {
+      // アイコンがない場合も中央揃え
+      modelNameLabel.textAlignment = .center
+      // 横幅いっぱいに広げる
+      modelNameLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+      // 中央配置を優先
+      modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    }
   }
   
   override func layoutSubviews() {
@@ -92,6 +116,23 @@ class ModelTableViewCell: UITableViewCell {
     // 選択時の背景ビューのサイズを調整 - より少ない余白で枠をテーブルビューに近づける
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
+    }
+    
+    // ラベルの最終調整 - レイアウト後にラベルが正しく表示されるように
+    let iconSpace = downloadIconImageView.isHidden ? 0 : 20 // アイコンのスペース（表示中なら考慮）
+    let availableWidth = bounds.width - 16 - CGFloat(iconSpace) // 左右のマージン(16) + アイコンスペース
+    
+    // ラベルの最大幅を設定し、中央配置が適切に機能するようにする
+    modelNameLabel.preferredMaxLayoutWidth = availableWidth
+    
+    // フレームを微調整して中央揃えを強制
+    let labelFrame = modelNameLabel.frame
+    if downloadIconImageView.isHidden {
+      // アイコンがない場合は完全に中央に
+      modelNameLabel.center.x = bounds.width / 2
+    } else {
+      // アイコンがある場合は、アイコンのスペースを考慮して中央よりやや左に
+        modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
     }
   }
 }

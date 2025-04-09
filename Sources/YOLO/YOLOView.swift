@@ -130,7 +130,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.setUpBoundingBoxViews()
     self.setupUI()
     self.videoCapture.delegate = self
-    start(position: .back)
+//    start(position: .back)
     setupOverlayLayer()
   }
 
@@ -142,11 +142,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public override func awakeFromNib() {
     super.awakeFromNib()
     Task { @MainActor in
+        self.backgroundColor = .red
       setUpOrientationChangeNotification()
       setUpBoundingBoxViews()
       setupUI()
       videoCapture.delegate = self
-      start(position: .back)
+//      start(position: .back)
       setupOverlayLayer()
     }
   }
@@ -199,7 +200,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     func handleSuccess(predictor: Predictor) {
       self.videoCapture.predictor = predictor
       self.activityIndicator.stopAnimating()
-      self.labelName.text = modelName
+      self.labelName.text = processString(modelName)
       completion?(.success(()))
     }
 
@@ -666,7 +667,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func setupUI() {
-    labelName.text = modelName
+    labelName.text = processString(modelName)
     labelName.textAlignment = .center
     labelName.font = UIFont.systemFont(ofSize: 24, weight: .medium)
     labelName.textColor = .white
@@ -769,7 +770,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       let width = bounds.width
       let height = bounds.height
 
-      let topMargin: CGFloat = height * 0.05  // Increased top margin
+      let topMargin: CGFloat = 0
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(
@@ -1144,4 +1145,20 @@ extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
       print("AVCapturePhotoCaptureDelegate Error")
     }
   }
+}
+
+func processString(_ input: String) -> String {
+    let lowercased = input.lowercased()
+    
+    if lowercased.hasPrefix("yolo") {
+        let index = lowercased.index(lowercased.startIndex, offsetBy: 4)
+        let remainder = String(lowercased[index...])
+        return "YOLO" + remainder
+    } else {
+        if let firstChar = lowercased.first {
+            let capitalized = String(firstChar).uppercased() + String(lowercased.dropFirst())
+            return capitalized
+        }
+        return lowercased
+    }
 }

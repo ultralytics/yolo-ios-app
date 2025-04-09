@@ -73,7 +73,7 @@ class ModelTableViewCell: UITableViewCell {
     // 選択時の背景ビューを設定
     let selectedBGView = UIView()
     selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-    selectedBGView.layer.cornerRadius = 8
+    selectedBGView.layer.cornerRadius = 5  // より緩やかなcorner radius
     selectedBGView.layer.masksToBounds = true
     selectedBackgroundView = selectedBGView
   }
@@ -89,9 +89,9 @@ class ModelTableViewCell: UITableViewCell {
   override func layoutSubviews() {
     super.layoutSubviews()
     
-    // 選択時の背景ビューのサイズを調整
+    // 選択時の背景ビューのサイズを調整 - より少ない余白で枠をテーブルビューに近づける
     if let selectedBGView = selectedBackgroundView {
-      selectedBGView.frame = bounds.insetBy(dx: 4, dy: 4)
+      selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
   }
 }
@@ -172,7 +172,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
-    table.layer.cornerRadius = 8
+    table.layer.cornerRadius = 5  // 他の要素のcorner radiusに合わせる
     table.clipsToBounds = true
     return table
   }()
@@ -581,7 +581,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelTableView.isScrollEnabled = false
 
     tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
-    tableViewBGView.layer.cornerRadius = 8
+    tableViewBGView.layer.cornerRadius = 5  // 選択時の枠のcorner radiusに合わせる
     tableViewBGView.clipsToBounds = true
 
     view.addSubview(tableViewBGView)

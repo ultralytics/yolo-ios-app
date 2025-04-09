@@ -147,7 +147,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.setUpBoundingBoxViews()
     self.setupUI()
     self.videoCapture.delegate = self
-//    start(position: .back)
+    start(position: .back)
     setupOverlayLayer()
   }
 
@@ -159,12 +159,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public override func awakeFromNib() {
     super.awakeFromNib()
     Task { @MainActor in
-        self.backgroundColor = .red
       setUpOrientationChangeNotification()
       setUpBoundingBoxViews()
       setupUI()
       videoCapture.delegate = self
-//      start(position: .back)
+      start(position: .back)
       setupOverlayLayer()
     }
   }

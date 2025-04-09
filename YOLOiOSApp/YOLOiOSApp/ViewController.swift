@@ -726,8 +726,11 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     // モデルがリモートかつダウンロードされていないかをチェック
     let isDownloaded = entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
     
+    // processString関数を使ってモデル名を整形
+    let formattedName = processString(entry.displayName)
+    
     // セルを設定
-    cell.configure(with: entry.displayName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
+    cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
     
     return cell
   }
@@ -768,4 +771,6 @@ extension ViewController {
       // self.labelName.text = "\(result.boxes.count) objects"
     }
   }
+  
+
 }

@@ -669,54 +669,54 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     labelName.text = modelName
     labelName.textAlignment = .center
     labelName.font = UIFont.systemFont(ofSize: 24, weight: .medium)
-    labelName.textColor = .black
+    labelName.textColor = .white
     labelName.font = UIFont.preferredFont(forTextStyle: .title1)
     self.addSubview(labelName)
 
     labelFPS.text = String(format: "%.1f FPS - %.1f ms", 0.0, 0.0)
     labelFPS.textAlignment = .center
-    labelFPS.textColor = .black
+    labelFPS.textColor = .white
     labelFPS.font = UIFont.preferredFont(forTextStyle: .body)
     self.addSubview(labelFPS)
 
     labelSliderNumItems.text = "0 items (max 30)"
     labelSliderNumItems.textAlignment = .left
-    labelSliderNumItems.textColor = .black
+    labelSliderNumItems.textColor = .white
     labelSliderNumItems.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderNumItems)
 
     sliderNumItems.minimumValue = 0
     sliderNumItems.maximumValue = 100
     sliderNumItems.value = 30
-    sliderNumItems.minimumTrackTintColor = .darkGray
+    sliderNumItems.minimumTrackTintColor = .white
     sliderNumItems.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
     sliderNumItems.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
     self.addSubview(sliderNumItems)
 
     labelSliderConf.text = "0.25 Confidence Threshold"
     labelSliderConf.textAlignment = .left
-    labelSliderConf.textColor = .black
+    labelSliderConf.textColor = .white
     labelSliderConf.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderConf)
 
     sliderConf.minimumValue = 0
     sliderConf.maximumValue = 1
     sliderConf.value = 0.25
-    sliderConf.minimumTrackTintColor = .darkGray
+    sliderConf.minimumTrackTintColor = .white
     sliderConf.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
     sliderConf.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
     self.addSubview(sliderConf)
 
     labelSliderIoU.text = "0.45 IoU Threshold"
     labelSliderIoU.textAlignment = .left
-    labelSliderIoU.textColor = .black
+    labelSliderIoU.textColor = .white
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
     sliderIoU.minimumValue = 0
     sliderIoU.maximumValue = 1
     sliderIoU.value = 0.45
-    sliderIoU.minimumTrackTintColor = .darkGray
+    sliderIoU.minimumTrackTintColor = .white
     sliderIoU.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
     sliderIoU.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
     self.addSubview(sliderIoU)
@@ -726,7 +726,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.labelSliderIoU.text = "0.45 IoU Threshold"
 
     labelZoom.text = "1.00x"
-    labelZoom.textColor = .black
+    labelZoom.textColor = .white
     labelZoom.font = UIFont.systemFont(ofSize: 14)
     labelZoom.textAlignment = .center
     labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
@@ -735,19 +735,19 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
 
     playButton.setImage(UIImage(systemName: "play.fill", withConfiguration: config), for: .normal)
-    playButton.tintColor = .systemGray
+    playButton.tintColor = .white
     pauseButton.setImage(UIImage(systemName: "pause.fill", withConfiguration: config), for: .normal)
-    pauseButton.tintColor = .systemGray
+    pauseButton.tintColor = .white
     switchCameraButton = UIButton()
     switchCameraButton.setImage(
       UIImage(systemName: "camera.rotate", withConfiguration: config), for: .normal)
-    switchCameraButton.tintColor = .systemGray
+    switchCameraButton.tintColor = .white
     playButton.isEnabled = false
     pauseButton.isEnabled = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
     pauseButton.addTarget(self, action: #selector(pauseTapped), for: .touchUpInside)
     switchCameraButton.addTarget(self, action: #selector(switchCameraTapped), for: .touchUpInside)
-    toolbar.backgroundColor = .darkGray.withAlphaComponent(0.7)
+    toolbar.backgroundColor = .black.withAlphaComponent(0.7)
     self.addSubview(toolbar)
     toolbar.addSubview(playButton)
     toolbar.addSubview(pauseButton)
@@ -761,15 +761,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
     if isLandscape {
-      toolbar.backgroundColor = .clear
-      playButton.tintColor = .darkGray
-      pauseButton.tintColor = .darkGray
-      switchCameraButton.tintColor = .darkGray
+      toolbar.backgroundColor = .black.withAlphaComponent(0.7)
+      playButton.tintColor = .white
+      pauseButton.tintColor = .white
+      switchCameraButton.tintColor = .white
 
       let width = bounds.width
       let height = bounds.height
 
-      let topMargin: CGFloat = 0
+      let topMargin: CGFloat = height * 0.05  // Increased top margin
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(
@@ -849,15 +849,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       switchCameraButton.frame = CGRect(
         x: pauseButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
     } else {
-      toolbar.backgroundColor = .darkGray.withAlphaComponent(0.7)
-      playButton.tintColor = .systemGray
-      pauseButton.tintColor = .systemGray
-      switchCameraButton.tintColor = .systemGray
+      toolbar.backgroundColor = .black.withAlphaComponent(0.7)
+      playButton.tintColor = .white
+      pauseButton.tintColor = .white
+      switchCameraButton.tintColor = .white
 
       let width = bounds.width
       let height = bounds.height
 
-      let topMargin: CGFloat = height * 0.02
+      let topMargin: CGFloat = height * 0.05  // Increased top margin
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(

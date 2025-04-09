@@ -240,6 +240,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
+    
+    // ラベルのテキスト色を白色に強制設定
+    labelName.textColor = .white
+    labelFPS.textColor = .white
+    labelVersion.textColor = .white
+    
+    // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
+    labelName.overrideUserInterfaceStyle = .dark
+    labelFPS.overrideUserInterfaceStyle = .dark
+    labelVersion.overrideUserInterfaceStyle = .dark
       
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
@@ -268,6 +278,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.downloadProgressLabel.text = "Downloading \(percentage)%"
       }
     }
+  }
+  
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    
+    // 画面表示時に常にラベルのテキスト色を白色に強制設定
+    enforceWhiteTextColor()
+    
+    // システムの外観モード設定に影響されないようにスタイル設定
+    view.overrideUserInterfaceStyle = .dark
+  }
+  
+  // トレイトコレクション（ダークモード/ライトモード）が変更されたときに呼ばれる
+  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    super.traitCollectionDidChange(previousTraitCollection)
+    
+    // 外観モードが変更されてもテキスト色を白色に維持
+    enforceWhiteTextColor()
+  }
+  
+  // ラベルのテキスト色を白色に設定する共通メソッド
+  private func enforceWhiteTextColor() {
+    labelName.textColor = .white
+    labelFPS.textColor = .white
+    labelVersion.textColor = .white
   }
 
   private func setupTaskSegmentedControl() {
@@ -535,6 +570,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.currentModelName = modelName
           DispatchQueue.main.async {
               self.labelName.text = processString(modelName)
+              // テキスト色を白色に強制設定
+              self.labelName.textColor = .white
           }
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
         self.downloadProgressLabel.isHidden = false
@@ -800,6 +837,8 @@ extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
     // FPSと推論時間をUIに表示
     labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+    // 色を常に白に保つ
+    labelFPS.textColor = .white
   }
   
   /// YOLO検出結果を受け取るメソッド

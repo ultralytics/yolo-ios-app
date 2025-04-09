@@ -788,7 +788,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       let width = bounds.width
       let height = bounds.height
 
-      let topMargin: CGFloat = 0
+      let topMargin: CGFloat = height * 0.05  // Increased top margin
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(
@@ -876,7 +876,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       let width = bounds.width
       let height = bounds.height
 
-      let topMargin: CGFloat = 0
+      let topMargin: CGFloat = height * 0.05  // Increased top margin
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(

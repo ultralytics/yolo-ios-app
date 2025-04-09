@@ -19,7 +19,7 @@ import ReplayKit
 import UIKit
 import YOLO
 
-// カスタムセルクラスの定義
+// Definition of custom table view cell
 class ModelTableViewCell: UITableViewCell {
   static let identifier = "ModelTableViewCell"
   
@@ -28,10 +28,10 @@ class ModelTableViewCell: UITableViewCell {
     label.textAlignment = .center
     label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
     label.translatesAutoresizingMaskIntoConstraints = false
-    // テキストが長い場合に自動的にサイズを縮小する設定
+    // Configure auto text size adjustment for long content
     label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.7 // 最小で70%まで縮小
-    label.lineBreakMode = .byClipping // 省略記号ではなく切り取り
+    label.minimumScaleFactor = 0.7 // Scale down to 70% minimum
+    label.lineBreakMode = .byClipping // Clip text instead of using ellipsis
     return label
   }()
   
@@ -61,51 +61,51 @@ class ModelTableViewCell: UITableViewCell {
     contentView.addSubview(downloadIconImageView)
     
     NSLayoutConstraint.activate([
-      // ラベルを中央に配置
-      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor), // X軸方向の中央配置を追加
+      // Center the label
+      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor), // Add center X alignment
       modelNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-      // 左端からのマージンを設定
+      // Set margin from the leading edge
       modelNameLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
-      // ダウンロードアイコンとの間にマージンを確保
+      // Ensure margin between label and download icon
       modelNameLabel.trailingAnchor.constraint(lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
       
-      // ダウンロードアイコンを右端に配置
+      // Position download icon at the trailing edge
       downloadIconImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
       downloadIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-      downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // やや小さくして場所を確保
+      downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // Slightly smaller to save space
       downloadIconImageView.heightAnchor.constraint(equalToConstant: 16)
     ])
     
-    // 選択時の背景ビューを設定
+    // Configure the background view for selection state
     let selectedBGView = UIView()
     selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-    selectedBGView.layer.cornerRadius = 5  // より緩やかなcorner radius
+    selectedBGView.layer.cornerRadius = 5  // More gentle corner radius
     selectedBGView.layer.masksToBounds = true
     selectedBackgroundView = selectedBGView
   }
   
-  // セルを設定するためのメソッド
+  // Method to configure the cell
   func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
     modelNameLabel.text = modelName
     
-    // リモートモデルかつダウンロードされていない場合のみアイコンを表示
+    // Show download icon only for remote models that are not yet downloaded
     let showDownloadIcon = isRemote && !isDownloaded
     downloadIconImageView.isHidden = !showDownloadIcon
     
-    // アイコンの表示状態に基づいてテキストの優先度を調整
+    // Adjust text priorities based on icon visibility
     if showDownloadIcon {
-      // アイコンが表示される場合は常に中央揃え
+      // Keep center alignment when icon is visible
       modelNameLabel.textAlignment = .center
-      // アイコンがあるスペースを考慮して横幅を調整
+      // Adjust width to accommodate icon space
       modelNameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-      // 優先度を設定して中央配置が尊重されるようにする
+      // Set priority to ensure center alignment is respected
       modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     } else {
-      // アイコンがない場合も中央揃え
+      // Keep center alignment when no icon is present
       modelNameLabel.textAlignment = .center
-      // 横幅いっぱいに広げる
+      // Expand to full width
       modelNameLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-      // 中央配置を優先
+      // Prioritize center alignment
       modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     }
   }
@@ -113,26 +113,26 @@ class ModelTableViewCell: UITableViewCell {
   override func layoutSubviews() {
     super.layoutSubviews()
     
-    // 選択時の背景ビューのサイズを調整 - より少ない余白で枠をテーブルビューに近づける
+    // Adjust selection background view size - reduce margins to bring frame closer to table view
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
     
-    // ラベルの最終調整 - レイアウト後にラベルが正しく表示されるように
-    let iconSpace = downloadIconImageView.isHidden ? 0 : 20 // アイコンのスペース（表示中なら考慮）
-    let availableWidth = bounds.width - 16 - CGFloat(iconSpace) // 左右のマージン(16) + アイコンスペース
+    // Final label adjustments - ensure label displays correctly after layout
+    let iconSpace = downloadIconImageView.isHidden ? 0 : 20 // Consider icon space if visible
+    let availableWidth = bounds.width - 16 - CGFloat(iconSpace) // Left/right margins(16) + icon space
     
-    // ラベルの最大幅を設定し、中央配置が適切に機能するようにする
+    // Set maximum label width to ensure center alignment works properly
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
     
-    // フレームを微調整して中央揃えを強制
+    // Fine-tune frame to enforce center alignment
     let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
-      // アイコンがない場合は完全に中央に
+      // Center completely when no icon is present
       modelNameLabel.center.x = bounds.width / 2
     } else {
-      // アイコンがある場合は、アイコンのスペースを考慮して中央よりやや左に
-        modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
+      // Shift slightly left when icon is present to account for its space
+      modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
     }
   }
 }
@@ -283,22 +283,22 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     
-    // 画面表示時に常にラベルのテキスト色を白色に強制設定
+    // Force text color to white whenever the screen appears
     enforceWhiteTextColor()
     
-    // システムの外観モード設定に影響されないようにスタイル設定
+    // Override system appearance mode setting to ensure consistent styling
     view.overrideUserInterfaceStyle = .dark
   }
   
-  // トレイトコレクション（ダークモード/ライトモード）が変更されたときに呼ばれる
+  // Called when trait collection changes (dark mode/light mode)
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
     super.traitCollectionDidChange(previousTraitCollection)
     
-    // 外観モードが変更されてもテキスト色を白色に維持
+    // Maintain white text color even when appearance mode changes
     enforceWhiteTextColor()
   }
   
-  // ラベルのテキスト色を白色に設定する共通メソッド
+  // Common method to set label text color to white
   private func enforceWhiteTextColor() {
     labelName.textColor = .white
     labelFPS.textColor = .white
@@ -797,17 +797,17 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
   }
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    // カスタムセルを取得
+    // Get custom cell
     let cell = tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath) as! ModelTableViewCell
     let entry = currentModels[indexPath.row]
     
-    // モデルがリモートかつダウンロードされていないかをチェック
+    // Check if the model is remote and not yet downloaded
     let isDownloaded = entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
     
-    // processString関数を使ってモデル名を整形
+    // Format model name using the processString function
     let formattedName = processString(entry.displayName)
     
-    // セルを設定
+    // Configure the cell
     cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
     
     return cell
@@ -822,7 +822,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     loadModel(entry: selectedEntry, forTask: currentTask)
   }
 
-  // layoutSubviewsメソッド内でセルの背景レイアウトを調整するため、このメソッドは不要になりました
+  // This method is no longer needed as we adjust cell background layout in layoutSubviews
 }
 
 extension ViewController: RPPreviewViewControllerDelegate {

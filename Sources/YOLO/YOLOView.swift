@@ -17,20 +17,20 @@ import Vision
 
 /// YOLOViewデリゲートプロトコル - 毎フレームごとのパフォーマンス情報とYOLOResultを通知
 public protocol YOLOViewDelegate: AnyObject {
-    /// パフォーマンス情報（FPSと推論時間）が更新された時に呼ばれる
-    func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
-    
-    /// 検出結果が得られた時に呼ばれる
-    func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
+  /// パフォーマンス情報（FPSと推論時間）が更新された時に呼ばれる
+  func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
+
+  /// 検出結果が得られた時に呼ばれる
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
 }
 
 /// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
 @MainActor
 public class YOLOView: UIView, VideoCaptureDelegate {
-  
+
   /// デリゲートオブジェクト - パフォーマンスとYOLO結果の通知を受け取る
   public weak var delegate: YOLOViewDelegate?
-  
+
   func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async {
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
@@ -42,7 +42,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   func onPredict(result: YOLOResult) {
     // デリゲートに検出結果を通知
     delegate?.yoloView(self, didReceiveResult: result)
-    
+
     showBoxes(predictions: result)
     onDetection?(result)
 
@@ -786,7 +786,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       let width = bounds.width
       let height = bounds.height
 
-        let topMargin: CGFloat = 0
+      let topMargin: CGFloat = 0
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(
@@ -1164,17 +1164,17 @@ extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
 }
 
 public func processString(_ input: String) -> String {
-    let lowercased = input.lowercased()
-    
-    if lowercased.hasPrefix("yolo") {
-        let index = lowercased.index(lowercased.startIndex, offsetBy: 4)
-        let remainder = String(lowercased[index...])
-        return "YOLO" + remainder
-    } else {
-        if let firstChar = lowercased.first {
-            let capitalized = String(firstChar).uppercased() + String(lowercased.dropFirst())
-            return capitalized
-        }
-        return lowercased
+  let lowercased = input.lowercased()
+
+  if lowercased.hasPrefix("yolo") {
+    let index = lowercased.index(lowercased.startIndex, offsetBy: 4)
+    let remainder = String(lowercased[index...])
+    return "YOLO" + remainder
+  } else {
+    if let firstChar = lowercased.first {
+      let capitalized = String(firstChar).uppercased() + String(lowercased.dropFirst())
+      return capitalized
     }
+    return lowercased
+  }
 }

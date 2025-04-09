@@ -22,7 +22,7 @@ import YOLO
 // カスタムセルクラスの定義
 class ModelTableViewCell: UITableViewCell {
   static let identifier = "ModelTableViewCell"
-  
+
   private let modelNameLabel: UILabel = {
     let label = UILabel()
     label.textAlignment = .center
@@ -30,11 +30,11 @@ class ModelTableViewCell: UITableViewCell {
     label.translatesAutoresizingMaskIntoConstraints = false
     // テキストが長い場合に自動的にサイズを縮小する設定
     label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.7 // 最小で70%まで縮小
-    label.lineBreakMode = .byClipping // 省略記号ではなく切り取り
+    label.minimumScaleFactor = 0.7  // 最小で70%まで縮小
+    label.lineBreakMode = .byClipping  // 省略記号ではなく切り取り
     return label
   }()
-  
+
   private let downloadIconImageView: UIImageView = {
     let imageView = UIImageView(image: UIImage(systemName: "icloud.and.arrow.down"))
     imageView.tintColor = .white
@@ -43,39 +43,42 @@ class ModelTableViewCell: UITableViewCell {
     imageView.isHidden = true
     return imageView
   }()
-  
+
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
     super.init(style: style, reuseIdentifier: reuseIdentifier)
     setupUI()
   }
-  
+
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-  
+
   private func setupUI() {
     backgroundColor = .clear
     selectionStyle = .default
-    
+
     contentView.addSubview(modelNameLabel)
     contentView.addSubview(downloadIconImageView)
-    
+
     NSLayoutConstraint.activate([
       // ラベルを中央に配置
-      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor), // X軸方向の中央配置を追加
+      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),  // X軸方向の中央配置を追加
       modelNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       // 左端からのマージンを設定
-      modelNameLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
+      modelNameLabel.leadingAnchor.constraint(
+        greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
       // ダウンロードアイコンとの間にマージンを確保
-      modelNameLabel.trailingAnchor.constraint(lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
-      
+      modelNameLabel.trailingAnchor.constraint(
+        lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
+
       // ダウンロードアイコンを右端に配置
-      downloadIconImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+      downloadIconImageView.trailingAnchor.constraint(
+        equalTo: contentView.trailingAnchor, constant: -4),
       downloadIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // やや小さくして場所を確保
-      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16)
+      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16),
     ])
-    
+
     // 選択時の背景ビューを設定
     let selectedBGView = UIView()
     selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
@@ -83,15 +86,15 @@ class ModelTableViewCell: UITableViewCell {
     selectedBGView.layer.masksToBounds = true
     selectedBackgroundView = selectedBGView
   }
-  
+
   // セルを設定するためのメソッド
   func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
     modelNameLabel.text = modelName
-    
+
     // リモートモデルかつダウンロードされていない場合のみアイコンを表示
     let showDownloadIcon = isRemote && !isDownloaded
     downloadIconImageView.isHidden = !showDownloadIcon
-    
+
     // アイコンの表示状態に基づいてテキストの優先度を調整
     if showDownloadIcon {
       // アイコンが表示される場合は常に中央揃え
@@ -109,22 +112,22 @@ class ModelTableViewCell: UITableViewCell {
       modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     }
   }
-  
+
   override func layoutSubviews() {
     super.layoutSubviews()
-    
+
     // 選択時の背景ビューのサイズを調整 - より少ない余白で枠をテーブルビューに近づける
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
-    
+
     // ラベルの最終調整 - レイアウト後にラベルが正しく表示されるように
-    let iconSpace = downloadIconImageView.isHidden ? 0 : 20 // アイコンのスペース（表示中なら考慮）
-    let availableWidth = bounds.width - 16 - CGFloat(iconSpace) // 左右のマージン(16) + アイコンスペース
-    
+    let iconSpace = downloadIconImageView.isHidden ? 0 : 20  // アイコンのスペース（表示中なら考慮）
+    let availableWidth = bounds.width - 16 - CGFloat(iconSpace)  // 左右のマージン(16) + アイコンスペース
+
     // ラベルの最大幅を設定し、中央配置が適切に機能するようにする
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
-    
+
     // フレームを微調整して中央揃えを強制
     let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
@@ -132,7 +135,7 @@ class ModelTableViewCell: UITableViewCell {
       modelNameLabel.center.x = bounds.width / 2
     } else {
       // アイコンがある場合は、アイコンのスペースを考慮して中央よりやや左に
-        modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
+      modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
     }
   }
 }
@@ -236,21 +239,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setupTableView()
     setupButtons()
-    
+
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
-    
+
     // ラベルのテキスト色を白色に強制設定
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
-    
+
     // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
     labelName.overrideUserInterfaceStyle = .dark
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark
-      
+
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
 
@@ -279,25 +282,25 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
   }
-  
+
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    
+
     // 画面表示時に常にラベルのテキスト色を白色に強制設定
     enforceWhiteTextColor()
-    
+
     // システムの外観モード設定に影響されないようにスタイル設定
     view.overrideUserInterfaceStyle = .dark
   }
-  
+
   // トレイトコレクション（ダークモード/ライトモード）が変更されたときに呼ばれる
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
     super.traitCollectionDidChange(previousTraitCollection)
-    
+
     // 外観モードが変更されてもテキスト色を白色に維持
     enforceWhiteTextColor()
   }
-  
+
   // ラベルのテキスト色を白色に設定する共通メソッド
   private func enforceWhiteTextColor() {
     labelName.textColor = .white
@@ -568,11 +571,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if success {
         print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
-          DispatchQueue.main.async {
-              self.labelName.text = processString(modelName)
-              // テキスト色を白色に強制設定
-              self.labelName.textColor = .white
-          }
+        DispatchQueue.main.async {
+          self.labelName.text = processString(modelName)
+          // テキスト色を白色に強制設定
+          self.labelName.textColor = .white
+        }
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
         self.downloadProgressLabel.isHidden = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -653,7 +656,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelTableView.delegate = self
     modelTableView.dataSource = self
     // カスタムセルを登録
-    modelTableView.register(ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
+    modelTableView.register(
+      ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
     modelTableView.backgroundColor = .clear
     modelTableView.separatorStyle = .none
     modelTableView.isScrollEnabled = false
@@ -798,18 +802,21 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     // カスタムセルを取得
-    let cell = tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath) as! ModelTableViewCell
+    let cell =
+      tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath)
+      as! ModelTableViewCell
     let entry = currentModels[indexPath.row]
-    
+
     // モデルがリモートかつダウンロードされていないかをチェック
-    let isDownloaded = entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
-    
+    let isDownloaded =
+      entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
+
     // processString関数を使ってモデル名を整形
     let formattedName = processString(entry.displayName)
-    
+
     // セルを設定
     cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
-    
+
     return cell
   }
 
@@ -840,7 +847,7 @@ extension ViewController {
     // 色を常に白に保つ
     labelFPS.textColor = .white
   }
-  
+
   /// YOLO検出結果を受け取るメソッド
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
     // ここで検出結果に基づいて追加の処理を行うことができます
@@ -851,6 +858,5 @@ extension ViewController {
       // self.labelName.text = "\(result.boxes.count) objects"
     }
   }
-  
 
 }

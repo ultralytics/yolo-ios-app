@@ -22,6 +22,7 @@ public protocol YOLOViewDelegate: AnyObject {
     
     /// Called when detection results are available
     func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
+
 }
 
 /// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
@@ -35,6 +36,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     DispatchQueue.main.async {
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
       // Notify delegate of performance metrics
+
       self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
     }
   }

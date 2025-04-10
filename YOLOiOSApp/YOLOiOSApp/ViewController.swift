@@ -34,7 +34,7 @@ class ModelTableViewCell: UITableViewCell {
     label.lineBreakMode = .byClipping // Clip text instead of using ellipsis
     return label
   }()
-  
+
   private let downloadIconImageView: UIImageView = {
     let imageView = UIImageView(image: UIImage(systemName: "icloud.and.arrow.down"))
     imageView.tintColor = .white
@@ -43,7 +43,7 @@ class ModelTableViewCell: UITableViewCell {
     imageView.isHidden = true
     return imageView
   }()
-  
+
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
     super.init(style: style, reuseIdentifier: reuseIdentifier)
     setupUI()
@@ -245,12 +245,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
-    
+
     // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
     labelName.overrideUserInterfaceStyle = .dark
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark
-      
+
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
 
@@ -299,6 +299,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
   
   // Common method to set label text color to white
+  private func enforceWhiteTextColor() {
+    labelName.textColor = .white
+    labelFPS.textColor = .white
+    labelVersion.textColor = .white
+  }
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+
+    // 画面表示時に常にラベルのテキスト色を白色に強制設定
+    enforceWhiteTextColor()
+
+    // システムの外観モード設定に影響されないようにスタイル設定
+    view.overrideUserInterfaceStyle = .dark
+  }
+
+  // トレイトコレクション（ダークモード/ライトモード）が変更されたときに呼ばれる
+  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    super.traitCollectionDidChange(previousTraitCollection)
+
+    // 外観モードが変更されてもテキスト色を白色に維持
+    enforceWhiteTextColor()
+  }
+
+  // ラベルのテキスト色を白色に設定する共通メソッド
   private func enforceWhiteTextColor() {
     labelName.textColor = .white
     labelFPS.textColor = .white
@@ -573,6 +598,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
               // テキスト色を白色に強制設定
               self.labelName.textColor = .white
           }
+
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
         self.downloadProgressLabel.isHidden = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -653,6 +679,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelTableView.delegate = self
     modelTableView.dataSource = self
     modelTableView.register(ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
+
     modelTableView.backgroundColor = .clear
     modelTableView.separatorStyle = .none
     modelTableView.isScrollEnabled = false
@@ -809,6 +836,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     // Configure the cell
     cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
     
+
     return cell
   }
 
@@ -822,6 +850,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
   }
 
   // This method is no longer needed as we adjust cell background layout in layoutSubviews
+
 }
 
 extension ViewController: RPPreviewViewControllerDelegate {
@@ -842,5 +871,6 @@ extension ViewController {
     }
   }
   
+
 
 }

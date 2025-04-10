@@ -198,7 +198,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ("Segment", "SegmentModels"),  // index 1
     ("Detect", "DetectModels"),  // index 2
     ("Pose", "PoseModels"),  // index 3
-    ("Obb", "ObbModels"),  // index 4
+    ("OBB", "ObbModels"),  // index 4
   ]
 
   private var modelsForTask: [String: [String]] = [:]
@@ -592,7 +592,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     case "Segment": return .segment
     case "Classify": return .classify
     case "Pose": return .pose
-    case "Obb": return .obb
+    case "OBB": return .obb
     default: return .detect
     }
   }
@@ -652,7 +652,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func setupTableView() {
     modelTableView.delegate = self
     modelTableView.dataSource = self
-    // カスタムセルを登録
     modelTableView.register(ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
     modelTableView.backgroundColor = .clear
     modelTableView.separatorStyle = .none
@@ -833,22 +832,13 @@ extension ViewController: RPPreviewViewControllerDelegate {
 
 // MARK: - YOLOViewDelegate
 extension ViewController {
-  /// パフォーマンス情報（FPSと推論時間）を受け取るメソッド
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    // FPSと推論時間をUIに表示
     labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-    // 色を常に白に保つ
     labelFPS.textColor = .white
   }
   
-  /// YOLO検出結果を受け取るメソッド
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-    // ここで検出結果に基づいて追加の処理を行うことができます
-    // 例：特定のオブジェクトが検出された時の処理、数値の記録など
-    // UI更新は必ずメインスレッドで行います
     DispatchQueue.main.async {
-      // 検出されたオブジェクト数を更新する例
-      // self.labelName.text = "\(result.boxes.count) objects"
     }
   }
   

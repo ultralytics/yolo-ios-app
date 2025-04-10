@@ -1164,17 +1164,31 @@ extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
 }
 
 public func processString(_ input: String) -> String {
-    let lowercased = input.lowercased()
+    var output = input.replacingOccurrences(
+        of: "yolo",
+        with: "YOLO",
+        options: .caseInsensitive,
+        range: nil
+    )
     
-    if lowercased.hasPrefix("yolo") {
-        let index = lowercased.index(lowercased.startIndex, offsetBy: 4)
-        let remainder = String(lowercased[index...])
-        return "YOLO" + remainder
-    } else {
-        if let firstChar = lowercased.first {
-            let capitalized = String(firstChar).uppercased() + String(lowercased.dropFirst())
-            return capitalized
-        }
-        return lowercased
+    output = output.replacingOccurrences(
+        of: "obb",
+        with: "OBB",
+        options: .caseInsensitive,
+        range: nil
+    )
+    
+    guard !output.isEmpty else {
+        return output
     }
+    
+    let first = output[output.startIndex]
+    let firstUppercased = String(first).uppercased()
+    
+    if String(first) != firstUppercased {
+        output = firstUppercased + output.dropFirst()
+    }
+    
+    return output
 }
+

@@ -22,7 +22,7 @@ import YOLO
 // Definition of custom table view cell
 class ModelTableViewCell: UITableViewCell {
   static let identifier = "ModelTableViewCell"
-  
+
   private let modelNameLabel: UILabel = {
     let label = UILabel()
     label.textAlignment = .center
@@ -30,8 +30,8 @@ class ModelTableViewCell: UITableViewCell {
     label.translatesAutoresizingMaskIntoConstraints = false
     // Configure auto text size adjustment for long content
     label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.7 // Scale down to 70% minimum
-    label.lineBreakMode = .byClipping // Clip text instead of using ellipsis
+    label.minimumScaleFactor = 0.7  // Scale down to 70% minimum
+    label.lineBreakMode = .byClipping  // Clip text instead of using ellipsis
     return label
   }()
 
@@ -48,34 +48,37 @@ class ModelTableViewCell: UITableViewCell {
     super.init(style: style, reuseIdentifier: reuseIdentifier)
     setupUI()
   }
-  
+
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-  
+
   private func setupUI() {
     backgroundColor = .clear
     selectionStyle = .default
-    
+
     contentView.addSubview(modelNameLabel)
     contentView.addSubview(downloadIconImageView)
-    
+
     NSLayoutConstraint.activate([
       // Center the label
-      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor), // Add center X alignment
+      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),  // Add center X alignment
       modelNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       // Set margin from the leading edge
-      modelNameLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
+      modelNameLabel.leadingAnchor.constraint(
+        greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
       // Ensure margin between label and download icon
-      modelNameLabel.trailingAnchor.constraint(lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
-      
+      modelNameLabel.trailingAnchor.constraint(
+        lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
+
       // Position download icon at the trailing edge
-      downloadIconImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+      downloadIconImageView.trailingAnchor.constraint(
+        equalTo: contentView.trailingAnchor, constant: -4),
       downloadIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // Slightly smaller to save space
-      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16)
+      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16),
     ])
-    
+
     // Configure the background view for selection state
     let selectedBGView = UIView()
     selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
@@ -83,15 +86,15 @@ class ModelTableViewCell: UITableViewCell {
     selectedBGView.layer.masksToBounds = true
     selectedBackgroundView = selectedBGView
   }
-  
+
   // Method to configure the cell
   func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
     modelNameLabel.text = modelName
-    
+
     // Show download icon only for remote models that are not yet downloaded
     let showDownloadIcon = isRemote && !isDownloaded
     downloadIconImageView.isHidden = !showDownloadIcon
-    
+
     // Adjust text priorities based on icon visibility
     if showDownloadIcon {
       // Keep center alignment when icon is visible
@@ -109,22 +112,22 @@ class ModelTableViewCell: UITableViewCell {
       modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     }
   }
-  
+
   override func layoutSubviews() {
     super.layoutSubviews()
-    
+
     // Adjust selection background view size - reduce margins to bring frame closer to table view
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
-    
+
     // Final label adjustments - ensure label displays correctly after layout
-    let iconSpace = downloadIconImageView.isHidden ? 0 : 20 // Consider icon space if visible
-    let availableWidth = bounds.width - 16 - CGFloat(iconSpace) // Left/right margins(16) + icon space
-    
+    let iconSpace = downloadIconImageView.isHidden ? 0 : 20  // Consider icon space if visible
+    let availableWidth = bounds.width - 16 - CGFloat(iconSpace)  // Left/right margins(16) + icon space
+
     // Set maximum label width to ensure center alignment works properly
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
-    
+
     // Fine-tune frame to enforce center alignment
     let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
@@ -236,11 +239,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setupTableView()
     setupButtons()
-    
+
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
-    
+
     // ラベルのテキスト色を白色に強制設定
     labelName.textColor = .white
     labelFPS.textColor = .white
@@ -279,25 +282,25 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
   }
-  
+
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    
+
     // Force text color to white whenever the screen appears
     enforceWhiteTextColor()
-    
+
     // Override system appearance mode setting to ensure consistent styling
     view.overrideUserInterfaceStyle = .dark
   }
-  
+
   // Called when trait collection changes (dark mode/light mode)
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
     super.traitCollectionDidChange(previousTraitCollection)
-    
+
     // Maintain white text color even when appearance mode changes
     enforceWhiteTextColor()
   }
-  
+
   // Common method to set label text color to white
   private func enforceWhiteTextColor() {
     labelName.textColor = .white
@@ -593,11 +596,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if success {
         print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
-          DispatchQueue.main.async {
-              self.labelName.text = processString(modelName)
-              // テキスト色を白色に強制設定
-              self.labelName.textColor = .white
-          }
+        DispatchQueue.main.async {
+          self.labelName.text = processString(modelName)
+          // テキスト色を白色に強制設定
+          self.labelName.textColor = .white
+        }
 
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
         self.downloadProgressLabel.isHidden = false
@@ -678,7 +681,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func setupTableView() {
     modelTableView.delegate = self
     modelTableView.dataSource = self
-    modelTableView.register(ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
+    modelTableView.register(
+      ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
 
     modelTableView.backgroundColor = .clear
     modelTableView.separatorStyle = .none
@@ -824,18 +828,20 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     // Get custom cell
-    let cell = tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath) as! ModelTableViewCell
+    let cell =
+      tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath)
+      as! ModelTableViewCell
     let entry = currentModels[indexPath.row]
-    
+
     // Check if the model is remote and not yet downloaded
-    let isDownloaded = entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
-    
+    let isDownloaded =
+      entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
+
     // Format model name using the processString function
     let formattedName = processString(entry.displayName)
-    
+
     // Configure the cell
     cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
-    
 
     return cell
   }
@@ -865,12 +871,10 @@ extension ViewController {
     labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
     labelFPS.textColor = .white
   }
-  
+
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
     DispatchQueue.main.async {
     }
   }
-  
-
 
 }

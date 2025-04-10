@@ -17,21 +17,21 @@ import Vision
 
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
-    /// Called when performance metrics (FPS and inference time) are updated
-    func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
-    
-    /// Called when detection results are available
-    func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
+  /// Called when performance metrics (FPS and inference time) are updated
+  func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
+
+  /// Called when detection results are available
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
 
 }
 
 /// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
 @MainActor
 public class YOLOView: UIView, VideoCaptureDelegate {
-  
+
   /// Delegate object - Receives performance metrics and YOLO detection results
   public weak var delegate: YOLOViewDelegate?
-  
+
   func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async {
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
@@ -44,7 +44,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   func onPredict(result: YOLOResult) {
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
-    
+
     showBoxes(predictions: result)
     onDetection?(result)
 
@@ -788,7 +788,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       let width = bounds.width
       let height = bounds.height
 
-        let topMargin: CGFloat = 0
+      let topMargin: CGFloat = 0
 
       let titleLabelHeight: CGFloat = height * 0.1
       labelName.frame = CGRect(
@@ -1166,31 +1166,30 @@ extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
 }
 
 public func processString(_ input: String) -> String {
-    var output = input.replacingOccurrences(
-        of: "yolo",
-        with: "YOLO",
-        options: .caseInsensitive,
-        range: nil
-    )
-    
-    output = output.replacingOccurrences(
-        of: "obb",
-        with: "OBB",
-        options: .caseInsensitive,
-        range: nil
-    )
-    
-    guard !output.isEmpty else {
-        return output
-    }
-    
-    let first = output[output.startIndex]
-    let firstUppercased = String(first).uppercased()
-    
-    if String(first) != firstUppercased {
-        output = firstUppercased + output.dropFirst()
-    }
-    
-    return output
-}
+  var output = input.replacingOccurrences(
+    of: "yolo",
+    with: "YOLO",
+    options: .caseInsensitive,
+    range: nil
+  )
 
+  output = output.replacingOccurrences(
+    of: "obb",
+    with: "OBB",
+    options: .caseInsensitive,
+    range: nil
+  )
+
+  guard !output.isEmpty else {
+    return output
+  }
+
+  let first = output[output.startIndex]
+  let firstUppercased = String(first).uppercased()
+
+  if String(first) != firstUppercased {
+    output = firstUppercased + output.dropFirst()
+  }
+
+  return output
+}

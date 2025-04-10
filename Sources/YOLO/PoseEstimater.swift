@@ -62,7 +62,6 @@ class PoseEstimater: BasePredictor, @unchecked Sendable {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
-    var boxes = [Box]()
 
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
@@ -91,14 +90,21 @@ class PoseEstimater: BasePredictor, @unchecked Sendable {
             confsList.append(person.keypoints.conf)
           }
 
-          let annotatedImage = drawPoseOnCIImage(
-            ciImage: image, keypointsList: keypointsForImage, confsList: confsList,
-            boundingBoxes: boxes, originalImageSize: inputSize)
+          // 新しい統合描画関数を使用
+          let annotatedImage = drawYOLOPoseWithBoxes(
+            ciImage: image,
+            keypointsList: keypointsForImage,
+            confsList: confsList,
+            boundingBoxes: boxes,
+            originalImageSize: inputSize
+          )
+          
+          var result = YOLOResult(
+                orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
+                keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
+                fps: 1 / self.t4, originalImage: nil, names: labels)
           updateTime()
-          return YOLOResult(
-            orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
-            keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
-            fps: 1 / self.t4, originalImage: nil, names: labels)
+          return result
         }
       }
     } catch {

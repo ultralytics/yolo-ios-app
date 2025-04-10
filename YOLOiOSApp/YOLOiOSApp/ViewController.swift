@@ -308,31 +308,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelVersion.textColor = .white
   }
 
-  override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-
-    // 画面表示時に常にラベルのテキスト色を白色に強制設定
-    enforceWhiteTextColor()
-
-    // システムの外観モード設定に影響されないようにスタイル設定
-    view.overrideUserInterfaceStyle = .dark
-  }
-
-  // トレイトコレクション（ダークモード/ライトモード）が変更されたときに呼ばれる
-  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-    super.traitCollectionDidChange(previousTraitCollection)
-
-    // 外観モードが変更されてもテキスト色を白色に維持
-    enforceWhiteTextColor()
-  }
-
-  // ラベルのテキスト色を白色に設定する共通メソッド
-  private func enforceWhiteTextColor() {
-    labelName.textColor = .white
-    labelFPS.textColor = .white
-    labelVersion.textColor = .white
-  }
-
   private func setupTaskSegmentedControl() {
     segmentedControl.removeAllSegments()
     for (index, taskInfo) in tasks.enumerated() {

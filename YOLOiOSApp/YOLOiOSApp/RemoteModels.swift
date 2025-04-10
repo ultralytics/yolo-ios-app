@@ -127,7 +127,7 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
       )!
     ),
   ],
-  "Obb": [
+  "OBB": [
     //        ("yolo11n-obb",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-obb.mlpackage.zip")!),
     (
       "yolo11s-obb",

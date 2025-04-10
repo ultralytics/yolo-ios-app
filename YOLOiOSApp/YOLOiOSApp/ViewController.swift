@@ -131,8 +131,8 @@ class ModelTableViewCell: UITableViewCell {
       // Center completely when no icon is present
       modelNameLabel.center.x = bounds.width / 2
     } else {
-      // Shift slightly left when icon is present to account for its space
-      modelNameLabel.center.x = (bounds.width - CGFloat(iconSpace)) / 2
+      // Keep text centered in the cell even when download icon is visible
+      modelNameLabel.center.x = bounds.width / 2
     }
   }
 }

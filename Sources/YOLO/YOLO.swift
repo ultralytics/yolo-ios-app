@@ -125,20 +125,20 @@ public class YOLO {
 
   public func callAsFunction(_ ciImage: CIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
     var result = predictor.predictOnImage(image: ciImage)
-    if returnAnnotatedImage {
-      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-      result.annotatedImage = annotatedImage
-    }
+    //    if returnAnnotatedImage {
+    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
+    //      result.annotatedImage = annotatedImage
+    //    }
     return result
   }
 
   public func callAsFunction(_ cgImage: CGImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
     let ciImage = CIImage(cgImage: cgImage)
     var result = predictor.predictOnImage(image: ciImage)
-    if returnAnnotatedImage {
-      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-      result.annotatedImage = annotatedImage
-    }
+    //    if returnAnnotatedImage {
+    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
+    //      result.annotatedImage = annotatedImage
+    //    }
     return result
   }
 

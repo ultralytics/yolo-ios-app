@@ -15,32 +15,34 @@ import AVFoundation
 import UIKit
 import Vision
 
-/// YOLOViewデリゲートプロトコル - 毎フレームごとのパフォーマンス情報とYOLOResultを通知
+/// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
-  /// パフォーマンス情報（FPSと推論時間）が更新された時に呼ばれる
+  /// Called when performance metrics (FPS and inference time) are updated
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
 
-  /// 検出結果が得られた時に呼ばれる
+  /// Called when detection results are available
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
+
 }
 
 /// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
 @MainActor
 public class YOLOView: UIView, VideoCaptureDelegate {
 
-  /// デリゲートオブジェクト - パフォーマンスとYOLO結果の通知を受け取る
+  /// Delegate object - Receives performance metrics and YOLO detection results
   public weak var delegate: YOLOViewDelegate?
 
   func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async {
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
-      // デリゲートにパフォーマンス情報を通知
+      // Notify delegate of performance metrics
+
       self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
     }
   }
 
   func onPredict(result: YOLOResult) {
-    // デリゲートに検出結果を通知
+    // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
     showBoxes(predictions: result)
@@ -1164,17 +1166,30 @@ extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
 }
 
 public func processString(_ input: String) -> String {
-  let lowercased = input.lowercased()
+  var output = input.replacingOccurrences(
+    of: "yolo",
+    with: "YOLO",
+    options: .caseInsensitive,
+    range: nil
+  )
 
-  if lowercased.hasPrefix("yolo") {
-    let index = lowercased.index(lowercased.startIndex, offsetBy: 4)
-    let remainder = String(lowercased[index...])
-    return "YOLO" + remainder
-  } else {
-    if let firstChar = lowercased.first {
-      let capitalized = String(firstChar).uppercased() + String(lowercased.dropFirst())
-      return capitalized
-    }
-    return lowercased
+  output = output.replacingOccurrences(
+    of: "obb",
+    with: "OBB",
+    options: .caseInsensitive,
+    range: nil
+  )
+
+  guard !output.isEmpty else {
+    return output
   }
+
+  let first = output[output.startIndex]
+  let firstUppercased = String(first).uppercased()
+
+  if String(first) != firstUppercased {
+    output = firstUppercased + output.dropFirst()
+  }
+
+  return output
 }

@@ -150,7 +150,10 @@ class ObjectDetector: BasePredictor {
     }
     let speed = Date().timeIntervalSince(start)
 
-    let result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: t1, names: labels)
+    var result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: t1, names: labels)
+    let annotatedImage = drawYOLODetections(on: image, result: result)
+    result.annotatedImage = annotatedImage
+
     return result
   }
 }

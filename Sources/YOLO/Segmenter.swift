@@ -114,16 +114,16 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         guard results.count == 2 else {
           return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
         }
-        
+
         // 1. Parse model outputs
         var pred: MLMultiArray
         var masks: MLMultiArray
         guard let out0 = results[0].featureValue.multiArrayValue,
-              let out1 = results[1].featureValue.multiArrayValue
-        else { 
-          return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels) 
+          let out1 = results[1].featureValue.multiArrayValue
+        else {
+          return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
         }
-        
+
         let out0dim = checkShapeDimensions(of: out0)
         let out1dim = checkShapeDimensions(of: out1)
         if out0dim == 4 {
@@ -137,7 +137,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         // 2. Post-process detection results
         let detectedObjects = postProcessSegment(
           feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
-        
+
         // 3. Construct bounding box information
         var boxes: [Box] = []
         for p in detectedObjects {
@@ -168,7 +168,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
             orig_shape: inputSize, boxes: boxes, masks: nil, annotatedImage: nil, speed: 0,
             names: labels)
         }
-        
+
         // 5. Use the new integrated drawing function to render masks and boxes in a single pass
         let annotatedImage = drawYOLOSegmentationWithBoxes(
           ciImage: image,
@@ -176,24 +176,24 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           maskImage: processedMasks.0,
           originalImageSize: inputSize
         )
-        
+
         // 6. Construct result
         let maskResults: Masks = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
-        
+
         // 7. Update timing measurements
         updateTime()
-        
+
         // 8. Return result
         result = YOLOResult(
-          orig_shape: inputSize, 
-          boxes: boxes, 
-          masks: maskResults, 
+          orig_shape: inputSize,
+          boxes: boxes,
+          masks: maskResults,
           annotatedImage: annotatedImage,
-          speed: self.t2, 
-          fps: 1 / self.t4, 
+          speed: self.t2,
+          fps: 1 / self.t4,
           names: labels
         )
-        
+
         return result
       }
     } catch {

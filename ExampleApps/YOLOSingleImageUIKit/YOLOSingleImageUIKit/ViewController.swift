@@ -35,13 +35,13 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
   /// Sets up the view and initializes the YOLO model.
   override func viewDidLoad() {
     super.viewDidLoad()
-//      view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentPhPicker)))
+    //      view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentPhPicker)))
     // Initialize YOLO model with a segmentation task
     // You can change the model or task type to use detection, classification, etc.
-      model = YOLO("yolo11l-seg", task: .segment) { [self] result in
+    model = YOLO("yolo11l-seg", task: .segment) { [self] result in
       switch result {
       case .success(_):
-          print("predictor initialized")
+        print("predictor initialized")
         setupView()
       case .failure(let error):
         fatalError(error.localizedDescription)
@@ -66,7 +66,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
           let time = Date().timeIntervalSince(date)
           print(result)
           DispatchQueue.main.async {
-              UIImageWriteToSavedPhotosAlbum(result.annotatedImage!, self, nil, nil)
+            UIImageWriteToSavedPhotosAlbum(result.annotatedImage!, self, nil, nil)
             safeSelf.imageView.image = result.annotatedImage
           }
         }

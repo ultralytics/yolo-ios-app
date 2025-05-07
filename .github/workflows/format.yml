@@ -1,4 +1,4 @@
-# Ultralytics 🚀 Proprietary Software - Internal Use Only
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 # Ultralytics Actions https://github.com/ultralytics/actions
 # This workflow formats code and documentation in PRs to Ultralytics standards
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   actions:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Run Ultralytics Actions
         uses: ultralytics/actions@main
@@ -28,7 +28,7 @@ jobs:
           labels: true # Auto-label issues/PRs using AI
           python: true # Format Python with Ruff and docformatter
           prettier: true # Format YAML, JSON, Markdown, CSS
-          swift: false # Format Swift (requires macos-latest)
+          swift: true # Format Swift (requires macos-latest)
           spelling: true # Check spelling with codespell
           links: false # Check broken links with Lychee
           summary: true # Generate AI-powered PR summaries

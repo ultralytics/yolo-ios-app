@@ -1,4 +1,5 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
 //
 //  Threshold Provider for Ultralytics YOLO App
 //  This class is designed to supply custom Intersection Over Union (IoU) and confidence thresholds

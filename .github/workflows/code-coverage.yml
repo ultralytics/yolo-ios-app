@@ -1,0 +1,52 @@
+name: Swift Code Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "15.2"
+
+      - name: Install dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies
+
+      - name: Create test .env file
+        run: |
+          echo "# Test environment variables" > .env
+          echo "API_URL=https://test-api.ultralytics.com" >> .env
+          echo "FIREBASE_API_KEY=test-key" >> .env
+
+      - name: Run tests with coverage
+        run: |
+          xcodebuild test \
+            -scheme YOLO \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            -enableCodeCoverage YES \
+            -derivedDataPath build \
+            -quiet
+
+      - name: Generate coverage report
+        run: |
+          xcrun xccov view --report build/Logs/Test/*.xcresult
+
+      - name: Upload Coverage Reports to CodeCov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          name: swift-codecov
+          verbose: false
+          xcode: true
+          xcode_package: build/Logs/Test/*.xcresult

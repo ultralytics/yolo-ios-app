@@ -1,13 +1,5 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//
-//  YOLOTests.swift
-//  YOLOTests
-//
-//  Created by Ultralytics
-//  License: MIT
-//
-
 import CoreImage
 import CoreML
 import UIKit

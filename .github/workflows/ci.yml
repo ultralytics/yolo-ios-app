@@ -50,9 +50,26 @@ jobs:
           echo "FIREBASE_API_KEY=test-key" >> .env
       - name: Run tests with coverage
         run: |
+          # List available simulators to help with debugging
+          xcrun simctl list devices available
+          
+          # Attempt to find an iPhone 15 with iOS 17.x
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone 15.*17\.[0-9]" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          
+          # Use specific simulator if found, otherwise use a generic destination
+          if [ -n "$IOS_SIMULATOR" ]; then
+            echo "Using simulator ID: $IOS_SIMULATOR"
+            DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR"
+          else
+            echo "No specific iPhone 15 simulator found. Using generic destination."
+            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+          fi
+          
+          echo "Running tests with destination: $DESTINATION"
+          
           xcodebuild test \
             -scheme YOLO \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            -destination "$DESTINATION" \
             -enableCodeCoverage YES \
             -derivedDataPath build \
             -quiet || true

@@ -15,12 +15,29 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download and unzip YOLO model
+      - name: Download and unzip YOLO models
         run: |
-          MODEL="yolo11n.mlpackage"
+          # Create all required directories
           mkdir -p YOLOiOSApp/DetectModels
+          mkdir -p Tests/YOLOTests/Resources
+          
+          # Download and unzip the main model to YOLOiOSApp/DetectModels
+          MODEL="yolo11n.mlpackage"
           curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.zip" -o "${MODEL}.zip"
           unzip "${MODEL}.zip" -d YOLOiOSApp/DetectModels
+          
+          # Copy the model to the test resources directory as well
+          cp -R YOLOiOSApp/DetectModels/${MODEL} Tests/YOLOTests/Resources/
+          
+          # Download and unzip variant models for tests
+          for VARIANT in "cls" "obb" "pose" "seg"; do
+            VARIANT_MODEL="yolo11n-${VARIANT}.mlpackage"
+            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${VARIANT_MODEL}.zip" -o "${VARIANT_MODEL}.zip"
+            unzip -q "${VARIANT_MODEL}.zip" -d Tests/YOLOTests/Resources/
+          done
+          
+          # List the contents of the test resources directory to verify
+          ls -la Tests/YOLOTests/Resources/
       - name: Install dependencies
         run: |
           xcodebuild -resolvePackageDependencies

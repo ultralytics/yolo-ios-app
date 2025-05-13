@@ -25,8 +25,8 @@ jobs:
       - name: Download and unzip YOLO model
         run: |
           mkdir -p YOLOiOSApp/DetectModels
-          curl -L https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip -o yolo11n.mlpackage.zip
-          unzip yolo11n.mlpackage.zip -d YOLOiOSApp/DetectModels
+          MODEL_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip"
+          curl -L $MODEL_URL | unzip -d YOLOiOSApp/DetectModels -
       - name: Install dependencies
         run: |
           xcodebuild -resolvePackageDependencies

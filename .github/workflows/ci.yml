@@ -81,18 +81,48 @@ jobs:
             -enableCodeCoverage YES \
             clean build test
 
-          # Extract and convert coverage data
-          cd Build/Build/ProfileData
-          cd $(ls -d */|head -n 1)
-          directory=${PWD##*/}
-          pathCoverage=Build/Build/ProfileData/${directory}/Coverage.profdata
-          cd ../../../../
-
+      - name: Generate Code Coverage Report
+        run: |
+          # List build products to debug
+          ls -la Build/Build/Products/
+          
+          # Find the app bundle directory
+          APP_PATH=$(find Build/Build/Products -name "YOLO.app" -type d)
+          echo "Found app at: $APP_PATH"
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: Could not find YOLO.app bundle"
+            exit 1
+          fi
+          
+          # Get the binary path
+          BINARY_PATH="$APP_PATH/YOLO"
+          
+          if [ ! -f "$BINARY_PATH" ]; then
+            echo "Error: Could not find YOLO binary at $BINARY_PATH"
+            # Try to find it anyway
+            BINARY_PATH=$(find Build/Build/Products -name "YOLO" -type f | grep -v "\.xctest" | head -1)
+            if [ -n "$BINARY_PATH" ]; then
+              echo "Found binary at alternative location: $BINARY_PATH"
+            else
+              exit 1
+            fi
+          fi
+          
+          # Find the coverage data
+          PROFDATA_PATH=$(find Build/Build/ProfileData -name "Coverage.profdata" -type f)
+          echo "Found coverage data at: $PROFDATA_PATH"
+          
+          if [ -z "$PROFDATA_PATH" ]; then
+            echo "Error: Could not find Coverage.profdata"
+            exit 1
+          fi
+          
           # Generate lcov format coverage report
           xcrun llvm-cov export \
             -format="lcov" \
-            -instr-profile $pathCoverage \
-            Build/Build/Products/Debug-iphonesimulator/YOLO.app/YOLO > info.lcov
+            -instr-profile "$PROFDATA_PATH" \
+            "$BINARY_PATH" > info.lcov
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5

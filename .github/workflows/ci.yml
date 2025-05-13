@@ -76,9 +76,15 @@ jobs:
       - name: Generate coverage report
         run: |
           if [ -d "build/Logs/Test" ]; then
-            xcrun xccov view --report build/Logs/Test/*.xcresult
+            # Check if any xcresult bundles exist
+            if ls build/Logs/Test/*.xcresult 1> /dev/null 2>&1; then
+              echo "Found test result bundles, generating coverage report..."
+              xcrun xccov view --report build/Logs/Test/*.xcresult || echo "Failed to generate coverage report, but continuing..."
+            else
+              echo "No xcresult bundles found in build/Logs/Test directory"
+            fi
           else
-            echo "No test results found"
+            echo "No test results directory found at build/Logs/Test"
           fi
       - name: Upload Coverage Reports to CodeCov
         if: always()

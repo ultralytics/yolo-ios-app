@@ -54,16 +54,10 @@ jobs:
 
       - name: Generate Code Coverage Report
         run: |
-          echo "Listing Build/Build/Products/Debug-iphonesimulator contents:"
-          ls -la Build/Build/Products/Debug-iphonesimulator
-
           PROFDATA_PATH=$(find Build/Build/ProfileData -name "Coverage.profdata" -type f | head -1)
-          echo "Coverage data path: $PROFDATA_PATH"
-
           BINARY_PATH=""
-          # Try to find the XCTest bundle executable first
-          # This is typical for library/framework coverage where tests exercise the library code
-          # Using -print -quit for find is not portable; head -1 is better.
+
+          # Prioritize XCTest bundle executable for library/framework coverage
           XCTEST_BUNDLE_PATH=$(find Build/Build/Products -path "*Debug-iphonesimulator/*.xctest" -type d | head -1)
           
           if [ -n "$XCTEST_BUNDLE_PATH" ]; then
@@ -71,72 +65,45 @@ jobs:
             CANDIDATE_PATH="$XCTEST_BUNDLE_PATH/$TEST_BUNDLE_NAME"
             if [ -f "$CANDIDATE_PATH" ]; then
               BINARY_PATH="$CANDIDATE_PATH"
-              echo "Identified XCTest executable for coverage: $BINARY_PATH"
-            else
-              echo "XCTest bundle found at $XCTEST_BUNDLE_PATH, but executable '$TEST_BUNDLE_NAME' not found inside."
+              echo "Using XCTest executable for coverage: $BINARY_PATH"
             fi
-          else
-            echo "No .xctest bundle found. Looking for an .app bundle."
-            # Fallback: Try to find an .app bundle executable (if it's an application project)
+          fi
+
+          # Fallback: If no XCTest executable, try to find an .app bundle executable
+          if [ -z "$BINARY_PATH" ]; then
+            echo "No .xctest executable found. Looking for an .app bundle."
             APP_BUNDLE_PATH=$(find Build/Build/Products -path "*Debug-iphonesimulator/*.app" -not -path "*.xctest/*" -type d | head -1)
             if [ -n "$APP_BUNDLE_PATH" ]; then
               APP_NAME=$(basename "$APP_BUNDLE_PATH" .app)
-              # Try executable with the same name as the .app bundle
-              CANDIDATE_APP_PATH_DERIVED="$APP_BUNDLE_PATH/$APP_NAME"
-              # Try executable with the scheme name "YOLO"
-              CANDIDATE_APP_PATH_YOLO="$APP_BUNDLE_PATH/YOLO"
-
-              if [ -f "$CANDIDATE_APP_PATH_DERIVED" ]; then
-                BINARY_PATH="$CANDIDATE_APP_PATH_DERIVED"
-                echo "Identified .app executable (derived name) for coverage: $BINARY_PATH"
-              elif [ -f "$CANDIDATE_APP_PATH_YOLO" ]; then # Fallback if app executable name matches scheme
-                BINARY_PATH="$CANDIDATE_APP_PATH_YOLO"
-                echo "Identified .app executable (YOLO name) for coverage: $BINARY_PATH"
-              else
-                echo "App bundle found at $APP_BUNDLE_PATH, but executable '$APP_NAME' or 'YOLO' not found inside."
+              # Try executable with the same name as the .app bundle or the scheme name "YOLO"
+              if [ -f "$APP_BUNDLE_PATH/$APP_NAME" ]; then
+                BINARY_PATH="$APP_BUNDLE_PATH/$APP_NAME"
+                echo "Using .app executable (derived name) for coverage: $BINARY_PATH"
+              elif [ -f "$APP_BUNDLE_PATH/YOLO" ]; then
+                BINARY_PATH="$APP_BUNDLE_PATH/YOLO"
+                echo "Using .app executable (YOLO name) for coverage: $BINARY_PATH"
               fi
-            else
-                echo "Neither .xctest nor .app bundle executable found in Build/Build/Products/Debug-iphonesimulator."
             fi
           fi
-
-          echo "Final binary path selected for coverage: $BINARY_PATH"
           
-          # Check if files exist before attempting to generate report
-          BINARY_EXISTS=false
-          if [ -n "$BINARY_PATH" ] && [ -f "$BINARY_PATH" ]; then
-            BINARY_EXISTS=true
-          fi
-
-          PROFDATA_EXISTS=false
-          if [ -n "$PROFDATA_PATH" ] && [ -f "$PROFDATA_PATH" ]; then
-            PROFDATA_EXISTS=true
-          fi
-
-          if $BINARY_EXISTS && $PROFDATA_EXISTS; then
-            echo "Generating lcov report with:"
-            echo "Binary: $BINARY_PATH"
-            echo "Profile Data: $PROFDATA_PATH"
+          if [ -n "$BINARY_PATH" ] && [ -f "$BINARY_PATH" ] && [ -n "$PROFDATA_PATH" ] && [ -f "$PROFDATA_PATH" ]; then
+            echo "Generating lcov report with Binary: $BINARY_PATH and Profile Data: $PROFDATA_PATH"
             xcrun llvm-cov export \
               -format="lcov" \
               -instr-profile "$PROFDATA_PATH" \
               "$BINARY_PATH" > info.lcov
             
-            if [ -s info.lcov ]; then # Check if file exists and is not empty
+            if [ -s info.lcov ]; then
                 echo "Coverage report generated successfully: info.lcov"
-                ls -l info.lcov
             else
-                echo "WARNING: info.lcov was generated but is empty. This might indicate an issue with coverage data or binary matching."
-                # Ensure info.lcov exists, even if empty, for the Codecov step
-                touch info.lcov 
+                echo "WARNING: info.lcov was generated but is empty."
+                touch info.lcov # Ensure file exists for Codecov step
             fi
           else
-            echo "Could not generate coverage report - required files (binary or profdata) are missing or invalid."
-            echo "Binary Path: $BINARY_PATH (Exists: $BINARY_EXISTS)"
-            echo "Profdata Path: $PROFDATA_PATH (Exists: $PROFDATA_EXISTS)"
-            # Create an empty info.lcov file so the Codecov action doesn't fail on "file not found"
-            # (since fail_ci_if_error is false, an empty report will lead to 0% coverage on Codecov).
-            touch info.lcov 
+            echo "Could not generate coverage report - required binary or profdata file missing or invalid."
+            echo "Binary Path: $BINARY_PATH"
+            echo "Profdata Path: $PROFDATA_PATH"
+            touch info.lcov # Create empty info.lcov for Codecov
             echo "Empty info.lcov created as a fallback."
           fi
 

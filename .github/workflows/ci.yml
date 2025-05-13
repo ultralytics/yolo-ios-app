@@ -27,12 +27,6 @@ jobs:
           
           # Verify contents
           ls -la Tests/YOLOTests/Resources
-      - name: Fix Swift tools version in Package.swift
-        run: |
-          if grep -q "^Ultralytics" Package.swift; then
-            perl -pi -e 's/^Ultralytics/swift-tools-version:/g' Package.swift
-            echo "Fixed Swift tools version in Package.swift"
-          fi
       - name: Install dependencies
         run: |
           xcodebuild -resolvePackageDependencies

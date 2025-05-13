@@ -13,8 +13,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      #- name: Set up Xcode
-      #  run: sudo xcode-select -s /Applications/Xcode_16.2.app
       - name: Download and unzip YOLO model
         run: |
           MODEL="yolo11n.mlpackage"

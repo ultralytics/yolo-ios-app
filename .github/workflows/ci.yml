@@ -18,6 +18,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Xcode Version
+        run: xcodebuild -version
+
       - name: Download and unzip YOLO models to tests directory
         run: |
           # First, clean up any existing model files to prevent duplicates
@@ -40,59 +44,59 @@ jobs:
           
           # Verify contents
           ls -la Tests/YOLOTests/Resources
+
       - name: Install dependencies
         run: |
           xcodebuild -resolvePackageDependencies
+
       - name: Create test .env file
         run: |
           echo "# Test environment variables" > .env
           echo "API_URL=https://test-api.ultralytics.com" >> .env
           echo "FIREBASE_API_KEY=test-key" >> .env
-      - name: Run tests with coverage
+
+      - name: Build and Test
         run: |
-          # List available simulators to help with debugging
+          # Find available simulators
           xcrun simctl list devices available
           
-          # Attempt to find an iPhone 15 with iOS 17.x
-          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone 15.*17\.[0-9]" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          # Find a suitable iOS simulator
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
           
-          # Use specific simulator if found, otherwise use a generic destination
           if [ -n "$IOS_SIMULATOR" ]; then
-            echo "Using simulator ID: $IOS_SIMULATOR"
-            DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR"
+            DESTINATION="id=$IOS_SIMULATOR"
           else
-            echo "No specific iPhone 15 simulator found. Using generic destination."
-            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+            DESTINATION="name=iPhone 14"
           fi
           
-          echo "Running tests with destination: $DESTINATION"
+          echo "Using iOS Simulator with $DESTINATION"
           
-          xcodebuild test \
+          # Run the build and test with code coverage enabled
+          xcodebuild \
             -scheme YOLO \
-            -destination "$DESTINATION" \
+            -sdk iphonesimulator \
+            -derivedDataPath Build/ \
+            -destination "platform=iOS Simulator,$DESTINATION" \
             -enableCodeCoverage YES \
-            -derivedDataPath build \
-            -quiet || true
-      - name: Generate coverage report
-        run: |
-          if [ -d "build/Logs/Test" ]; then
-            # Check if any xcresult bundles exist
-            if ls build/Logs/Test/*.xcresult 1> /dev/null 2>&1; then
-              echo "Found test result bundles, generating coverage report..."
-              xcrun xccov view --report build/Logs/Test/*.xcresult || echo "Failed to generate coverage report, but continuing..."
-            else
-              echo "No xcresult bundles found in build/Logs/Test directory"
-            fi
-          else
-            echo "No test results directory found at build/Logs/Test"
-          fi
-      - name: Upload Coverage Reports to CodeCov
-        if: always()
+            clean build test
+          
+          # Extract and convert coverage data
+          cd Build/Build/ProfileData
+          cd $(ls -d */|head -n 1)
+          directory=${PWD##*/}
+          pathCoverage=Build/Build/ProfileData/${directory}/Coverage.profdata
+          cd ../../../../
+          
+          # Generate lcov format coverage report
+          xcrun llvm-cov export \
+            -format="lcov" \
+            -instr-profile $pathCoverage \
+            Build/Build/Products/Debug-iphonesimulator/YOLO.app/YOLO > info.lcov
+
+      - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./info.lcov
+          slug: ultralytics/yolo-ios-app
           fail_ci_if_error: false
-          name: swift-codecov
-          verbose: false
-          xcode: true
-          xcode_package: build/Logs/Test/*.xcresult

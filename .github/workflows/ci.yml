@@ -13,6 +13,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+# Continuous Integration (CI) GitHub Actions tests
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Download and unzip YOLO model to tests directory
         run: |
           # Define model name
@@ -28,6 +43,46 @@ jobs:
           # Verify contents
           echo "Contents of Tests/YOLOTests/Resources:"
           ls -la Tests/YOLOTests/Resources
+      - name: Fix Swift tools version in Package.swift
+        run: |
+          if grep -q "^Ultralytics" Package.swift; then
+            perl -pi -e 's/^Ultralytics/swift-tools-version:/g' Package.swift
+            echo "Fixed Swift tools version in Package.swift"
+          fi
+      - name: Install dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies
+      - name: Create test .env file
+        run: |
+          echo "# Test environment variables" > .env
+          echo "API_URL=https://test-api.ultralytics.com" >> .env
+          echo "FIREBASE_API_KEY=test-key" >> .env
+      - name: Run tests with coverage
+        run: |
+          xcodebuild test \
+            -scheme YOLO \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            -enableCodeCoverage YES \
+            -derivedDataPath build \
+            -quiet || true
+      - name: Generate coverage report
+        run: |
+          if [ -d "build/Logs/Test" ]; then
+            xcrun xccov view --report build/Logs/Test/*.xcresult
+          else
+            echo "No test results found"
+          fi
+      - name: Upload Coverage Reports to CodeCov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          name: swift-codecov
+          verbose: false
+          xcode: true
+          xcode_package: build/Logs/Test/*.xcresult
+
       - name: Fix Swift tools version in Package.swift
         run: |
           if grep -q "^Ultralytics" Package.swift; then

@@ -13,20 +13,19 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download and unzip YOLO model to tests directory
+      - name: Download and unzip YOLO models to tests directory
         run: |
-          # Define model name
-          MODEL="yolo11n.mlpackage"
-          
           # Create tests directory
           mkdir -p Tests/YOLOTests/Resources
           
-          # Download and unzip directly to tests directory
-          curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.zip" -o "${MODEL}.zip"
-          unzip -o "${MODEL}.zip" -d Tests/YOLOTests/Resources
+          # Download and extract all models
+          for MODEL in yolo11n yolo11n-cls yolo11n-obb yolo11n-pose yolo11n-seg; do
+            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.mlpackage.zip" -o "${MODEL}.zip"
+            unzip -o "${MODEL}.zip" -d Tests/YOLOTests/Resources
+            rm "${MODEL}.zip"
+          done
           
           # Verify contents
-          echo "Contents of Tests/YOLOTests/Resources:"
           ls -la Tests/YOLOTests/Resources
       - name: Fix Swift tools version in Package.swift
         run: |

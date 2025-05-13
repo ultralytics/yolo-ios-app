@@ -15,15 +15,23 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download and unzip YOLO models to tests directory
         run: |
+          # First, clean up any existing model files to prevent duplicates
+          rm -rf Tests/YOLOTests/Resources/*.mlpackage
+          rm -rf Tests/YOLOTests/Resources/__MACOSX
+          
           # Create tests directory
           mkdir -p Tests/YOLOTests/Resources
           
           # Download and extract all models
           for MODEL in yolo11n yolo11n-cls yolo11n-obb yolo11n-pose yolo11n-seg; do
-            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.mlpackage.zip" -o "${MODEL}.zip"
-            unzip -o "${MODEL}.zip" -d Tests/YOLOTests/Resources
-            rm "${MODEL}.zip"
+            echo "Processing $MODEL..."
+            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.mlpackage.zip" -o temp.zip
+            unzip -o temp.zip -d Tests/YOLOTests/Resources
+            rm temp.zip
           done
+          
+          # Clean up macOS metadata folders
+          rm -rf Tests/YOLOTests/Resources/__MACOSX
           
           # Verify contents
           ls -la Tests/YOLOTests/Resources

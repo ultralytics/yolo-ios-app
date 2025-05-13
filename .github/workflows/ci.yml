@@ -1,13 +1,18 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
 # Continuous Integration (CI) GitHub Actions tests
+
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 permissions:
   contents: read
+
 jobs:
   test:
     runs-on: macos-latest

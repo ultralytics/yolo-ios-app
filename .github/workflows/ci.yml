@@ -59,10 +59,10 @@ jobs:
         run: |
           # Find available simulators
           xcrun simctl list devices available
-          
+
           # Find a suitable iOS simulator
           IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
-          
+
           if [ -n "$IOS_SIMULATOR" ]; then
             DESTINATION="id=$IOS_SIMULATOR"
           else
@@ -70,7 +70,7 @@ jobs:
           fi
           
           echo "Using iOS Simulator with $DESTINATION"
-          
+
           # Run the build and test with code coverage enabled
           xcodebuild \
             -scheme YOLO \
@@ -79,14 +79,14 @@ jobs:
             -destination "platform=iOS Simulator,$DESTINATION" \
             -enableCodeCoverage YES \
             clean build test
-          
+
           # Extract and convert coverage data
           cd Build/Build/ProfileData
           cd $(ls -d */|head -n 1)
           directory=${PWD##*/}
           pathCoverage=Build/Build/ProfileData/${directory}/Coverage.profdata
           cd ../../../../
-          
+
           # Generate lcov format coverage report
           xcrun llvm-cov export \
             -format="lcov" \

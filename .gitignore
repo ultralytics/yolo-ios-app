@@ -196,6 +196,7 @@ Temporary Items
 .html  # Bokeh Plots
 .pg  # TensorFlow Frozen Graphs
 .avi # videos
+.vscode
 
 # Sensitive or high-churn files:
 .idea/**/dataSources/

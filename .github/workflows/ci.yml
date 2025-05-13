@@ -13,10 +13,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Xcode
-        uses: apple-actions/setup-xcode@v2
-        with:
-          xcode-version: "15.2"
       - name: Download and unzip YOLO model to tests directory
         run: |
           # Define model name

@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: apple-actions/setup-xcode@v2
         with:
           xcode-version: "15.2"
       - name: Download and unzip YOLO model
@@ -23,9 +23,6 @@ jobs:
           mkdir -p YOLOiOSApp/DetectModels
           curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.zip" -o "${MODEL}.zip"
           unzip "${MODEL}.zip" -d YOLOiOSApp/DetectModels
-      - name: Fix Swift tools version in Package.swift
-        run: |
-          sed -i '' 's/^Ultralytics/swift-tools-version:/' Package.swift
       - name: Install dependencies
         run: |
           xcodebuild -resolvePackageDependencies

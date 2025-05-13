@@ -1,7 +1,7 @@
 {
-    "editor.quickSuggestions": {
-        "comments": "off",
-        "strings": "off",
-        "other": "off"
-    }
+  "editor.quickSuggestions": {
+    "comments": "off",
+    "strings": "off",
+    "other": "off"
+  }
 }

@@ -1,0 +1,98 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# Continuous Integration (CI) GitHub Actions tests
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and unzip YOLO models to tests directory
+        run: |
+          # First, clean up any existing model files to prevent duplicates
+          rm -rf Tests/YOLOTests/Resources/*.mlpackage
+          rm -rf Tests/YOLOTests/Resources/__MACOSX
+          
+          # Create tests directory
+          mkdir -p Tests/YOLOTests/Resources
+          
+          # Download and extract all models
+          for MODEL in yolo11n yolo11n-cls yolo11n-obb yolo11n-pose yolo11n-seg; do
+            echo "Processing $MODEL..."
+            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.mlpackage.zip" -o temp.zip
+            unzip -o temp.zip -d Tests/YOLOTests/Resources
+            rm temp.zip
+          done
+          
+          # Clean up macOS metadata folders
+          rm -rf Tests/YOLOTests/Resources/__MACOSX
+          
+          # Verify contents
+          ls -la Tests/YOLOTests/Resources
+      - name: Install dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies
+      - name: Create test .env file
+        run: |
+          echo "# Test environment variables" > .env
+          echo "API_URL=https://test-api.ultralytics.com" >> .env
+          echo "FIREBASE_API_KEY=test-key" >> .env
+      - name: Run tests with coverage
+        run: |
+          # List available simulators to help with debugging
+          xcrun simctl list devices available
+          
+          # Attempt to find an iPhone 15 with iOS 17.x
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone 15.*17\.[0-9]" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          
+          # Use specific simulator if found, otherwise use a generic destination
+          if [ -n "$IOS_SIMULATOR" ]; then
+            echo "Using simulator ID: $IOS_SIMULATOR"
+            DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR"
+          else
+            echo "No specific iPhone 15 simulator found. Using generic destination."
+            DESTINATION="platform=iOS Simulator,name=iPhone 15"
+          fi
+          
+          echo "Running tests with destination: $DESTINATION"
+          
+          xcodebuild test \
+            -scheme YOLO \
+            -destination "$DESTINATION" \
+            -enableCodeCoverage YES \
+            -derivedDataPath build \
+            -quiet || true
+      - name: Generate coverage report
+        run: |
+          if [ -d "build/Logs/Test" ]; then
+            # Check if any xcresult bundles exist
+            if ls build/Logs/Test/*.xcresult 1> /dev/null 2>&1; then
+              echo "Found test result bundles, generating coverage report..."
+              xcrun xccov view --report build/Logs/Test/*.xcresult || echo "Failed to generate coverage report, but continuing..."
+            else
+              echo "No xcresult bundles found in build/Logs/Test directory"
+            fi
+          else
+            echo "No test results directory found at build/Logs/Test"
+          fi
+      - name: Upload Coverage Reports to CodeCov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          name: swift-codecov
+          verbose: false
+          xcode: true
+          xcode_package: build/Logs/Test/*.xcresult

@@ -23,6 +23,7 @@ The test resources follow this structure:
 ```
 Tests/YOLOTests/Resources/
 ├── README.md                      # This file
+├── download-test-models.sh
 ├── yolo11n.mlpackage/             # Detection model package
 ├── yolo11n-cls.mlpackage/         # Classification model package
 ├── yolo11n-obb.mlpackage/         # Oriented bounding box model package

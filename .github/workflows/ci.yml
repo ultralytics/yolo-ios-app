@@ -22,13 +22,11 @@ jobs:
 
       - name: Download YOLO models
         run: |
-          rm -rf Tests/YOLOTests/Resources/*.mlpackage Tests/YOLOTests/Resources/__MACOSX
-          mkdir -p Tests/YOLOTests/Resources
-          for MODEL in yolo11n yolo11n-cls yolo11n-obb yolo11n-pose yolo11n-seg; do
-            curl -L "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/${MODEL}.mlpackage.zip" -o temp.zip
-            unzip -o temp.zip -d Tests/YOLOTests/Resources && rm temp.zip
-          done
-          rm -rf Tests/YOLOTests/Resources/__MACOSX
+          # Make the script executable
+          # chmod +x Tests/YOLOTests/Resources/prepare-test-models.sh
+          
+          # Run the script to download and extract models
+          ./Tests/YOLOTests/Resources/prepare-test-models.sh
 
       - name: Install dependencies
         run: xcodebuild -resolvePackageDependencies

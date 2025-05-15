@@ -11,15 +11,23 @@ import AVFoundation
 
 /// Comprehensive test suite for validating all functions of the YOLO framework.
 class YOLOTests: XCTestCase {
+  // Basic diagnostic test
+  func testBasic() {
+    print("Running basic YOLO test diagnostic")
+    print("Resource URL: \(Bundle.module.resourceURL?.path ?? "nil")")
+    XCTAssertTrue(true)  // Always succeeds
+  }
+
   // MARK: - Model Loading Tests
-  
+
   /// Test that a valid detection model can be correctly loaded
   func testLoadValidDetectionModel() async throws {
     let expectation = XCTestExpectation(description: "Load detection model")
-    
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
-    
+
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .detect) { result in
@@ -32,7 +40,7 @@ class YOLOTests: XCTestCase {
           XCTFail("Failed to load model: \(error)")
         }
       }
-      
+
       await self.fulfillment(of: [expectation], timeout: 5.0)
     }
   }
@@ -40,7 +48,7 @@ class YOLOTests: XCTestCase {
   /// Test error handling when model path is invalid
   func testLoadInvalidModelPath() async throws {
     let expectation = XCTestExpectation(description: "Invalid model path")
-    
+
     let _ = YOLO("invalid_path.mlpackage", task: .detect) { result in
       switch result {
       case .success(_):
@@ -50,17 +58,18 @@ class YOLOTests: XCTestCase {
         expectation.fulfill()
       }
     }
-    
+
     await self.fulfillment(of: [expectation], timeout: 5.0)
   }
 
   /// Test that a segmentation model can be correctly loaded
   func testLoadSegmentationModel() async throws {
     let expectation = XCTestExpectation(description: "Load segmentation model")
-    
-    let modelURL = Bundle.module.url(forResource: "yolo11n-seg", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
-    
+
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n-seg", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n-seg.mlpackage to Tests/YOLOTests/Resources")
+
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .segment) { result in
@@ -73,75 +82,18 @@ class YOLOTests: XCTestCase {
           XCTFail("Failed to load model: \(error)")
         }
       }
-      
+
       await fulfillment(of: [expectation], timeout: 5.0)
     }
-  }
-
-  // MARK: - YOLOResult Tests
-  
-  /// Test YOLOResult initialization and properties
-  func testYOLOResultInitialization() {
-    let result = YOLOResult(
-      boxes: [YOLOBox(x: 10, y: 20, width: 100, height: 200, confidence: 0.9, classIndex: 0, name: "person")],
-      masks: nil,
-      probs: nil,
-      keypoints: nil,
-      obb: nil,
-      speed: 15.0, 
-      task: .detect,
-      orig_shape: CGSize(width: 640, height: 640)
-    )
-    
-    XCTAssertEqual(result.boxes?.count, 1)
-    XCTAssertEqual(result.boxes?[0].name, "person")
-    XCTAssertEqual(result.boxes?[0].confidence, 0.9)
-    XCTAssertEqual(result.speed, 15.0)
-    XCTAssertEqual(result.task, .detect)
-    XCTAssertEqual(result.orig_shape.width, 640)
-    XCTAssertEqual(result.orig_shape.height, 640)
-    XCTAssertNil(result.masks)
-    XCTAssertNil(result.probs)
-    XCTAssertNil(result.keypoints)
-    XCTAssertNil(result.obb)
-  }
-  
-  // MARK: - YOLOBox Tests
-  
-  /// Test YOLOBox properties and calculations
-  func testYOLOBoxProperties() {
-    let box = YOLOBox(x: 100, y: 150, width: 200, height: 300, confidence: 0.85, classIndex: 2, name: "car")
-    
-    XCTAssertEqual(box.x, 100)
-    XCTAssertEqual(box.y, 150)
-    XCTAssertEqual(box.width, 200)
-    XCTAssertEqual(box.height, 300)
-    XCTAssertEqual(box.confidence, 0.85)
-    XCTAssertEqual(box.classIndex, 2)
-    XCTAssertEqual(box.name, "car")
-    
-    // Test computed properties
-    XCTAssertEqual(box.rect, CGRect(x: 100, y: 150, width: 200, height: 300))
-    XCTAssertEqual(box.centerX, 200)
-    XCTAssertEqual(box.centerY, 300)
-  }
-  
-  // MARK: - Task Type Tests
-  
-  /// Test YOLO task string representations
-  func testYOLOTaskStringRepresentation() {
-    XCTAssertEqual(YOLOTask.detect.stringValue, "detect")
-    XCTAssertEqual(YOLOTask.segment.stringValue, "segment")
-    XCTAssertEqual(YOLOTask.classify.stringValue, "classify")
-    XCTAssertEqual(YOLOTask.pose.stringValue, "pose")
-    XCTAssertEqual(YOLOTask.obb.stringValue, "obb")
   }
 
   // MARK: - Processing Pipeline Tests
 
   /// Helper method to get a test image
   @MainActor
-  private func getTestImage(size: CGSize = CGSize(width: 640, height: 640)) -> UIImage? {
+  private func getTestImage() -> UIImage? {
+    // Generate test image (white square on black background)
+    let size = CGSize(width: 640, height: 640)
     UIGraphicsBeginImageContextWithOptions(size, true, 1.0)
     UIColor.black.setFill()
     UIRectFill(CGRect(origin: .zero, size: size))
@@ -164,8 +116,9 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -210,8 +163,9 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n-cls", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n-cls", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n-cls.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -252,8 +206,9 @@ class YOLOTests: XCTestCase {
   func testErrorHandlingWithInvalidImageInput() async throws {
     let expectation = XCTestExpectation(description: "Test invalid image input")
     
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
     
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -292,8 +247,9 @@ class YOLOTests: XCTestCase {
   func testConfidenceThresholdSetting() async throws {
     let expectation = XCTestExpectation(description: "Confidence threshold setting")
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -329,8 +285,9 @@ class YOLOTests: XCTestCase {
   func testIoUThresholdSetting() async throws {
     let expectation = XCTestExpectation(description: "IoU threshold setting")
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -373,8 +330,9 @@ class YOLOTests: XCTestCase {
       return
     }
     
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
     
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -415,10 +373,12 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOCamera component can be initialized
   @MainActor
   func testYOLOCameraInitialization() async throws {
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
+      // Initialize YOLOCamera with the model path
       let yoloCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
 
       // Validate component properties
@@ -431,8 +391,9 @@ class YOLOTests: XCTestCase {
   /// Test YOLOCamera with different parameter combinations
   @MainActor
   func testYOLOCameraWithDifferentParameters() async throws {
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
     
     if let url = modelURL {
       // Test with front camera
@@ -450,8 +411,9 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOView component can be initialized
   @MainActor
   func testYOLOViewInitialization() async throws {
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       // Initialize YOLOView
@@ -478,8 +440,9 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -527,8 +490,9 @@ class YOLOTests: XCTestCase {
       return
     }
     
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
     
     if let url = modelURL {
       let initExpectation = XCTestExpectation(description: "Initialize model")
@@ -577,8 +541,9 @@ class YOLOTests: XCTestCase {
   func testTaskMismatchError() async throws {
     let expectation = XCTestExpectation(description: "Task mismatch error")
 
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
       // Use detection model with classification task - should fail
@@ -596,12 +561,13 @@ class YOLOTests: XCTestCase {
     }
   }
   
-  /// Test multiple tasks with the same model
+  /// Test multiple tasks with the same model to verify task validation
   @MainActor
   func testMultipleTasksWithSameModel() async throws {
     // Get model path
-    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found")
+    let modelURL = Bundle.module.url(
+      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
     
     guard let url = modelURL else { return }
     

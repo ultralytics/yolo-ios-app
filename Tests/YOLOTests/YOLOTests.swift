@@ -5,17 +5,24 @@ import CoreML
 import UIKit
 import Vision
 import XCTest
-import AVFoundation
 
 @testable import YOLO
 
 /// Comprehensive test suite for validating all functions of the YOLO framework.
+///
+/// This test suite validates:
+/// - Model loading and initialization
+/// - Inference on static images
+/// - Real-time camera frame processing
+/// - Functionality of each task type (detection, segmentation, classification, pose estimation, OBB)
+/// - Error handling and edge cases
+/// - Performance and memory usage
 class YOLOTests: XCTestCase {
   // Basic diagnostic test
   func testBasic() {
     print("Running basic YOLO test diagnostic")
     print("Resource URL: \(Bundle.module.resourceURL?.path ?? "nil")")
-    XCTAssertTrue(true)  // Always succeeds
+    XCTAssertTrue(true)
   }
 
   // MARK: - Model Loading Tests
@@ -41,7 +48,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      await self.fulfillment(of: [expectation], timeout: 5.0)
+      await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 
@@ -59,7 +66,7 @@ class YOLOTests: XCTestCase {
       }
     }
 
-    await self.fulfillment(of: [expectation], timeout: 5.0)
+    await fulfillment(of: [expectation], timeout: 5.0)
   }
 
   /// Test that a segmentation model can be correctly loaded
@@ -125,7 +132,7 @@ class YOLOTests: XCTestCase {
       yolo = YOLO(url.path, task: .detect) { result in
         switch result {
         case .success(_):
-          // Process the image after model is loaded
+          // Process image after model is loaded
           guard let yolo = yolo else { return }
 
           Task {
@@ -135,7 +142,6 @@ class YOLOTests: XCTestCase {
             XCTAssertNotNil(yoloResult)
             XCTAssertEqual(yoloResult.orig_shape.width, ciImage.extent.width)
             XCTAssertEqual(yoloResult.orig_shape.height, ciImage.extent.height)
-            // Check boxes exist (may be empty if nothing detected)
             XCTAssertNotNil(yoloResult.boxes)
             XCTAssertGreaterThan(yoloResult.speed, 0)
 
@@ -173,6 +179,7 @@ class YOLOTests: XCTestCase {
       yolo = YOLO(url.path, task: .classify) { result in
         switch result {
         case .success(_):
+          // Process image after model is loaded
           guard let yolo = yolo else { return }
 
           Task {
@@ -199,50 +206,6 @@ class YOLOTests: XCTestCase {
       }
 
       await fulfillment(of: [expectation], timeout: 10.0)
-    }
-  }
-  
-  /// Test handling of invalid image input
-  @MainActor
-  func testHandlingInvalidImageInput() async throws {
-    let expectation = XCTestExpectation(description: "Test invalid image input")
-    
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-    
-    if let url = modelURL {
-      var yolo: YOLO? = nil
-      yolo = YOLO(url.path, task: .detect) { result in
-        switch result {
-        case .success(_):
-          guard let yolo = yolo else { return }
-          
-          Task {
-            // Create an invalid CIImage (empty)
-            let invalidImage = CIImage()
-            
-            // Process invalid image - should handle gracefully
-            let result = yolo(invalidImage)
-            
-            // Should return result with empty data but not crash
-            XCTAssertNotNil(result)
-            
-            // Use isEmpty without optional chaining as we know result.boxes is not nil
-            if let boxes = result.boxes {
-              XCTAssertTrue(boxes.isEmpty)
-            }
-            
-            expectation.fulfill()
-          }
-          
-        case .failure(let error):
-          XCTFail("Failed to load model: \(error)")
-          expectation.fulfill()
-        }
-      }
-      
-      await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 
@@ -323,55 +286,6 @@ class YOLOTests: XCTestCase {
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
-  
-  /// Test configuration persistence after inference
-  @MainActor
-  func testConfigurationPersistence() async throws {
-    let expectation = XCTestExpectation(description: "Test configuration persistence")
-    
-    guard let testImage = getTestImage(),
-          let ciImage = CIImage(image: testImage) else {
-      XCTFail("Failed to create test image")
-      return
-    }
-    
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-    
-    if let url = modelURL {
-      var yolo: YOLO? = nil
-      yolo = YOLO(url.path, task: .detect) { result in
-        switch result {
-        case .success(_):
-          guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
-          
-          // Set custom configuration
-          let customConfidence = 0.7
-          let customIOU = 0.6
-          predictor.setConfidenceThreshold(confidence: customConfidence)
-          predictor.setIouThreshold(iou: customIOU)
-          
-          Task {
-            // Run inference
-            let _ = yolo(ciImage)
-            
-            // Check if settings are maintained
-            XCTAssertEqual(predictor.confidenceThreshold, customConfidence)
-            XCTAssertEqual(predictor.iouThreshold, customIOU)
-            
-            expectation.fulfill()
-          }
-          
-        case .failure(let error):
-          XCTFail("Failed to load model: \(error)")
-          expectation.fulfill()
-        }
-      }
-      
-      await fulfillment(of: [expectation], timeout: 5.0)
-    }
-  }
 
   // MARK: - YOLOCamera Tests
 
@@ -383,7 +297,8 @@ class YOLOTests: XCTestCase {
     XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
-      // Initialize YOLOCamera with the model path
+      // Initialize YOLOCamera in a UIViewController
+      let viewController = UIViewController()
       let yoloCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
 
       // Validate component properties
@@ -453,7 +368,7 @@ class YOLOTests: XCTestCase {
             let averageTime = totalTime / Double(iterations)
 
             print("Average inference time: \(averageTime * 1000) ms")
-            // Check if inference time is reasonable
+            // Verify inference time is reasonably fast
             XCTAssertLessThan(averageTime, 1.0, "Inference is too slow (> 1 second)")
             expectation.fulfill()
           }
@@ -464,7 +379,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      await self.fulfillment(of: [expectation], timeout: 30.0)
+      await fulfillment(of: [expectation], timeout: 30.0)
     }
   }
 

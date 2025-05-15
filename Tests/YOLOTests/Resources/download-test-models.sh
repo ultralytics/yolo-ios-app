@@ -1,6 +1,9 @@
 #!/bin/bash
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+# Script to download and prepare YOLO model files for testing
+# Run directly from repository root: $ bash Tests/YOLOTests/Resources/download-test-models.sh
+
 set -e # Exit immediately if a command fails
 
 BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"

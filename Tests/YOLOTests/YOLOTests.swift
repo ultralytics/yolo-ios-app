@@ -10,7 +10,7 @@ import XCTest
 
 // Configuration to temporarily skip all model-dependent tests
 // Set this to false when model files are ready for testing
-private let SKIP_MODEL_TESTS = true
+private let SKIP_MODEL_TESTS = false
 
 /// Comprehensive test suite for validating all functions of the YOLO framework.
 ///

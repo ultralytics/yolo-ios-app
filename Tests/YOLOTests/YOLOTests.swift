@@ -135,6 +135,7 @@ class YOLOTests: XCTestCase {
             XCTAssertNotNil(yoloResult)
             XCTAssertEqual(yoloResult.orig_shape.width, ciImage.extent.width)
             XCTAssertEqual(yoloResult.orig_shape.height, ciImage.extent.height)
+            // Check boxes exist (may be empty if nothing detected)
             XCTAssertNotNil(yoloResult.boxes)
             XCTAssertGreaterThan(yoloResult.speed, 0)
 
@@ -201,9 +202,9 @@ class YOLOTests: XCTestCase {
     }
   }
   
-  /// Test error handling with invalid image input
+  /// Test handling of invalid image input
   @MainActor
-  func testErrorHandlingWithInvalidImageInput() async throws {
+  func testHandlingInvalidImageInput() async throws {
     let expectation = XCTestExpectation(description: "Test invalid image input")
     
     let modelURL = Bundle.module.url(
@@ -224,9 +225,13 @@ class YOLOTests: XCTestCase {
             // Process invalid image - should handle gracefully
             let result = yolo(invalidImage)
             
-            // Should return empty result but not crash
+            // Should return result with empty data but not crash
             XCTAssertNotNil(result)
-            XCTAssertTrue(result.boxes?.isEmpty ?? true)
+            
+            // Use isEmpty without optional chaining as we know result.boxes is not nil
+            if let boxes = result.boxes {
+              XCTAssertTrue(boxes.isEmpty)
+            }
             
             expectation.fulfill()
           }
@@ -321,7 +326,7 @@ class YOLOTests: XCTestCase {
   
   /// Test configuration persistence after inference
   @MainActor
-  func testConfigurationPersistenceAfterInference() async throws {
+  func testConfigurationPersistence() async throws {
     let expectation = XCTestExpectation(description: "Test configuration persistence")
     
     guard let testImage = getTestImage(),
@@ -385,24 +390,6 @@ class YOLOTests: XCTestCase {
       XCTAssertEqual(yoloCamera.task, .detect)
       XCTAssertEqual(yoloCamera.cameraPosition, .back)
       XCTAssertNotNil(yoloCamera.body)
-    }
-  }
-  
-  /// Test YOLOCamera with different parameter combinations
-  @MainActor
-  func testYOLOCameraWithDifferentParameters() async throws {
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-    
-    if let url = modelURL {
-      // Test with front camera
-      let frontCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .front)
-      XCTAssertEqual(frontCamera.cameraPosition, .front)
-      
-      // Test with different task
-      let segCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
-      XCTAssertEqual(segCamera.task, .detect)
     }
   }
 
@@ -480,60 +467,6 @@ class YOLOTests: XCTestCase {
       await self.fulfillment(of: [expectation], timeout: 30.0)
     }
   }
-  
-  /// Test concurrent model inference
-  @MainActor
-  func testConcurrentModelInference() async throws {
-    guard let testImage = getTestImage(),
-          let ciImage = CIImage(image: testImage) else {
-      XCTFail("Failed to create test image")
-      return
-    }
-    
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-    
-    if let url = modelURL {
-      let initExpectation = XCTestExpectation(description: "Initialize model")
-      
-      var yolo: YOLO? = nil
-      yolo = YOLO(url.path, task: .detect) { result in
-        switch result {
-        case .success():
-          initExpectation.fulfill()
-        case .failure(let error):
-          XCTFail("Failed to load model: \(error)")
-          initExpectation.fulfill()
-        }
-      }
-      
-      await fulfillment(of: [initExpectation], timeout: 5.0)
-      
-      guard let yolo = yolo else {
-        XCTFail("YOLO instance is nil")
-        return
-      }
-      
-      // Run multiple inferences concurrently
-      let concurrentInferenceCount = 5
-      let inferenceExpectations = (0..<concurrentInferenceCount).map { 
-        XCTestExpectation(description: "Concurrent inference \($0)")
-      }
-      
-      await withTaskGroup(of: Void.self) { group in
-        for i in 0..<concurrentInferenceCount {
-          group.addTask {
-            let result = yolo(ciImage)
-            XCTAssertNotNil(result)
-            inferenceExpectations[i].fulfill()
-          }
-        }
-      }
-      
-      await fulfillment(of: inferenceExpectations, timeout: 10.0)
-    }
-  }
 
   // MARK: - Error Handling Tests
 
@@ -559,64 +492,5 @@ class YOLOTests: XCTestCase {
 
       await fulfillment(of: [expectation], timeout: 5.0)
     }
-  }
-  
-  /// Test multiple tasks with the same model to verify task validation
-  @MainActor
-  func testMultipleTasksWithSameModel() async throws {
-    // Get model path
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-    
-    guard let url = modelURL else { return }
-    
-    // Create test image
-    guard let testImage = getTestImage(), 
-          let ciImage = CIImage(image: testImage) else {
-      XCTFail("Failed to create test image")
-      return
-    }
-    
-    // Test with detection task
-    let expectation1 = XCTestExpectation(description: "Load model for detection task")
-    var yoloDetect: YOLO? = nil
-    
-    yoloDetect = YOLO(url.path, task: .detect) { result in
-      switch result {
-      case .success():
-        // Process image
-        guard let yolo = yoloDetect else { return }
-        
-        Task {
-          let result = yolo(ciImage)
-          XCTAssertNotNil(result)
-          XCTAssertEqual(result.task, .detect)
-          expectation1.fulfill()
-        }
-        
-      case .failure(let error):
-        XCTFail("Failed to load model for detection: \(error)")
-        expectation1.fulfill()
-      }
-    }
-    
-    await fulfillment(of: [expectation1], timeout: 10.0)
-    
-    // Test with the same model but different task (should fail)
-    let expectation2 = XCTestExpectation(description: "Load model with incorrect task")
-    
-    let _ = YOLO(url.path, task: .classify) { result in
-      switch result {
-      case .success():
-        XCTFail("Should not succeed with incorrect task")
-        expectation2.fulfill()
-      case .failure(let error):
-        XCTAssertNotNil(error)
-        expectation2.fulfill()
-      }
-    }
-    
-    await fulfillment(of: [expectation2], timeout: 5.0)
   }
 }

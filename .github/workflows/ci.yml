@@ -23,7 +23,7 @@ jobs:
       - name: Download YOLO models
         run: |
           # Make the script executable
-          # chmod +x Tests/YOLOTests/Resources/prepare-test-models.sh
+          chmod +x Tests/YOLOTests/Resources/prepare-test-models.sh
           
           # Run the script to download and extract models
           ./Tests/YOLOTests/Resources/download-test-models.sh

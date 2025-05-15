@@ -16,7 +16,7 @@ download_model() {
 
   # Remove existing model directory if present
   [ -d "$model_path" ] && rm -rf "$model_path"
-  
+
   # Create model directory
   mkdir -p "$model_path"
 
@@ -27,10 +27,10 @@ download_model() {
   # Extract the zip file
   echo "Extracting $model_name..."
   unzip -o "$zip_path" -d "$model_path"
-  
+
   # Remove macOS metadata if present (after extraction)
-  rm -rf "$model_path/__MACOSX" 2>/dev/null || true
-  find "$model_path" -name "*.DS_Store" -delete 2>/dev/null || true
+  rm -rf "$model_path/__MACOSX" 2> /dev/null || true
+  find "$model_path" -name "*.DS_Store" -delete 2> /dev/null || true
 
   # Clean up zip
   rm "$zip_path"

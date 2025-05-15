@@ -43,31 +43,24 @@ You can obtain the necessary `.mlpackage` files using one of the following metho
 
 ```python
 from ultralytics import YOLO
+from ultralytics.utils.downloads import zip_directory
 
-# Ensure you have the base .pt files (e.g., yolo11n.pt, yolo11n-seg.pt, etc.)
-# Download them if necessary or use your custom trained models.
 
-# Detection model (YOLO11n)
-model_det = YOLO("yolo11n.pt")
-model_det.export(format="coreml", nms=True)  # Exports yolo11n.mlpackage
+def export_and_zip_yolo_models(
+    model_types=("", "-seg", "-cls", "-pose", "-obb"),
+    model_sizes=("n", "s", "m", "l", "x"),
+):
+    """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+    for size in model_sizes:
+        for model_type in model_types:
+            model_name = f"yolo11{size}{model_type}"
+            model = YOLO(f"{model_name}.pt")
+            model.export(format="coreml", int8=True, nms=True if model_type == "" else False)
+            zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
-# Segmentation model (YOLO11n-Seg)
-model_seg = YOLO("yolo11n-seg.pt")
-model_seg.export(format="coreml")  # Exports yolo11n-seg.mlpackage
 
-# Classification model (YOLO11n-Cls)
-model_cls = YOLO("yolo11n-cls.pt")
-model_cls.export(format="coreml")  # Exports yolo11n-cls.mlpackage
-
-# Pose estimation model (YOLO11n-Pose)
-model_pose = YOLO("yolo11n-pose.pt")
-model_pose.export(format="coreml")  # Exports yolo11n-pose.mlpackage
-
-# OBB (Oriented Bounding Box) model (YOLO11n-OBB)
-model_obb = YOLO("yolo11n-obb.pt")
-model_obb.export(format="coreml")  # Exports yolo11n-obb.mlpackage
-
-# For more details on export options and formats, see: https://docs.ultralytics.com/modes/export/
+# Execute with default parameters
+export_and_zip_yolo_models()
 ```
 
 #### Method 2: Use Ultralytics Pre-Exported Models (If Available)

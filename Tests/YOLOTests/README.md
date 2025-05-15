@@ -45,17 +45,21 @@ You can obtain the necessary `.mlpackage` files using one of the following metho
 from ultralytics import YOLO
 from ultralytics.utils.downloads import zip_directory
 
-def export_and_zip_yolo_models(model_types=None, nms=False, zip_files=True):
-    """Exports YOLO11n models to CoreML format and optionally zips the output packages."""
-    if model_types is None:
-        model_types = ["", "-seg", "-cls", "-pose", "-obb"]
-    
-    for model_type in model_types:
-        model = YOLO(f"yolo11n{model_type}.pt")
-        model.export(format="coreml", nms=nms if model_type == "" else False)
-        
-        if zip_files:
-            zip_directory(f"yolo11n{model_type}.mlpackage")
+def export_and_zip_yolo_models(
+    model_types=("", "-seg", "-cls", "-pose", "-obb"), 
+    model_sizes=("n", "s", "m", "l", "x"), 
+    nms=False, 
+    zip_files=True
+):
+    """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+    for size in model_sizes:
+        for model_type in model_types:
+            model_name = f"yolo11{size}{model_type}"
+            model = YOLO(f"{model_name}.pt")
+            model.export(format="coreml", nms=nms if model_type == "" else False)
+            
+            if zip_files:
+                zip_directory(f"{model_name}.mlpackage")
 
 # Execute with default parameters
 export_and_zip_yolo_models()

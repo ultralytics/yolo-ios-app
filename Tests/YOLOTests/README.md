@@ -59,7 +59,7 @@ def export_and_zip_yolo_models(
             model.export(format="coreml", int8=True, nms=nms if model_type == "" else False)
             
             if zip_files:
-                zip_directory(f"{model_name}.mlpackage")
+                zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 # Execute with default parameters
 export_and_zip_yolo_models()

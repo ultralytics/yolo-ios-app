@@ -16,6 +16,23 @@ To execute the test suite successfully, ensure the following [Core ML](https://d
 
 **Note**: Due to their significant file sizes, these model files are not included directly in the source code repository. While the necessary directory structure is provided, you must manually add the actual `.mlpackage` files.
 
+## 📁 Directory Structure
+
+The test resources follow this structure:
+
+```
+Tests/YOLOTests/Resources/
+├── README.md                      # This file
+├── download-test-models.sh
+├── yolo11n.mlpackage/             # Detection model package
+├── yolo11n-cls.mlpackage/         # Classification model package
+├── yolo11n-obb.mlpackage/         # Oriented bounding box model package
+├── yolo11n-pose.mlpackage/        # Pose estimation model package
+└── yolo11n-seg.mlpackage/         # Segmentation model package
+```
+
+Each `.mlpackage` directory should contain a complete Core ML model package with the proper structure including `Manifest.json` and other required files. When downloading or converting models, ensure they maintain this structure.
+
 ## 📥 How to Obtain Model Files
 
 For comprehensive instructions on acquiring and placing these model files, please consult the main `Tests/YOLOTests/README.md` file located in the parent test directory. This guide provides the necessary steps for exporting models in the required format.

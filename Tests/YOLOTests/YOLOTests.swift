@@ -97,7 +97,7 @@ class YOLOTests: XCTestCase {
       }
     }
 
-    // async版に変更
+    // Changed to async version
     await self.fulfillment(of: [expectation], timeout: 5.0)
   }
 
@@ -126,7 +126,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
@@ -173,22 +173,22 @@ class YOLOTests: XCTestCase {
       yolo = YOLO(url.path, task: .detect) { result in
         switch result {
         case .success(_):
-          // モデルがロードされたら、画像を処理
+          // Process the image after the model is loaded
           guard let yolo = yolo else { return }
 
-          // 非同期でYOLOResult取得
+          // Get YOLOResult asynchronously
           Task {
             let yoloResult = yolo(ciImage)
 
-            // 結果の検証
+            // Validate results
             XCTAssertNotNil(yoloResult)
             XCTAssertEqual(yoloResult.orig_shape.width, ciImage.extent.width)
             XCTAssertEqual(yoloResult.orig_shape.height, ciImage.extent.height)
 
-            // 検出結果が配列として存在する（空でも可）
+            // Detection results exist as an array (can be empty)
             XCTAssertNotNil(yoloResult.boxes)
 
-            // 処理速度が記録されている
+            // Processing speed is recorded
             XCTAssertGreaterThan(yoloResult.speed, 0)
 
             expectation.fulfill()
@@ -200,7 +200,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 10.0)
     }
   }
@@ -230,17 +230,17 @@ class YOLOTests: XCTestCase {
       yolo = YOLO(url.path, task: .classify) { result in
         switch result {
         case .success(_):
-          // モデルがロードされたら、画像を処理
+          // Process the image after the model is loaded
           guard let yolo = yolo else { return }
 
-          // 非同期でYOLOResult取得
+          // Get YOLOResult asynchronously
           Task {
             let yoloResult = yolo(ciImage)
 
-            // 結果の検証
+            // Validate results
             XCTAssertNotNil(yoloResult)
 
-            // 分類結果が存在する
+            // Classification results exist
             XCTAssertNotNil(yoloResult.probs)
 
             if let probs = yoloResult.probs {
@@ -259,7 +259,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 10.0)
     }
   }
@@ -285,15 +285,15 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
 
-          // デフォルト閾値の確認
+          // Check default threshold
           let defaultThreshold = predictor.confidenceThreshold
           XCTAssertEqual(defaultThreshold, 0.25)
 
-          // 閾値を変更
+          // Change threshold
           let newThreshold = 0.7
           predictor.setConfidenceThreshold(confidence: newThreshold)
 
-          // 変更後の閾値の確認
+          // Verify changed threshold
           XCTAssertEqual(predictor.confidenceThreshold, newThreshold)
 
           expectation.fulfill()
@@ -304,7 +304,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
@@ -328,15 +328,15 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
 
-          // デフォルト閾値の確認
+          // Check default threshold
           let defaultThreshold = predictor.iouThreshold
           XCTAssertEqual(defaultThreshold, 0.4)
 
-          // 閾値を変更
+          // Change threshold
           let newThreshold = 0.8
           predictor.setIouThreshold(iou: newThreshold)
 
-          // 変更後の閾値の確認
+          // Verify changed threshold
           XCTAssertEqual(predictor.iouThreshold, newThreshold)
 
           expectation.fulfill()
@@ -347,7 +347,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
@@ -366,11 +366,11 @@ class YOLOTests: XCTestCase {
     //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
-      // UIViewControllerを作成してYOLOCameraを初期化
+      // Create UIViewController and initialize YOLOCamera
       let viewController = UIViewController()
       let yoloCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
 
-      // コンポーネントのプロパティを検証
+      // Verify component properties
       XCTAssertEqual(yoloCamera.task, .detect)
       XCTAssertEqual(yoloCamera.cameraPosition, .back)
       XCTAssertNotNil(yoloCamera.body)
@@ -391,11 +391,11 @@ class YOLOTests: XCTestCase {
     //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
-      // YOLOViewを初期化
+      // Initialize YOLOView
       let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
       let yoloView = YOLOView(frame: frame, modelPathOrName: url.path, task: .detect)
 
-      // コンポーネントのプロパティを検証
+      // Verify component properties
       XCTAssertNotNil(yoloView)
       XCTAssertEqual(yoloView.frame, frame)
     }
@@ -430,7 +430,7 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo else { return }
 
-          // パフォーマンス測定を実行
+          // Execute performance measurement
           Task {
             let iterations = 10
             var totalTime: Double = 0
@@ -445,7 +445,7 @@ class YOLOTests: XCTestCase {
             let averageTime = totalTime / Double(iterations)
 
             print("Average inference time: \(averageTime * 1000) ms")
-            // 推論時間が合理的な範囲内か確認
+            // Check if inference time is within a reasonable range
             XCTAssertLessThan(averageTime, 1.0, "Inference is too slow (> 1 second)")
             expectation.fulfill()
           }
@@ -456,7 +456,7 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await self.fulfillment(of: [expectation], timeout: 30.0)
     }
   }
@@ -476,7 +476,7 @@ class YOLOTests: XCTestCase {
     //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
 
     if let url = modelURL {
-      // 検出モデルを分類タスクで使用 - エラーとなるはず
+      // Use detection model with classification task - should result in an error
       let _ = YOLO(url.path, task: .classify) { result in
         switch result {
         case .success(_):
@@ -487,51 +487,51 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      // Changed to async version
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 }
 
-// MARK: - テスト実行のためのメインエントリポイント
+// MARK: - Main entry point for test execution
 
-/// テスト実行前の注意事項
+/// Notes before running tests
 ///
-/// このテストを実行するには、以下のCoreMLモデルファイルを
-/// Tests/YOLOTests/Resources ディレクトリに配置する必要があります:
+/// To run these tests, you need to place the following CoreML model files
+/// in the Tests/YOLOTests/Resources directory:
 ///
-/// - yolo11n.mlpackage - 検出モデル
-/// - yolo11n-seg.mlpackage - セグメンテーションモデル
-/// - yolo11n-cls.mlpackage - 分類モデル
-/// - yolo11n-pose.mlpackage - ポーズ推定モデル
-/// - yolo11n-obb.mlpackage - 向き付き境界ボックスモデル
+/// - yolo11n.mlpackage - Detection model
+/// - yolo11n-seg.mlpackage - Segmentation model
+/// - yolo11n-cls.mlpackage - Classification model
+/// - yolo11n-pose.mlpackage - Pose estimation model
+/// - yolo11n-obb.mlpackage - Oriented bounding box model
 ///
-/// モデルのダウンロードとCoreML変換方法:
-/// 1. https://github.com/ultralytics/ultralytics からYOLO11モデルをダウンロード
-/// 2. Ultralyticsモデルを使って以下のPythonコードでCoreMLに変換:
+/// How to download and convert models to CoreML:
+/// 1. Download YOLO11 models from https://github.com/ultralytics/ultralytics
+/// 2. Convert Ultralytics models to CoreML using the following Python code:
 ///
 /// ```python
 /// from ultralytics import YOLO
 ///
-/// # 検出モデル
+/// # Detection model
 /// model = YOLO("yolo11n.pt")
 /// model.export(format="coreml")
 ///
-/// # セグメンテーションモデル
+/// # Segmentation model
 /// model = YOLO("yolo11n-seg.pt")
 /// model.export(format="coreml")
 ///
-/// # 分類モデル
+/// # Classification model
 /// model = YOLO("yolo11n-cls.pt")
 /// model.export(format="coreml")
 ///
-/// # ポーズ推定モデル
+/// # Pose estimation model
 /// model = YOLO("yolo11n-pose.pt")
 /// model.export(format="coreml")
 ///
-/// # 向き付き境界ボックスモデル
+/// # Oriented bounding box model
 /// model = YOLO("yolo11n-obb.pt")
 /// model.export(format="coreml")
 /// ```
 ///
-/// 3. 生成された.mlpackageファイルをテストディレクトリに配置
+/// 3. Place the generated .mlpackage files in the test directory

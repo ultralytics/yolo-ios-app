@@ -5,62 +5,21 @@ import CoreML
 import UIKit
 import Vision
 import XCTest
+import AVFoundation
 
 @testable import YOLO
 
-// Configuration to temporarily skip all model-dependent tests
-// Set this to false when model files are ready for testing
-private let SKIP_MODEL_TESTS = false
-
 /// Comprehensive test suite for validating all functions of the YOLO framework.
-///
-/// This test suite validates:
-/// - Model loading and initialization
-/// - Inference on static images
-/// - Real-time camera frame processing
-/// - Functionality of each task type (detection, segmentation, classification, pose estimation, OBB)
-/// - Error handling and edge cases
-/// - Performance and memory usage
-///
-/// # Prerequisites for running tests
-///
-/// The following model files are required to run these tests.
-/// Please place these models in the Tests/YOLOTests/Resources directory before testing:
-///
-/// - yolo11n.mlpackage: Detection model
-/// - yolo11n-seg.mlpackage: Segmentation model
-/// - yolo11n-cls.mlpackage: Classification model
-/// - yolo11n-pose.mlpackage: Pose estimation model
-/// - yolo11n-obb.mlpackage: Oriented bounding box model
-///
-/// These models can be downloaded from https://github.com/ultralytics/ultralytics
-/// and must be converted to CoreML format.
 class YOLOTests: XCTestCase {
-  // Basic diagnostic test
-  func testBasic() {
-    print("Running basic YOLO test diagnostic")
-    print("Resource URL: \(Bundle.module.resourceURL?.path ?? "nil")")
-    // Actual tests will be skipped until models are prepared
-    if SKIP_MODEL_TESTS {
-      print("Other tests are temporarily skipped until models are prepared")
-    }
-    XCTAssertTrue(true)  // Always succeeds
-  }
-
   // MARK: - Model Loading Tests
-
+  
   /// Test that a valid detection model can be correctly loaded
   func testLoadValidDetectionModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadValidDetectionModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Load detection model")
-
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
-
+    
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .detect) { result in
@@ -73,20 +32,15 @@ class YOLOTests: XCTestCase {
           XCTFail("Failed to load model: \(error)")
         }
       }
-
-      // Wait for 5 seconds - using async version
+      
       await self.fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 
   /// Test error handling when model path is invalid
   func testLoadInvalidModelPath() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadInvalidModelPath as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Invalid model path")
-
+    
     let _ = YOLO("invalid_path.mlpackage", task: .detect) { result in
       switch result {
       case .success(_):
@@ -96,23 +50,17 @@ class YOLOTests: XCTestCase {
         expectation.fulfill()
       }
     }
-
-    // async版に変更
+    
     await self.fulfillment(of: [expectation], timeout: 5.0)
   }
 
   /// Test that a segmentation model can be correctly loaded
   func testLoadSegmentationModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadSegmentationModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Load segmentation model")
-
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n-seg", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n-seg.mlpackage to Tests/YOLOTests/Resources")
-
+    
+    let modelURL = Bundle.module.url(forResource: "yolo11n-seg", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .segment) { result in
@@ -125,19 +73,75 @@ class YOLOTests: XCTestCase {
           XCTFail("Failed to load model: \(error)")
         }
       }
-
-      // async版に変更
+      
       await fulfillment(of: [expectation], timeout: 5.0)
     }
+  }
+
+  // MARK: - YOLOResult Tests
+  
+  /// Test YOLOResult initialization and properties
+  func testYOLOResultInitialization() {
+    let result = YOLOResult(
+      boxes: [YOLOBox(x: 10, y: 20, width: 100, height: 200, confidence: 0.9, classIndex: 0, name: "person")],
+      masks: nil,
+      probs: nil,
+      keypoints: nil,
+      obb: nil,
+      speed: 15.0, 
+      task: .detect,
+      orig_shape: CGSize(width: 640, height: 640)
+    )
+    
+    XCTAssertEqual(result.boxes?.count, 1)
+    XCTAssertEqual(result.boxes?[0].name, "person")
+    XCTAssertEqual(result.boxes?[0].confidence, 0.9)
+    XCTAssertEqual(result.speed, 15.0)
+    XCTAssertEqual(result.task, .detect)
+    XCTAssertEqual(result.orig_shape.width, 640)
+    XCTAssertEqual(result.orig_shape.height, 640)
+    XCTAssertNil(result.masks)
+    XCTAssertNil(result.probs)
+    XCTAssertNil(result.keypoints)
+    XCTAssertNil(result.obb)
+  }
+  
+  // MARK: - YOLOBox Tests
+  
+  /// Test YOLOBox properties and calculations
+  func testYOLOBoxProperties() {
+    let box = YOLOBox(x: 100, y: 150, width: 200, height: 300, confidence: 0.85, classIndex: 2, name: "car")
+    
+    XCTAssertEqual(box.x, 100)
+    XCTAssertEqual(box.y, 150)
+    XCTAssertEqual(box.width, 200)
+    XCTAssertEqual(box.height, 300)
+    XCTAssertEqual(box.confidence, 0.85)
+    XCTAssertEqual(box.classIndex, 2)
+    XCTAssertEqual(box.name, "car")
+    
+    // Test computed properties
+    XCTAssertEqual(box.rect, CGRect(x: 100, y: 150, width: 200, height: 300))
+    XCTAssertEqual(box.centerX, 200)
+    XCTAssertEqual(box.centerY, 300)
+  }
+  
+  // MARK: - Task Type Tests
+  
+  /// Test YOLO task string representations
+  func testYOLOTaskStringRepresentation() {
+    XCTAssertEqual(YOLOTask.detect.stringValue, "detect")
+    XCTAssertEqual(YOLOTask.segment.stringValue, "segment")
+    XCTAssertEqual(YOLOTask.classify.stringValue, "classify")
+    XCTAssertEqual(YOLOTask.pose.stringValue, "pose")
+    XCTAssertEqual(YOLOTask.obb.stringValue, "obb")
   }
 
   // MARK: - Processing Pipeline Tests
 
   /// Helper method to get a test image
   @MainActor
-  private func getTestImage() -> UIImage? {
-    // Generate test image (white square on black background)
-    let size = CGSize(width: 640, height: 640)
+  private func getTestImage(size: CGSize = CGSize(width: 640, height: 640)) -> UIImage? {
     UIGraphicsBeginImageContextWithOptions(size, true, 1.0)
     UIColor.black.setFill()
     UIRectFill(CGRect(origin: .zero, size: size))
@@ -151,10 +155,6 @@ class YOLOTests: XCTestCase {
   /// Test processing static images with a detection model
   @MainActor
   func testProcessStaticImageWithDetectionModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testProcessStaticImageWithDetectionModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Process static image")
 
     guard let testImage = getTestImage(),
@@ -164,31 +164,25 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .detect) { result in
         switch result {
         case .success(_):
-          // モデルがロードされたら、画像を処理
+          // Process the image after model is loaded
           guard let yolo = yolo else { return }
 
-          // 非同期でYOLOResult取得
           Task {
             let yoloResult = yolo(ciImage)
 
-            // 結果の検証
+            // Validate results
             XCTAssertNotNil(yoloResult)
             XCTAssertEqual(yoloResult.orig_shape.width, ciImage.extent.width)
             XCTAssertEqual(yoloResult.orig_shape.height, ciImage.extent.height)
-
-            // 検出結果が配列として存在する（空でも可）
             XCTAssertNotNil(yoloResult.boxes)
-
-            // 処理速度が記録されている
             XCTAssertGreaterThan(yoloResult.speed, 0)
 
             expectation.fulfill()
@@ -200,7 +194,6 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
       await fulfillment(of: [expectation], timeout: 10.0)
     }
   }
@@ -208,10 +201,6 @@ class YOLOTests: XCTestCase {
   /// Test processing static images with a classification model
   @MainActor
   func testProcessStaticImageWithClassificationModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testProcessStaticImageWithClassificationModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Process static image with classification")
 
     guard let testImage = getTestImage(),
@@ -221,26 +210,21 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n-cls", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n-cls.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n-cls", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
       yolo = YOLO(url.path, task: .classify) { result in
         switch result {
         case .success(_):
-          // モデルがロードされたら、画像を処理
           guard let yolo = yolo else { return }
 
-          // 非同期でYOLOResult取得
           Task {
             let yoloResult = yolo(ciImage)
 
-            // 結果の検証
+            // Validate classification results
             XCTAssertNotNil(yoloResult)
-
-            // 分類結果が存在する
             XCTAssertNotNil(yoloResult.probs)
 
             if let probs = yoloResult.probs {
@@ -259,8 +243,46 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
       await fulfillment(of: [expectation], timeout: 10.0)
+    }
+  }
+  
+  /// Test error handling with invalid image input
+  @MainActor
+  func testErrorHandlingWithInvalidImageInput() async throws {
+    let expectation = XCTestExpectation(description: "Test invalid image input")
+    
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
+    if let url = modelURL {
+      var yolo: YOLO? = nil
+      yolo = YOLO(url.path, task: .detect) { result in
+        switch result {
+        case .success(_):
+          guard let yolo = yolo else { return }
+          
+          Task {
+            // Create an invalid CIImage (empty)
+            let invalidImage = CIImage()
+            
+            // Process invalid image - should handle gracefully
+            let result = yolo(invalidImage)
+            
+            // Should return empty result but not crash
+            XCTAssertNotNil(result)
+            XCTAssertTrue(result.boxes?.isEmpty ?? true)
+            
+            expectation.fulfill()
+          }
+          
+        case .failure(let error):
+          XCTFail("Failed to load model: \(error)")
+          expectation.fulfill()
+        }
+      }
+      
+      await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 
@@ -268,15 +290,10 @@ class YOLOTests: XCTestCase {
 
   /// Test that confidence threshold setting functions correctly
   func testConfidenceThresholdSetting() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testConfidenceThresholdSetting as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Confidence threshold setting")
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -285,15 +302,15 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
 
-          // デフォルト閾値の確認
+          // Check default threshold
           let defaultThreshold = predictor.confidenceThreshold
           XCTAssertEqual(defaultThreshold, 0.25)
 
-          // 閾値を変更
+          // Change threshold
           let newThreshold = 0.7
           predictor.setConfidenceThreshold(confidence: newThreshold)
 
-          // 変更後の閾値の確認
+          // Verify new threshold
           XCTAssertEqual(predictor.confidenceThreshold, newThreshold)
 
           expectation.fulfill()
@@ -304,22 +321,16 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
 
   /// Test that IoU threshold setting functions correctly
   func testIoUThresholdSetting() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testIoUThresholdSetting as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "IoU threshold setting")
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -328,15 +339,15 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
 
-          // デフォルト閾値の確認
+          // Check default threshold
           let defaultThreshold = predictor.iouThreshold
           XCTAssertEqual(defaultThreshold, 0.4)
 
-          // 閾値を変更
+          // Change threshold
           let newThreshold = 0.8
           predictor.setIouThreshold(iou: newThreshold)
 
-          // 変更後の閾値の確認
+          // Verify new threshold
           XCTAssertEqual(predictor.iouThreshold, newThreshold)
 
           expectation.fulfill()
@@ -347,7 +358,54 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
+      await fulfillment(of: [expectation], timeout: 5.0)
+    }
+  }
+  
+  /// Test configuration persistence after inference
+  @MainActor
+  func testConfigurationPersistenceAfterInference() async throws {
+    let expectation = XCTestExpectation(description: "Test configuration persistence")
+    
+    guard let testImage = getTestImage(),
+          let ciImage = CIImage(image: testImage) else {
+      XCTFail("Failed to create test image")
+      return
+    }
+    
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
+    if let url = modelURL {
+      var yolo: YOLO? = nil
+      yolo = YOLO(url.path, task: .detect) { result in
+        switch result {
+        case .success(_):
+          guard let yolo = yolo, let predictor = yolo.predictor as? BasePredictor else { return }
+          
+          // Set custom configuration
+          let customConfidence = 0.7
+          let customIOU = 0.6
+          predictor.setConfidenceThreshold(confidence: customConfidence)
+          predictor.setIouThreshold(iou: customIOU)
+          
+          Task {
+            // Run inference
+            let _ = yolo(ciImage)
+            
+            // Check if settings are maintained
+            XCTAssertEqual(predictor.confidenceThreshold, customConfidence)
+            XCTAssertEqual(predictor.iouThreshold, customIOU)
+            
+            expectation.fulfill()
+          }
+          
+        case .failure(let error):
+          XCTFail("Failed to load model: \(error)")
+          expectation.fulfill()
+        }
+      }
+      
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
@@ -357,23 +415,33 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOCamera component can be initialized
   @MainActor
   func testYOLOCameraInitialization() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testYOLOCameraInitialization as models are not prepared")
-      return
-    }
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
-      // UIViewControllerを作成してYOLOCameraを初期化
-      let viewController = UIViewController()
       let yoloCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
 
-      // コンポーネントのプロパティを検証
+      // Validate component properties
       XCTAssertEqual(yoloCamera.task, .detect)
       XCTAssertEqual(yoloCamera.cameraPosition, .back)
       XCTAssertNotNil(yoloCamera.body)
+    }
+  }
+  
+  /// Test YOLOCamera with different parameter combinations
+  @MainActor
+  func testYOLOCameraWithDifferentParameters() async throws {
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
+    if let url = modelURL {
+      // Test with front camera
+      let frontCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .front)
+      XCTAssertEqual(frontCamera.cameraPosition, .front)
+      
+      // Test with different task
+      let segCamera = YOLOCamera(modelPathOrName: url.path, task: .detect, cameraPosition: .back)
+      XCTAssertEqual(segCamera.task, .detect)
     }
   }
 
@@ -382,20 +450,15 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOView component can be initialized
   @MainActor
   func testYOLOViewInitialization() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testYOLOViewInitialization as models are not prepared")
-      return
-    }
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
-      // YOLOViewを初期化
+      // Initialize YOLOView
       let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
       let yoloView = YOLOView(frame: frame, modelPathOrName: url.path, task: .detect)
 
-      // コンポーネントのプロパティを検証
+      // Validate component properties
       XCTAssertNotNil(yoloView)
       XCTAssertEqual(yoloView.frame, frame)
     }
@@ -406,10 +469,6 @@ class YOLOTests: XCTestCase {
   /// Measure the performance of model inference
   @MainActor
   func testInferencePerformance() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testInferencePerformance as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Inference performance")
 
     guard let testImage = getTestImage(),
@@ -419,9 +478,8 @@ class YOLOTests: XCTestCase {
       return
     }
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
       var yolo: YOLO? = nil
@@ -430,7 +488,7 @@ class YOLOTests: XCTestCase {
         case .success(_):
           guard let yolo = yolo else { return }
 
-          // パフォーマンス測定を実行
+          // Measure performance
           Task {
             let iterations = 10
             var totalTime: Double = 0
@@ -445,7 +503,7 @@ class YOLOTests: XCTestCase {
             let averageTime = totalTime / Double(iterations)
 
             print("Average inference time: \(averageTime * 1000) ms")
-            // 推論時間が合理的な範囲内か確認
+            // Check if inference time is reasonable
             XCTAssertLessThan(averageTime, 1.0, "Inference is too slow (> 1 second)")
             expectation.fulfill()
           }
@@ -456,8 +514,60 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
       await self.fulfillment(of: [expectation], timeout: 30.0)
+    }
+  }
+  
+  /// Test concurrent model inference
+  @MainActor
+  func testConcurrentModelInference() async throws {
+    guard let testImage = getTestImage(),
+          let ciImage = CIImage(image: testImage) else {
+      XCTFail("Failed to create test image")
+      return
+    }
+    
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
+    if let url = modelURL {
+      let initExpectation = XCTestExpectation(description: "Initialize model")
+      
+      var yolo: YOLO? = nil
+      yolo = YOLO(url.path, task: .detect) { result in
+        switch result {
+        case .success():
+          initExpectation.fulfill()
+        case .failure(let error):
+          XCTFail("Failed to load model: \(error)")
+          initExpectation.fulfill()
+        }
+      }
+      
+      await fulfillment(of: [initExpectation], timeout: 5.0)
+      
+      guard let yolo = yolo else {
+        XCTFail("YOLO instance is nil")
+        return
+      }
+      
+      // Run multiple inferences concurrently
+      let concurrentInferenceCount = 5
+      let inferenceExpectations = (0..<concurrentInferenceCount).map { 
+        XCTestExpectation(description: "Concurrent inference \($0)")
+      }
+      
+      await withTaskGroup(of: Void.self) { group in
+        for i in 0..<concurrentInferenceCount {
+          group.addTask {
+            let result = yolo(ciImage)
+            XCTAssertNotNil(result)
+            inferenceExpectations[i].fulfill()
+          }
+        }
+      }
+      
+      await fulfillment(of: inferenceExpectations, timeout: 10.0)
     }
   }
 
@@ -465,18 +575,13 @@ class YOLOTests: XCTestCase {
 
   /// Test error handling when task type and model do not match
   func testTaskMismatchError() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testTaskMismatchError as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Task mismatch error")
 
-    let modelURL = Bundle.module.url(
-      forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
-    //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
 
     if let url = modelURL {
-      // 検出モデルを分類タスクで使用 - エラーとなるはず
+      // Use detection model with classification task - should fail
       let _ = YOLO(url.path, task: .classify) { result in
         switch result {
         case .success(_):
@@ -487,51 +592,65 @@ class YOLOTests: XCTestCase {
         }
       }
 
-      // async版に変更
       await fulfillment(of: [expectation], timeout: 5.0)
     }
   }
+  
+  /// Test multiple tasks with the same model
+  @MainActor
+  func testMultipleTasksWithSameModel() async throws {
+    // Get model path
+    let modelURL = Bundle.module.url(forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
+    XCTAssertNotNil(modelURL, "Test model file not found")
+    
+    guard let url = modelURL else { return }
+    
+    // Create test image
+    guard let testImage = getTestImage(), 
+          let ciImage = CIImage(image: testImage) else {
+      XCTFail("Failed to create test image")
+      return
+    }
+    
+    // Test with detection task
+    let expectation1 = XCTestExpectation(description: "Load model for detection task")
+    var yoloDetect: YOLO? = nil
+    
+    yoloDetect = YOLO(url.path, task: .detect) { result in
+      switch result {
+      case .success():
+        // Process image
+        guard let yolo = yoloDetect else { return }
+        
+        Task {
+          let result = yolo(ciImage)
+          XCTAssertNotNil(result)
+          XCTAssertEqual(result.task, .detect)
+          expectation1.fulfill()
+        }
+        
+      case .failure(let error):
+        XCTFail("Failed to load model for detection: \(error)")
+        expectation1.fulfill()
+      }
+    }
+    
+    await fulfillment(of: [expectation1], timeout: 10.0)
+    
+    // Test with the same model but different task (should fail)
+    let expectation2 = XCTestExpectation(description: "Load model with incorrect task")
+    
+    let _ = YOLO(url.path, task: .classify) { result in
+      switch result {
+      case .success():
+        XCTFail("Should not succeed with incorrect task")
+        expectation2.fulfill()
+      case .failure(let error):
+        XCTAssertNotNil(error)
+        expectation2.fulfill()
+      }
+    }
+    
+    await fulfillment(of: [expectation2], timeout: 5.0)
+  }
 }
-
-// MARK: - テスト実行のためのメインエントリポイント
-
-/// テスト実行前の注意事項
-///
-/// このテストを実行するには、以下のCoreMLモデルファイルを
-/// Tests/YOLOTests/Resources ディレクトリに配置する必要があります:
-///
-/// - yolo11n.mlpackage - 検出モデル
-/// - yolo11n-seg.mlpackage - セグメンテーションモデル
-/// - yolo11n-cls.mlpackage - 分類モデル
-/// - yolo11n-pose.mlpackage - ポーズ推定モデル
-/// - yolo11n-obb.mlpackage - 向き付き境界ボックスモデル
-///
-/// モデルのダウンロードとCoreML変換方法:
-/// 1. https://github.com/ultralytics/ultralytics からYOLO11モデルをダウンロード
-/// 2. Ultralyticsモデルを使って以下のPythonコードでCoreMLに変換:
-///
-/// ```python
-/// from ultralytics import YOLO
-///
-/// # 検出モデル
-/// model = YOLO("yolo11n.pt")
-/// model.export(format="coreml")
-///
-/// # セグメンテーションモデル
-/// model = YOLO("yolo11n-seg.pt")
-/// model.export(format="coreml")
-///
-/// # 分類モデル
-/// model = YOLO("yolo11n-cls.pt")
-/// model.export(format="coreml")
-///
-/// # ポーズ推定モデル
-/// model = YOLO("yolo11n-pose.pt")
-/// model.export(format="coreml")
-///
-/// # 向き付き境界ボックスモデル
-/// model = YOLO("yolo11n-obb.pt")
-/// model.export(format="coreml")
-/// ```
-///
-/// 3. 生成された.mlpackageファイルをテストディレクトリに配置

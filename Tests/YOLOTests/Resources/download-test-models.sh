@@ -21,10 +21,10 @@ download_model() {
   local model_path="$OUTPUT_DIR/$model_name.mlpackage"
   local zip_path="$OUTPUT_DIR/$model_name.mlpackage.zip"
 
-  # Skip if model already exists
+  # Remove any existing model directory
   if [ -d "$model_path" ]; then
-    echo "Model $model_name already exists at $model_path, skipping download"
-    return 0
+    echo "Removing existing $model_name model"
+    rm -rf "$model_path"
   fi
 
   # Download the model

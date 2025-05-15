@@ -8,10 +8,6 @@ import XCTest
 
 @testable import YOLO
 
-// Configuration to temporarily skip all model-dependent tests
-// Set this to false when model files are ready for testing
-private let SKIP_MODEL_TESTS = false
-
 /// Comprehensive test suite for validating all functions of the YOLO framework.
 ///
 /// This test suite validates:
@@ -40,10 +36,6 @@ class YOLOTests: XCTestCase {
   func testBasic() {
     print("Running basic YOLO test diagnostic")
     print("Resource URL: \(Bundle.module.resourceURL?.path ?? "nil")")
-    // Actual tests will be skipped until models are prepared
-    if SKIP_MODEL_TESTS {
-      print("Other tests are temporarily skipped until models are prepared")
-    }
     XCTAssertTrue(true)  // Always succeeds
   }
 
@@ -51,10 +43,6 @@ class YOLOTests: XCTestCase {
 
   /// Test that a valid detection model can be correctly loaded
   func testLoadValidDetectionModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadValidDetectionModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Load detection model")
 
     let modelURL = Bundle.module.url(
@@ -81,10 +69,6 @@ class YOLOTests: XCTestCase {
 
   /// Test error handling when model path is invalid
   func testLoadInvalidModelPath() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadInvalidModelPath as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Invalid model path")
 
     let _ = YOLO("invalid_path.mlpackage", task: .detect) { result in
@@ -103,10 +87,6 @@ class YOLOTests: XCTestCase {
 
   /// Test that a segmentation model can be correctly loaded
   func testLoadSegmentationModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testLoadSegmentationModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Load segmentation model")
 
     let modelURL = Bundle.module.url(
@@ -151,10 +131,6 @@ class YOLOTests: XCTestCase {
   /// Test processing static images with a detection model
   @MainActor
   func testProcessStaticImageWithDetectionModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testProcessStaticImageWithDetectionModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Process static image")
 
     guard let testImage = getTestImage(),
@@ -208,10 +184,6 @@ class YOLOTests: XCTestCase {
   /// Test processing static images with a classification model
   @MainActor
   func testProcessStaticImageWithClassificationModel() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testProcessStaticImageWithClassificationModel as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Process static image with classification")
 
     guard let testImage = getTestImage(),
@@ -268,10 +240,6 @@ class YOLOTests: XCTestCase {
 
   /// Test that confidence threshold setting functions correctly
   func testConfidenceThresholdSetting() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testConfidenceThresholdSetting as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Confidence threshold setting")
 
     let modelURL = Bundle.module.url(
@@ -311,10 +279,6 @@ class YOLOTests: XCTestCase {
 
   /// Test that IoU threshold setting functions correctly
   func testIoUThresholdSetting() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testIoUThresholdSetting as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "IoU threshold setting")
 
     let modelURL = Bundle.module.url(
@@ -357,10 +321,6 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOCamera component can be initialized
   @MainActor
   func testYOLOCameraInitialization() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testYOLOCameraInitialization as models are not prepared")
-      return
-    }
     let modelURL = Bundle.module.url(
       forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
     //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
@@ -382,10 +342,6 @@ class YOLOTests: XCTestCase {
   /// Test that YOLOView component can be initialized
   @MainActor
   func testYOLOViewInitialization() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testYOLOViewInitialization as models are not prepared")
-      return
-    }
     let modelURL = Bundle.module.url(
       forResource: "yolo11n", withExtension: "mlpackage", subdirectory: "Resources")
     //        XCTAssertNotNil(modelURL, "Test model file not found. Please add yolo11n.mlpackage to Tests/YOLOTests/Resources")
@@ -406,10 +362,6 @@ class YOLOTests: XCTestCase {
   /// Measure the performance of model inference
   @MainActor
   func testInferencePerformance() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testInferencePerformance as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Inference performance")
 
     guard let testImage = getTestImage(),
@@ -465,10 +417,6 @@ class YOLOTests: XCTestCase {
 
   /// Test error handling when task type and model do not match
   func testTaskMismatchError() async throws {
-    if SKIP_MODEL_TESTS {
-      print("Skipping testTaskMismatchError as models are not prepared")
-      return
-    }
     let expectation = XCTestExpectation(description: "Task mismatch error")
 
     let modelURL = Bundle.module.url(

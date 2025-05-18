@@ -55,7 +55,7 @@ def export_and_zip_yolo_models(
         for model_type in model_types:
             model_name = f"yolo11{size}{model_type}"
             model = YOLO(f"{model_name}.pt")
-            model.export(format="coreml", int8=True, nms=True if model_type == "" else False)
+            model.export(format="coreml", int8=True, imgsz=[640, 384], nms=True if model_type == "" else False)
             zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 

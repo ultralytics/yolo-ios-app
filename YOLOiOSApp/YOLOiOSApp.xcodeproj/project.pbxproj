@@ -17,7 +17,7 @@
 		73220ED32D373C2E00A94B92 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73220ED22D373C2E00A94B92 /* YOLO */; };
 		734B44482D42F7CF00D2CA6A /* DetectModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44432D42F7CF00D2CA6A /* DetectModels */; };
 		734B44492D42F7CF00D2CA6A /* ClassifyModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44442D42F7CF00D2CA6A /* ClassifyModels */; };
-		734B444A2D42F7CF00D2CA6A /* ObbModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* ObbModels */; };
+		734B444A2D42F7CF00D2CA6A /* OBBModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* OBBModels */; };
 		734B444B2D42F7CF00D2CA6A /* PoseModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44462D42F7CF00D2CA6A /* PoseModels */; };
 		734B444C2D42F7CF00D2CA6A /* SegmentModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44472D42F7CF00D2CA6A /* SegmentModels */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
@@ -36,7 +36,7 @@
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		734B44432D42F7CF00D2CA6A /* DetectModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DetectModels; sourceTree = "<group>"; };
 		734B44442D42F7CF00D2CA6A /* ClassifyModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClassifyModels; sourceTree = "<group>"; };
-		734B44452D42F7CF00D2CA6A /* ObbModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ObbModels; sourceTree = "<group>"; };
+		734B44452D42F7CF00D2CA6A /* OBBModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OBBModels; sourceTree = "<group>"; };
 		734B44462D42F7CF00D2CA6A /* PoseModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PoseModels; sourceTree = "<group>"; };
 		734B44472D42F7CF00D2CA6A /* SegmentModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SegmentModels; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
@@ -81,7 +81,7 @@
 				734B44442D42F7CF00D2CA6A /* ClassifyModels */,
 				734B44472D42F7CF00D2CA6A /* SegmentModels */,
 				734B44462D42F7CF00D2CA6A /* PoseModels */,
-				734B44452D42F7CF00D2CA6A /* ObbModels */,
+				734B44452D42F7CF00D2CA6A /* OBBModels */,
 				636EFC9B21E62DD300DE43BC /* YOLOiOSApp */,
 				7BCB411821C3096100BFC4D0 /* Products */,
 			);
@@ -161,7 +161,7 @@
 			files = (
 				734B44482D42F7CF00D2CA6A /* DetectModels in Resources */,
 				734B44492D42F7CF00D2CA6A /* ClassifyModels in Resources */,
-				734B444A2D42F7CF00D2CA6A /* ObbModels in Resources */,
+				734B444A2D42F7CF00D2CA6A /* OBBModels in Resources */,
 				734B444B2D42F7CF00D2CA6A /* PoseModels in Resources */,
 				734B444C2D42F7CF00D2CA6A /* SegmentModels in Resources */,
 				636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */,

@@ -56,27 +56,24 @@ Follow these steps to get the examples up and running:
 
         ```python
         from ultralytics import YOLO
+        from ultralytics.utils.downloads import zip_directory
 
-        # Example: Export for various YOLO11 model sizes
-        for size in ("n", "s", "m", "l", "x"):
-            # Load a YOLO11 PyTorch model (detection is default)
-            # Find PyTorch models at https://github.com/ultralytics/ultralytics/releases
-            model = YOLO(f"yolo11{size}.pt")
 
-            # Export the PyTorch model to CoreML INT8 format (with NMS layers for detection)
-            # NMS is Non-Maximum Suppression, see https://www.ultralytics.com/glossary/non-maximum-suppression-nms
-            model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
+        def export_and_zip_yolo_models(
+            model_types=("", "-seg", "-cls", "-pose", "-obb"),
+            model_sizes=("n", "s", "m", "l", "x"),
+        ):
+            """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+            for size in model_sizes:
+                for model_type in model_types:
+                    model_name = f"yolo11{size}{model_type}"
+                    model = YOLO(f"{model_name}.pt")
+                    model.export(format="coreml", int8=True, imgsz=[640, 384], nms=True if model_type == "" else False)
+                    zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
-            # --- Exporting other task models ---
-            # Load a specific task model, e.g., segmentation
-            # model = YOLO(f"yolo11{size}-seg.pt")   # Segmentation: https://docs.ultralytics.com/tasks/segment/
-            # model = YOLO(f"yolo11{size}-cls.pt")   # Classification: https://docs.ultralytics.com/tasks/classify/
-            # model = YOLO(f"yolo11{size}-pose.pt")  # Pose Estimation: https://docs.ultralytics.com/tasks/pose/
-            # model = YOLO(f"yolo11{size}-obb.pt")   # Oriented Bounding Box: https://docs.ultralytics.com/tasks/obb/
 
-            # Export other task models to CoreML INT8 format (without NMS layers)
-            # For use with the YOLO package, only add NMS to detection models.
-            # model.export(format="coreml", int8=True, imgsz=[640, 384])
+        # Execute with default parameters
+        export_and_zip_yolo_models()
         ```
 
       - Locate the exported `.mlpackage` file in your working directory (or the directory specified in `export`) and add it to your Xcode project. Learn more about [PyTorch](https://pytorch.org/).

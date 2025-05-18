@@ -201,7 +201,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ("Segment", "SegmentModels"),  // index 1
     ("Detect", "DetectModels"),  // index 2
     ("Pose", "PoseModels"),  // index 3
-    ("OBB", "ObbModels"),  // index 4
+    ("OBB", "OBBModels"),  // index 4
   ]
 
   private var modelsForTask: [String: [String]] = [:]

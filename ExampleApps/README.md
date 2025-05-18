@@ -37,46 +37,47 @@ Follow these steps to get the examples up and running:
 
 2.  **Open an Example Project:** Navigate to the desired example directory (e.g., `YOLO-RealTime-SwiftUI`) and open the `.xcodeproj` file in [Xcode](https://developer.apple.com/xcode/).
 
-   3.  **Add a YOLO Core ML Model:** Drag and drop your chosen `.mlpackage` or `.mlmodel` file into the Xcode project navigator. Ensure it's added to the target membership of the application.
+3.  **Add a YOLO Core ML Model:** Drag and drop your chosen `.mlpackage` or `.mlmodel` file into the Xcode project navigator. Ensure it's added to the target membership of the application.
 
-       #### Obtaining YOLO Core ML Models
+    #### Obtaining YOLO Core ML Models
 
-       You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
+    You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
 
-       - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
-       - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
+    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
+    - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
-       - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
+    - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
 
-           ```bash
-           pip install ultralytics
-           ```
+      ```bash
+      pip install ultralytics
+      ```
 
-       - Run a Python script to [export](https://docs.ultralytics.com/modes/export/):
+    - Run a Python script to [export](https://docs.ultralytics.com/modes/export/):
 
-           ```python
-           from ultralytics import YOLO
-           from ultralytics.utils.downloads import zip_directory
-        
-        
-           def export_and_zip_yolo_models(
-               model_types=("", "-seg", "-cls", "-pose", "-obb"),
-               model_sizes=("n", "s", "m", "l", "x"),
-           ):
-               """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
-               for model_type in model_types:
-                   imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
-                   nms = True if model_type == "" else False  # only apply NMS to Detect models
-                   for size in model_sizes:
-                       model_name = f"yolo11{size}{model_type}"
-                       model = YOLO(f"{model_name}.pt")            
-                       model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
-                       zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
-        
-        
-           # Execute with default parameters
-           export_and_zip_yolo_models()
-           ```
+      ```python
+      from ultralytics import YOLO
+      from ultralytics.utils.downloads import zip_directory
+
+
+      def export_and_zip_yolo_models(
+          model_types=("", "-seg", "-cls", "-pose", "-obb"),
+          model_sizes=("n", "s", "m", "l", "x"),
+      ):
+          """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+          for model_type in model_types:
+              imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
+              nms = True if model_type == "" else False  # only apply NMS to Detect models
+              for size in model_sizes:
+                  model_name = f"yolo11{size}{model_type}"
+                  model = YOLO(f"{model_name}.pt")
+                  model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
+                  zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
+
+
+      # Execute with default parameters
+      export_and_zip_yolo_models()
+      ```
+
 
       - Locate the exported `.mlpackage` file in your working directory (or the directory specified in `export`) and add it to your Xcode project. Learn more about [PyTorch](https://pytorch.org/).
 

@@ -57,8 +57,8 @@ Follow these steps to get the examples up and running:
         ```python
         from ultralytics import YOLO
         from ultralytics.utils.downloads import zip_directory
-        
-        
+
+
         def export_and_zip_yolo_models(
             model_types=("", "-seg", "-cls", "-pose", "-obb"),
             model_sizes=("n", "s", "m", "l", "x"),
@@ -70,8 +70,8 @@ Follow these steps to get the examples up and running:
                     model = YOLO(f"{model_name}.pt")
                     model.export(format="coreml", int8=True, imgsz=[640, 384], nms=True if model_type == "" else False)
                     zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
-        
-        
+
+
         # Execute with default parameters
         export_and_zip_yolo_models()
         ```

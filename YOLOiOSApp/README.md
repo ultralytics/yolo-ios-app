@@ -67,35 +67,26 @@ Ensure you have the following before you begin:
 
     ```python
     from ultralytics import YOLO
-
-    # Loop through different YOLO11 model sizes (nano, small, medium, large, x-large)
-    for size in ("n", "s", "m", "l", "x"):
-        # Load a YOLO11 PyTorch model for detection
-        model = YOLO(f"yolo11{size}.pt")
-
-        # Export the model to CoreML INT8 format with NMS layers (recommended for detection)
-        # Ensure imgsz matches expected input size, e.g., [640, 384] for landscape video
-        # INT8 quantization reduces model size and speeds up inference with minimal accuracy trade-off
-        model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-
-        # Example exports for other tasks (segmentation, classification, pose, OBB)
-        # Note: For tasks other than detection, export without NMS (nms=False)
-
-        # Segmentation: https://docs.ultralytics.com/tasks/segment/
-        # seg_model = YOLO(f"yolo11{size}-seg.pt")
-        # seg_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
-
-        # Classification: https://docs.ultralytics.com/tasks/classify/
-        # cls_model = YOLO(f"yolo11{size}-cls.pt")
-        # cls_model.export(format="coreml", int8=True, nms=False, imgsz=[224, 224]) # Typical classification input size
-
-        # Pose Estimation: https://docs.ultralytics.com/tasks/pose/
-        # pose_model = YOLO(f"yolo11{size}-pose.pt")
-        # pose_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
-
-        # Oriented Bounding Box (OBB): https://docs.ultralytics.com/tasks/obb/
-        # obb_model = YOLO(f"yolo11{size}-obb.pt")
-        # obb_model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
+    from ultralytics.utils.downloads import zip_directory
+    
+    
+    def export_and_zip_yolo_models(
+        model_types=("", "-seg", "-cls", "-pose", "-obb"),
+        model_sizes=("n", "s", "m", "l", "x"),
+    ):
+        """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+        for model_type in model_types:
+            imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
+            nms = True if model_type == "" else False  # only apply NMS to Detect models
+            for size in model_sizes:
+                model_name = f"yolo11{size}{model_type}"
+                model = YOLO(f"{model_name}.pt")            
+                model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
+                zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
+    
+    
+    # Execute with default parameters
+    export_and_zip_yolo_models()
     ```
 
 4.  **Run the App:**

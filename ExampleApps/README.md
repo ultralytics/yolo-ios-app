@@ -78,7 +78,6 @@ Follow these steps to get the examples up and running:
       export_and_zip_yolo_models()
       ```
 
-
       - Locate the exported `.mlpackage` file in your working directory (or the directory specified in `export`) and add it to your Xcode project. Learn more about [PyTorch](https://pytorch.org/).
 
 4.  **Configure Signing:** In the project settings under "Signing & Capabilities", select your development team.

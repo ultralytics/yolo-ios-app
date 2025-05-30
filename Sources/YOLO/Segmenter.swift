@@ -102,7 +102,6 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
-    var boxes = [Box]()
 
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
@@ -112,15 +111,19 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-        //                DispatchQueue.main.async { [self] in
         guard results.count == 2 else {
           return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
         }
+
+        // 1. Parse model outputs
         var pred: MLMultiArray
         var masks: MLMultiArray
         guard let out0 = results[0].featureValue.multiArrayValue,
           let out1 = results[1].featureValue.multiArrayValue
-        else { return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels) }
+        else {
+          return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
+        }
+
         let out0dim = checkShapeDimensions(of: out0)
         let out1dim = checkShapeDimensions(of: out1)
         if out0dim == 4 {
@@ -130,14 +133,13 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           masks = out1
           pred = out0
         }
-        let a = Date()
 
+        // 2. Post-process detection results
         let detectedObjects = postProcessSegment(
           feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
+
+        // 3. Construct bounding box information
         var boxes: [Box] = []
-        var colorMasks: [CGImage?] = []
-        var alhaMasks: [CGImage?] = []
-        var alphas = [CGFloat]()
         for p in detectedObjects {
           let box = p.0
           let rect = CGRect(
@@ -149,42 +151,50 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
           let boxResult = Box(
             index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
-          let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
           boxes.append(boxResult)
-          alphas.append(alpha)
         }
 
+        // 4. Generate mask image
         guard
-          let procceessedMasks = generateCombinedMaskImage(
+          let processedMasks = generateCombinedMaskImage(
             detectedObjects: detectedObjects,
             protos: masks,
             inputWidth: self.modelInputSize.width,
             inputHeight: self.modelInputSize.height,
             threshold: 0.5
-
           ) as? (CGImage?, [[[Float]]])
         else {
           return YOLOResult(
             orig_shape: inputSize, boxes: boxes, masks: nil, annotatedImage: nil, speed: 0,
             names: labels)
         }
-        let cgImage = CIContext().createCGImage(image, from: image.extent)!
-        var annotatedImage = composeImageWithMask(
-          baseImage: cgImage, maskImage: procceessedMasks.0!)
-        var maskResults: Masks = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
-        if self.t1 < 10.0 {  // valid dt
-          self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-        }
-        self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-        self.t3 = CACurrentMediaTime()
-        result = YOLOResult(
-          orig_shape: inputSize, boxes: boxes, masks: maskResults, annotatedImage: annotatedImage,
-          speed: self.t2, fps: 1 / self.t4, names: labels)
-        annotatedImage = drawYOLODetections(on: CIImage(image: annotatedImage!)!, result: result)
-        result.annotatedImage = annotatedImage
-        return result
 
-        //                }
+        // 5. Use the new integrated drawing function to render masks and boxes in a single pass
+        let annotatedImage = drawYOLOSegmentationWithBoxes(
+          ciImage: image,
+          boxes: boxes,
+          maskImage: processedMasks.0,
+          originalImageSize: inputSize
+        )
+
+        // 6. Construct result
+        let maskResults: Masks = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
+
+        // 7. Update timing measurements
+        updateTime()
+
+        // 8. Return result
+        result = YOLOResult(
+          orig_shape: inputSize,
+          boxes: boxes,
+          masks: maskResults,
+          annotatedImage: annotatedImage,
+          speed: self.t2,
+          fps: 1 / self.t4,
+          names: labels
+        )
+
+        return result
       }
     } catch {
       print(error)

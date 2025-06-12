@@ -231,7 +231,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        [weak self] result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor: predictor)
@@ -241,7 +242,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        [weak self] result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor: predictor)
@@ -251,7 +253,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     case .pose:
-      PoseEstimater.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      PoseEstimater.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        [weak self] result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor: predictor)
@@ -261,10 +264,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        [weak self] result in
         switch result {
         case .success(let predictor):
-          self.obbLayer?.isHidden = false
+          self?.obbLayer?.isHidden = false
 
           handleSuccess(predictor: predictor)
         case .failure(let error):
@@ -273,7 +277,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        [weak self] result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor: predictor)
@@ -469,6 +474,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
             alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
           default:
             let prediction = predictions.boxes[i]
+            let clsIndex = prediction.index
             rect = prediction.xywhn
             bestClass = prediction.cls
             confidence = CGFloat(prediction.conf)
@@ -1095,7 +1101,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 }
 
 extension YOLOView: AVCapturePhotoCaptureDelegate {
-  nonisolated public func photoOutput(
+  public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     if let error = error {

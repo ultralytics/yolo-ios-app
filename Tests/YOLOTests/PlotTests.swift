@@ -188,7 +188,7 @@ class PlotTests: XCTestCase {
     
     func testDrawOBBsOnCIImageWithEmptyDetections() {
         // Test drawOBBsOnCIImage with empty detections
-        let inputImage = CIImage(color: .purple).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let inputImage = CIImage(color: CIColor(red: 0.5, green: 0.0, blue: 0.5, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         let emptyDetections: [OBBResult] = []
         
         let outputImage = drawOBBsOnCIImage(ciImage: inputImage, obbDetections: emptyDetections)
@@ -199,7 +199,7 @@ class PlotTests: XCTestCase {
     
     func testDrawOBBsOnCIImageWithDetections() {
         // Test drawOBBsOnCIImage with actual detections
-        let inputImage = CIImage(color: .orange).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 200))
+        let inputImage = CIImage(color: CIColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 200))
         
         let obb = OBB(cx: 0.5, cy: 0.5, w: 0.3, h: 0.2, angle: 0.5)
         let obbResult = OBBResult(box: obb, confidence: 0.8, cls: "ship", index: 1)

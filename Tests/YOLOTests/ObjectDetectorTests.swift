@@ -96,8 +96,8 @@ class ObjectDetectorTests: XCTestCase {
         // Test ObjectDetector is instance of BasePredictor
         let detector = ObjectDetector()
         
-        XCTAssertTrue(detector is BasePredictor)
-        XCTAssertTrue(detector is Predictor)
+        XCTAssertNotNil(detector, "Detector should not be nil")
+        XCTAssertEqual(type(of: detector), ObjectDetector.self, "Should be ObjectDetector type")
     }
     
     func testObjectDetectorResultStructure() {

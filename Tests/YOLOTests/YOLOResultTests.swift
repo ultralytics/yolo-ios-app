@@ -9,7 +9,7 @@ import UIKit
 class YOLOResultTests: XCTestCase {
     
     func testBoxCreation() {
-        """Test Box struct initialization and properties"""
+        // Test Box struct initialization and properties
         let box = Box(
             index: 5,
             cls: "person",
@@ -26,7 +26,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testYOLOResultCreation() {
-        """Test YOLOResult struct initialization"""
+        // Test YOLOResult struct initialization
         let boxes = [Box(index: 0, cls: "cat", conf: 0.9, xywh: CGRect(), xywhn: CGRect())]
         let result = YOLOResult(
             orig_shape: CGSize(width: 640, height: 480),
@@ -43,7 +43,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testProbsCreation() {
-        """Test Probs struct for classification results"""
+        // Test Probs struct for classification results
         var probs = Probs(
             top1: "dog",
             top5: ["dog", "cat", "bird", "fish", "mouse"],
@@ -61,7 +61,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testMasksCreation() {
-        """Test Masks struct for segmentation results"""
+        // Test Masks struct for segmentation results
         let maskData: [[[Float]]] = [[[0.1, 0.9], [0.8, 0.2]]]
         let masks = Masks(masks: maskData, combinedMask: nil)
         
@@ -71,7 +71,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testKeypointsCreation() {
-        """Test Keypoints struct for pose estimation"""
+        // Test Keypoints struct for pose estimation
         let keypoints = Keypoints(
             xyn: [(0.5, 0.3), (0.6, 0.4)],
             xy: [(320, 240), (384, 288)],
@@ -84,7 +84,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testOBBCreation() {
-        """Test OBB struct for oriented bounding boxes"""
+        // Test OBB struct for oriented bounding boxes
         let obb = OBB(cx: 100, cy: 50, w: 80, h: 40, angle: 0.5)
         
         XCTAssertEqual(obb.cx, 100, accuracy: 0.001)
@@ -93,7 +93,7 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testOBBToPolygon() {
-        """Test OBB conversion to polygon points"""
+        // Test OBB conversion to polygon points
         let obb = OBB(cx: 0, cy: 0, w: 4, h: 2, angle: 0)
         let polygon = obb.toPolygon()
         
@@ -103,13 +103,13 @@ class YOLOResultTests: XCTestCase {
     }
     
     func testOBBArea() {
-        """Test OBB area calculation"""
+        // Test OBB area calculation
         let obb = OBB(cx: 0, cy: 0, w: 10, h: 5, angle: 1.0)
         XCTAssertEqual(obb.area, 50, accuracy: 0.001)
     }
     
     func testOBBResultCreation() {
-        """Test OBBResult struct"""
+        // Test OBBResult struct
         let obb = OBB(cx: 50, cy: 25, w: 30, h: 20, angle: 0.3)
         var obbResult = OBBResult(box: obb, confidence: 0.8, cls: "car", index: 2)
         

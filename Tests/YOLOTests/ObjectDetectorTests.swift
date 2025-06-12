@@ -9,7 +9,7 @@ import CoreML
 class ObjectDetectorTests: XCTestCase {
     
     func testObjectDetectorInitialization() {
-        """Test ObjectDetector initialization inherits from BasePredictor"""
+        // Test ObjectDetector initialization inherits from BasePredictor
         let detector = ObjectDetector()
         
         XCTAssertFalse(detector.isModelLoaded)
@@ -21,7 +21,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorPredictOnImageWithoutModel() {
-        """Test predictOnImage without loaded model returns empty result"""
+        // Test predictOnImage without loaded model returns empty result
         let detector = ObjectDetector()
         detector.labels = ["person", "car", "bicycle"]
         
@@ -36,7 +36,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorProcessObservationsWithoutModel() {
-        """Test processObservations without crashing"""
+        // Test processObservations without crashing
         let detector = ObjectDetector()
         detector.labels = ["person", "car", "bicycle", "dog", "cat"]
         detector.inputSize = CGSize(width: 640, height: 480)
@@ -49,7 +49,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorLabelsAssignment() {
-        """Test labels can be assigned and retrieved"""
+        // Test labels can be assigned and retrieved
         let detector = ObjectDetector()
         let testLabels = ["person", "bicycle", "car", "motorbike", "aeroplane"]
         
@@ -59,7 +59,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorThresholdUpdates() {
-        """Test threshold setting methods"""
+        // Test threshold setting methods
         let detector = ObjectDetector()
         
         detector.setConfidenceThreshold(confidence: 0.8)
@@ -73,7 +73,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorInputSize() {
-        """Test input size can be set and retrieved"""
+        // Test input size can be set and retrieved
         let detector = ObjectDetector()
         let testSize = CGSize(width: 640, height: 640)
         
@@ -82,7 +82,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorTimingProperties() {
-        """Test timing properties are properly initialized"""
+        // Test timing properties are properly initialized
         let detector = ObjectDetector()
         
         XCTAssertEqual(detector.t0, 0.0, accuracy: 0.001)
@@ -93,7 +93,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorIsInstanceOfBasePredictor() {
-        """Test ObjectDetector is instance of BasePredictor"""
+        // Test ObjectDetector is instance of BasePredictor
         let detector = ObjectDetector()
         
         XCTAssertTrue(detector is BasePredictor)
@@ -101,7 +101,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorResultStructure() {
-        """Test ObjectDetector result has correct structure"""
+        // Test ObjectDetector result has correct structure
         let detector = ObjectDetector()
         detector.labels = ["person", "car"]
         
@@ -117,7 +117,7 @@ class ObjectDetectorTests: XCTestCase {
     }
     
     func testObjectDetectorEmptyLabelsHandling() {
-        """Test ObjectDetector handles empty labels gracefully"""
+        // Test ObjectDetector handles empty labels gracefully
         let detector = ObjectDetector()
         detector.labels = []
         

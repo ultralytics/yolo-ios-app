@@ -9,7 +9,7 @@ import CoreML
 class PoseEstimaterTests: XCTestCase {
     
     func testPoseEstimaterInitialization() {
-        """Test PoseEstimater initialization inherits from BasePredictor"""
+        // Test PoseEstimater initialization inherits from BasePredictor
         let poseEstimater = PoseEstimater()
         
         XCTAssertFalse(poseEstimater.isModelLoaded)
@@ -21,7 +21,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterPredictOnImageWithoutModel() {
-        """Test predictOnImage without loaded model returns empty result"""
+        // Test predictOnImage without loaded model returns empty result
         let poseEstimater = PoseEstimater()
         poseEstimater.labels = ["person"]
         
@@ -38,7 +38,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterProcessObservationsWithoutModel() {
-        """Test processObservations without crashing"""
+        // Test processObservations without crashing
         let poseEstimater = PoseEstimater()
         poseEstimater.labels = ["person"]
         poseEstimater.inputSize = CGSize(width: 640, height: 480)
@@ -51,7 +51,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterLabelsAssignment() {
-        """Test labels can be assigned and retrieved"""
+        // Test labels can be assigned and retrieved
         let poseEstimater = PoseEstimater()
         let testLabels = ["person"]
         
@@ -61,7 +61,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterInputSize() {
-        """Test input size can be set and retrieved"""
+        // Test input size can be set and retrieved
         let poseEstimater = PoseEstimater()
         let testSize = CGSize(width: 640, height: 480)
         
@@ -70,7 +70,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterTimingProperties() {
-        """Test timing properties are properly initialized"""
+        // Test timing properties are properly initialized
         let poseEstimater = PoseEstimater()
         
         XCTAssertEqual(poseEstimater.t0, 0.0, accuracy: 0.001)
@@ -81,7 +81,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterIsInstanceOfBasePredictor() {
-        """Test PoseEstimater is instance of BasePredictor"""
+        // Test PoseEstimater is instance of BasePredictor
         let poseEstimater = PoseEstimater()
         
         XCTAssertTrue(poseEstimater is BasePredictor)
@@ -89,7 +89,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterResultStructure() {
-        """Test PoseEstimater result has correct structure"""
+        // Test PoseEstimater result has correct structure
         let poseEstimater = PoseEstimater()
         poseEstimater.labels = ["person"]
         
@@ -105,7 +105,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterColorsForMaskProperty() {
-        """Test colorsForMask property exists and can be modified"""
+        // Test colorsForMask property exists and can be modified
         let poseEstimater = PoseEstimater()
         
         XCTAssertEqual(poseEstimater.colorsForMask.count, 0)
@@ -118,7 +118,7 @@ class PoseEstimaterTests: XCTestCase {
     }
     
     func testPoseEstimaterModelInputSize() {
-        """Test model input size properties"""
+        // Test model input size properties
         let poseEstimater = PoseEstimater()
         
         XCTAssertEqual(poseEstimater.modelInputSize.width, 0)

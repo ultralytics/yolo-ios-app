@@ -8,7 +8,7 @@ import CoreGraphics
 class NonMaxSuppressionTests: XCTestCase {
     
     func testCGRectAreaExtension() {
-        """Test CGRect area calculation extension"""
+        // Test CGRect area calculation extension
         let rect = CGRect(x: 0, y: 0, width: 10, height: 5)
         XCTAssertEqual(rect.area, 50, accuracy: 0.001)
         
@@ -17,7 +17,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSWithNoOverlap() {
-        """Test NMS with non-overlapping boxes"""
+        // Test NMS with non-overlapping boxes
         let boxes = [
             CGRect(x: 0, y: 0, width: 10, height: 10),
             CGRect(x: 20, y: 20, width: 10, height: 10),
@@ -34,7 +34,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSWithOverlap() {
-        """Test NMS with overlapping boxes"""
+        // Test NMS with overlapping boxes
         let boxes = [
             CGRect(x: 0, y: 0, width: 10, height: 10),
             CGRect(x: 5, y: 5, width: 10, height: 10), // Overlapping
@@ -51,7 +51,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSWithIdenticalBoxes() {
-        """Test NMS with identical boxes"""
+        // Test NMS with identical boxes
         let boxes = [
             CGRect(x: 0, y: 0, width: 10, height: 10),
             CGRect(x: 0, y: 0, width: 10, height: 10)
@@ -65,7 +65,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSWithSingleBox() {
-        """Test NMS with single box"""
+        // Test NMS with single box
         let boxes = [CGRect(x: 0, y: 0, width: 10, height: 10)]
         let scores: [Float] = [0.9]
         
@@ -76,7 +76,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSWithEmptyInput() {
-        """Test NMS with empty input"""
+        // Test NMS with empty input
         let boxes: [CGRect] = []
         let scores: [Float] = []
         
@@ -86,7 +86,7 @@ class NonMaxSuppressionTests: XCTestCase {
     }
     
     func testNMSThresholdSensitivity() {
-        """Test NMS threshold sensitivity"""
+        // Test NMS threshold sensitivity
         let boxes = [
             CGRect(x: 0, y: 0, width: 10, height: 10),
             CGRect(x: 5, y: 5, width: 10, height: 10)

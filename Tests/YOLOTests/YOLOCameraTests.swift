@@ -9,7 +9,7 @@ import AVFoundation
 class YOLOCameraTests: XCTestCase {
     
     func testYOLOCameraInitialization() {
-        """Test YOLOCamera initialization with different parameters"""
+        // Test YOLOCamera initialization with different parameters
         let camera1 = YOLOCamera(modelPathOrName: "test_model", task: .detect, cameraPosition: .back)
         
         XCTAssertEqual(camera1.modelPathOrName, "test_model")
@@ -18,7 +18,7 @@ class YOLOCameraTests: XCTestCase {
     }
     
     func testYOLOCameraInitializationWithDefaultValues() {
-        """Test YOLOCamera initialization with default values"""
+        // Test YOLOCamera initialization with default values
         let camera = YOLOCamera(modelPathOrName: "model")
         
         XCTAssertEqual(camera.modelPathOrName, "model")
@@ -27,7 +27,7 @@ class YOLOCameraTests: XCTestCase {
     }
     
     func testYOLOCameraWithDifferentTasks() {
-        """Test YOLOCamera initialization with different tasks"""
+        // Test YOLOCamera initialization with different tasks
         let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
         for task in tasks {
@@ -40,7 +40,7 @@ class YOLOCameraTests: XCTestCase {
     }
     
     func testYOLOCameraWithDifferentCameraPositions() {
-        """Test YOLOCamera initialization with different camera positions"""
+        // Test YOLOCamera initialization with different camera positions
         let positions: [AVCaptureDevice.Position] = [.back, .front, .unspecified]
         
         for position in positions {
@@ -53,7 +53,7 @@ class YOLOCameraTests: XCTestCase {
     
     @MainActor
     func testYOLOCameraBody() {
-        """Test YOLOCamera body property returns a View"""
+        // Test YOLOCamera body property returns a View
         let camera = YOLOCamera(modelPathOrName: "test_model", task: .segment, cameraPosition: .back)
         
         let body = camera.body
@@ -66,7 +66,7 @@ class YOLOCameraTests: XCTestCase {
     }
     
     func testYOLOCameraProperties() {
-        """Test YOLOCamera properties are correctly set"""
+        // Test YOLOCamera properties are correctly set
         let modelPath = "custom_model_path"
         let task = YOLOTask.pose
         let position = AVCaptureDevice.Position.front
@@ -83,7 +83,7 @@ class YOLOCameraTests: XCTestCase {
 class YOLOViewRepresentableTests: XCTestCase {
     
     func testYOLOViewRepresentableInitialization() {
-        """Test YOLOViewRepresentable initialization"""
+        // Test YOLOViewRepresentable initialization
         let modelPath = "test_model"
         let task = YOLOTask.detect
         let position = AVCaptureDevice.Position.back
@@ -103,7 +103,7 @@ class YOLOViewRepresentableTests: XCTestCase {
     }
     
     func testYOLOViewRepresentableWithNilCallback() {
-        """Test YOLOViewRepresentable with nil callback"""
+        // Test YOLOViewRepresentable with nil callback
         let representable = YOLOViewRepresentable(
             modelPathOrName: "model",
             task: .segment,
@@ -119,7 +119,7 @@ class YOLOViewRepresentableTests: XCTestCase {
     
     @MainActor
     func testYOLOViewRepresentableMakeUIView() {
-        """Test YOLOViewRepresentable makeUIView method"""
+        // Test YOLOViewRepresentable makeUIView method
         let representable = YOLOViewRepresentable(
             modelPathOrName: "test_model",
             task: .classify,
@@ -140,7 +140,7 @@ class YOLOViewRepresentableTests: XCTestCase {
     
     @MainActor
     func testYOLOViewRepresentableUpdateUIView() {
-        """Test YOLOViewRepresentable updateUIView method"""
+        // Test YOLOViewRepresentable updateUIView method
         let expectation = XCTestExpectation(description: "Detection callback")
         
         let onDetection: (YOLOResult) -> Void = { result in
@@ -172,7 +172,7 @@ class YOLOViewRepresentableTests: XCTestCase {
     }
     
     func testYOLOViewRepresentableAllTaskTypes() {
-        """Test YOLOViewRepresentable with all task types"""
+        // Test YOLOViewRepresentable with all task types
         let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
         for task in tasks {
@@ -196,7 +196,7 @@ class YOLOCameraSwiftUITests: XCTestCase {
     
     @MainActor
     func testYOLOCameraInSwiftUIView() {
-        """Test YOLOCamera can be used in SwiftUI views"""
+        // Test YOLOCamera can be used in SwiftUI views
         let camera = YOLOCamera(modelPathOrName: "test_model")
         
         // Create a simple SwiftUI view containing the camera
@@ -210,14 +210,14 @@ class YOLOCameraSwiftUITests: XCTestCase {
     }
     
     func testYOLOCameraAsView() {
-        """Test YOLOCamera conforms to View protocol"""
+        // Test YOLOCamera conforms to View protocol
         let camera = YOLOCamera(modelPathOrName: "model")
         
         XCTAssertTrue(camera is any View)
     }
     
     func testYOLOCameraWithModifiers() {
-        """Test YOLOCamera can be used with SwiftUI modifiers"""
+        // Test YOLOCamera can be used with SwiftUI modifiers
         let camera = YOLOCamera(modelPathOrName: "test", task: .detect, cameraPosition: .front)
         
         // Apply some common SwiftUI modifiers

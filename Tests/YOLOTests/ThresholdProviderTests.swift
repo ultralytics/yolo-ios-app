@@ -8,7 +8,7 @@ import CoreML
 class ThresholdProviderTests: XCTestCase {
     
     func testDefaultInitialization() {
-        """Test ThresholdProvider with default values"""
+        // Test ThresholdProvider with default values
         let provider = ThresholdProvider()
         
         XCTAssertEqual(provider.featureNames.count, 2)
@@ -25,7 +25,7 @@ class ThresholdProviderTests: XCTestCase {
     }
     
     func testCustomInitialization() {
-        """Test ThresholdProvider with custom values"""
+        // Test ThresholdProvider with custom values
         let provider = ThresholdProvider(iouThreshold: 0.7, confidenceThreshold: 0.8)
         
         let iouValue = provider.featureValue(for: "iouThreshold")
@@ -36,7 +36,7 @@ class ThresholdProviderTests: XCTestCase {
     }
     
     func testInvalidFeatureName() {
-        """Test behavior with invalid feature name"""
+        // Test behavior with invalid feature name
         let provider = ThresholdProvider()
         let value = provider.featureValue(for: "invalidFeature")
         
@@ -44,7 +44,7 @@ class ThresholdProviderTests: XCTestCase {
     }
     
     func testFeatureNames() {
-        """Test featureNames property"""
+        // Test featureNames property
         let provider = ThresholdProvider()
         let names = provider.featureNames
         

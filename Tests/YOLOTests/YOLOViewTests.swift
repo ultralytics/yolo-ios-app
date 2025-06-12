@@ -10,7 +10,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewInitialization() {
-        """Test YOLOView initialization with frame and model"""
+        // Test YOLOView initialization with frame and model
         let frame = CGRect(x: 0, y: 0, width: 400, height: 600)
         let yoloView = createTestYOLOView(frame: frame, task: .detect)
         
@@ -23,7 +23,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewInitializationWithDifferentTasks() {
-        """Test YOLOView initialization with different tasks"""
+        // Test YOLOView initialization with different tasks
         let frame = CGRect(x: 0, y: 0, width: 300, height: 400)
         let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
@@ -35,7 +35,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewUIElementsExist() {
-        """Test that YOLOView UI elements are properly initialized"""
+        // Test that YOLOView UI elements are properly initialized
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         XCTAssertNotNil(yoloView.sliderNumItems)
@@ -56,7 +56,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewSliderDefaults() {
-        """Test YOLOView slider default values"""
+        // Test YOLOView slider default values
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         // Test slider default values
@@ -75,7 +75,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewButtonStates() {
-        """Test YOLOView button initial states"""
+        // Test YOLOView button initial states
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         XCTAssertFalse(yoloView.playButton.isEnabled)
@@ -84,7 +84,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewZoomProperties() {
-        """Test YOLOView zoom-related properties"""
+        // Test YOLOView zoom-related properties
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         XCTAssertEqual(yoloView.labelZoom.text, "1.00x")
@@ -93,7 +93,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewBoundingBoxViewsSetup() {
-        """Test YOLOView bounding box views setup"""
+        // Test YOLOView bounding box views setup
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         XCTAssertEqual(yoloView.boundingBoxViews.count, yoloView.maxBoundingBoxViews)
@@ -107,7 +107,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewLayoutSubviews() {
-        """Test YOLOView layoutSubviews method"""
+        // Test YOLOView layoutSubviews method
         let frame = CGRect(x: 0, y: 0, width: 400, height: 600)
         let yoloView = createTestYOLOView(frame: frame, task: .detect)
         
@@ -125,7 +125,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewStop() {
-        """Test YOLOView stop method"""
+        // Test YOLOView stop method
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         // Should not crash
@@ -135,7 +135,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewResume() {
-        """Test YOLOView resume method"""
+        // Test YOLOView resume method
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         // Should not crash
@@ -145,7 +145,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewSetInferenceFlag() {
-        """Test YOLOView setInferenceFlag method"""
+        // Test YOLOView setInferenceFlag method
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         
         yoloView.setInferenceFlag(ok: false)
@@ -157,7 +157,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewOnDetectionCallback() {
-        """Test YOLOView onDetection callback"""
+        // Test YOLOView onDetection callback
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         let expectation = XCTestExpectation(description: "Detection callback")
         
@@ -175,7 +175,7 @@ class YOLOViewTests: XCTestCase {
     
     @MainActor
     func testYOLOViewDelegate() {
-        """Test YOLOView delegate functionality"""
+        // Test YOLOView delegate functionality
         let yoloView = createTestYOLOView(frame: CGRect(x: 0, y: 0, width: 400, height: 600), task: .detect)
         let delegate = MockYOLOViewDelegate()
         
@@ -209,7 +209,7 @@ class YOLOViewTests: XCTestCase {
 class YOLOViewUtilityTests: XCTestCase {
     
     func testProcessString() {
-        """Test processString utility function"""
+        // Test processString utility function
         XCTAssertEqual(processString("yolo11n"), "YOLO11n")
         XCTAssertEqual(processString("yolov8s"), "YOLOv8s")
         XCTAssertEqual(processString("model-obb"), "Model-OBB")
@@ -223,7 +223,7 @@ class YOLOViewUtilityTests: XCTestCase {
     }
     
     func testProcessStringCaseInsensitive() {
-        """Test processString handles case insensitive replacements"""
+        // Test processString handles case insensitive replacements
         XCTAssertEqual(processString("YOLO11n"), "YOLO11n")
         XCTAssertEqual(processString("Yolo11n"), "YOLO11n")
         XCTAssertEqual(processString("yOlO11n"), "YOLO11n")
@@ -233,7 +233,7 @@ class YOLOViewUtilityTests: XCTestCase {
     }
     
     func testProcessStringCapitalization() {
-        """Test processString capitalizes first letter"""
+        // Test processString capitalizes first letter
         XCTAssertEqual(processString("model"), "Model")
         XCTAssertEqual(processString("detection"), "Detection")
         XCTAssertEqual(processString("custom"), "Custom")
@@ -241,7 +241,7 @@ class YOLOViewUtilityTests: XCTestCase {
     }
     
     func testProcessStringEmptyAndEdgeCases() {
-        """Test processString edge cases"""
+        // Test processString edge cases
         XCTAssertEqual(processString(""), "")
         XCTAssertEqual(processString("y"), "Y")
         XCTAssertEqual(processString("o"), "O")

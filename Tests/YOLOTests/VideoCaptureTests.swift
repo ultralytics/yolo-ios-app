@@ -9,7 +9,7 @@ import Vision
 class VideoCaptureTests: XCTestCase {
     
     func testVideoCaptureInitialization() {
-        """Test VideoCapture initialization"""
+        // Test VideoCapture initialization
         let videoCapture = VideoCapture()
         
         XCTAssertNil(videoCapture.predictor)
@@ -29,7 +29,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureSessionConfiguration() {
-        """Test capture session properties"""
+        // Test capture session properties
         let videoCapture = VideoCapture()
         
         XCTAssertNotNil(videoCapture.captureSession)
@@ -37,7 +37,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureOutputConfiguration() {
-        """Test video output configuration"""
+        // Test video output configuration
         let videoCapture = VideoCapture()
         
         XCTAssertNotNil(videoCapture.videoOutput)
@@ -48,7 +48,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureStartStop() {
-        """Test start and stop methods don't crash"""
+        // Test start and stop methods don't crash
         let videoCapture = VideoCapture()
         
         // These should not crash even without proper setup
@@ -59,7 +59,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureZoomRatio() {
-        """Test setZoomRatio method handles nil captureDevice gracefully"""
+        // Test setZoomRatio method handles nil captureDevice gracefully
         let videoCapture = VideoCapture()
         
         // Should not crash with nil captureDevice
@@ -69,7 +69,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureInferenceFlag() {
-        """Test inferenceOK flag can be set and read"""
+        // Test inferenceOK flag can be set and read
         let videoCapture = VideoCapture()
         
         XCTAssertTrue(videoCapture.inferenceOK)
@@ -82,7 +82,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureDimensionProperties() {
-        """Test frame dimension properties"""
+        // Test frame dimension properties
         let videoCapture = VideoCapture()
         
         XCTAssertEqual(videoCapture.longSide, 3)
@@ -99,7 +99,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureUpdateVideoOrientation() {
-        """Test updateVideoOrientation method handles empty connections gracefully"""
+        // Test updateVideoOrientation method handles empty connections gracefully
         let videoCapture = VideoCapture()
         
         // Should not crash even without proper connection setup
@@ -112,7 +112,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureAsResultsListener() {
-        """Test VideoCapture conforms to ResultsListener"""
+        // Test VideoCapture conforms to ResultsListener
         let videoCapture = VideoCapture()
         
         XCTAssertTrue(videoCapture is ResultsListener)
@@ -125,7 +125,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureAsInferenceTimeListener() {
-        """Test VideoCapture conforms to InferenceTimeListener"""
+        // Test VideoCapture conforms to InferenceTimeListener
         let videoCapture = VideoCapture()
         
         XCTAssertTrue(videoCapture is InferenceTimeListener)
@@ -137,7 +137,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureQueueCreation() {
-        """Test camera queue is properly created"""
+        // Test camera queue is properly created
         let videoCapture = VideoCapture()
         
         XCTAssertNotNil(videoCapture.cameraQueue)
@@ -152,7 +152,7 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testVideoCaptureWeakDelegate() {
-        """Test delegate is weak reference"""
+        // Test delegate is weak reference
         let videoCapture = VideoCapture()
         
         class MockDelegate: VideoCaptureDelegate {
@@ -176,7 +176,7 @@ class VideoCaptureTests: XCTestCase {
 class VideoCaptureUtilityTests: XCTestCase {
     
     func testBestCaptureDeviceFunction() {
-        """Test bestCaptureDevice function handles camera selection"""
+        // Test bestCaptureDevice function handles camera selection
         // This test might fail on simulator where cameras aren't available
         // but should not crash
         

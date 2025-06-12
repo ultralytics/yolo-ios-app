@@ -10,7 +10,7 @@ import UIKit
 class YOLOErrorHandlingTests: XCTestCase {
     
     func testPredictorErrorTypes() {
-        """Test PredictorError enum cases"""
+        // Test PredictorError enum cases
         let errors: [PredictorError] = [
             .invalidTask,
             .noLabelsFound,
@@ -31,7 +31,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testYOLOResultWithAllFields() {
-        """Test YOLOResult with all optional fields populated"""
+        // Test YOLOResult with all optional fields populated
         let boxes = [Box(index: 0, cls: "person", conf: 0.9, xywh: CGRect(), xywhn: CGRect())]
         let masks = Masks(masks: [[[0.5]]], combinedMask: nil)
         let probs = Probs(top1: "cat", top5: ["cat"], top1Conf: 0.95, top5Confs: [0.95])
@@ -63,7 +63,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testBoxNormalizedCoordinates() {
-        """Test Box with normalized coordinates"""
+        // Test Box with normalized coordinates
         let box = Box(
             index: 2,
             cls: "bicycle",
@@ -82,7 +82,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testProbsEdgeCases() {
-        """Test Probs with edge cases"""
+        // Test Probs with edge cases
         // Test with single class
         let singleProbs = Probs(top1: "only_class", top5: ["only_class"], top1Conf: 1.0, top5Confs: [1.0])
         XCTAssertEqual(singleProbs.top5.count, 1)
@@ -101,7 +101,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testKeypointsWithMultiplePoints() {
-        """Test Keypoints with realistic human pose data"""
+        // Test Keypoints with realistic human pose data
         // 17 keypoints for human pose (COCO format)
         let xyn: [(x: Float, y: Float)] = (0..<17).map { i in (Float(i) * 0.05, Float(i) * 0.05) }
         let xy: [(x: Float, y: Float)] = (0..<17).map { i in (Float(i * 20), Float(i * 25)) }
@@ -129,7 +129,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testOBBPolygonConversionWithRotation() {
-        """Test OBB polygon conversion with various rotations"""
+        // Test OBB polygon conversion with various rotations
         let rotations: [Float] = [0, Float.pi/4, Float.pi/2, Float.pi, 3*Float.pi/2]
         
         for angle in rotations {
@@ -145,7 +145,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testOBBAreaCalculation() {
-        """Test OBB area calculation"""
+        // Test OBB area calculation
         let testCases: [(w: Float, h: Float, expectedArea: Float)] = [
             (1.0, 1.0, 1.0),
             (2.0, 3.0, 6.0),
@@ -160,7 +160,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testMasksWithEmptyData() {
-        """Test Masks with edge cases"""
+        // Test Masks with edge cases
         // Empty masks
         let emptyMasks = Masks(masks: [], combinedMask: nil)
         XCTAssertEqual(emptyMasks.masks.count, 0)
@@ -175,7 +175,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testThresholdProviderEdgeValues() {
-        """Test ThresholdProvider with edge values"""
+        // Test ThresholdProvider with edge values
         let minProvider = ThresholdProvider(iouThreshold: 0.0, confidenceThreshold: 0.0)
         let maxProvider = ThresholdProvider(iouThreshold: 1.0, confidenceThreshold: 1.0)
         
@@ -187,7 +187,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testNonMaxSuppressionEdgeCases() {
-        """Test NonMaxSuppression with edge cases"""
+        // Test NonMaxSuppression with edge cases
         // Single box
         let singleBox = [CGRect(x: 0, y: 0, width: 10, height: 10)]
         let singleScore: [Float] = [0.9]
@@ -209,7 +209,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testYOLOTasksEquality() {
-        """Test YOLOTask equality and hashing"""
+        // Test YOLOTask equality and hashing
         let allTasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
         // Test equality
@@ -232,7 +232,7 @@ class YOLOErrorHandlingTests: XCTestCase {
     }
     
     func testCGRectAreaExtension() {
-        """Test CGRect area extension with various sizes"""
+        // Test CGRect area extension with various sizes
         let testRects = [
             (CGRect(x: 0, y: 0, width: 10, height: 5), 50.0),
             (CGRect(x: 5, y: 5, width: 3, height: 4), 12.0),
@@ -250,7 +250,7 @@ class YOLOErrorHandlingTests: XCTestCase {
 class YOLOProtocolTests: XCTestCase {
     
     func testResultsListenerProtocol() {
-        """Test ResultsListener protocol can be implemented"""
+        // Test ResultsListener protocol can be implemented
         class TestListener: ResultsListener {
             var receivedResult: YOLOResult?
             
@@ -267,7 +267,7 @@ class YOLOProtocolTests: XCTestCase {
     }
     
     func testInferenceTimeListenerProtocol() {
-        """Test InferenceTimeListener protocol can be implemented"""
+        // Test InferenceTimeListener protocol can be implemented
         class TestListener: InferenceTimeListener {
             var lastInferenceTime: Double = 0
             var lastFpsRate: Double = 0
@@ -286,7 +286,7 @@ class YOLOProtocolTests: XCTestCase {
     }
     
     func testPredictorProtocol() {
-        """Test Predictor protocol interface"""
+        // Test Predictor protocol interface
         class TestPredictor: Predictor {
             var labels: [String] = ["test"]
             var isUpdating: Bool = false

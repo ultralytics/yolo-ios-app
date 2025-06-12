@@ -10,7 +10,7 @@ import QuartzCore
 class PlotTests: XCTestCase {
     
     func testUltralyticsColorsExist() {
-        """Test ultralyticsColors array is populated"""
+        // Test ultralyticsColors array is populated
         XCTAssertGreaterThan(ultralyticsColors.count, 0)
         XCTAssertEqual(ultralyticsColors.count, 20)
         
@@ -20,7 +20,7 @@ class PlotTests: XCTestCase {
     }
     
     func testPosePaletteAndConstants() {
-        """Test pose-related constants are properly initialized"""
+        // Test pose-related constants are properly initialized
         XCTAssertGreaterThan(posePalette.count, 0)
         XCTAssertEqual(posePalette.count, 20)
         XCTAssertEqual(posePalette[0].count, 3) // RGB values
@@ -32,7 +32,7 @@ class PlotTests: XCTestCase {
     }
     
     func testUIColorRGBComponentsExtension() {
-        """Test UIColor RGB components extension"""
+        // Test UIColor RGB components extension
         let redColor = UIColor.red
         let components = redColor.toRGBComponents()
         
@@ -51,7 +51,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLODetections() {
-        """Test drawYOLODetections function creates image"""
+        // Test drawYOLODetections function creates image
         let inputImage = CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
         let box = Box(
@@ -77,7 +77,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLODetectionsEmptyBoxes() {
-        """Test drawYOLODetections with empty boxes"""
+        // Test drawYOLODetections with empty boxes
         let inputImage = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 150))
         
         let result = YOLOResult(
@@ -95,7 +95,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLOClassifications() {
-        """Test drawYOLOClassifications function"""
+        // Test drawYOLOClassifications function
         let inputImage = CIImage(color: .green).cropped(to: CGRect(x: 0, y: 0, width: 224, height: 224))
         
         let probs = Probs(
@@ -121,7 +121,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLOClassificationsWithoutProbs() {
-        """Test drawYOLOClassifications without probs returns original"""
+        // Test drawYOLOClassifications without probs returns original
         let inputImage = CIImage(color: .yellow).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
         let result = YOLOResult(
@@ -140,7 +140,7 @@ class PlotTests: XCTestCase {
     }
     
     func testComposeImageWithMask() {
-        """Test composeImageWithMask function"""
+        // Test composeImageWithMask function
         // Create a simple test image
         UIGraphicsBeginImageContextWithOptions(CGSize(width: 50, height: 50), false, 1.0)
         UIColor.red.setFill()
@@ -166,7 +166,7 @@ class PlotTests: XCTestCase {
     }
     
     func testOBBShapeLayerBundleInitialization() {
-        """Test OBBShapeLayerBundle initialization"""
+        // Test OBBShapeLayerBundle initialization
         let bundle = OBBShapeLayerBundle()
         
         XCTAssertNotNil(bundle.shapeLayer)
@@ -177,7 +177,7 @@ class PlotTests: XCTestCase {
     }
     
     func testOBBRendererInitialization() {
-        """Test OBBRenderer initialization"""
+        // Test OBBRenderer initialization
         let renderer = OBBRenderer()
         
         // Should not crash on initialization
@@ -185,7 +185,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawOBBsOnCIImageWithEmptyDetections() {
-        """Test drawOBBsOnCIImage with empty detections"""
+        // Test drawOBBsOnCIImage with empty detections
         let inputImage = CIImage(color: .purple).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         let emptyDetections: [OBBResult] = []
         
@@ -196,7 +196,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawOBBsOnCIImageWithDetections() {
-        """Test drawOBBsOnCIImage with actual detections"""
+        // Test drawOBBsOnCIImage with actual detections
         let inputImage = CIImage(color: .orange).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 200))
         
         let obb = OBB(cx: 0.5, cy: 0.5, w: 0.3, h: 0.2, angle: 0.5)
@@ -210,7 +210,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawPoseOnCIImageWithEmptyKeypoints() {
-        """Test drawPoseOnCIImage with empty keypoints"""
+        // Test drawPoseOnCIImage with empty keypoints
         let inputImage = CIImage(color: .cyan).cropped(to: CGRect(x: 0, y: 0, width: 300, height: 200))
         let emptyKeypoints: [[(x: Float, y: Float)]] = []
         let emptyConfs: [[Float]] = []
@@ -230,7 +230,7 @@ class PlotTests: XCTestCase {
     
     @MainActor
     func testDrawObbDetectionsWithReuse() {
-        """Test OBBRenderer drawObbDetectionsWithReuse method"""
+        // Test OBBRenderer drawObbDetectionsWithReuse method
         let renderer = OBBRenderer()
         let layer = CALayer()
         layer.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
@@ -250,7 +250,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLOPoseWithBoxes() {
-        """Test integrated pose with boxes rendering"""
+        // Test integrated pose with boxes rendering
         let inputImage = CIImage(color: .gray).cropped(to: CGRect(x: 0, y: 0, width: 400, height: 300))
         
         let keypoints: [(x: Float, y: Float)] = Array(repeating: (0.5, 0.5), count: 17)
@@ -274,7 +274,7 @@ class PlotTests: XCTestCase {
     }
     
     func testDrawYOLOSegmentationWithBoxes() {
-        """Test integrated segmentation with boxes rendering"""
+        // Test integrated segmentation with boxes rendering
         let inputImage = CIImage(color: .magenta).cropped(to: CGRect(x: 0, y: 0, width: 300, height: 300))
         
         let box = Box(

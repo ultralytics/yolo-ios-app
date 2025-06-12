@@ -7,7 +7,7 @@ import XCTest
 class YOLOTaskTests: XCTestCase {
     
     func testAllTaskTypes() {
-        """Test all YOLOTask enum cases exist and are distinct"""
+        // Test all YOLOTask enum cases exist and are distinct
         let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
         XCTAssertEqual(tasks.count, 5)
@@ -21,7 +21,7 @@ class YOLOTaskTests: XCTestCase {
     }
     
     func testTaskEquality() {
-        """Test YOLOTask equality"""
+        // Test YOLOTask equality
         XCTAssertEqual(YOLOTask.detect, YOLOTask.detect)
         XCTAssertEqual(YOLOTask.segment, YOLOTask.segment)
         XCTAssertEqual(YOLOTask.pose, YOLOTask.pose)
@@ -30,7 +30,7 @@ class YOLOTaskTests: XCTestCase {
     }
     
     func testTaskSwitchStatement() {
-        """Test YOLOTask can be used in switch statements"""
+        // Test YOLOTask can be used in switch statements
         func taskDescription(_ task: YOLOTask) -> String {
             switch task {
             case .detect: return "detection"
@@ -49,7 +49,7 @@ class YOLOTaskTests: XCTestCase {
     }
     
     func testTaskInArray() {
-        """Test YOLOTask can be stored in arrays and collections"""
+        // Test YOLOTask can be stored in arrays and collections
         let detectionTasks: [YOLOTask] = [.detect, .obb]
         let segmentationTasks: [YOLOTask] = [.segment]
         let humanTasks: [YOLOTask] = [.pose]

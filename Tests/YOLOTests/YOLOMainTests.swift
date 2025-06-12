@@ -9,7 +9,7 @@ import CoreImage
 class YOLOMainTests: XCTestCase {
     
     func testYOLOInitializationWithInvalidPath() {
-        """Test YOLO initialization with invalid model path calls completion with error"""
+        // Test YOLO initialization with invalid model path calls completion with error
         let expectation = XCTestExpectation(description: "Invalid model path")
         
         let _ = YOLO("invalid_model_path", task: .detect) { result in
@@ -31,7 +31,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithUIImage() {
-        """Test YOLO callable interface with UIImage"""
+        // Test YOLO callable interface with UIImage
         let yolo = createMockYOLO()
         
         // Create a test UIImage
@@ -49,7 +49,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithCIImage() {
-        """Test YOLO callable interface with CIImage"""
+        // Test YOLO callable interface with CIImage
         let yolo = createMockYOLO()
         
         let testImage = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 200))
@@ -61,7 +61,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithCGImage() {
-        """Test YOLO callable interface with CGImage"""
+        // Test YOLO callable interface with CGImage
         let yolo = createMockYOLO()
         
         // Create a test CGImage
@@ -79,7 +79,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithResourceName() {
-        """Test YOLO callable interface with resource name (will fail gracefully)"""
+        // Test YOLO callable interface with resource name (will fail gracefully)
         let yolo = createMockYOLO()
         
         // This will fail because the resource doesn't exist, but should return empty result
@@ -93,7 +93,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithRemoteURL() {
-        """Test YOLO callable interface with remote URL (will fail gracefully)"""
+        // Test YOLO callable interface with remote URL (will fail gracefully)
         let yolo = createMockYOLO()
         
         // This will fail because the URL doesn't exist, but should return empty result
@@ -106,7 +106,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOCallAsFunctionWithLocalPath() {
-        """Test YOLO callable interface with local path (will fail gracefully)"""
+        // Test YOLO callable interface with local path (will fail gracefully)
         let yolo = createMockYOLO()
         
         // This will fail because the path doesn't exist, but should return empty result
@@ -118,7 +118,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOAllTaskTypes() {
-        """Test YOLO initialization for all task types with invalid paths"""
+        // Test YOLO initialization for all task types with invalid paths
         let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
         
         for task in tasks {
@@ -139,7 +139,7 @@ class YOLOMainTests: XCTestCase {
     }
     
     func testYOLOWithReturnAnnotatedImageFlag() {
-        """Test YOLO callable interface with returnAnnotatedImage flag"""
+        // Test YOLO callable interface with returnAnnotatedImage flag
         let yolo = createMockYOLO()
         
         let testImage = CIImage(color: .yellow).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -155,7 +155,7 @@ class YOLOMainTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createMockYOLO() -> YOLO {
-        """Create a mock YOLO instance for testing"""
+        // Create a mock YOLO instance for testing
         let yolo = YOLO.__allocating_init()
         yolo.predictor = MockPredictor()
         return yolo

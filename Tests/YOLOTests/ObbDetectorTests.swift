@@ -9,7 +9,7 @@ import CoreML
 class ObbDetectorTests: XCTestCase {
     
     func testObbDetectorInitialization() {
-        """Test ObbDetector initialization inherits from BasePredictor"""
+        // Test ObbDetector initialization inherits from BasePredictor
         let obbDetector = ObbDetector()
         
         XCTAssertFalse(obbDetector.isModelLoaded)
@@ -21,7 +21,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorPredictOnImageWithoutModel() {
-        """Test predictOnImage without loaded model returns empty result"""
+        // Test predictOnImage without loaded model returns empty result
         let obbDetector = ObbDetector()
         obbDetector.labels = ["plane", "ship", "vehicle"]
         
@@ -39,7 +39,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorProcessObservationsWithoutModel() {
-        """Test processObservations without crashing"""
+        // Test processObservations without crashing
         let obbDetector = ObbDetector()
         obbDetector.labels = ["plane", "ship", "vehicle"]
         obbDetector.inputSize = CGSize(width: 640, height: 480)
@@ -52,7 +52,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorLabelsAssignment() {
-        """Test labels can be assigned and retrieved"""
+        // Test labels can be assigned and retrieved
         let obbDetector = ObbDetector()
         let testLabels = ["plane", "ship", "storage-tank", "baseball-diamond", "tennis-court"]
         
@@ -62,7 +62,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorInputSize() {
-        """Test input size can be set and retrieved"""
+        // Test input size can be set and retrieved
         let obbDetector = ObbDetector()
         let testSize = CGSize(width: 1024, height: 1024)
         
@@ -71,7 +71,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorTimingProperties() {
-        """Test timing properties are properly initialized"""
+        // Test timing properties are properly initialized
         let obbDetector = ObbDetector()
         
         XCTAssertEqual(obbDetector.t0, 0.0, accuracy: 0.001)
@@ -82,7 +82,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorIsInstanceOfBasePredictor() {
-        """Test ObbDetector is instance of BasePredictor"""
+        // Test ObbDetector is instance of BasePredictor
         let obbDetector = ObbDetector()
         
         XCTAssertTrue(obbDetector is BasePredictor)
@@ -90,7 +90,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorResultStructure() {
-        """Test ObbDetector result has correct structure"""
+        // Test ObbDetector result has correct structure
         let obbDetector = ObbDetector()
         obbDetector.labels = ["plane", "ship"]
         
@@ -106,7 +106,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorNonMaxSuppressionOBB() {
-        """Test nonMaxSuppressionOBB utility method"""
+        // Test nonMaxSuppressionOBB utility method
         let obbDetector = ObbDetector()
         
         let boxes = [
@@ -128,7 +128,7 @@ class ObbDetectorTests: XCTestCase {
     }
     
     func testObbDetectorLockQueue() {
-        """Test lockQueue property exists"""
+        // Test lockQueue property exists
         let obbDetector = ObbDetector()
         
         // Test that lockQueue can be accessed without crashing
@@ -143,7 +143,7 @@ class ObbDetectorTests: XCTestCase {
 class OBBUtilityTests: XCTestCase {
     
     func testPolygonArea() {
-        """Test polygonArea calculation"""
+        // Test polygonArea calculation
         let square: Polygon = [
             CGPoint(x: 0, y: 0),
             CGPoint(x: 10, y: 0),
@@ -167,7 +167,7 @@ class OBBUtilityTests: XCTestCase {
     }
     
     func testOBBToAABB() {
-        """Test OBB to axis-aligned bounding box conversion"""
+        // Test OBB to axis-aligned bounding box conversion
         let obb = OBB(cx: 50, cy: 50, w: 20, h: 10, angle: 0)
         let aabb = obb.toAABB()
         
@@ -178,7 +178,7 @@ class OBBUtilityTests: XCTestCase {
     }
     
     func testIsInsideFunction() {
-        """Test isInside point-in-polygon test"""
+        // Test isInside point-in-polygon test
         let edgeStart = CGPoint(x: 0, y: 0)
         let edgeEnd = CGPoint(x: 10, y: 0)
         
@@ -190,7 +190,7 @@ class OBBUtilityTests: XCTestCase {
     }
     
     func testComputeIntersection() {
-        """Test line intersection computation"""
+        // Test line intersection computation
         let p1 = CGPoint(x: 0, y: 0)
         let p2 = CGPoint(x: 10, y: 10)
         let clipStart = CGPoint(x: 0, y: 5)
@@ -204,7 +204,7 @@ class OBBUtilityTests: XCTestCase {
     }
     
     func testOBBInfoInitialization() {
-        """Test OBBInfo struct initialization"""
+        // Test OBBInfo struct initialization
         let obb = OBB(cx: 25, cy: 25, w: 10, h: 8, angle: 0.5)
         let obbInfo = OBBInfo(obb)
         
@@ -216,7 +216,7 @@ class OBBUtilityTests: XCTestCase {
     }
     
     func testOBBInfoAABBIntersection() {
-        """Test AABB intersection check"""
+        // Test AABB intersection check
         let obb1 = OBB(cx: 25, cy: 25, w: 10, h: 10, angle: 0)
         let obb2 = OBB(cx: 30, cy: 30, w: 10, h: 10, angle: 0) // Overlapping
         let obb3 = OBB(cx: 100, cy: 100, w: 10, h: 10, angle: 0) // Non-overlapping

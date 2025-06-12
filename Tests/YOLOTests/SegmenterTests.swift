@@ -9,7 +9,7 @@ import CoreML
 class SegmenterTests: XCTestCase {
     
     func testSegmenterInitialization() {
-        """Test Segmenter initialization inherits from BasePredictor"""
+        // Test Segmenter initialization inherits from BasePredictor
         let segmenter = Segmenter()
         
         XCTAssertFalse(segmenter.isModelLoaded)
@@ -21,7 +21,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterPredictOnImageWithoutModel() {
-        """Test predictOnImage without loaded model returns empty result"""
+        // Test predictOnImage without loaded model returns empty result
         let segmenter = Segmenter()
         segmenter.labels = ["person", "car", "dog"]
         
@@ -38,7 +38,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterProcessObservationsWithoutModel() {
-        """Test processObservations without crashing"""
+        // Test processObservations without crashing
         let segmenter = Segmenter()
         segmenter.labels = ["person", "car", "bicycle"]
         segmenter.inputSize = CGSize(width: 640, height: 480)
@@ -51,7 +51,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterLabelsAssignment() {
-        """Test labels can be assigned and retrieved"""
+        // Test labels can be assigned and retrieved
         let segmenter = Segmenter()
         let testLabels = ["person", "bicycle", "car", "motorbike", "bus"]
         
@@ -61,7 +61,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterInputSize() {
-        """Test input size can be set and retrieved"""
+        // Test input size can be set and retrieved
         let segmenter = Segmenter()
         let testSize = CGSize(width: 640, height: 640)
         
@@ -70,7 +70,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterTimingProperties() {
-        """Test timing properties are properly initialized"""
+        // Test timing properties are properly initialized
         let segmenter = Segmenter()
         
         XCTAssertEqual(segmenter.t0, 0.0, accuracy: 0.001)
@@ -81,7 +81,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterIsInstanceOfBasePredictor() {
-        """Test Segmenter is instance of BasePredictor"""
+        // Test Segmenter is instance of BasePredictor
         let segmenter = Segmenter()
         
         XCTAssertTrue(segmenter is BasePredictor)
@@ -89,7 +89,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterResultStructure() {
-        """Test Segmenter result has correct structure"""
+        // Test Segmenter result has correct structure
         let segmenter = Segmenter()
         segmenter.labels = ["person", "car"]
         
@@ -105,7 +105,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterColorsForMaskProperty() {
-        """Test colorsForMask property exists and can be modified"""
+        // Test colorsForMask property exists and can be modified
         let segmenter = Segmenter()
         
         XCTAssertEqual(segmenter.colorsForMask.count, 0)
@@ -118,7 +118,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterModelInputSize() {
-        """Test model input size properties"""
+        // Test model input size properties
         let segmenter = Segmenter()
         
         XCTAssertEqual(segmenter.modelInputSize.width, 0)
@@ -126,7 +126,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterCheckShapeDimensions() {
-        """Test checkShapeDimensions utility method"""
+        // Test checkShapeDimensions utility method
         let segmenter = Segmenter()
         
         // Create a test MLMultiArray
@@ -142,7 +142,7 @@ class SegmenterTests: XCTestCase {
     }
     
     func testSegmenterAdjustBox() {
-        """Test adjustBox utility method"""
+        // Test adjustBox utility method
         let segmenter = Segmenter()
         let originalBox = CGRect(x: 100, y: 100, width: 200, height: 150)
         let containerSize = CGSize(width: 1280, height: 960)

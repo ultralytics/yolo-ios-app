@@ -9,7 +9,7 @@ import CoreML
 class BasePredictorTests: XCTestCase {
     
     func testInitialization() {
-        """Test BasePredictor initialization"""
+        // Test BasePredictor initialization
         let predictor = BasePredictor()
         
         XCTAssertFalse(predictor.isModelLoaded)
@@ -22,7 +22,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testConfidenceThresholdSetting() {
-        """Test confidence threshold configuration"""
+        // Test confidence threshold configuration
         let predictor = BasePredictor()
         
         predictor.setConfidenceThreshold(confidence: 0.8)
@@ -33,7 +33,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testIoUThresholdSetting() {
-        """Test IoU threshold configuration"""
+        // Test IoU threshold configuration
         let predictor = BasePredictor()
         
         predictor.setIouThreshold(iou: 0.7)
@@ -44,7 +44,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testNumItemsThresholdSetting() {
-        """Test number of items threshold configuration"""
+        // Test number of items threshold configuration
         let predictor = BasePredictor()
         
         predictor.setNumItemsThreshold(numItems: 50)
@@ -55,7 +55,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testBasePredictOnImage() {
-        """Test base predictOnImage method returns empty result"""
+        // Test base predictOnImage method returns empty result
         let predictor = BasePredictor()
         let image = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
@@ -68,7 +68,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testBaseProcessObservations() {
-        """Test base processObservations method does nothing"""
+        // Test base processObservations method does nothing
         let predictor = BasePredictor()
         
         // Should not crash when called
@@ -77,7 +77,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testLabelsProperty() {
-        """Test labels property can be read and written"""
+        // Test labels property can be read and written
         let predictor = BasePredictor()
         let testLabels = ["person", "car", "dog"]
         
@@ -90,7 +90,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testIsUpdatingFlag() {
-        """Test isUpdating flag can be set and read"""
+        // Test isUpdating flag can be set and read
         let predictor = BasePredictor()
         
         XCTAssertFalse(predictor.isUpdating)
@@ -103,7 +103,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testModelInputSizeInitialization() {
-        """Test model input size has proper default values"""
+        // Test model input size has proper default values
         let predictor = BasePredictor()
         
         XCTAssertEqual(predictor.modelInputSize.width, 0)
@@ -111,7 +111,7 @@ class BasePredictorTests: XCTestCase {
     }
     
     func testTimingProperties() {
-        """Test timing properties initialization"""
+        // Test timing properties initialization
         let predictor = BasePredictor()
         
         XCTAssertEqual(predictor.t0, 0.0, accuracy: 0.001)

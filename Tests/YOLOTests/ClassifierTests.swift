@@ -9,7 +9,7 @@ import CoreML
 class ClassifierTests: XCTestCase {
     
     func testClassifierInitialization() {
-        """Test Classifier initialization inherits from BasePredictor"""
+        // Test Classifier initialization inherits from BasePredictor
         let classifier = Classifier()
         
         XCTAssertFalse(classifier.isModelLoaded)
@@ -20,7 +20,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierPredictOnImageWithoutModel() {
-        """Test predictOnImage without loaded model returns empty result"""
+        // Test predictOnImage without loaded model returns empty result
         let classifier = Classifier()
         classifier.labels = ["cat", "dog", "bird"]
         
@@ -35,7 +35,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierProcessObservationsWithoutModel() {
-        """Test processObservations without crashing"""
+        // Test processObservations without crashing
         let classifier = Classifier()
         classifier.labels = ["person", "car", "bicycle"]
         classifier.inputSize = CGSize(width: 640, height: 480)
@@ -48,7 +48,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierLabelsAssignment() {
-        """Test labels can be assigned and retrieved"""
+        // Test labels can be assigned and retrieved
         let classifier = Classifier()
         let testLabels = ["cat", "dog", "bird", "fish", "mouse"]
         
@@ -58,7 +58,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierInputSize() {
-        """Test input size can be set and retrieved"""
+        // Test input size can be set and retrieved
         let classifier = Classifier()
         let testSize = CGSize(width: 224, height: 224)
         
@@ -67,7 +67,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierTimingProperties() {
-        """Test timing properties are properly initialized"""
+        // Test timing properties are properly initialized
         let classifier = Classifier()
         
         XCTAssertEqual(classifier.t0, 0.0, accuracy: 0.001)
@@ -78,7 +78,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierIsInstanceOfBasePredictor() {
-        """Test Classifier is instance of BasePredictor"""
+        // Test Classifier is instance of BasePredictor
         let classifier = Classifier()
         
         XCTAssertTrue(classifier is BasePredictor)
@@ -86,7 +86,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierOverridesBaseMethods() {
-        """Test Classifier overrides base methods"""
+        // Test Classifier overrides base methods
         let classifier = Classifier()
         
         // Test that methods can be called without crashing
@@ -98,7 +98,7 @@ class ClassifierTests: XCTestCase {
     }
     
     func testClassifierEmptyLabelsHandling() {
-        """Test Classifier handles empty labels gracefully"""
+        // Test Classifier handles empty labels gracefully
         let classifier = Classifier()
         classifier.labels = []
         

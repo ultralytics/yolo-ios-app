@@ -9,7 +9,7 @@ import QuartzCore
 class BoundingBoxViewTests: XCTestCase {
     
     func testBoundingBoxViewInitialization() {
-        """Test BoundingBoxView initialization"""
+        // Test BoundingBoxView initialization
         let boxView = BoundingBoxView()
         
         XCTAssertNotNil(boxView.shapeLayer)
@@ -29,7 +29,7 @@ class BoundingBoxViewTests: XCTestCase {
     
     @MainActor
     func testBoundingBoxViewAddToLayer() {
-        """Test BoundingBoxView addToLayer method"""
+        // Test BoundingBoxView addToLayer method
         let boxView = BoundingBoxView()
         let parentLayer = CALayer()
         
@@ -44,7 +44,7 @@ class BoundingBoxViewTests: XCTestCase {
     
     @MainActor
     func testBoundingBoxViewShow() {
-        """Test BoundingBoxView show method"""
+        // Test BoundingBoxView show method
         let boxView = BoundingBoxView()
         let frame = CGRect(x: 10, y: 20, width: 100, height: 50)
         let label = "person 85%"
@@ -69,7 +69,7 @@ class BoundingBoxViewTests: XCTestCase {
     
     @MainActor
     func testBoundingBoxViewHide() {
-        """Test BoundingBoxView hide method"""
+        // Test BoundingBoxView hide method
         let boxView = BoundingBoxView()
         
         // First show the box
@@ -85,7 +85,7 @@ class BoundingBoxViewTests: XCTestCase {
     
     @MainActor
     func testBoundingBoxViewShowWithDifferentColors() {
-        """Test BoundingBoxView show with different colors"""
+        // Test BoundingBoxView show with different colors
         let boxView = BoundingBoxView()
         let frame = CGRect(x: 0, y: 0, width: 80, height: 60)
         let colors = [UIColor.red, UIColor.blue, UIColor.green, UIColor.yellow, UIColor.purple]
@@ -101,7 +101,7 @@ class BoundingBoxViewTests: XCTestCase {
     
     @MainActor
     func testBoundingBoxViewShowWithDifferentFrames() {
-        """Test BoundingBoxView show with different frame sizes"""
+        // Test BoundingBoxView show with different frame sizes
         let boxView = BoundingBoxView()
         let frames = [
             CGRect(x: 0, y: 0, width: 50, height: 30),
@@ -128,7 +128,7 @@ class BoundingBoxViewTests: XCTestCase {
 class BoundingBoxInfoTests: XCTestCase {
     
     func testBoundingBoxInfoCreation() {
-        """Test BoundingBoxInfo struct creation"""
+        // Test BoundingBoxInfo struct creation
         let rect = CGRect(x: 10, y: 20, width: 100, height: 50)
         let strokeColor = UIColor.blue
         let strokeWidth: CGFloat = 3.0
@@ -167,7 +167,7 @@ class BoundingBoxInfoTests: XCTestCase {
     
     @MainActor
     func testCreateBoxViewFromInfo() {
-        """Test createBoxView utility function"""
+        // Test createBoxView utility function
         let info = BoundingBoxInfo(
             rect: CGRect(x: 0, y: 0, width: 120, height: 80),
             strokeColor: .green,
@@ -198,7 +198,7 @@ class BoundingBoxInfoTests: XCTestCase {
     
     @MainActor
     func testMakeBoundingBoxInfosFromVisibleBoxes() {
-        """Test makeBoundingBoxInfos with visible boxes"""
+        // Test makeBoundingBoxInfos with visible boxes
         let boxView1 = BoundingBoxView()
         let boxView2 = BoundingBoxView()
         
@@ -237,7 +237,7 @@ class BoundingBoxInfoTests: XCTestCase {
     
     @MainActor
     func testMakeBoundingBoxInfosFromHiddenBoxes() {
-        """Test makeBoundingBoxInfos with hidden boxes"""
+        // Test makeBoundingBoxInfos with hidden boxes
         let boxView1 = BoundingBoxView()
         let boxView2 = BoundingBoxView()
         
@@ -255,7 +255,7 @@ class BoundingBoxInfoTests: XCTestCase {
     
     @MainActor
     func testMakeBoundingBoxInfosFromMixedBoxes() {
-        """Test makeBoundingBoxInfos with mix of visible and hidden boxes"""
+        // Test makeBoundingBoxInfos with mix of visible and hidden boxes
         let boxView1 = BoundingBoxView()
         let boxView2 = BoundingBoxView()
         let boxView3 = BoundingBoxView()
@@ -279,7 +279,7 @@ class BoundingBoxInfoTests: XCTestCase {
     
     @MainActor
     func testMakeBoundingBoxInfosFromEmptyArray() {
-        """Test makeBoundingBoxInfos with empty array"""
+        // Test makeBoundingBoxInfos with empty array
         let infos = makeBoundingBoxInfos(from: [])
         
         XCTAssertEqual(infos.count, 0)

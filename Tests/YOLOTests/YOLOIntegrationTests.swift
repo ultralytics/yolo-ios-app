@@ -7,7 +7,7 @@ import XCTest
 class YOLOIntegrationTests: XCTestCase {
     
     func testYOLOWorkflowWithMockComponents() {
-        """Test complete YOLO workflow with mock components"""
+        // Test complete YOLO workflow with mock components
         // This test simulates a complete workflow without requiring actual models
         
         // 1. Create mock data structures
@@ -55,7 +55,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testMultiTaskYOLOResults() {
-        """Test YOLOResult structure for different task types"""
+        // Test YOLOResult structure for different task types
         let originalSize = CGSize(width: 416, height: 416)
         let names = ["person", "car", "bicycle", "dog", "cat"]
         
@@ -143,7 +143,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testPerformanceMetrics() {
-        """Test performance-related calculations"""
+        // Test performance-related calculations
         let speeds = [0.025, 0.030, 0.028, 0.032, 0.026]
         let fps = speeds.map { 1.0 / $0 }
         
@@ -164,7 +164,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testCoordinateTransformations() {
-        """Test coordinate transformations between normalized and pixel space"""
+        // Test coordinate transformations between normalized and pixel space
         let imageSize = CGSize(width: 640, height: 480)
         
         // Test conversion from normalized to pixel coordinates
@@ -198,7 +198,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testColorManagement() {
-        """Test color selection and management for visualizations"""
+        // Test color selection and management for visualizations
         let classIndices = [0, 1, 2, 19, 20, 21, 50]  // Test wrap-around
         
         for classIndex in classIndices {
@@ -222,7 +222,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testTaskSpecificDataStructures() {
-        """Test data structures specific to each task type"""
+        // Test data structures specific to each task type
         
         // Test pose-specific data
         XCTAssertEqual(skeleton.count, 19) // Number of bones in human skeleton
@@ -250,7 +250,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
     
     func testThreadSafety() {
-        """Test thread safety of data structures"""
+        // Test thread safety of data structures
         let dispatchGroup = DispatchGroup()
         var results: [YOLOResult] = []
         let queue = DispatchQueue.global(qos: .background)
@@ -291,7 +291,7 @@ class YOLOIntegrationTests: XCTestCase {
 class YOLOBoundaryTests: XCTestCase {
     
     func testZeroSizedInputs() {
-        """Test handling of zero-sized inputs"""
+        // Test handling of zero-sized inputs
         let zeroSizeResult = YOLOResult(
             orig_shape: .zero,
             boxes: [],
@@ -306,7 +306,7 @@ class YOLOBoundaryTests: XCTestCase {
     }
     
     func testLargeInputs() {
-        """Test handling of large inputs"""
+        // Test handling of large inputs
         let largeImageSize = CGSize(width: 4096, height: 4096)
         let largeBox = Box(
             index: 999,
@@ -330,7 +330,7 @@ class YOLOBoundaryTests: XCTestCase {
     }
     
     func testExtremeConfidenceValues() {
-        """Test handling of extreme confidence values"""
+        // Test handling of extreme confidence values
         let boxes = [
             Box(index: 0, cls: "min_conf", conf: 0.0, xywh: CGRect(), xywhn: CGRect()),
             Box(index: 1, cls: "max_conf", conf: 1.0, xywh: CGRect(), xywhn: CGRect()),
@@ -351,7 +351,7 @@ class YOLOBoundaryTests: XCTestCase {
     }
     
     func testUnicodeAndSpecialCharacters() {
-        """Test handling of unicode and special characters in class names"""
+        // Test handling of unicode and special characters in class names
         let specialClassNames = [
             "人物", // Chinese
             "自動車", // Japanese  

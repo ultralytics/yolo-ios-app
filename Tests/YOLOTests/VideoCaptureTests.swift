@@ -196,16 +196,15 @@ class VideoCaptureUtilityTests: XCTestCase {
 
 // MARK: - Mock Delegate for Testing
 
-@MainActor
 class MockVideoCaptureDelegate: VideoCaptureDelegate {
     var lastResult: YOLOResult?
     var lastSpeed: Double?
     var lastFPS: Double?
-    
+
     func onPredict(result: YOLOResult) {
         lastResult = result
     }
-    
+
     func onInferenceTime(speed: Double, fps: Double) {
         lastSpeed = speed
         lastFPS = fps

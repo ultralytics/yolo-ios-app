@@ -126,7 +126,7 @@ class BasePredictorTests: XCTestCase {
 
 class MockVNRequest: VNRequest {
     init() {
-        super.init()
+        super.init(completionHandler: nil)
     }
     
     @available(*, unavailable)

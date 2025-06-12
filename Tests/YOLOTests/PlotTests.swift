@@ -139,6 +139,7 @@ class PlotTests: XCTestCase {
         XCTAssertGreaterThan(outputImage.size.width, 0)
     }
     
+    @MainActor
     func testComposeImageWithMask() {
         // Test composeImageWithMask function
         // Create a simple test image
@@ -165,6 +166,7 @@ class PlotTests: XCTestCase {
         XCTAssertEqual(composedImage?.size.height, 50)
     }
     
+    @MainActor
     func testOBBShapeLayerBundleInitialization() {
         // Test OBBShapeLayerBundle initialization
         let bundle = OBBShapeLayerBundle()

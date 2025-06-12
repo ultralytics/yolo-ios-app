@@ -146,24 +146,26 @@ class VideoCaptureTests: XCTestCase {
         waitForExpectations(timeout: 1.0)
     }
     
+    @MainActor
     func testVideoCaptureWeakDelegate() {
         // Test delegate is weak reference
         let videoCapture = VideoCapture()
-        
+
         class MockDelegate: VideoCaptureDelegate {
             func onPredict(result: YOLOResult) {}
             func onInferenceTime(speed: Double, fps: Double) {}
         }
-        
+
         var delegate: MockDelegate? = MockDelegate()
         videoCapture.delegate = delegate
-        
+
         XCTAssertNotNil(videoCapture.delegate)
-        
+
         delegate = nil
         // Delegate should become nil because it's weak
         XCTAssertNil(videoCapture.delegate)
     }
+
 }
 
 // MARK: - Tests for VideoCapture utility functions

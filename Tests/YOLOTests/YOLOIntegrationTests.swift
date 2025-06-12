@@ -252,9 +252,8 @@ class YOLOIntegrationTests: XCTestCase {
     func testThreadSafety() {
         // Test thread safety of data structures
         let dispatchGroup = DispatchGroup()
-        var results: [YOLOResult] = []
+        let results = ThreadSafeArray<YOLOResult>()
         let queue = DispatchQueue.global(qos: .background)
-        let resultsQueue = DispatchQueue(label: "results", attributes: .concurrent)
         
         // Create multiple results concurrently
         for i in 0..<10 {
@@ -275,10 +274,8 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                resultsQueue.async(flags: .barrier) {
-                    results.append(result)
-                    dispatchGroup.leave()
-                }
+                results.append(result)
+                dispatchGroup.leave()
             }
         }
         
@@ -287,7 +284,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
 }
 
-/// Tests for edge cases and boundary conditions
+/// Tests for edge cases and boundary conditions  
 class YOLOBoundaryTests: XCTestCase {
     
     func testZeroSizedInputs() {
@@ -383,5 +380,23 @@ class YOLOBoundaryTests: XCTestCase {
 extension String {
     func repeated(_ count: Int) -> String {
         return String(repeating: self, count: count)
+    }
+}
+
+// Thread-safe array for testing
+class ThreadSafeArray<T>: @unchecked Sendable {
+    private var array: [T] = []
+    private let queue = DispatchQueue(label: "ThreadSafeArray", attributes: .concurrent)
+    
+    func append(_ element: T) {
+        queue.async(flags: .barrier) {
+            self.array.append(element)
+        }
+    }
+    
+    var count: Int {
+        return queue.sync {
+            return array.count
+        }
     }
 }

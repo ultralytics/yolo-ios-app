@@ -8,7 +8,7 @@ import XCTest
 
 @testable import YOLO
 
-/// Comprehensive test suite for validating all functions of the YOLO framework.
+/// Comprehensive test suite for validating all functions in the YOLO framework.
 ///
 /// This test suite validates:
 /// - Model loading and initialization

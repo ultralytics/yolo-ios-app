@@ -97,7 +97,7 @@ class ObjectDetectorTests: XCTestCase {
         let detector = ObjectDetector()
         
         XCTAssertNotNil(detector, "Detector should not be nil")
-        XCTAssertEqual(type(of: detector), ObjectDetector.self, "Should be ObjectDetector type")
+        XCTAssertTrue(type(of: detector) == ObjectDetector.self, "Should be ObjectDetector type")
     }
     
     func testObjectDetectorResultStructure() {

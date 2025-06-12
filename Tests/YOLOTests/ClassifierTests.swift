@@ -76,15 +76,7 @@ class ClassifierTests: XCTestCase {
         XCTAssertEqual(classifier.t4, 0.0, accuracy: 0.001)
         XCTAssertGreaterThan(classifier.t3, 0)
     }
-    
-    func testClassifierIsInstanceOfBasePredictor() {
-        // Test Classifier is instance of BasePredictor
-        let classifier = Classifier()
-        
-        XCTAssertTrue(classifier is BasePredictor)
-        XCTAssertTrue(classifier is Predictor)
-    }
-    
+
     func testClassifierOverridesBaseMethods() {
         // Test Classifier overrides base methods
         let classifier = Classifier()

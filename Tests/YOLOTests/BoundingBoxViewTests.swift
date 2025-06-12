@@ -6,43 +6,42 @@ import QuartzCore
 @testable import YOLO
 
 /// Minimal tests for BoundingBoxView functionality
+@MainActor
 class BoundingBoxViewTests: XCTestCase {
-    
+
     func testBoundingBoxViewInitialization() {
         // Test BoundingBoxView initialization
         let boxView = BoundingBoxView()
-        
+
         XCTAssertNotNil(boxView.shapeLayer)
         XCTAssertNotNil(boxView.textLayer)
-        
+
         // Test shape layer properties
         XCTAssertEqual(boxView.shapeLayer.fillColor, UIColor.clear.cgColor)
         XCTAssertEqual(boxView.shapeLayer.lineWidth, 4)
         XCTAssertTrue(boxView.shapeLayer.isHidden)
-        
+
         // Test text layer properties
         XCTAssertTrue(boxView.textLayer.isHidden)
         XCTAssertEqual(boxView.textLayer.contentsScale, UIScreen.main.scale)
         XCTAssertEqual(boxView.textLayer.fontSize, 14)
         XCTAssertEqual(boxView.textLayer.alignmentMode, .center)
     }
-    
-    @MainActor
+
     func testBoundingBoxViewAddToLayer() {
         // Test BoundingBoxView addToLayer method
         let boxView = BoundingBoxView()
         let parentLayer = CALayer()
-        
+
         XCTAssertEqual(parentLayer.sublayers?.count ?? 0, 0)
-        
+
         boxView.addToLayer(parentLayer)
-        
+
         XCTAssertEqual(parentLayer.sublayers?.count, 2)
         XCTAssertTrue(parentLayer.sublayers?.contains(boxView.shapeLayer) ?? false)
         XCTAssertTrue(parentLayer.sublayers?.contains(boxView.textLayer) ?? false)
     }
-    
-    @MainActor
+
     func testBoundingBoxViewShow() {
         // Test BoundingBoxView show method
         let boxView = BoundingBoxView()
@@ -50,56 +49,53 @@ class BoundingBoxViewTests: XCTestCase {
         let label = "person 85%"
         let color = UIColor.red
         let alpha: CGFloat = 0.8
-        
+
         boxView.show(frame: frame, label: label, color: color, alpha: alpha)
-        
+
         // Test that layers become visible
         XCTAssertFalse(boxView.shapeLayer.isHidden)
         XCTAssertFalse(boxView.textLayer.isHidden)
-        
+
         // Test shape layer properties
         XCTAssertNotNil(boxView.shapeLayer.path)
         XCTAssertEqual(boxView.shapeLayer.strokeColor, color.withAlphaComponent(alpha).cgColor)
-        
+
         // Test text layer properties
         XCTAssertEqual(boxView.textLayer.string as? String, label)
         XCTAssertEqual(boxView.textLayer.backgroundColor, color.withAlphaComponent(alpha).cgColor)
         XCTAssertEqual(boxView.textLayer.foregroundColor, UIColor.white.withAlphaComponent(alpha).cgColor)
     }
-    
-    @MainActor
+
     func testBoundingBoxViewHide() {
         // Test BoundingBoxView hide method
         let boxView = BoundingBoxView()
-        
+
         // First show the box
         boxView.show(frame: CGRect(x: 0, y: 0, width: 50, height: 30), label: "test", color: .blue, alpha: 1.0)
         XCTAssertFalse(boxView.shapeLayer.isHidden)
         XCTAssertFalse(boxView.textLayer.isHidden)
-        
+
         // Then hide it
         boxView.hide()
         XCTAssertTrue(boxView.shapeLayer.isHidden)
         XCTAssertTrue(boxView.textLayer.isHidden)
     }
-    
-    @MainActor
+
     func testBoundingBoxViewShowWithDifferentColors() {
         // Test BoundingBoxView show with different colors
         let boxView = BoundingBoxView()
         let frame = CGRect(x: 0, y: 0, width: 80, height: 60)
         let colors = [UIColor.red, UIColor.blue, UIColor.green, UIColor.yellow, UIColor.purple]
-        
+
         for (index, color) in colors.enumerated() {
             let alpha: CGFloat = CGFloat(index + 1) * 0.2
             boxView.show(frame: frame, label: "test \(index)", color: color, alpha: alpha)
-            
+
             XCTAssertEqual(boxView.shapeLayer.strokeColor, color.withAlphaComponent(alpha).cgColor)
             XCTAssertEqual(boxView.textLayer.backgroundColor, color.withAlphaComponent(alpha).cgColor)
         }
     }
-    
-    @MainActor
+
     func testBoundingBoxViewShowWithDifferentFrames() {
         // Test BoundingBoxView show with different frame sizes
         let boxView = BoundingBoxView()

@@ -4,6 +4,7 @@ import SwiftUI
 import UIKit
 import XCTest
 import AVFoundation
+import CoreImage
 
 @testable import YOLO
 

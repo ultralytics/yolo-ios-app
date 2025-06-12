@@ -25,7 +25,7 @@ class ObbDetectorTests: XCTestCase {
         let obbDetector = ObbDetector()
         obbDetector.labels = ["plane", "ship", "vehicle"]
         
-        let image = CIImage(color: .magenta).cropped(to: CGRect(x: 0, y: 0, width: 640, height: 640))
+        let image = CIImage(color: CIColor(red: 1.0, green: 0.0, blue: 1.0, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 640, height: 640))
         let result = obbDetector.predictOnImage(image: image)
         
         XCTAssertEqual(result.boxes.count, 0)

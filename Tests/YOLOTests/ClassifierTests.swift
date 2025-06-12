@@ -24,7 +24,7 @@ class ClassifierTests: XCTestCase {
         let classifier = Classifier()
         classifier.labels = ["cat", "dog", "bird"]
         
-        let image = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let image = CIImage(color: CIColor(red: 0.0, green: 0.0, blue: 1.0, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         let result = classifier.predictOnImage(image: image)
         
         XCTAssertEqual(result.boxes.count, 0)
@@ -94,7 +94,7 @@ class ClassifierTests: XCTestCase {
         let classifier = Classifier()
         classifier.labels = []
         
-        let image = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let image = CIImage(color: CIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         let result = classifier.predictOnImage(image: image)
         
         XCTAssertEqual(result.names.count, 0)

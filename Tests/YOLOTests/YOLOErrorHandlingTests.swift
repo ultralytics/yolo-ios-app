@@ -179,11 +179,11 @@ class YOLOErrorHandlingTests: XCTestCase {
         let minProvider = ThresholdProvider(iouThreshold: 0.0, confidenceThreshold: 0.0)
         let maxProvider = ThresholdProvider(iouThreshold: 1.0, confidenceThreshold: 1.0)
         
-        XCTAssertEqual(minProvider.featureValue(for: "iouThreshold")?.doubleValue, 0.0)
-        XCTAssertEqual(minProvider.featureValue(for: "confidenceThreshold")?.doubleValue, 0.0)
+        XCTAssertEqual(minProvider.featureValue(for: "iouThreshold")!.doubleValue, 0.0)
+        XCTAssertEqual(minProvider.featureValue(for: "confidenceThreshold")!.doubleValue, 0.0)
         
-        XCTAssertEqual(maxProvider.featureValue(for: "iouThreshold")?.doubleValue, 1.0)
-        XCTAssertEqual(maxProvider.featureValue(for: "confidenceThreshold")?.doubleValue, 1.0)
+        XCTAssertEqual(maxProvider.featureValue(for: "iouThreshold")!.doubleValue, 1.0)
+        XCTAssertEqual(maxProvider.featureValue(for: "confidenceThreshold")!.doubleValue, 1.0)
     }
     
     func testNonMaxSuppressionEdgeCases() {
@@ -304,7 +304,7 @@ class YOLOProtocolTests: XCTestCase {
         XCTAssertEqual(predictor.labels, ["test"])
         XCTAssertFalse(predictor.isUpdating)
         
-        let testImage = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let testImage = CIImage(color: CIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         let result = predictor.predictOnImage(image: testImage)
         XCTAssertEqual(result.names, ["test"])
     }

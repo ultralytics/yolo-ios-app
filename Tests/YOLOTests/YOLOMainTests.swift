@@ -2,6 +2,7 @@
 
 import XCTest
 import UIKit
+import AVFoundation
 import CoreImage
 @testable import YOLO
 

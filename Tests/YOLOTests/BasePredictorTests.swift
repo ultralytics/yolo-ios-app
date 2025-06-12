@@ -125,7 +125,7 @@ class BasePredictorTests: XCTestCase {
 // MARK: - Mock Classes
 
 class MockVNRequest: VNRequest {
-    override init() {
+    init() {
         super.init()
     }
     

@@ -80,23 +80,13 @@ class ObbDetectorTests: XCTestCase {
         XCTAssertEqual(obbDetector.t4, 0.0, accuracy: 0.001)
         XCTAssertGreaterThan(obbDetector.t3, 0)
     }
-    
-    func testObbDetectorIsInstanceOfBasePredictor() {
-        // Test ObbDetector is instance of BasePredictor/Predictor
-        let obbDetector = ObbDetector()
-        // The following lines will always be true if ObbDetector inherits from BasePredictor/Predictor.
-        // Kept for explicitness, but compiler will warn if statically obvious.
-        XCTAssertTrue(obbDetector is BasePredictor)
-        XCTAssertTrue(obbDetector is Predictor)
-    }
 
     func testObbDetectorResultStructure() {
         // Test ObbDetector result has correct structure
         let obbDetector = ObbDetector()
         obbDetector.labels = ["plane", "ship"]
-
-        // FIX: CIColor has no 'brown', use 'orange'
-        let image = CIImage(color: .orange).cropped(to: CGRect(x: 0, y: 0, width: 512, height: 512))
+        let orange = CIColor(red: 1.0, green: 0.5, blue: 0.0)
+        let image = CIImage(color: orange).cropped(to: CGRect(x: 0, y: 0, width: 512, height: 512))
         let result = obbDetector.predictOnImage(image: image)
 
         XCTAssertNotNil(result.boxes)
@@ -128,18 +118,6 @@ class ObbDetectorTests: XCTestCase {
         XCTAssertLessThanOrEqual(selected.count, 3)
         XCTAssertTrue(selected.contains(0)) // Highest score should be kept
     }
-
-    func testObbDetectorLockQueue() {
-        // Test lockQueue property exists
-        let obbDetector = ObbDetector()
-        // If lockQueue is fileprivate, this will not compile unless your test is in the same file/module.
-        // If not accessible, this test should be removed or lockQueue made internal for testing.
-        // Uncomment the following only if accessible:
-        // obbDetector.lockQueue.sync {
-        //     XCTAssertTrue(true)
-        // }
-    }
-}
 
 // MARK: - Tests for OBB utility functions
 

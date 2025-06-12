@@ -22,7 +22,7 @@ class YOLOResultTests: XCTestCase {
         XCTAssertEqual(box.cls, "person")
         XCTAssertEqual(box.conf, 0.85, accuracy: 0.001)
         XCTAssertEqual(box.xywh.width, 100)
-        XCTAssertEqual(box.xywhn.x, 0.1, accuracy: 0.001)
+        XCTAssertEqual(box.xywhn.minX, 0.1, accuracy: 0.001)
     }
     
     func testYOLOResultCreation() {
@@ -79,7 +79,7 @@ class YOLOResultTests: XCTestCase {
         )
         
         XCTAssertEqual(keypoints.xyn.count, 2)
-        XCTAssertEqual(keypoints.xy[0].x, 320, accuracy: 0.001)
+        XCTAssertEqual(keypoints.xy[0].0, 320, accuracy: 0.001)
         XCTAssertEqual(keypoints.conf[1], 0.8, accuracy: 0.001)
     }
     

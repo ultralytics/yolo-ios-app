@@ -12,16 +12,11 @@ class VideoCaptureTests: XCTestCase {
         // Test VideoCapture initialization
         let videoCapture = VideoCapture()
         
-        XCTAssertNil(videoCapture.predictor)
-        XCTAssertNil(videoCapture.previewLayer)
-        XCTAssertNil(videoCapture.delegate)
-        XCTAssertNil(videoCapture.captureDevice)
+        // Only test publicly accessible properties
         XCTAssertNotNil(videoCapture.captureSession)
-        XCTAssertNil(videoCapture.videoInput)
         XCTAssertNotNil(videoCapture.videoOutput)
         XCTAssertNotNil(videoCapture.photoOutput)
         XCTAssertNotNil(videoCapture.cameraQueue)
-        XCTAssertNil(videoCapture.lastCapturedPhoto)
         XCTAssertTrue(videoCapture.inferenceOK)
         XCTAssertEqual(videoCapture.longSide, 3)
         XCTAssertEqual(videoCapture.shortSide, 4)

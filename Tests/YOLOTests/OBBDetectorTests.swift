@@ -118,6 +118,7 @@ class ObbDetectorTests: XCTestCase {
         XCTAssertLessThanOrEqual(selected.count, 3)
         XCTAssertTrue(selected.contains(0)) // Highest score should be kept
     }
+}
 
 // MARK: - Tests for OBB utility functions
 

@@ -133,7 +133,6 @@ class Classifier: BasePredictor {
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        var recognitions: [[String: Any]] = []
 
         // Get the MLMultiArray from the observation
         let multiArray = observation.first?.featureValue.multiArrayValue

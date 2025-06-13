@@ -130,7 +130,7 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
     let textSize = labelText.size(withAttributes: attrs)
     let labelWidth = textSize.width + 10
     let labelHeight = textSize.height + 4
-    var labelRect = CGRect(
+    let labelRect = CGRect(
       x: rect.minX,
       y: rect.minY - labelHeight,
       width: labelWidth,

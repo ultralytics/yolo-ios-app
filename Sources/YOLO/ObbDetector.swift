@@ -67,7 +67,7 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    let result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
 
     do {
       try requestHandler.perform([request])

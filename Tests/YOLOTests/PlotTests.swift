@@ -7,7 +7,7 @@ import QuartzCore
 @testable import YOLO
 
 /// Minimal tests for Plot visualization functions  
-class PlotTests: XCTestCase {
+@MainActor class PlotTests: XCTestCase {
     
     func testUltralyticsColorsExist() {
         // Test ultralyticsColors array is populated
@@ -139,7 +139,6 @@ class PlotTests: XCTestCase {
         XCTAssertGreaterThan(outputImage.size.width, 0)
     }
     
-    @MainActor
     func testComposeImageWithMask() {
         // Test composeImageWithMask function
         // Create a simple test image
@@ -166,7 +165,6 @@ class PlotTests: XCTestCase {
         XCTAssertEqual(composedImage?.size.height, 50)
     }
     
-    @MainActor
     func testOBBShapeLayerBundleInitialization() {
         // Test OBBShapeLayerBundle initialization
         let bundle = OBBShapeLayerBundle()
@@ -230,7 +228,6 @@ class PlotTests: XCTestCase {
         XCTAssertGreaterThan(outputImage?.size.width ?? 0, 0)
     }
     
-    @MainActor
     func testDrawObbDetectionsWithReuse() {
         // Test OBBRenderer drawObbDetectionsWithReuse method
         let renderer = OBBRenderer()

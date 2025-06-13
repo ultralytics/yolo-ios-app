@@ -124,7 +124,7 @@ class BasePredictorTests: XCTestCase {
 
 // MARK: - Mock Classes
 
-class MockVNRequest: VNRequest {
+class MockVNRequest: VNRequest, @unchecked Sendable {
     init() {
         super.init(completionHandler: nil)
     }

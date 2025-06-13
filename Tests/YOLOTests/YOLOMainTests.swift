@@ -94,7 +94,7 @@ class YOLOMainTests: XCTestCase {
 
 // MARK: - Mock Classes for Testing
 
-class MockPredictor: Predictor {
+class MockPredictor: Predictor, @unchecked Sendable {
     var labels: [String] = []
     var isUpdating: Bool = false
     

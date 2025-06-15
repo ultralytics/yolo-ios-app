@@ -13,7 +13,7 @@
 Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project leverages Ultralytics' state-of-the-art [YOLO11 models](https://docs.ultralytics.com/models/yolo11/) to transform your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
-  <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="https://github.com/ultralytics/ultralytics/assets/26833433/fd3c8a92-fec0-4253-b4ac-ee94f5ced3fb" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="doc/images/appstore_preview.png" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <a href="https://github.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-github.png" width="3%" alt="Ultralytics GitHub"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
@@ -34,6 +34,23 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 
+## ✨ Why Choose YOLO iOS Native?
+
+  | Feature         | iOS |
+  |-----------------|-----|
+  | Detection       | ✅ |
+  | Classification  | ✅ |
+  | Segmentation    | ✅ |
+  | Pose Estimation | ✅ |
+  | OBB Detection   | ✅ |
+
+  - Native iOS Performance - Maximum speed with Swift & CoreML
+  - Optimized for Apple Silicon - Leverages Neural Engine & GPU
+  - Real-time Detection - 60+ FPS on latest iPhones
+  - Low Latency - Direct hardware access without framework overhead
+  - iOS-First Design - Native UI/UX following Apple guidelines
+  - CoreML Integration - Apple's optimized ML framework
+  
 ## 📂 Repository Content
 
 This repository provides a comprehensive solution for running YOLO models on Apple platforms, enabling powerful [Edge AI](https://www.ultralytics.com/glossary/edge-ai) capabilities:

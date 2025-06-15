@@ -13,7 +13,7 @@
 Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project leverages Ultralytics' state-of-the-art [YOLO11 models](https://docs.ultralytics.com/models/yolo11/) to transform your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
-  <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="90%" src="doc/images/appstore_preview.png" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="100%" src="doc/images/appstore_preview.png" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <a href="https://github.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-github.png" width="3%" alt="Ultralytics GitHub"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">

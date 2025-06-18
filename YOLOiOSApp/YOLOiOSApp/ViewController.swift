@@ -152,6 +152,23 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var forcus: UIImageView!
   @IBOutlet weak var logoImage: UIImageView!
+  
+  // New UI Components
+  private let statusMetricBar = StatusMetricBar()
+  private let cameraPreviewContainer = UIView()
+  private let taskTabStrip = TaskTabStrip()
+  private let shutterBar = ShutterBar()
+  private let rightSideToolBar = RightSideToolBar()
+  private let parameterEditView = ParameterEditView()
+  
+  // UI State
+  private var isNewUIActive = true // Toggle for new/old UI
+  private var currentThresholds: [String: Float] = [
+    "confidence": 0.25,
+    "iou": 0.45,
+    "itemsMax": 15,
+    "lineThickness": 2.0
+  ]
 
   var shareButton = UIButton()
   var recordButton = UIButton()
@@ -253,6 +270,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelName.overrideUserInterfaceStyle = .dark
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark
+    
+    // Setup new UI if active
+    if isNewUIActive {
+      setupNewUI()
+      hideOldUI()
+    }
 
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
@@ -575,6 +598,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.labelName.text = processString(modelName)
           // テキスト色を白色に強制設定
           self.labelName.textColor = .white
+          
+          // Update new UI
+          self.updateUIAfterModelLoad(success: true, modelName: modelName)
         }
 
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
@@ -845,6 +871,11 @@ extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
     labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
     labelFPS.textColor = .white
+    
+    // Update new UI metrics
+    if isNewUIActive {
+      statusMetricBar.updateMetrics(fps: fps, latency: inferenceTime)
+    }
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
@@ -852,4 +883,321 @@ extension ViewController {
     }
   }
 
+}
+
+// MARK: - New UI Setup
+extension ViewController {
+  private func setupNewUI() {
+    view.backgroundColor = .ultralyticsSurfaceDark
+    
+    // Camera Preview Container
+    cameraPreviewContainer.backgroundColor = .black
+    cameraPreviewContainer.layer.cornerRadius = 18
+    cameraPreviewContainer.clipsToBounds = true
+    
+    // Add components to view
+    [statusMetricBar, cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, parameterEditView].forEach {
+      view.addSubview($0)
+      $0.translatesAutoresizingMaskIntoConstraints = false
+    }
+    
+    // Move YOLOView to camera preview container
+    if let yoloView = yoloView {
+      yoloView.removeFromSuperview()
+      cameraPreviewContainer.addSubview(yoloView)
+      yoloView.translatesAutoresizingMaskIntoConstraints = false
+      NSLayoutConstraint.activate([
+        yoloView.topAnchor.constraint(equalTo: cameraPreviewContainer.topAnchor),
+        yoloView.leadingAnchor.constraint(equalTo: cameraPreviewContainer.leadingAnchor),
+        yoloView.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor),
+        yoloView.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor)
+      ])
+    }
+    
+    setupNewUIConstraints()
+    setupNewUIActions()
+    
+    // Initial task setup
+    taskTabStrip.selectedTask = .detect
+    
+    // Listen for hidden info notification
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(showHiddenInfo),
+      name: .showHiddenInfo,
+      object: nil
+    )
+  }
+  
+  private func setupNewUIConstraints() {
+    NSLayoutConstraint.activate([
+      // Status Bar
+      statusMetricBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      statusMetricBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Camera Preview (16:9 aspect ratio)
+      cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 8),
+      cameraPreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
+      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
+      cameraPreviewContainer.heightAnchor.constraint(equalTo: cameraPreviewContainer.widthAnchor, multiplier: 9.0/16.0),
+      
+      // Task Tab Strip
+      taskTabStrip.topAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor),
+      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Shutter Bar
+      shutterBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+      shutterBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      shutterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Right Tool Bar
+      rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
+      rightSideToolBar.centerYAnchor.constraint(equalTo: cameraPreviewContainer.centerYAnchor),
+      
+      // Parameter Edit View (overlay)
+      parameterEditView.topAnchor.constraint(equalTo: cameraPreviewContainer.topAnchor),
+      parameterEditView.leadingAnchor.constraint(equalTo: cameraPreviewContainer.leadingAnchor),
+      parameterEditView.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor),
+      parameterEditView.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor)
+    ])
+  }
+  
+  private func setupNewUIActions() {
+    // Status bar actions
+    statusMetricBar.onModelTap = { [weak self] in
+      self?.showModelSelector()
+    }
+    
+    // Task tab actions
+    taskTabStrip.onTaskChange = { [weak self] task in
+      self?.handleTaskChange(to: task)
+    }
+    
+    // Shutter bar actions
+    shutterBar.onShutterTap = { [weak self] in
+      self?.capturePhoto()
+    }
+    
+    shutterBar.onShutterLongPress = { [weak self] in
+      self?.toggleRecording()
+    }
+    
+    shutterBar.onFlipCamera = { [weak self] in
+      self?.flipCamera()
+    }
+    
+    shutterBar.onThumbnailTap = { [weak self] in
+      self?.showLastCapture()
+    }
+    
+    // Right toolbar actions
+    rightSideToolBar.onZoomToggle = { [weak self] isZoomed in
+      self?.handleZoomToggle(isZoomed)
+    }
+    
+    rightSideToolBar.onToolSelected = { [weak self] tool in
+      self?.handleParameterTool(tool)
+    }
+    
+    // Parameter edit actions
+    parameterEditView.onValueChange = { [weak self] parameter in
+      self?.handleParameterChange(parameter)
+    }
+  }
+  
+  private func hideOldUI() {
+    // Hide old UI elements
+    segmentedControl.isHidden = true
+    labelName.isHidden = true
+    labelFPS.isHidden = true
+    labelVersion.isHidden = true
+    shareButton.isHidden = true
+    recordButton.isHidden = true
+    modelTableView.isHidden = true
+    tableViewBGView.isHidden = true
+    
+    // Hide YOLOView's built-in UI elements
+    yoloView.toolbar.isHidden = true
+    yoloView.sliderConf.isHidden = true
+    yoloView.sliderIoU.isHidden = true
+    yoloView.sliderNumItems.isHidden = true
+    yoloView.labelSliderConf.isHidden = true
+    yoloView.labelSliderIoU.isHidden = true
+    yoloView.labelSliderNumItems.isHidden = true
+    yoloView.playButton.isHidden = true
+    yoloView.pauseButton.isHidden = true
+    yoloView.switchCameraButton.isHidden = true
+  }
+  
+  // MARK: - New UI Actions
+  
+  private func showModelSelector() {
+    // Create action sheet for model selection
+    let actionSheet = UIAlertController(title: "Select Model", message: nil, preferredStyle: .actionSheet)
+    
+    // Add models for current task
+    for model in currentModels {
+      let action = UIAlertAction(title: processString(model.displayName), style: .default) { [weak self] _ in
+        self?.loadModel(entry: model, forTask: self?.currentTask ?? "")
+      }
+      actionSheet.addAction(action)
+    }
+    
+    actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    
+    // For iPad
+    if let popover = actionSheet.popoverPresentationController {
+      popover.sourceView = statusMetricBar
+      popover.sourceRect = statusMetricBar.bounds
+    }
+    
+    present(actionSheet, animated: true)
+  }
+  
+  private func handleTaskChange(to task: TaskTabStrip.Task) {
+    let taskName: String
+    switch task {
+    case .detect:
+      taskName = "Detect"
+    case .segment:
+      taskName = "Segment"
+    case .classify:
+      taskName = "Classify"
+    }
+    
+    currentTask = taskName
+    reloadModelEntriesAndLoadFirst(for: taskName)
+  }
+  
+  private func capturePhoto() {
+    selection.selectionChanged()
+    yoloView.capturePhoto { [weak self] captured in
+      guard let self = self else { return }
+      if let image = captured {
+        // Update thumbnail
+        self.shutterBar.updateThumbnail(image)
+        
+        // Share functionality
+        DispatchQueue.main.async {
+          let activityViewController = UIActivityViewController(
+            activityItems: [image], applicationActivities: nil
+          )
+          activityViewController.popoverPresentationController?.sourceView = self.shutterBar
+          self.present(activityViewController, animated: true, completion: nil)
+        }
+      } else {
+        print("error capturing photo")
+      }
+    }
+  }
+  
+  private func toggleRecording() {
+    let recorder = RPScreenRecorder.shared()
+    recorder.isMicrophoneEnabled = true
+    
+    if !recorder.isRecording {
+      AudioServicesPlaySystemSound(1117)
+      shutterBar.setRecording(true)
+      recorder.startRecording { error in
+        if let error = error {
+          print("Screen recording start error: \(error)")
+        } else {
+          print("Started screen recording.")
+        }
+      }
+    } else {
+      AudioServicesPlaySystemSound(1118)
+      shutterBar.setRecording(false)
+      recorder.stopRecording { previewVC, error in
+        if let error = error {
+          print("Stop recording error: \(error)")
+        }
+        if let previewVC = previewVC {
+          previewVC.previewControllerDelegate = self
+          self.present(previewVC, animated: true, completion: nil)
+        }
+      }
+    }
+  }
+  
+  private func flipCamera() {
+    // Use YOLOView's switch camera button tap action
+    yoloView.switchCameraButton.sendActions(for: .touchUpInside)
+  }
+  
+  private func showLastCapture() {
+    // Placeholder for showing last capture
+    print("Show last capture")
+  }
+  
+  private func handleZoomToggle(_ isZoomed: Bool) {
+    // Since YOLOView doesn't expose direct zoom control,
+    // we'll simulate pinch gesture for zoom
+    // For now, just update the UI state
+    print("Zoom toggled: \(isZoomed ? "1.8x" : "1.0x")")
+    // TODO: Implement zoom functionality when YOLOView API allows it
+  }
+  
+  private func handleParameterTool(_ tool: RightSideToolBar.Tool) {
+    switch tool {
+    case .itemsMax:
+      let current = Int(currentThresholds["itemsMax"] ?? 15)
+      parameterEditView.showParameter(.itemsMax(current))
+    case .confidence:
+      let current = currentThresholds["confidence"] ?? 0.25
+      parameterEditView.showParameter(.confidence(current))
+    case .iou:
+      let current = currentThresholds["iou"] ?? 0.45
+      parameterEditView.showParameter(.iou(current))
+    case .lineThickness:
+      let current = currentThresholds["lineThickness"] ?? 2.0
+      parameterEditView.showParameter(.lineThickness(current))
+    default:
+      break
+    }
+  }
+  
+  private func handleParameterChange(_ parameter: ParameterEditView.Parameter) {
+    switch parameter {
+    case .itemsMax(let value):
+      currentThresholds["itemsMax"] = Float(value)
+      // Update via slider
+      yoloView.sliderNumItems.value = Float(value)
+      yoloView.sliderNumItems.sendActions(for: .valueChanged)
+    case .confidence(let value):
+      currentThresholds["confidence"] = value
+      // Update via slider
+      yoloView.sliderConf.value = value
+      yoloView.sliderConf.sendActions(for: .valueChanged)
+    case .iou(let value):
+      currentThresholds["iou"] = value
+      // Update via slider
+      yoloView.sliderIoU.value = value
+      yoloView.sliderIoU.sendActions(for: .valueChanged)
+    case .lineThickness(let value):
+      currentThresholds["lineThickness"] = value
+      // Line thickness is not configurable in YOLOView
+      print("Line thickness set to: \(value) (not yet implemented)")
+    }
+    
+    // Save to UserDefaults
+    UserDefaults.standard.set(currentThresholds, forKey: "thresholds")
+  }
+  
+  @objc private func showHiddenInfo() {
+    let hiddenInfoVC = HiddenInfoViewController()
+    hiddenInfoVC.modalPresentationStyle = .pageSheet
+    present(hiddenInfoVC, animated: true)
+  }
+  
+  private func updateUIAfterModelLoad(success: Bool, modelName: String) {
+    
+    if success && isNewUIActive {
+      // Update status bar with model info
+      let modelSize = ModelSizeHelper.getModelSize(from: modelName)
+      statusMetricBar.updateModel(name: processString(modelName), size: modelSize)
+    }
+  }
 }

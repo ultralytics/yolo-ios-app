@@ -20,6 +20,15 @@
 		734B444A2D42F7CF00D2CA6A /* OBBModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* OBBModels */; };
 		734B444B2D42F7CF00D2CA6A /* PoseModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44462D42F7CF00D2CA6A /* PoseModels */; };
 		734B444C2D42F7CF00D2CA6A /* SegmentModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44472D42F7CF00D2CA6A /* SegmentModels */; };
+		73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */; };
+		73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */; };
+		73A992122E029C7A0051C61F /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992072E029C7A0051C61F /* Colors.swift */; };
+		73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920C2E029C7A0051C61F /* ShutterBar.swift */; };
+		73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */; };
+		73A992152E029C7A0051C61F /* ModelSizeHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992092E029C7A0051C61F /* ModelSizeHelper.swift */; };
+		73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */; };
+		73A992172E029C7A0051C61F /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920F2E029C7A0051C61F /* Typography.swift */; };
+		73A992182E029C7A0051C61F /* ParameterEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920A2E029C7A0051C61F /* ParameterEditView.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
 		73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73D95D182D45DAA50050E640 /* ZIPFoundation */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
@@ -39,6 +48,15 @@
 		734B44452D42F7CF00D2CA6A /* OBBModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OBBModels; sourceTree = "<group>"; };
 		734B44462D42F7CF00D2CA6A /* PoseModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PoseModels; sourceTree = "<group>"; };
 		734B44472D42F7CF00D2CA6A /* SegmentModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SegmentModels; sourceTree = "<group>"; };
+		73A992072E029C7A0051C61F /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenInfoViewController.swift; sourceTree = "<group>"; };
+		73A992092E029C7A0051C61F /* ModelSizeHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSizeHelper.swift; sourceTree = "<group>"; };
+		73A9920A2E029C7A0051C61F /* ParameterEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterEditView.swift; sourceTree = "<group>"; };
+		73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightSideToolBar.swift; sourceTree = "<group>"; };
+		73A9920C2E029C7A0051C61F /* ShutterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShutterBar.swift; sourceTree = "<group>"; };
+		73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusMetricBar.swift; sourceTree = "<group>"; };
+		73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTabStrip.swift; sourceTree = "<group>"; };
+		73A9920F2E029C7A0051C61F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
 		73D95D1A2D45DB800050E640 /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLOiOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLOiOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,6 +78,15 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				73A992072E029C7A0051C61F /* Colors.swift */,
+				73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */,
+				73A992092E029C7A0051C61F /* ModelSizeHelper.swift */,
+				73A9920A2E029C7A0051C61F /* ParameterEditView.swift */,
+				73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */,
+				73A9920C2E029C7A0051C61F /* ShutterBar.swift */,
+				73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */,
+				73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */,
+				73A9920F2E029C7A0051C61F /* Typography.swift */,
 				636EFCA721E62DD300DE43BC /* AppDelegate.swift */,
 				636EFC9C21E62DD300DE43BC /* ViewController.swift */,
 				73D95D152D45DA510050E640 /* ModelDownloadManager.swift */,
@@ -204,6 +231,15 @@
 				73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
+				73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */,
+				73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */,
+				73A992122E029C7A0051C61F /* Colors.swift in Sources */,
+				73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */,
+				73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */,
+				73A992152E029C7A0051C61F /* ModelSizeHelper.swift in Sources */,
+				73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */,
+				73A992172E029C7A0051C61F /* Typography.swift in Sources */,
+				73A992182E029C7A0051C61F /* ParameterEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,7 +371,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -363,7 +399,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";

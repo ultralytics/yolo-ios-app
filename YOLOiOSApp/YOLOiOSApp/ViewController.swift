@@ -141,7 +141,7 @@ class ModelTableViewCell: UITableViewCell {
 }
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
-class ViewController: UIViewController, YOLOViewDelegate {
+class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDelegate {
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet var View0: UIView!
@@ -160,6 +160,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let shutterBar = ShutterBar()
   private let rightSideToolBar = RightSideToolBar()
   private let parameterEditView = ParameterEditView()
+  private let modelDropdown = ModelDropdownView()
   
   // UI State
   private var isNewUIActive = true // Toggle for new/old UI
@@ -706,62 +707,68 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func setupButtons() {
-    let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-    shareButton.setImage(
-      UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
-    shareButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
-    view.addSubview(shareButton)
+    // Only setup old UI buttons if not using new UI
+    if !isNewUIActive {
+      let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
+      shareButton.setImage(
+        UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
+      shareButton.addGestureRecognizer(
+        UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
+      view.addSubview(shareButton)
 
-    recordButton.setImage(UIImage(systemName: "video", withConfiguration: config), for: .normal)
-    recordButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
-    view.addSubview(recordButton)
+      recordButton.setImage(UIImage(systemName: "video", withConfiguration: config), for: .normal)
+      recordButton.addGestureRecognizer(
+        UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
+      view.addSubview(recordButton)
 
-    logoImage.isUserInteractionEnabled = true
-    logoImage.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(logoButton)))
+      logoImage.isUserInteractionEnabled = true
+      logoImage.addGestureRecognizer(
+        UITapGestureRecognizer(target: self, action: #selector(logoButton)))
+    }
   }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    if view.bounds.width > view.bounds.height {
-      shareButton.tintColor = .darkGray
-      recordButton.tintColor = .darkGray
-      let tableViewWidth = view.bounds.width * 0.2
-      modelTableView.frame = CGRect(
-        x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-    } else {
-      shareButton.tintColor = .systemGray
-      recordButton.tintColor = .systemGray
-      let tableViewWidth = view.bounds.width * 0.4
-      modelTableView.frame = CGRect(
-        x: view.bounds.width - tableViewWidth - 8,
-        y: segmentedControl.frame.maxY + 25,
-        width: tableViewWidth,
-        height: 200)
+    // Only layout old UI elements if not using new UI
+    if !isNewUIActive {
+      if view.bounds.width > view.bounds.height {
+        shareButton.tintColor = .darkGray
+        recordButton.tintColor = .darkGray
+        let tableViewWidth = view.bounds.width * 0.2
+        modelTableView.frame = CGRect(
+          x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+      } else {
+        shareButton.tintColor = .systemGray
+        recordButton.tintColor = .systemGray
+        let tableViewWidth = view.bounds.width * 0.4
+        modelTableView.frame = CGRect(
+          x: view.bounds.width - tableViewWidth - 8,
+          y: segmentedControl.frame.maxY + 25,
+          width: tableViewWidth,
+          height: 200)
+      }
+
+      shareButton.frame = CGRect(
+        x: view.bounds.maxX - 49.5,
+        y: view.bounds.maxY - 66,
+        width: 49.5,
+        height: 49.5
+      )
+      recordButton.frame = CGRect(
+        x: shareButton.frame.minX - 49.5,
+        y: view.bounds.maxY - 66,
+        width: 49.5,
+        height: 49.5
+      )
+
+      tableViewBGView.frame = CGRect(
+        x: modelTableView.frame.minX - 1,
+        y: modelTableView.frame.minY - 1,
+        width: modelTableView.frame.width + 2,
+        height: CGFloat(currentModels.count * 30 + 2)
+      )
     }
-
-    shareButton.frame = CGRect(
-      x: view.bounds.maxX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
-    recordButton.frame = CGRect(
-      x: shareButton.frame.minX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
-
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
-    )
   }
 
   @objc func shareButtonTapped() {
@@ -895,11 +902,15 @@ extension ViewController {
     cameraPreviewContainer.layer.cornerRadius = 18
     cameraPreviewContainer.clipsToBounds = true
     
-    // Add components to view
+    // Add components to view (order matters for z-index)
     [statusMetricBar, cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, parameterEditView].forEach {
       view.addSubview($0)
       $0.translatesAutoresizingMaskIntoConstraints = false
     }
+    
+    // Add model dropdown last so it appears on top
+    view.addSubview(modelDropdown)
+    modelDropdown.translatesAutoresizingMaskIntoConstraints = false
     
     // Move YOLOView to camera preview container
     if let yoloView = yoloView {
@@ -912,13 +923,21 @@ extension ViewController {
         yoloView.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor),
         yoloView.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor)
       ])
+      
+      // Ensure user interaction is enabled
+      cameraPreviewContainer.isUserInteractionEnabled = true
+      yoloView.isUserInteractionEnabled = true
     }
     
     setupNewUIConstraints()
     setupNewUIActions()
     
-    // Initial task setup
+    // Load models for the new UI
+    loadModelsForAllTasks()
+    
+    // Initial task setup - this will trigger model loading
     taskTabStrip.selectedTask = .detect
+    handleTaskChange(to: .detect)
     
     // Listen for hidden info notification
     NotificationCenter.default.addObserver(
@@ -936,31 +955,37 @@ extension ViewController {
       statusMetricBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       
-      // Camera Preview (16:9 aspect ratio)
-      cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 8),
-      cameraPreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
-      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
-      cameraPreviewContainer.heightAnchor.constraint(equalTo: cameraPreviewContainer.widthAnchor, multiplier: 9.0/16.0),
-      
-      // Task Tab Strip
-      taskTabStrip.topAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor),
-      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      
-      // Shutter Bar
+      // Shutter Bar (set this first as reference)
       shutterBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
       shutterBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shutterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       
-      // Right Tool Bar
+      // Task Tab Strip (position above shutter bar)
+      taskTabStrip.bottomAnchor.constraint(equalTo: shutterBar.topAnchor),
+      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Camera Preview (fill space between status bar and task tab strip)
+      cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 8),
+      cameraPreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
+      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
+      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -8),
+      
+      // Right Tool Bar (positioned near bottom of camera preview)
       rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
-      rightSideToolBar.centerYAnchor.constraint(equalTo: cameraPreviewContainer.centerYAnchor),
+      rightSideToolBar.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor, constant: -20),
       
       // Parameter Edit View (overlay)
       parameterEditView.topAnchor.constraint(equalTo: cameraPreviewContainer.topAnchor),
       parameterEditView.leadingAnchor.constraint(equalTo: cameraPreviewContainer.leadingAnchor),
       parameterEditView.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor),
-      parameterEditView.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor)
+      parameterEditView.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor),
+      
+      // Model Dropdown
+      modelDropdown.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor),
+      modelDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      modelDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      modelDropdown.bottomAnchor.constraint(equalTo: view.bottomAnchor)
     ])
   }
   
@@ -969,6 +994,9 @@ extension ViewController {
     statusMetricBar.onModelTap = { [weak self] in
       self?.showModelSelector()
     }
+    
+    // Model dropdown delegate
+    modelDropdown.delegate = self
     
     // Task tab actions
     taskTabStrip.onTaskChange = { [weak self] task in
@@ -993,8 +1021,8 @@ extension ViewController {
     }
     
     // Right toolbar actions
-    rightSideToolBar.onZoomToggle = { [weak self] isZoomed in
-      self?.handleZoomToggle(isZoomed)
+    rightSideToolBar.onZoomChanged = { [weak self] zoomLevel in
+      self?.handleZoomChange(to: zoomLevel)
     }
     
     rightSideToolBar.onToolSelected = { [weak self] tool in
@@ -1017,6 +1045,9 @@ extension ViewController {
     recordButton.isHidden = true
     modelTableView.isHidden = true
     tableViewBGView.isHidden = true
+    forcus.isHidden = true
+    logoImage.isHidden = true
+    activityIndicator.isHidden = true
     
     // Hide YOLOView's built-in UI elements
     yoloView.toolbar.isHidden = true
@@ -1029,34 +1060,26 @@ extension ViewController {
     yoloView.playButton.isHidden = true
     yoloView.pauseButton.isHidden = true
     yoloView.switchCameraButton.isHidden = true
+    yoloView.labelZoom.isHidden = true
   }
   
   // MARK: - New UI Actions
   
   private func showModelSelector() {
-    // Create action sheet for model selection
-    let actionSheet = UIAlertController(title: "Select Model", message: nil, preferredStyle: .actionSheet)
+    // Ensure dropdown is on top
+    view.bringSubviewToFront(modelDropdown)
     
-    // Add models for current task
-    for model in currentModels {
-      let action = UIAlertAction(title: processString(model.displayName), style: .default) { [weak self] _ in
-        self?.loadModel(entry: model, forTask: self?.currentTask ?? "")
-      }
-      actionSheet.addAction(action)
-    }
-    
-    actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    
-    // For iPad
-    if let popover = actionSheet.popoverPresentationController {
-      popover.sourceView = statusMetricBar
-      popover.sourceRect = statusMetricBar.bounds
-    }
-    
-    present(actionSheet, animated: true)
+    // Configure and toggle dropdown
+    modelDropdown.configure(with: currentModels, currentModel: currentModelName)
+    modelDropdown.toggle()
   }
   
   private func handleTaskChange(to task: TaskTabStrip.Task) {
+    // Hide dropdown if it's showing
+    if modelDropdown.isShowing {
+      modelDropdown.hide()
+    }
+    
     let taskName: String
     switch task {
     case .detect:
@@ -1065,6 +1088,10 @@ extension ViewController {
       taskName = "Segment"
     case .classify:
       taskName = "Classify"
+    case .pose:
+      taskName = "Pose"
+    case .obb:
+      taskName = "OBB"
     }
     
     currentTask = taskName
@@ -1132,12 +1159,14 @@ extension ViewController {
     print("Show last capture")
   }
   
-  private func handleZoomToggle(_ isZoomed: Bool) {
-    // Since YOLOView doesn't expose direct zoom control,
-    // we'll simulate pinch gesture for zoom
-    // For now, just update the UI state
-    print("Zoom toggled: \(isZoomed ? "1.8x" : "1.0x")")
-    // TODO: Implement zoom functionality when YOLOView API allows it
+  private func handleZoomChange(to zoomLevel: Float) {
+    // Apply zoom using the new public method
+    yoloView?.setZoomLevel(zoomLevel)
+    
+    // Get the actual applied zoom level (may be clamped to device limits)
+    if let actualZoom = yoloView?.getZoomLevel() {
+      rightSideToolBar.updateZoomLevel(actualZoom)
+    }
   }
   
   private func handleParameterTool(_ tool: RightSideToolBar.Tool) {
@@ -1199,5 +1228,16 @@ extension ViewController {
       let modelSize = ModelSizeHelper.getModelSize(from: modelName)
       statusMetricBar.updateModel(name: processString(modelName), size: modelSize)
     }
+  }
+}
+
+// MARK: - ModelDropdownViewDelegate
+extension ViewController {
+  func modelDropdown(_ dropdown: ModelDropdownView, didSelectModel model: ModelEntry) {
+    loadModel(entry: model, forTask: currentTask)
+  }
+  
+  func modelDropdownDidDismiss(_ dropdown: ModelDropdownView) {
+    // Handle dropdown dismissal if needed
   }
 }

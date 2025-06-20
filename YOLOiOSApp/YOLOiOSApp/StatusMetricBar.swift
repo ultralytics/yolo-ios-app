@@ -30,15 +30,13 @@ class StatusMetricBar: UIView {
         // Logo
         logoImageView.image = UIImage(named: "ultralytics_icon") // Using existing asset
         logoImageView.contentMode = .scaleAspectFit
-        logoImageView.translatesAutoresizingMaskIntoConstraints = false
-        logoImageView.widthAnchor.constraint(equalToConstant: 20).isActive = true
-        logoImageView.heightAnchor.constraint(equalToConstant: 20).isActive = true
         
         // Model Button
         modelButton.setTitle("YOLO11 ▼", for: .normal)
         modelButton.setTitleColor(.ultralyticsTextPrimary, for: .normal)
         modelButton.titleLabel?.font = Typography.statusBarFont
         modelButton.addTarget(self, action: #selector(modelButtonTapped), for: .touchUpInside)
+        modelButton.isUserInteractionEnabled = true
         
         // Labels
         [sizeLabel, fpsLabel, latencyLabel].forEach { label in
@@ -52,19 +50,71 @@ class StatusMetricBar: UIView {
         
         // Stack View
         stackView.axis = .horizontal
-        stackView.spacing = 12
+        stackView.spacing = 0
         stackView.alignment = .center
-        stackView.distribution = .fill
+        stackView.distribution = .fillEqually
+        stackView.isUserInteractionEnabled = true
         
-        [logoImageView, modelButton, sizeLabel, fpsLabel, latencyLabel].forEach {
+        // Create container views for each element to ensure equal spacing
+        let logoContainer = UIView()
+        let modelContainer = UIView()
+        let sizeContainer = UIView()
+        let fpsContainer = UIView()
+        let latencyContainer = UIView()
+        
+        // Ensure containers don't block touch events
+        [logoContainer, modelContainer, sizeContainer, fpsContainer, latencyContainer].forEach {
+            $0.isUserInteractionEnabled = true
             stackView.addArrangedSubview($0)
         }
+        
+        // Add elements to their containers
+        logoContainer.addSubview(logoImageView)
+        modelContainer.addSubview(modelButton)
+        sizeContainer.addSubview(sizeLabel)
+        fpsContainer.addSubview(fpsLabel)
+        latencyContainer.addSubview(latencyLabel)
+        
+        // Center elements in their containers
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            logoImageView.centerXAnchor.constraint(equalTo: logoContainer.centerXAnchor),
+            logoImageView.centerYAnchor.constraint(equalTo: logoContainer.centerYAnchor),
+            logoImageView.widthAnchor.constraint(equalToConstant: 20),
+            logoImageView.heightAnchor.constraint(equalToConstant: 20)
+        ])
+        
+        modelButton.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            modelButton.leadingAnchor.constraint(equalTo: modelContainer.leadingAnchor),
+            modelButton.trailingAnchor.constraint(equalTo: modelContainer.trailingAnchor),
+            modelButton.topAnchor.constraint(equalTo: modelContainer.topAnchor),
+            modelButton.bottomAnchor.constraint(equalTo: modelContainer.bottomAnchor)
+        ])
+        
+        sizeLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            sizeLabel.centerXAnchor.constraint(equalTo: sizeContainer.centerXAnchor),
+            sizeLabel.centerYAnchor.constraint(equalTo: sizeContainer.centerYAnchor)
+        ])
+        
+        fpsLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            fpsLabel.centerXAnchor.constraint(equalTo: fpsContainer.centerXAnchor),
+            fpsLabel.centerYAnchor.constraint(equalTo: fpsContainer.centerYAnchor)
+        ])
+        
+        latencyLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            latencyLabel.centerXAnchor.constraint(equalTo: latencyContainer.centerXAnchor),
+            latencyLabel.centerYAnchor.constraint(equalTo: latencyContainer.centerYAnchor)
+        ])
         
         addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
             heightAnchor.constraint(equalToConstant: 36)
         ])

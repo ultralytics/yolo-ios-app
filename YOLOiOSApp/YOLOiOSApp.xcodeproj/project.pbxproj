@@ -29,6 +29,7 @@
 		73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */; };
 		73A992172E029C7A0051C61F /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920F2E029C7A0051C61F /* Typography.swift */; };
 		73A992182E029C7A0051C61F /* ParameterEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920A2E029C7A0051C61F /* ParameterEditView.swift */; };
+		73A9921A2E05132F0051C61F /* ModelDropdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992192E05132F0051C61F /* ModelDropdownView.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
 		73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73D95D182D45DAA50050E640 /* ZIPFoundation */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
@@ -57,6 +58,7 @@
 		73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusMetricBar.swift; sourceTree = "<group>"; };
 		73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTabStrip.swift; sourceTree = "<group>"; };
 		73A9920F2E029C7A0051C61F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		73A992192E05132F0051C61F /* ModelDropdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDropdownView.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
 		73D95D1A2D45DB800050E640 /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLOiOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLOiOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -78,6 +80,7 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				73A992192E05132F0051C61F /* ModelDropdownView.swift */,
 				73A992072E029C7A0051C61F /* Colors.swift */,
 				73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */,
 				73A992092E029C7A0051C61F /* ModelSizeHelper.swift */,
@@ -232,6 +235,7 @@
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
 				73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */,
+				73A9921A2E05132F0051C61F /* ModelDropdownView.swift in Sources */,
 				73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */,
 				73A992122E029C7A0051C61F /* Colors.swift in Sources */,
 				73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */,

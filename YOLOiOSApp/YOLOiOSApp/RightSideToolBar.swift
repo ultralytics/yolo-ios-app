@@ -27,10 +27,10 @@ class RightSideToolBar: UIView {
     
     private var buttons: [UIButton] = []
     private var activeTool: Tool?
-    private var isZoomed = false
+    private var currentZoomLevel: Float = 1.0
     
     var onToolSelected: ((Tool) -> Void)?
-    var onZoomToggle: ((Bool) -> Void)?
+    var onZoomChanged: ((Float) -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -98,11 +98,24 @@ class RightSideToolBar: UIView {
         guard let tool = Tool(rawValue: sender.tag) else { return }
         
         if tool == .zoom {
-            // Toggle zoom
-            isZoomed.toggle()
-            sender.setTitle(isZoomed ? "1.8x" : "1.0x", for: .normal)
-            sender.setTitleColor(isZoomed ? .ultralyticsLime : .white, for: .normal)
-            onZoomToggle?(isZoomed)
+            // Cycle through zoom levels: 0.5x -> 1.0x -> 3.0x -> 0.5x
+            let nextZoom: Float
+            if currentZoomLevel < 0.75 {
+                nextZoom = 1.0
+            } else if currentZoomLevel < 2.0 {
+                nextZoom = 3.0
+            } else {
+                nextZoom = 0.5
+            }
+            
+            currentZoomLevel = nextZoom
+            sender.setTitle(String(format: "%.1fx", nextZoom), for: .normal)
+            
+            // Change color based on zoom level
+            let isDefaultZoom = abs(nextZoom - 1.0) < 0.1
+            sender.setTitleColor(isDefaultZoom ? .white : .ultralyticsLime, for: .normal)
+            
+            onZoomChanged?(nextZoom)
         } else {
             // Handle parameter tools
             if activeTool == tool {
@@ -141,5 +154,14 @@ class RightSideToolBar: UIView {
             }
         }
         activeTool = nil
+    }
+    
+    func updateZoomLevel(_ level: Float) {
+        currentZoomLevel = level
+        if let zoomButton = buttons[safe: Tool.zoom.rawValue] {
+            zoomButton.setTitle(String(format: "%.1fx", level), for: .normal)
+            let isDefaultZoom = abs(level - 1.0) < 0.1
+            zoomButton.setTitleColor(isDefaultZoom ? .white : .ultralyticsLime, for: .normal)
+        }
     }
 }

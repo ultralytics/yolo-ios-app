@@ -61,7 +61,8 @@ class ParameterEditView: UIView {
     }
     
     private func setupUI() {
-        isUserInteractionEnabled = true
+        // Allow touches to pass through when not showing controls
+        isUserInteractionEnabled = false
         
         // Toast View
         toastView.backgroundColor = UIColor.ultralyticsBrown.withAlphaComponent(0.95)
@@ -125,6 +126,9 @@ class ParameterEditView: UIView {
     
     func showParameter(_ parameter: Parameter) {
         currentParameter = parameter
+        
+        // Enable interaction when showing controls
+        isUserInteractionEnabled = true
         
         // Configure slider
         slider.minimumValue = parameter.range.lowerBound
@@ -200,6 +204,9 @@ class ParameterEditView: UIView {
         UIView.animate(withDuration: 0.3) {
             self.toastView.alpha = 0
             self.slider.alpha = 0
+        } completion: { _ in
+            // Disable interaction when hidden
+            self.isUserInteractionEnabled = false
         }
     }
 }

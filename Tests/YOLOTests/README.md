@@ -109,14 +109,14 @@ If you receive an error message indicating that a model file could not be found:
 
 1.  **Verify Path:** Double-check that all required `.mlpackage` files are present directly inside the `Tests/YOLOTests/Resources/` directory.
 2.  **Verify Filenames:** Ensure the filenames exactly match the required names (e.g., `yolo11n.mlpackage`, `yolo11n-seg.mlpackage`, etc.). Check for typos or incorrect extensions.
-3.  **Check `Package.swift`:** Confirm that the `Resources` directory is correctly specified as a resource for the `YOLOTests` target in the `Package.swift` file. See the [Swift Package Manager documentation](https://developer.apple.com/documentation/swift_packages/bundling_resources_with_a_swift_package) for details on resource bundling.
+3.  **Check `Package.swift`:** Confirm that the `Resources` directory is correctly specified as a resource for the `YOLOTests` target in the `Package.swift` file. See the [Swift Package Manager documentation](https://developer.apple.com/documentation/xcode/bundling-resources-with-a-swift-package) for details on resource bundling.
 
 ### Other Issues
 
 If tests fail or you encounter other problems:
 
 1.  **SwiftPM Version:** Ensure your installed Swift Package Manager version is compatible with the project requirements.
-2.  **iOS Target:** The project requires [iOS](https://www.apple.com/ios/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
+2.  **iOS Target:** The project requires [iOS](https://www.apple.com/ios/ios-18/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
 3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
 5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).

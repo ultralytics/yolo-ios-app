@@ -71,7 +71,7 @@ To run the full test suite, including tests that perform inference:
 3.  Change the flag `SKIP_MODEL_TESTS` to `false`.
 4.  Run the tests using Xcode (Product > Test or `Cmd+U`).
 
-This flexible approach ensures that both core application logic and [model deployment](https://www.ultralytics.com/glossary/model-deployment) integration can be tested effectively, accommodating different development and testing scenarios. Explore more terms in the [Ultralytics Glossary](https://www.ultralytics.com/glossary/).
+This flexible approach ensures that both core application logic and [model deployment](https://www.ultralytics.com/glossary/model-deployment) integration can be tested effectively, accommodating different development and testing scenarios. Explore more terms in the [Ultralytics Glossary](https://www.ultralytics.com/glossary).
 
 ## 🤝 Contributing
 

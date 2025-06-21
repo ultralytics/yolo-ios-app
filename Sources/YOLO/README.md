@@ -35,7 +35,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 | watchOS  | 6.0+            | Limited use cases due to hardware constraints                                                            |
 
 - **Swift 5.7+**: Required for modern language features.
-- **Xcode 14.0+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/swift_standard_library/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
+- **Xcode 14.0+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
 
 ## 🚀 Installation
 
@@ -296,4 +296,4 @@ Contributions are welcome! Whether it's bug reports, feature requests, or code c
 
 ## 📜 License
 
-This project is licensed under the [AGPL-3.0 License](https://opensource.org/licenses/AGPL-3.0). See the [`license`](license) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
+This project is licensed under the [AGPL-3.0 License](https://opensource.org/license/agpl-v3). See the [`license`](license) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).

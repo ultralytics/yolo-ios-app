@@ -1066,11 +1066,22 @@ extension ViewController {
   // MARK: - New UI Actions
   
   private func showModelSelector() {
+    print("showModelSelector called")
+    print("Current models count: \(currentModels.count)")
+    print("Current model name: \(currentModelName)")
+    
     // Ensure dropdown is on top
     view.bringSubviewToFront(modelDropdown)
     
+    // Find the current model's identifier
+    let currentModelIdentifier = currentModels.first { model in
+      model.displayName == currentModelName
+    }?.identifier
+    
+    print("Current model identifier: \(currentModelIdentifier ?? "nil")")
+    
     // Configure and toggle dropdown
-    modelDropdown.configure(with: currentModels, currentModel: currentModelName)
+    modelDropdown.configure(with: currentModels, currentModel: currentModelIdentifier)
     modelDropdown.toggle()
   }
   

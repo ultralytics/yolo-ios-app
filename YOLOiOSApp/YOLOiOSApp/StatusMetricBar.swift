@@ -43,7 +43,7 @@ class StatusMetricBar: UIView {
         modelButton.setTitle("YOLO11", for: .normal)
         modelButton.setTitleColor(.ultralyticsTextPrimary, for: .normal)
         modelButton.titleLabel?.font = Typography.statusBarFont
-        modelButton.addTarget(self, action: #selector(modelButtonTapped), for: .touchUpInside)
+        modelButton.contentHorizontalAlignment = .center
         modelButton.isUserInteractionEnabled = true
         
         // Labels
@@ -71,9 +71,9 @@ class StatusMetricBar: UIView {
         
         // Configure dropdown icons
         [modelDropdownIcon, sizeDropdownIcon].forEach { label in
-            label.text = "▼"
+            label.text = "⌄"
             label.textColor = .ultralyticsTextSubtle
-            label.font = UIFont.systemFont(ofSize: 8, weight: .regular)
+            label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
             label.textAlignment = .center
         }
         
@@ -105,8 +105,8 @@ class StatusMetricBar: UIView {
         modelStack.isUserInteractionEnabled = true
         
         let modelSubtitleStack = UIStackView()
-        modelSubtitleStack.axis = .horizontal
-        modelSubtitleStack.spacing = 2
+        modelSubtitleStack.axis = .vertical
+        modelSubtitleStack.spacing = 0
         modelSubtitleStack.alignment = .center
         modelSubtitleStack.addArrangedSubview(modelSubtitleLabel)
         modelSubtitleStack.addArrangedSubview(modelDropdownIcon)
@@ -114,14 +114,18 @@ class StatusMetricBar: UIView {
         modelStack.addArrangedSubview(modelButton)
         modelStack.addArrangedSubview(modelSubtitleStack)
         
+        // Add tap gesture to model stack
+        let modelTapGesture = UITapGestureRecognizer(target: self, action: #selector(modelButtonTapped))
+        modelStack.addGestureRecognizer(modelTapGesture)
+        
         let sizeStack = UIStackView()
         sizeStack.axis = .vertical
         sizeStack.spacing = 2
         sizeStack.alignment = .center
         
         let sizeSubtitleStack = UIStackView()
-        sizeSubtitleStack.axis = .horizontal
-        sizeSubtitleStack.spacing = 2
+        sizeSubtitleStack.axis = .vertical
+        sizeSubtitleStack.spacing = 0
         sizeSubtitleStack.alignment = .center
         sizeSubtitleStack.addArrangedSubview(sizeSubtitleLabel)
         sizeSubtitleStack.addArrangedSubview(sizeDropdownIcon)
@@ -189,7 +193,7 @@ class StatusMetricBar: UIView {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            heightAnchor.constraint(equalToConstant: 44)
+            heightAnchor.constraint(equalToConstant: 48)
         ])
         
         // Long press gesture for hidden info

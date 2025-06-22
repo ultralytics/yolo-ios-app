@@ -9,27 +9,27 @@
 /* Begin PBXBuildFile section */
 		633BC6FB22EDE73D00821BCA /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 633BC6FA22EDE73D00821BCA /* Settings.bundle */; };
 		636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFC9C21E62DD300DE43BC /* ViewController.swift */; };
-		636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 636EFCA721E62DD300DE43BC /* AppDelegate.swift */; };
 		636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 636EFCB821E62E3900DE43BC /* Assets.xcassets */; };
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
 		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		73220ED32D373C2E00A94B92 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73220ED22D373C2E00A94B92 /* YOLO */; };
-		734B44482D42F7CF00D2CA6A /* DetectModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44432D42F7CF00D2CA6A /* DetectModels */; };
-		734B44492D42F7CF00D2CA6A /* ClassifyModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44442D42F7CF00D2CA6A /* ClassifyModels */; };
-		734B444A2D42F7CF00D2CA6A /* OBBModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* OBBModels */; };
-		734B444B2D42F7CF00D2CA6A /* PoseModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44462D42F7CF00D2CA6A /* PoseModels */; };
-		734B444C2D42F7CF00D2CA6A /* SegmentModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44472D42F7CF00D2CA6A /* SegmentModels */; };
 		73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */; };
 		73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */; };
 		73A992122E029C7A0051C61F /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992072E029C7A0051C61F /* Colors.swift */; };
 		73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920C2E029C7A0051C61F /* ShutterBar.swift */; };
 		73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */; };
-		73A992152E029C7A0051C61F /* ModelSizeHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992092E029C7A0051C61F /* ModelSizeHelper.swift */; };
 		73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */; };
 		73A992172E029C7A0051C61F /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920F2E029C7A0051C61F /* Typography.swift */; };
 		73A992182E029C7A0051C61F /* ParameterEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920A2E029C7A0051C61F /* ParameterEditView.swift */; };
 		73A9921A2E05132F0051C61F /* ModelDropdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A992192E05132F0051C61F /* ModelDropdownView.swift */; };
+		73A992732E06AF930051C61F /* DetectModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44432D42F7CF00D2CA6A /* DetectModels */; };
+		73A992742E06AF930051C61F /* ClassifyModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44442D42F7CF00D2CA6A /* ClassifyModels */; };
+		73A992752E06AF930051C61F /* SegmentModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44472D42F7CF00D2CA6A /* SegmentModels */; };
+		73A992762E06AF930051C61F /* PoseModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44462D42F7CF00D2CA6A /* PoseModels */; };
+		73A992772E06AF930051C61F /* OBBModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* OBBModels */; };
+		73BFE0A72E07BDD000CF6FEC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */; };
+		73BFE0A82E07BDD000CF6FEC /* ModelSizeHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
 		73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73D95D182D45DAA50050E640 /* ZIPFoundation */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
@@ -42,7 +42,6 @@
 		632892DF22EB3DB100A12D9C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.info; path = Info.plist; sourceTree = "<group>"; };
 		633BC6FA22EDE73D00821BCA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		636EFC9C21E62DD300DE43BC /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		734B44432D42F7CF00D2CA6A /* DetectModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DetectModels; sourceTree = "<group>"; };
 		734B44442D42F7CF00D2CA6A /* ClassifyModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClassifyModels; sourceTree = "<group>"; };
@@ -51,7 +50,6 @@
 		734B44472D42F7CF00D2CA6A /* SegmentModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SegmentModels; sourceTree = "<group>"; };
 		73A992072E029C7A0051C61F /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenInfoViewController.swift; sourceTree = "<group>"; };
-		73A992092E029C7A0051C61F /* ModelSizeHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSizeHelper.swift; sourceTree = "<group>"; };
 		73A9920A2E029C7A0051C61F /* ParameterEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterEditView.swift; sourceTree = "<group>"; };
 		73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RightSideToolBar.swift; sourceTree = "<group>"; };
 		73A9920C2E029C7A0051C61F /* ShutterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShutterBar.swift; sourceTree = "<group>"; };
@@ -59,6 +57,8 @@
 		73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTabStrip.swift; sourceTree = "<group>"; };
 		73A9920F2E029C7A0051C61F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		73A992192E05132F0051C61F /* ModelDropdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDropdownView.swift; sourceTree = "<group>"; };
+		73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSizeHelper.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
 		73D95D1A2D45DB800050E640 /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLOiOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLOiOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,17 +80,17 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */,
+				73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */,
 				73A992192E05132F0051C61F /* ModelDropdownView.swift */,
 				73A992072E029C7A0051C61F /* Colors.swift */,
 				73A992082E029C7A0051C61F /* HiddenInfoViewController.swift */,
-				73A992092E029C7A0051C61F /* ModelSizeHelper.swift */,
 				73A9920A2E029C7A0051C61F /* ParameterEditView.swift */,
 				73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */,
 				73A9920C2E029C7A0051C61F /* ShutterBar.swift */,
 				73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */,
 				73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */,
 				73A9920F2E029C7A0051C61F /* Typography.swift */,
-				636EFCA721E62DD300DE43BC /* AppDelegate.swift */,
 				636EFC9C21E62DD300DE43BC /* ViewController.swift */,
 				73D95D152D45DA510050E640 /* ModelDownloadManager.swift */,
 				73D95D1A2D45DB800050E640 /* RemoteModels.swift */,
@@ -189,11 +189,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				734B44482D42F7CF00D2CA6A /* DetectModels in Resources */,
-				734B44492D42F7CF00D2CA6A /* ClassifyModels in Resources */,
-				734B444A2D42F7CF00D2CA6A /* OBBModels in Resources */,
-				734B444B2D42F7CF00D2CA6A /* PoseModels in Resources */,
-				734B444C2D42F7CF00D2CA6A /* SegmentModels in Resources */,
+				73A992732E06AF930051C61F /* DetectModels in Resources */,
+				73A992742E06AF930051C61F /* ClassifyModels in Resources */,
+				73A992752E06AF930051C61F /* SegmentModels in Resources */,
+				73A992762E06AF930051C61F /* PoseModels in Resources */,
+				73A992772E06AF930051C61F /* OBBModels in Resources */,
 				636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */,
 				63CF37202514455300E2DEA1 /* Main.storyboard in Resources */,
 				63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */,
@@ -232,7 +232,6 @@
 			files = (
 				73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */,
 				73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */,
-				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
 				73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */,
 				73A9921A2E05132F0051C61F /* ModelDropdownView.swift in Sources */,
@@ -240,7 +239,8 @@
 				73A992122E029C7A0051C61F /* Colors.swift in Sources */,
 				73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */,
 				73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */,
-				73A992152E029C7A0051C61F /* ModelSizeHelper.swift in Sources */,
+				73BFE0A72E07BDD000CF6FEC /* AppDelegate.swift in Sources */,
+				73BFE0A82E07BDD000CF6FEC /* ModelSizeHelper.swift in Sources */,
 				73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */,
 				73A992172E029C7A0051C61F /* Typography.swift in Sources */,
 				73A992182E029C7A0051C61F /* ParameterEditView.swift in Sources */,

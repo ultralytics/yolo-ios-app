@@ -114,9 +114,7 @@ class StatusMetricBar: UIView {
         modelStack.addArrangedSubview(modelButton)
         modelStack.addArrangedSubview(modelSubtitleStack)
         
-        // Add tap gesture to model stack
-        let modelTapGesture = UITapGestureRecognizer(target: self, action: #selector(modelButtonTapped))
-        modelStack.addGestureRecognizer(modelTapGesture)
+        // Remove the tap gesture from model stack (we'll add it to the container instead)
         
         let sizeStack = UIStackView()
         sizeStack.axis = .vertical
@@ -153,6 +151,10 @@ class StatusMetricBar: UIView {
         sizeContainer.addSubview(sizeStack)
         fpsContainer.addSubview(fpsStack)
         latencyContainer.addSubview(latencyStack)
+        
+        // Add tap gesture to entire model container
+        let modelTapGesture = UITapGestureRecognizer(target: self, action: #selector(modelButtonTapped))
+        modelContainer.addGestureRecognizer(modelTapGesture)
         
         // Center elements in their containers
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -204,6 +206,7 @@ class StatusMetricBar: UIView {
     }
     
     @objc private func modelButtonTapped() {
+        print("StatusMetricBar: modelButtonTapped called")
         onModelTap?()
     }
     

@@ -49,7 +49,7 @@ class ModelDropdownView: UIView {
         
         // Container
         containerView.backgroundColor = UIColor.black.withAlphaComponent(0.98)
-        containerView.layer.cornerRadius = 8
+        containerView.layer.cornerRadius = 16
         containerView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         containerView.layer.shadowColor = UIColor.black.cgColor
         containerView.layer.shadowOffset = CGSize(width: 0, height: 10)
@@ -64,6 +64,9 @@ class ModelDropdownView: UIView {
         tableView.dataSource = self
         tableView.register(ModelDropdownCell.self, forCellReuseIdentifier: ModelDropdownCell.identifier)
         tableView.register(ModelDropdownHeaderView.self, forHeaderFooterViewReuseIdentifier: ModelDropdownHeaderView.identifier)
+        tableView.layer.cornerRadius = 16
+        tableView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        tableView.clipsToBounds = true
         
         // Add subviews
         addSubview(overlayView)

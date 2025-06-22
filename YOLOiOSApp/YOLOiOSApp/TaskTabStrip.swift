@@ -59,7 +59,7 @@ class TaskTabStrip: UIView {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .fillProportionally
-        stackView.spacing = 16
+        stackView.spacing = 8
         
         for task in Task.allCases {
             let button = UIButton(type: .system)
@@ -67,7 +67,7 @@ class TaskTabStrip: UIView {
             button.titleLabel?.font = Typography.tabLabelFont
             button.tag = Task.allCases.firstIndex(of: task)!
             button.addTarget(self, action: #selector(taskButtonTapped), for: .touchUpInside)
-            button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+            button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
             buttons.append(button)
             stackView.addArrangedSubview(button)
         }
@@ -144,22 +144,32 @@ class TaskTabStrip: UIView {
             )
         }
         
-        // Scroll to make selected button visible
+        // Scroll to center the selected button
         DispatchQueue.main.async {
-            let targetRect = CGRect(
-                x: buttonFrame.minX - 50,
-                y: 0,
-                width: buttonFrame.width + 100,
-                height: self.scrollView.bounds.height
-            )
-            self.scrollView.scrollRectToVisible(targetRect, animated: true)
+            // Calculate the center position of the button
+            let buttonCenter = buttonFrame.midX
+            
+            // Calculate the target offset to center the button
+            let scrollViewWidth = self.scrollView.bounds.width
+            let contentWidth = self.contentView.bounds.width
+            let targetOffset = buttonCenter - (scrollViewWidth / 2)
+            
+            // Clamp the offset to valid range
+            let minOffset: CGFloat = 0
+            let maxOffset = max(0, contentWidth - scrollViewWidth)
+            let clampedOffset = min(max(targetOffset, minOffset), maxOffset)
+            
+            // Animate scroll to center
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+                self.scrollView.contentOffset = CGPoint(x: clampedOffset, y: 0)
+            }
         }
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
         // Wait for layout to complete before updating selection
-        DispatchQueue.main.async {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.updateSelection()
         }
     }

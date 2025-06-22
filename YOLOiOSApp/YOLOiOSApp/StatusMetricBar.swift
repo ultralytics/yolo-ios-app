@@ -11,6 +11,14 @@ class StatusMetricBar: UIView {
     private let latencyLabel = UILabel()
     private let stackView = UIStackView()
     
+    // Subtitle labels
+    private let modelSubtitleLabel = UILabel()
+    private let modelDropdownIcon = UILabel()
+    private let sizeSubtitleLabel = UILabel()
+    private let sizeDropdownIcon = UILabel()
+    private let fpsSubtitleLabel = UILabel()
+    private let latencySubtitleLabel = UILabel()
+    
     // Properties
     var onModelTap: (() -> Void)?
     
@@ -32,7 +40,7 @@ class StatusMetricBar: UIView {
         logoImageView.contentMode = .scaleAspectFit
         
         // Model Button
-        modelButton.setTitle("YOLO11 ▼", for: .normal)
+        modelButton.setTitle("YOLO11", for: .normal)
         modelButton.setTitleColor(.ultralyticsTextPrimary, for: .normal)
         modelButton.titleLabel?.font = Typography.statusBarFont
         modelButton.addTarget(self, action: #selector(modelButtonTapped), for: .touchUpInside)
@@ -42,11 +50,32 @@ class StatusMetricBar: UIView {
         [sizeLabel, fpsLabel, latencyLabel].forEach { label in
             label.textColor = .ultralyticsTextPrimary
             label.font = Typography.statusBarFont
+            label.textAlignment = .center
         }
         
         sizeLabel.text = "SMALL"
-        fpsLabel.text = "0.0 FPS"
-        latencyLabel.text = "0.0 ms"
+        fpsLabel.text = "0.0"
+        latencyLabel.text = "0.0"
+        
+        // Configure subtitle labels
+        [modelSubtitleLabel, sizeSubtitleLabel, fpsSubtitleLabel, latencySubtitleLabel].forEach { label in
+            label.textColor = .ultralyticsTextSubtle
+            label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
+            label.textAlignment = .center
+        }
+        
+        modelSubtitleLabel.text = "MODEL"
+        sizeSubtitleLabel.text = "SIZE"
+        fpsSubtitleLabel.text = "FPS"
+        latencySubtitleLabel.text = "MS"
+        
+        // Configure dropdown icons
+        [modelDropdownIcon, sizeDropdownIcon].forEach { label in
+            label.text = "▼"
+            label.textColor = .ultralyticsTextSubtle
+            label.font = UIFont.systemFont(ofSize: 8, weight: .regular)
+            label.textAlignment = .center
+        }
         
         // Stack View
         stackView.axis = .horizontal
@@ -68,12 +97,58 @@ class StatusMetricBar: UIView {
             stackView.addArrangedSubview($0)
         }
         
+        // Create vertical stacks for model and size
+        let modelStack = UIStackView()
+        modelStack.axis = .vertical
+        modelStack.spacing = 2
+        modelStack.alignment = .center
+        modelStack.isUserInteractionEnabled = true
+        
+        let modelSubtitleStack = UIStackView()
+        modelSubtitleStack.axis = .horizontal
+        modelSubtitleStack.spacing = 2
+        modelSubtitleStack.alignment = .center
+        modelSubtitleStack.addArrangedSubview(modelSubtitleLabel)
+        modelSubtitleStack.addArrangedSubview(modelDropdownIcon)
+        
+        modelStack.addArrangedSubview(modelButton)
+        modelStack.addArrangedSubview(modelSubtitleStack)
+        
+        let sizeStack = UIStackView()
+        sizeStack.axis = .vertical
+        sizeStack.spacing = 2
+        sizeStack.alignment = .center
+        
+        let sizeSubtitleStack = UIStackView()
+        sizeSubtitleStack.axis = .horizontal
+        sizeSubtitleStack.spacing = 2
+        sizeSubtitleStack.alignment = .center
+        sizeSubtitleStack.addArrangedSubview(sizeSubtitleLabel)
+        sizeSubtitleStack.addArrangedSubview(sizeDropdownIcon)
+        
+        sizeStack.addArrangedSubview(sizeLabel)
+        sizeStack.addArrangedSubview(sizeSubtitleStack)
+        
+        let fpsStack = UIStackView()
+        fpsStack.axis = .vertical
+        fpsStack.spacing = 2
+        fpsStack.alignment = .center
+        fpsStack.addArrangedSubview(fpsLabel)
+        fpsStack.addArrangedSubview(fpsSubtitleLabel)
+        
+        let latencyStack = UIStackView()
+        latencyStack.axis = .vertical
+        latencyStack.spacing = 2
+        latencyStack.alignment = .center
+        latencyStack.addArrangedSubview(latencyLabel)
+        latencyStack.addArrangedSubview(latencySubtitleLabel)
+        
         // Add elements to their containers
         logoContainer.addSubview(logoImageView)
-        modelContainer.addSubview(modelButton)
-        sizeContainer.addSubview(sizeLabel)
-        fpsContainer.addSubview(fpsLabel)
-        latencyContainer.addSubview(latencyLabel)
+        modelContainer.addSubview(modelStack)
+        sizeContainer.addSubview(sizeStack)
+        fpsContainer.addSubview(fpsStack)
+        latencyContainer.addSubview(latencyStack)
         
         // Center elements in their containers
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -84,30 +159,28 @@ class StatusMetricBar: UIView {
             logoImageView.heightAnchor.constraint(equalToConstant: 20)
         ])
         
-        modelButton.translatesAutoresizingMaskIntoConstraints = false
+        modelStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            modelButton.leadingAnchor.constraint(equalTo: modelContainer.leadingAnchor),
-            modelButton.trailingAnchor.constraint(equalTo: modelContainer.trailingAnchor),
-            modelButton.topAnchor.constraint(equalTo: modelContainer.topAnchor),
-            modelButton.bottomAnchor.constraint(equalTo: modelContainer.bottomAnchor)
+            modelStack.centerXAnchor.constraint(equalTo: modelContainer.centerXAnchor),
+            modelStack.centerYAnchor.constraint(equalTo: modelContainer.centerYAnchor)
         ])
         
-        sizeLabel.translatesAutoresizingMaskIntoConstraints = false
+        sizeStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            sizeLabel.centerXAnchor.constraint(equalTo: sizeContainer.centerXAnchor),
-            sizeLabel.centerYAnchor.constraint(equalTo: sizeContainer.centerYAnchor)
+            sizeStack.centerXAnchor.constraint(equalTo: sizeContainer.centerXAnchor),
+            sizeStack.centerYAnchor.constraint(equalTo: sizeContainer.centerYAnchor)
         ])
         
-        fpsLabel.translatesAutoresizingMaskIntoConstraints = false
+        fpsStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            fpsLabel.centerXAnchor.constraint(equalTo: fpsContainer.centerXAnchor),
-            fpsLabel.centerYAnchor.constraint(equalTo: fpsContainer.centerYAnchor)
+            fpsStack.centerXAnchor.constraint(equalTo: fpsContainer.centerXAnchor),
+            fpsStack.centerYAnchor.constraint(equalTo: fpsContainer.centerYAnchor)
         ])
         
-        latencyLabel.translatesAutoresizingMaskIntoConstraints = false
+        latencyStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            latencyLabel.centerXAnchor.constraint(equalTo: latencyContainer.centerXAnchor),
-            latencyLabel.centerYAnchor.constraint(equalTo: latencyContainer.centerYAnchor)
+            latencyStack.centerXAnchor.constraint(equalTo: latencyContainer.centerXAnchor),
+            latencyStack.centerYAnchor.constraint(equalTo: latencyContainer.centerYAnchor)
         ])
         
         addSubview(stackView)
@@ -116,7 +189,7 @@ class StatusMetricBar: UIView {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            heightAnchor.constraint(equalToConstant: 36)
+            heightAnchor.constraint(equalToConstant: 44)
         ])
         
         // Long press gesture for hidden info
@@ -138,12 +211,12 @@ class StatusMetricBar: UIView {
     }
     
     func updateMetrics(fps: Double, latency: Double) {
-        fpsLabel.text = String(format: "%.1f FPS", fps)
-        latencyLabel.text = String(format: "%.1f ms", latency)
+        fpsLabel.text = String(format: "%.1f", fps)
+        latencyLabel.text = String(format: "%.1f", latency)
     }
     
     func updateModel(name: String, size: String) {
-        modelButton.setTitle("\(name) ▼", for: .normal)
+        modelButton.setTitle(name, for: .normal)
         sizeLabel.text = size.uppercased()
     }
 }

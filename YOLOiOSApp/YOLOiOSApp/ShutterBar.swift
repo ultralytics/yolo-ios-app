@@ -27,17 +27,41 @@ class ShutterBar: UIView {
     private func setupUI() {
         backgroundColor = .ultralyticsSurfaceDark
         
-        // Thumbnail Button
+        // Thumbnail Button - Modern design with border
         thumbnailButton.backgroundColor = .ultralyticsBrown
-        thumbnailButton.layer.cornerRadius = 8
+        thumbnailButton.layer.cornerRadius = 12
+        thumbnailButton.layer.borderWidth = 2
+        thumbnailButton.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
         thumbnailButton.clipsToBounds = true
+        thumbnailButton.contentMode = .scaleAspectFill
         thumbnailButton.addTarget(self, action: #selector(thumbnailTapped), for: .touchUpInside)
         
-        // Shutter Button
+        // Shutter Button - Modern design with gradient
         shutterButton.backgroundColor = .white
         shutterButton.layer.cornerRadius = 34
-        shutterButton.layer.borderWidth = 4
-        shutterButton.layer.borderColor = UIColor.black.cgColor
+        shutterButton.layer.borderWidth = 3
+        shutterButton.layer.borderColor = UIColor.white.withAlphaComponent(0.8).cgColor
+        
+        // Add inner circle for visual depth
+        let innerCircle = UIView()
+        innerCircle.backgroundColor = .white
+        innerCircle.layer.cornerRadius = 28
+        innerCircle.isUserInteractionEnabled = false
+        innerCircle.translatesAutoresizingMaskIntoConstraints = false
+        shutterButton.addSubview(innerCircle)
+        
+        NSLayoutConstraint.activate([
+            innerCircle.centerXAnchor.constraint(equalTo: shutterButton.centerXAnchor),
+            innerCircle.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
+            innerCircle.widthAnchor.constraint(equalToConstant: 56),
+            innerCircle.heightAnchor.constraint(equalToConstant: 56)
+        ])
+        
+        // Add shadow for depth
+        shutterButton.layer.shadowColor = UIColor.black.cgColor
+        shutterButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+        shutterButton.layer.shadowRadius = 4
+        shutterButton.layer.shadowOpacity = 0.2
         
         let shutterTap = UITapGestureRecognizer(target: self, action: #selector(shutterTapped))
         let shutterLongPress = UILongPressGestureRecognizer(target: self, action: #selector(shutterLongPressed))
@@ -46,10 +70,13 @@ class ShutterBar: UIView {
         shutterButton.addGestureRecognizer(shutterTap)
         shutterButton.addGestureRecognizer(shutterLongPress)
         
-        // Flip Camera Button
-        flipCameraButton.backgroundColor = .clear
+        // Flip Camera Button - Modern circular design
+        flipCameraButton.backgroundColor = UIColor.white.withAlphaComponent(0.1)
         flipCameraButton.setImage(UIImage(systemName: "camera.rotate"), for: .normal)
         flipCameraButton.tintColor = .white
+        flipCameraButton.layer.cornerRadius = 22
+        flipCameraButton.layer.borderWidth = 1
+        flipCameraButton.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
         flipCameraButton.addTarget(self, action: #selector(flipCameraTapped), for: .touchUpInside)
         
         // Layout

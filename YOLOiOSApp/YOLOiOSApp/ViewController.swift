@@ -982,7 +982,7 @@ extension ViewController {
       parameterEditView.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor),
       
       // Model Dropdown
-      modelDropdown.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor),
+      modelDropdown.topAnchor.constraint(equalTo: view.topAnchor),
       modelDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       modelDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       modelDropdown.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -990,10 +990,15 @@ extension ViewController {
   }
   
   private func setupNewUIActions() {
+    print("ViewController: setupNewUIActions called")
+    
     // Status bar actions
     statusMetricBar.onModelTap = { [weak self] in
+      print("ViewController: onModelTap closure called")
       self?.showModelSelector()
     }
+    
+    print("ViewController: onModelTap closure set")
     
     // Model dropdown delegate
     modelDropdown.delegate = self
@@ -1069,6 +1074,13 @@ extension ViewController {
     print("showModelSelector called")
     print("Current models count: \(currentModels.count)")
     print("Current model name: \(currentModelName)")
+    print("isNewUIActive: \(isNewUIActive)")
+    
+    // Debug: Check if models are loaded
+    if currentModels.isEmpty {
+      print("WARNING: No models loaded!")
+      return
+    }
     
     // Ensure dropdown is on top
     view.bringSubviewToFront(modelDropdown)
@@ -1079,6 +1091,8 @@ extension ViewController {
     }?.identifier
     
     print("Current model identifier: \(currentModelIdentifier ?? "nil")")
+    print("Model dropdown frame: \(modelDropdown.frame)")
+    print("Model dropdown superview: \(modelDropdown.superview != nil)")
     
     // Configure and toggle dropdown
     modelDropdown.configure(with: currentModels, currentModel: currentModelIdentifier)

@@ -41,6 +41,7 @@ class ModelDropdownView: UIView {
     private func setupUI() {
         // Disable interaction initially
         isUserInteractionEnabled = false
+        isHidden = false  // Ensure view is not hidden
         
         // Overlay
         overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
@@ -100,6 +101,11 @@ class ModelDropdownView: UIView {
         // Height constraint
         containerHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: 0)
         containerHeightConstraint?.isActive = true
+        
+        // Ensure the dropdown is initially hidden properly
+        containerView.alpha = 1.0
+        overlayView.alpha = 0
+        isExpanded = false
     }
     
     // MARK: - Public Methods
@@ -112,8 +118,19 @@ class ModelDropdownView: UIView {
     }
     
     func show() {
-        guard !isExpanded else { return }
+        guard !isExpanded else { 
+            print("ModelDropdownView: Already expanded, returning")
+            return 
+        }
         isExpanded = true
+        
+        print("ModelDropdownView: Showing dropdown")
+        print("ModelDropdownView: isHidden = \(isHidden)")
+        print("ModelDropdownView: superview = \(superview != nil ? "exists" : "nil")")
+        
+        // Ensure view is visible and on top
+        isHidden = false
+        superview?.bringSubviewToFront(self)
         
         // Enable interaction when showing
         isUserInteractionEnabled = true
@@ -123,11 +140,18 @@ class ModelDropdownView: UIView {
         let contentHeight = calculateContentHeight()
         let finalHeight = min(contentHeight, maxHeight)
         
+        print("ModelDropdownView: Calculated height = \(finalHeight)")
+        print("ModelDropdownView: Frame = \(frame)")
+        
         containerHeightConstraint?.constant = finalHeight
         
         UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut) {
             self.overlayView.alpha = 1
             self.layoutIfNeeded()
+        } completion: { _ in
+            print("ModelDropdownView: Animation completed")
+            print("ModelDropdownView: Final frame = \(self.frame)")
+            print("ModelDropdownView: Container frame = \(self.containerView.frame)")
         }
     }
     
@@ -192,12 +216,19 @@ class ModelDropdownView: UIView {
     private func calculateContentHeight() -> CGFloat {
         var height: CGFloat = 0
         
+        print("ModelDropdownView: Calculating content height")
+        print("ModelDropdownView: Number of sections: \(groupedModels.count)")
+        
         for section in groupedModels {
+            print("ModelDropdownView: Section '\(section.title)' has \(section.models.count) models")
             height += 44 // Header height
             height += CGFloat(section.models.count) * 52 // Row height
         }
         
-        return height + 20 // Extra padding
+        let totalHeight = height + 20 // Extra padding
+        print("ModelDropdownView: Total calculated height: \(totalHeight)")
+        
+        return totalHeight
     }
     
     @objc private func overlayTapped() {

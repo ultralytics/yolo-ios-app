@@ -2,7 +2,7 @@
 
 import UIKit
 
-class StatusMetricBar: UIView {
+class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
     // UI Elements
     private let logoImageView = UIImageView()
     private let modelButton = UIButton(type: .system)
@@ -18,6 +18,13 @@ class StatusMetricBar: UIView {
     private let sizeDropdownIcon = UILabel()
     private let fpsSubtitleLabel = UILabel()
     private let latencySubtitleLabel = UILabel()
+    
+    // Container views
+    private let logoContainer = UIView()
+    private let modelContainer = UIView()
+    private let sizeContainer = UIView()
+    private let fpsContainer = UIView()
+    private let latencyContainer = UIView()
     
     // Properties
     var onModelTap: (() -> Void)?
@@ -44,7 +51,7 @@ class StatusMetricBar: UIView {
         modelButton.setTitleColor(.ultralyticsTextPrimary, for: .normal)
         modelButton.titleLabel?.font = Typography.statusBarFont
         modelButton.contentHorizontalAlignment = .center
-        modelButton.isUserInteractionEnabled = true
+        modelButton.isUserInteractionEnabled = false  // Disable button to let container handle tap
         
         // Labels
         [sizeLabel, fpsLabel, latencyLabel].forEach { label in
@@ -73,7 +80,7 @@ class StatusMetricBar: UIView {
         [modelDropdownIcon, sizeDropdownIcon].forEach { label in
             label.text = "⌄"
             label.textColor = .ultralyticsTextSubtle
-            label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
+            label.font = UIFont.systemFont(ofSize: 8, weight: .regular)  // Smaller font for dropdown icon
             label.textAlignment = .center
         }
         
@@ -84,12 +91,7 @@ class StatusMetricBar: UIView {
         stackView.distribution = .fillEqually
         stackView.isUserInteractionEnabled = true
         
-        // Create container views for each element to ensure equal spacing
-        let logoContainer = UIView()
-        let modelContainer = UIView()
-        let sizeContainer = UIView()
-        let fpsContainer = UIView()
-        let latencyContainer = UIView()
+        // Use the instance container views (already declared as properties)
         
         // Ensure containers don't block touch events
         [logoContainer, modelContainer, sizeContainer, fpsContainer, latencyContainer].forEach {
@@ -100,13 +102,14 @@ class StatusMetricBar: UIView {
         // Create vertical stacks for model and size
         let modelStack = UIStackView()
         modelStack.axis = .vertical
-        modelStack.spacing = 2
+        modelStack.spacing = 0  // Reduce spacing to 0
         modelStack.alignment = .center
+        modelStack.distribution = .fill
         modelStack.isUserInteractionEnabled = true
         
         let modelSubtitleStack = UIStackView()
         modelSubtitleStack.axis = .vertical
-        modelSubtitleStack.spacing = 0
+        modelSubtitleStack.spacing = -2  // Negative spacing to bring elements closer
         modelSubtitleStack.alignment = .center
         modelSubtitleStack.addArrangedSubview(modelSubtitleLabel)
         modelSubtitleStack.addArrangedSubview(modelDropdownIcon)
@@ -118,12 +121,13 @@ class StatusMetricBar: UIView {
         
         let sizeStack = UIStackView()
         sizeStack.axis = .vertical
-        sizeStack.spacing = 2
+        sizeStack.spacing = 0  // Reduce spacing to 0
         sizeStack.alignment = .center
+        sizeStack.distribution = .fill
         
         let sizeSubtitleStack = UIStackView()
         sizeSubtitleStack.axis = .vertical
-        sizeSubtitleStack.spacing = 0
+        sizeSubtitleStack.spacing = -2  // Negative spacing to bring elements closer
         sizeSubtitleStack.alignment = .center
         sizeSubtitleStack.addArrangedSubview(sizeSubtitleLabel)
         sizeSubtitleStack.addArrangedSubview(sizeDropdownIcon)
@@ -133,15 +137,17 @@ class StatusMetricBar: UIView {
         
         let fpsStack = UIStackView()
         fpsStack.axis = .vertical
-        fpsStack.spacing = 2
+        fpsStack.spacing = 0  // Reduce spacing to 0
         fpsStack.alignment = .center
+        fpsStack.distribution = .fill
         fpsStack.addArrangedSubview(fpsLabel)
         fpsStack.addArrangedSubview(fpsSubtitleLabel)
         
         let latencyStack = UIStackView()
         latencyStack.axis = .vertical
-        latencyStack.spacing = 2
+        latencyStack.spacing = 0  // Reduce spacing to 0
         latencyStack.alignment = .center
+        latencyStack.distribution = .fill
         latencyStack.addArrangedSubview(latencyLabel)
         latencyStack.addArrangedSubview(latencySubtitleLabel)
         
@@ -152,9 +158,22 @@ class StatusMetricBar: UIView {
         fpsContainer.addSubview(fpsStack)
         latencyContainer.addSubview(latencyStack)
         
+        // Disable user interaction on child views to ensure container gets the tap
+        modelStack.isUserInteractionEnabled = false
+        modelButton.isUserInteractionEnabled = false
+        modelSubtitleStack.isUserInteractionEnabled = false
+        modelSubtitleLabel.isUserInteractionEnabled = false
+        modelDropdownIcon.isUserInteractionEnabled = false
+        print("StatusMetricBar: Disabled user interaction on child views to ensure container gets tap")
+        
         // Add tap gesture to entire model container
         let modelTapGesture = UITapGestureRecognizer(target: self, action: #selector(modelButtonTapped))
+        modelTapGesture.delegate = self
         modelContainer.addGestureRecognizer(modelTapGesture)
+        modelContainer.isUserInteractionEnabled = true
+        
+        print("StatusMetricBar: Added tap gesture to modelContainer")
+        print("StatusMetricBar: modelContainer.isUserInteractionEnabled = \(modelContainer.isUserInteractionEnabled)")
         
         // Center elements in their containers
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -195,7 +214,23 @@ class StatusMetricBar: UIView {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            heightAnchor.constraint(equalToConstant: 48)
+            heightAnchor.constraint(equalToConstant: 48),
+            
+            // Set fixed heights for main labels to ensure alignment
+            modelButton.heightAnchor.constraint(equalToConstant: 18),
+            sizeLabel.heightAnchor.constraint(equalToConstant: 18),
+            fpsLabel.heightAnchor.constraint(equalToConstant: 18),
+            latencyLabel.heightAnchor.constraint(equalToConstant: 18),
+            
+            // Set fixed heights for subtitle labels
+            modelSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
+            sizeSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
+            fpsSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
+            latencySubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
+            
+            // Set fixed heights for dropdown icons
+            modelDropdownIcon.heightAnchor.constraint(equalToConstant: 8),
+            sizeDropdownIcon.heightAnchor.constraint(equalToConstant: 8)
         ])
         
         // Long press gesture for hidden info
@@ -203,10 +238,17 @@ class StatusMetricBar: UIView {
         longPress.minimumPressDuration = 1.0
         logoImageView.isUserInteractionEnabled = true
         logoImageView.addGestureRecognizer(longPress)
+        
+        // Add a test tap to the entire StatusMetricBar
+        let testTap = UITapGestureRecognizer(target: self, action: #selector(testTapped))
+        self.addGestureRecognizer(testTap)
+        self.isUserInteractionEnabled = true
+        print("StatusMetricBar: Added test tap gesture to self")
     }
     
     @objc private func modelButtonTapped() {
         print("StatusMetricBar: modelButtonTapped called")
+        print("StatusMetricBar: onModelTap is \(onModelTap != nil ? "set" : "nil")")
         onModelTap?()
     }
     
@@ -214,6 +256,26 @@ class StatusMetricBar: UIView {
         if gesture.state == .began {
             // Show hidden info page
             NotificationCenter.default.post(name: .showHiddenInfo, object: nil)
+        }
+    }
+    
+    @objc private func testTapped(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: self)
+        print("StatusMetricBar: TEST TAP detected at \(location)")
+        print("StatusMetricBar: Frame = \(frame)")
+        print("StatusMetricBar: Bounds = \(bounds)")
+        print("StatusMetricBar: modelContainer frame = \(modelContainer.frame)")
+        
+        // Check if tap is in the horizontal range of modelContainer
+        // Since height is 0, we check X position and use parent's height
+        let modelContainerX = modelContainer.frame.minX
+        let modelContainerMaxX = modelContainer.frame.maxX
+        
+        print("StatusMetricBar: Checking if tap X \(location.x) is between \(modelContainerX) and \(modelContainerMaxX)")
+        
+        if location.x >= modelContainerX && location.x <= modelContainerMaxX {
+            print("StatusMetricBar: Tap is in modelContainer X range - triggering model tap")
+            modelButtonTapped()
         }
     }
     
@@ -225,6 +287,45 @@ class StatusMetricBar: UIView {
     func updateModel(name: String, size: String) {
         modelButton.setTitle(name, for: .normal)
         sizeLabel.text = size.uppercased()
+    }
+    
+    // MARK: - Layout
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        print("StatusMetricBar: layoutSubviews called")
+        print("StatusMetricBar: self.frame = \(frame)")
+        print("StatusMetricBar: modelContainer.frame = \(modelContainer.frame)")
+        print("StatusMetricBar: isUserInteractionEnabled = \(isUserInteractionEnabled)")
+        print("StatusMetricBar: modelContainer.isUserInteractionEnabled = \(modelContainer.isUserInteractionEnabled)")
+    }
+    
+    // MARK: - Hit Testing
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let view = super.hitTest(point, with: event)
+        if modelContainer.frame.contains(point) {
+            print("StatusMetricBar: Hit test - point \(point) is in modelContainer")
+        }
+        return view
+    }
+    
+    // MARK: - UIGestureRecognizerDelegate
+    
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        print("StatusMetricBar: gestureRecognizerShouldBegin called")
+        let location = gestureRecognizer.location(in: self)
+        print("StatusMetricBar: Tap location: \(location)")
+        print("StatusMetricBar: modelContainer frame: \(modelContainer.frame)")
+        return true
+    }
+    
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        print("StatusMetricBar: shouldReceive touch called")
+        let location = touch.location(in: self)
+        print("StatusMetricBar: Touch location in StatusMetricBar: \(location)")
+        print("StatusMetricBar: Touch view: \(touch.view)")
+        return true
     }
 }
 

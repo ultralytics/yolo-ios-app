@@ -71,17 +71,19 @@ class RightSideToolBar: UIView {
     private func createToolButton(for tool: Tool) -> UIButton {
         let button = UIButton(type: .custom)
         button.tag = tool.rawValue
-        button.backgroundColor = .ultralyticsBrown
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
         button.layer.cornerRadius = 20
-        button.clipsToBounds = true
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
         
         if tool.isTextButton {
             button.setTitle(tool.icon, for: .normal)
-            button.titleLabel?.font = Typography.labelFont
+            button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
             button.setTitleColor(.white, for: .normal)
         } else {
             button.setImage(UIImage(systemName: tool.icon), for: .normal)
             button.tintColor = .white
+            button.imageView?.contentMode = .scaleAspectFit
         }
         
         button.addTarget(self, action: #selector(toolButtonTapped), for: .touchUpInside)
@@ -140,10 +142,14 @@ class RightSideToolBar: UIView {
     private func setButtonActive(_ button: UIButton, active: Bool) {
         if active {
             button.backgroundColor = .ultralyticsLime
+            button.layer.borderColor = UIColor.ultralyticsLime.cgColor
             button.tintColor = .black
+            button.setTitleColor(.black, for: .normal)
         } else {
-            button.backgroundColor = .ultralyticsBrown
+            button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
+            button.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
             button.tintColor = .white
+            button.setTitleColor(.white, for: .normal)
         }
     }
     

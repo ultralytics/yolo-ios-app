@@ -61,6 +61,24 @@ class TaskTabStrip: UIView {
         stackView.distribution = .fillProportionally
         stackView.spacing = 8
         
+        // Add padding views to allow edge items to center
+        let leadingPaddingView = UIView()
+        let trailingPaddingView = UIView()
+        leadingPaddingView.translatesAutoresizingMaskIntoConstraints = false
+        trailingPaddingView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Create horizontal stack with padding
+        let containerStack = UIStackView()
+        containerStack.axis = .horizontal
+        containerStack.distribution = .fill
+        containerStack.spacing = 0
+        
+        // Add leading padding
+        containerStack.addArrangedSubview(leadingPaddingView)
+        
+        // Add buttons stack
+        containerStack.addArrangedSubview(stackView)
+        
         for task in Task.allCases {
             let button = UIButton(type: .system)
             button.setTitle(task.rawValue, for: .normal)
@@ -72,17 +90,21 @@ class TaskTabStrip: UIView {
             stackView.addArrangedSubview(button)
         }
         
+        // Add trailing padding
+        containerStack.addArrangedSubview(trailingPaddingView)
+        
         // Underline
         underlineView.backgroundColor = .ultralyticsLime
         
         // Add views
         addSubview(scrollView)
         scrollView.addSubview(contentView)
-        contentView.addSubview(stackView)
+        contentView.addSubview(containerStack)
         contentView.addSubview(underlineView)
         
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        containerStack.translatesAutoresizingMaskIntoConstraints = false
         stackView.translatesAutoresizingMaskIntoConstraints = false
         underlineView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -101,11 +123,15 @@ class TaskTabStrip: UIView {
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
             
-            // Stack view constraints
-            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            // Container stack constraints
+            containerStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            containerStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            containerStack.topAnchor.constraint(equalTo: contentView.topAnchor),
+            containerStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            
+            // Padding constraints - make them half the screen width to allow centering
+            leadingPaddingView.widthAnchor.constraint(equalTo: scrollView.widthAnchor, multiplier: 0.5),
+            trailingPaddingView.widthAnchor.constraint(equalTo: scrollView.widthAnchor, multiplier: 0.5),
             
             // Underline constraints
             underlineView.heightAnchor.constraint(equalToConstant: 2),
@@ -159,8 +185,8 @@ class TaskTabStrip: UIView {
             let maxOffset = max(0, contentWidth - scrollViewWidth)
             let clampedOffset = min(max(targetOffset, minOffset), maxOffset)
             
-            // Animate scroll to center
-            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+            // Animate scroll to center with smooth animation
+            UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseInOut, .allowUserInteraction]) {
                 self.scrollView.contentOffset = CGPoint(x: clampedOffset, y: 0)
             }
         }

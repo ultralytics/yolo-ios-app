@@ -13,11 +13,15 @@ class RightSideToolBar: UIView {
         var icon: String {
             switch self {
             case .zoom: return "1.0x" // Will be updated dynamically
-            case .itemsMax: return "square.stack"
-            case .confidence: return "chart.dots.scatter"
-            case .iou: return "intersect.circle"
+            case .itemsMax: return "square.stack.3d.up"
+            case .confidence: return "target"
+            case .iou: return "square.on.square"
             case .lineThickness: return "pencil.line"
             }
+        }
+        
+        var usesCustomIcon: Bool {
+            return false // All use system icons now
         }
         
         var isTextButton: Bool {
@@ -71,16 +75,16 @@ class RightSideToolBar: UIView {
     private func createToolButton(for tool: Tool) -> UIButton {
         let button = UIButton(type: .custom)
         button.tag = tool.rawValue
-        button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         button.layer.cornerRadius = 20
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+        button.layer.borderWidth = 0
         
         if tool.isTextButton {
             button.setTitle(tool.icon, for: .normal)
             button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
             button.setTitleColor(.white, for: .normal)
         } else {
+            // Use system icon
             button.setImage(UIImage(systemName: tool.icon), for: .normal)
             button.tintColor = .white
             button.imageView?.contentMode = .scaleAspectFit
@@ -142,12 +146,12 @@ class RightSideToolBar: UIView {
     private func setButtonActive(_ button: UIButton, active: Bool) {
         if active {
             button.backgroundColor = .ultralyticsLime
-            button.layer.borderColor = UIColor.ultralyticsLime.cgColor
+            button.layer.borderWidth = 0
             button.tintColor = .black
             button.setTitleColor(.black, for: .normal)
         } else {
-            button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
-            button.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+            button.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+            button.layer.borderWidth = 0
             button.tintColor = .white
             button.setTitleColor(.white, for: .normal)
         }

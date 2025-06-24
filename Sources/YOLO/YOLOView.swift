@@ -1210,6 +1210,22 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     
     return Float(device.videoZoomFactor)
   }
+  
+  /// Sets the line width for bounding box strokes
+  /// - Parameter width: The desired line width (1.0 to 10.0)
+  public func setLineWidth(_ width: Float) {
+    let clampedWidth = CGFloat(max(1.0, min(width, 10.0)))
+    for boundingBox in boundingBoxViews {
+      boundingBox.setLineWidth(clampedWidth)
+    }
+  }
+  
+  /// Gets the current line width for bounding boxes
+  /// - Returns: The current line width
+  public func getLineWidth() -> Float {
+    guard let firstBox = boundingBoxViews.first else { return 4.0 }
+    return Float(firstBox.getLineWidth())
+  }
 }
 
 extension YOLOView: AVCapturePhotoCaptureDelegate {

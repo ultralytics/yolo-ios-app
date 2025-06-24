@@ -160,15 +160,16 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   private let shutterBar = ShutterBar()
   private let rightSideToolBar = RightSideToolBar()
   private let parameterEditView = ParameterEditView()
+  private let thresholdSlider = ThresholdSliderView()
   private let modelDropdown = ModelDropdownView()
   
   // UI State
   private var isNewUIActive = true // Toggle for new/old UI
   private var currentThresholds: [String: Float] = [
-    "confidence": 0.25,
-    "iou": 0.45,
-    "itemsMax": 15,
-    "lineThickness": 2.0
+    "confidence": 0.5,
+    "iou": 0.5,
+    "itemsMax": 30,
+    "lineThickness": 3.0
   ]
 
   var shareButton = UIButton()
@@ -903,7 +904,7 @@ extension ViewController {
     cameraPreviewContainer.clipsToBounds = true
     
     // Add components to view (order matters for z-index)
-    [statusMetricBar, cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, parameterEditView].forEach {
+    [statusMetricBar, cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, thresholdSlider].forEach {
       view.addSubview($0)
       $0.translatesAutoresizingMaskIntoConstraints = false
     }
@@ -975,11 +976,11 @@ extension ViewController {
       rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
       rightSideToolBar.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor, constant: -20),
       
-      // Parameter Edit View (overlay)
-      parameterEditView.topAnchor.constraint(equalTo: cameraPreviewContainer.topAnchor),
-      parameterEditView.leadingAnchor.constraint(equalTo: cameraPreviewContainer.leadingAnchor),
-      parameterEditView.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor),
-      parameterEditView.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor),
+      // Threshold Slider (overlay)
+      thresholdSlider.topAnchor.constraint(equalTo: view.topAnchor),
+      thresholdSlider.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      thresholdSlider.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      thresholdSlider.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       
       // Model Dropdown
       modelDropdown.topAnchor.constraint(equalTo: view.topAnchor),
@@ -1034,9 +1035,16 @@ extension ViewController {
       self?.handleParameterTool(tool)
     }
     
-    // Parameter edit actions
-    parameterEditView.onValueChange = { [weak self] parameter in
-      self?.handleParameterChange(parameter)
+    // Threshold slider actions
+    thresholdSlider.onValueChange = { [weak self] value in
+      self?.handleSliderValueChange(value)
+    }
+    
+    thresholdSlider.onHide = { [weak self] in
+      // Show task tab strip when slider hides
+      UIView.animate(withDuration: 0.2) {
+        self?.taskTabStrip.alpha = 1
+      }
     }
   }
   
@@ -1195,21 +1203,58 @@ extension ViewController {
   }
   
   private func handleParameterTool(_ tool: RightSideToolBar.Tool) {
+    // Hide task tab strip when showing slider
+    UIView.animate(withDuration: 0.2) {
+      self.taskTabStrip.alpha = 0
+    }
+    
     switch tool {
     case .itemsMax:
-      let current = Int(currentThresholds["itemsMax"] ?? 15)
-      parameterEditView.showParameter(.itemsMax(current))
+      let current = Int(currentThresholds["itemsMax"] ?? 30)
+      thresholdSlider.showParameter(.itemsMax(current))
     case .confidence:
-      let current = currentThresholds["confidence"] ?? 0.25
-      parameterEditView.showParameter(.confidence(current))
+      let current = currentThresholds["confidence"] ?? 0.5
+      thresholdSlider.showParameter(.confidence(current))
     case .iou:
-      let current = currentThresholds["iou"] ?? 0.45
-      parameterEditView.showParameter(.iou(current))
+      let current = currentThresholds["iou"] ?? 0.5
+      thresholdSlider.showParameter(.iou(current))
     case .lineThickness:
-      let current = currentThresholds["lineThickness"] ?? 2.0
-      parameterEditView.showParameter(.lineThickness(current))
+      let current = currentThresholds["lineThickness"] ?? 3.0
+      thresholdSlider.showParameter(.lineThickness(current))
     default:
       break
+    }
+    
+    // Deactivate the toolbar after selection
+    rightSideToolBar.deactivateAll()
+  }
+  
+  private func handleSliderValueChange(_ normalizedValue: Float) {
+    guard let parameter = thresholdSlider.parameter else { return }
+    
+    // Convert normalized value (0-1) to parameter range
+    let range = parameter.range
+    let actualValue = range.lowerBound + normalizedValue * (range.upperBound - range.lowerBound)
+    
+    switch parameter {
+    case .itemsMax:
+      let intValue = Int(actualValue)
+      currentThresholds["itemsMax"] = Float(intValue)
+      yoloView.sliderNumItems.value = Float(intValue)
+      yoloView.sliderNumItems.sendActions(for: .valueChanged)
+    case .confidence:
+      currentThresholds["confidence"] = actualValue
+      yoloView.sliderConf.value = actualValue
+      yoloView.sliderConf.sendActions(for: .valueChanged)
+    case .iou:
+      currentThresholds["iou"] = actualValue
+      yoloView.sliderIoU.value = actualValue
+      yoloView.sliderIoU.sendActions(for: .valueChanged)
+    case .lineThickness:
+      currentThresholds["lineThickness"] = actualValue
+      // Apply line thickness to YOLOView
+      yoloView.setLineWidth(actualValue)
+      print("Line thickness set to: \(actualValue)")
     }
   }
   
@@ -1232,8 +1277,9 @@ extension ViewController {
       yoloView.sliderIoU.sendActions(for: .valueChanged)
     case .lineThickness(let value):
       currentThresholds["lineThickness"] = value
-      // Line thickness is not configurable in YOLOView
-      print("Line thickness set to: \(value) (not yet implemented)")
+      // Apply line thickness to YOLOView
+      yoloView.setLineWidth(value)
+      print("Line thickness set to: \(value)")
     }
     
     // Save to UserDefaults

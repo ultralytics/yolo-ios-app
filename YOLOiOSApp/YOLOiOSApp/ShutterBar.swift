@@ -72,7 +72,7 @@ class ShutterBar: UIView {
         
         // Flip Camera Button - Modern circular design
         flipCameraButton.backgroundColor = UIColor.white.withAlphaComponent(0.1)
-        flipCameraButton.setImage(UIImage(systemName: "camera.rotate"), for: .normal)
+        flipCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath"), for: .normal)
         flipCameraButton.tintColor = .white
         flipCameraButton.layer.cornerRadius = 22
         flipCameraButton.layer.borderWidth = 1

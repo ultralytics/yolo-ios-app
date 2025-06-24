@@ -28,6 +28,7 @@
 		73A992752E06AF930051C61F /* SegmentModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44472D42F7CF00D2CA6A /* SegmentModels */; };
 		73A992762E06AF930051C61F /* PoseModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44462D42F7CF00D2CA6A /* PoseModels */; };
 		73A992772E06AF930051C61F /* OBBModels in Resources */ = {isa = PBXBuildFile; fileRef = 734B44452D42F7CF00D2CA6A /* OBBModels */; };
+		73A9927D2E093F680051C61F /* ThresholdSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9927C2E093F680051C61F /* ThresholdSliderView.swift */; };
 		73BFE0A72E07BDD000CF6FEC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */; };
 		73BFE0A82E07BDD000CF6FEC /* ModelSizeHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
@@ -57,6 +58,7 @@
 		73A9920E2E029C7A0051C61F /* TaskTabStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTabStrip.swift; sourceTree = "<group>"; };
 		73A9920F2E029C7A0051C61F /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		73A992192E05132F0051C61F /* ModelDropdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDropdownView.swift; sourceTree = "<group>"; };
+		73A9927C2E093F680051C61F /* ThresholdSliderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThresholdSliderView.swift; sourceTree = "<group>"; };
 		73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSizeHelper.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				73A9927C2E093F680051C61F /* ThresholdSliderView.swift */,
 				73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */,
 				73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */,
 				73A992192E05132F0051C61F /* ModelDropdownView.swift */,
@@ -238,6 +241,7 @@
 				73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */,
 				73A992122E029C7A0051C61F /* Colors.swift in Sources */,
 				73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */,
+				73A9927D2E093F680051C61F /* ThresholdSliderView.swift in Sources */,
 				73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */,
 				73BFE0A72E07BDD000CF6FEC /* AppDelegate.swift in Sources */,
 				73BFE0A82E07BDD000CF6FEC /* ModelSizeHelper.swift in Sources */,

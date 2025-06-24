@@ -67,7 +67,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         // Configure subtitle labels
         [modelSubtitleLabel, sizeSubtitleLabel, fpsSubtitleLabel, latencySubtitleLabel].forEach { label in
             label.textColor = .ultralyticsTextSubtle
-            label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
+            label.font = UIFont.systemFont(ofSize: 9, weight: .regular)
             label.textAlignment = .center
         }
         
@@ -102,7 +102,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         // Create vertical stacks for model and size
         let modelStack = UIStackView()
         modelStack.axis = .vertical
-        modelStack.spacing = 0  // Reduce spacing to 0
+        modelStack.spacing = -2  // Negative spacing for tighter layout
         modelStack.alignment = .center
         modelStack.distribution = .fill
         modelStack.isUserInteractionEnabled = true
@@ -121,7 +121,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         
         let sizeStack = UIStackView()
         sizeStack.axis = .vertical
-        sizeStack.spacing = 0  // Reduce spacing to 0
+        sizeStack.spacing = -2  // Negative spacing for tighter layout
         sizeStack.alignment = .center
         sizeStack.distribution = .fill
         
@@ -137,7 +137,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         
         let fpsStack = UIStackView()
         fpsStack.axis = .vertical
-        fpsStack.spacing = 0  // Reduce spacing to 0
+        fpsStack.spacing = -2  // Negative spacing for tighter layout
         fpsStack.alignment = .center
         fpsStack.distribution = .fill
         fpsStack.addArrangedSubview(fpsLabel)
@@ -145,7 +145,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         
         let latencyStack = UIStackView()
         latencyStack.axis = .vertical
-        latencyStack.spacing = 0  // Reduce spacing to 0
+        latencyStack.spacing = -2  // Negative spacing for tighter layout
         latencyStack.alignment = .center
         latencyStack.distribution = .fill
         latencyStack.addArrangedSubview(latencyLabel)
@@ -214,19 +214,19 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            heightAnchor.constraint(equalToConstant: 48),
+            heightAnchor.constraint(equalToConstant: 44),
             
             // Set fixed heights for main labels to ensure alignment
-            modelButton.heightAnchor.constraint(equalToConstant: 18),
-            sizeLabel.heightAnchor.constraint(equalToConstant: 18),
-            fpsLabel.heightAnchor.constraint(equalToConstant: 18),
-            latencyLabel.heightAnchor.constraint(equalToConstant: 18),
+            modelButton.heightAnchor.constraint(equalToConstant: 16),
+            sizeLabel.heightAnchor.constraint(equalToConstant: 16),
+            fpsLabel.heightAnchor.constraint(equalToConstant: 16),
+            latencyLabel.heightAnchor.constraint(equalToConstant: 16),
             
             // Set fixed heights for subtitle labels
-            modelSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
-            sizeSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
-            fpsSubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
-            latencySubtitleLabel.heightAnchor.constraint(equalToConstant: 12),
+            modelSubtitleLabel.heightAnchor.constraint(equalToConstant: 10),
+            sizeSubtitleLabel.heightAnchor.constraint(equalToConstant: 10),
+            fpsSubtitleLabel.heightAnchor.constraint(equalToConstant: 10),
+            latencySubtitleLabel.heightAnchor.constraint(equalToConstant: 10),
             
             // Set fixed heights for dropdown icons
             modelDropdownIcon.heightAnchor.constraint(equalToConstant: 8),

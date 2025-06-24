@@ -27,25 +27,24 @@ class ShutterBar: UIView {
     private func setupUI() {
         backgroundColor = .ultralyticsSurfaceDark
         
-        // Thumbnail Button - Modern design with border
+        // Thumbnail Button - Modern design without border
         thumbnailButton.backgroundColor = .ultralyticsBrown
         thumbnailButton.layer.cornerRadius = 12
-        thumbnailButton.layer.borderWidth = 2
-        thumbnailButton.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
+        thumbnailButton.layer.borderWidth = 0
         thumbnailButton.clipsToBounds = true
         thumbnailButton.contentMode = .scaleAspectFill
         thumbnailButton.addTarget(self, action: #selector(thumbnailTapped), for: .touchUpInside)
         
-        // Shutter Button - Modern design with gradient
-        shutterButton.backgroundColor = .white
+        // Shutter Button - Modern design with gray border and black gap
+        shutterButton.backgroundColor = .black  // Black background for the gap
         shutterButton.layer.cornerRadius = 34
         shutterButton.layer.borderWidth = 3
-        shutterButton.layer.borderColor = UIColor.white.withAlphaComponent(0.8).cgColor
+        shutterButton.layer.borderColor = UIColor.gray.cgColor  // Gray border
         
-        // Add inner circle for visual depth
+        // Add inner white circle with gap from border
         let innerCircle = UIView()
         innerCircle.backgroundColor = .white
-        innerCircle.layer.cornerRadius = 28
+        innerCircle.layer.cornerRadius = 29  // Larger radius for smaller black gap
         innerCircle.isUserInteractionEnabled = false
         innerCircle.translatesAutoresizingMaskIntoConstraints = false
         shutterButton.addSubview(innerCircle)
@@ -53,8 +52,8 @@ class ShutterBar: UIView {
         NSLayoutConstraint.activate([
             innerCircle.centerXAnchor.constraint(equalTo: shutterButton.centerXAnchor),
             innerCircle.centerYAnchor.constraint(equalTo: shutterButton.centerYAnchor),
-            innerCircle.widthAnchor.constraint(equalToConstant: 56),
-            innerCircle.heightAnchor.constraint(equalToConstant: 56)
+            innerCircle.widthAnchor.constraint(equalToConstant: 58),  // Larger white circle for smaller gap
+            innerCircle.heightAnchor.constraint(equalToConstant: 58)
         ])
         
         // Add shadow for depth
@@ -70,13 +69,12 @@ class ShutterBar: UIView {
         shutterButton.addGestureRecognizer(shutterTap)
         shutterButton.addGestureRecognizer(shutterLongPress)
         
-        // Flip Camera Button - Modern circular design
+        // Flip Camera Button - Modern circular design without border
         flipCameraButton.backgroundColor = UIColor.white.withAlphaComponent(0.1)
         flipCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath"), for: .normal)
         flipCameraButton.tintColor = .white
         flipCameraButton.layer.cornerRadius = 22
-        flipCameraButton.layer.borderWidth = 1
-        flipCameraButton.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+        flipCameraButton.layer.borderWidth = 0
         flipCameraButton.addTarget(self, action: #selector(flipCameraTapped), for: .touchUpInside)
         
         // Layout
@@ -135,14 +133,18 @@ class ShutterBar: UIView {
     @objc private func shutterLongPressed(_ gesture: UILongPressGestureRecognizer) {
         if gesture.state == .began {
             onShutterLongPress?()
-            // Start recording animation
-            UIView.animate(withDuration: 0.3) {
-                self.shutterButton.backgroundColor = .red
+            // Start recording animation - change inner circle to red
+            if let innerCircle = self.shutterButton.subviews.first {
+                UIView.animate(withDuration: 0.3) {
+                    innerCircle.backgroundColor = .red
+                }
             }
         } else if gesture.state == .ended || gesture.state == .cancelled {
             // Reset color when recording stops
-            UIView.animate(withDuration: 0.3) {
-                self.shutterButton.backgroundColor = .white
+            if let innerCircle = self.shutterButton.subviews.first {
+                UIView.animate(withDuration: 0.3) {
+                    innerCircle.backgroundColor = .white
+                }
             }
         }
     }
@@ -157,6 +159,9 @@ class ShutterBar: UIView {
     }
     
     func setRecording(_ isRecording: Bool) {
-        shutterButton.backgroundColor = isRecording ? .red : .white
+        // Change inner circle color, not button background
+        if let innerCircle = shutterButton.subviews.first {
+            innerCircle.backgroundColor = isRecording ? .red : .white
+        }
     }
 }

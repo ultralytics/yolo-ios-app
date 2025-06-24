@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Model Files
+The YOLOiOSApp includes pre-trained YOLO11 CoreML models organized by task type:
+- **Location**: `YOLOiOSApp/YOLOiOSApp/Models/`
+- **Structure**: Models are organized in folders by task (DetectModels, SegmentModels, ClassifyModels, PoseModels, OBBModels)
+- **Format**: `.mlpackage` files (CoreML format)
+- **Sizes**: Each task includes models in NANO (n), SMALL (s), MEDIUM (m), LARGE (l), and XLARGE (x) sizes
+- **Git**: Model files are excluded from version control via `.gitignore` to keep repository size manageable
+
 ## Build and Test Commands
 
 ### Swift Package Commands
@@ -92,7 +100,7 @@ This repository provides a comprehensive YOLO implementation for iOS, consisting
 - Model sizes: NANO (n), SMALL (s), MEDIUM (m), LARGE (l), XLARGE (x)
 - INT8 quantization for optimal performance
 
-### Current UI State (feat/new-design branch)
+### Current UI State (feat/uikit-modern-ui branch)
 - Modern dark theme with gradient backgrounds
 - Yellow bounding boxes for detections
 - Real-time FPS and latency metrics

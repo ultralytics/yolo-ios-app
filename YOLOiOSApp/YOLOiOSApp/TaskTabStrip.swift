@@ -59,7 +59,7 @@ class TaskTabStrip: UIView {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .fillProportionally
-        stackView.spacing = 8
+        stackView.spacing = 8  // Minimal spacing between tasks
         
         // Add padding views to allow edge items to center
         let leadingPaddingView = UIView()

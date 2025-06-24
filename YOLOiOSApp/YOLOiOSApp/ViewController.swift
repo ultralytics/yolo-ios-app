@@ -952,7 +952,7 @@ extension ViewController {
   private func setupNewUIConstraints() {
     NSLayoutConstraint.activate([
       // Status Bar
-      statusMetricBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+      statusMetricBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -8),
       statusMetricBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       
@@ -967,10 +967,10 @@ extension ViewController {
       taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       
       // Camera Preview (fill space between status bar and task tab strip)
-      cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 8),
+      cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 2),
       cameraPreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
       cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
-      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -8),
+      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -2),
       
       // Right Tool Bar (positioned near bottom of camera preview)
       rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),

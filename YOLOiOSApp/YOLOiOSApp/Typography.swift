@@ -4,10 +4,10 @@ import UIKit
 
 struct Typography {
     // Status Bar
-    static let statusBarFont = UIFont.systemFont(ofSize: 10, weight: .bold).rounded()
+    static let statusBarFont = UIFont.systemFont(ofSize: 12, weight: .bold).rounded()
     
     // Task Tabs
-    static let tabLabelFont = UIFont.systemFont(ofSize: 11, weight: .semibold).rounded()
+    static let tabLabelFont = UIFont.systemFont(ofSize: 14, weight: .semibold).rounded()
     
     // Labels
     static let labelFont = UIFont.systemFont(ofSize: 8, weight: .bold).rounded()

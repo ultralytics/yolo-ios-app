@@ -119,7 +119,8 @@ class RightSideToolBar: UIView {
             
             // Change color based on zoom level
             let isDefaultZoom = abs(nextZoom - 1.0) < 0.1
-            sender.setTitleColor(isDefaultZoom ? .white : .ultralyticsLime, for: .normal)
+            let highlightColor = UIColor(red: 0.882, green: 1.0, blue: 0.145, alpha: 1.0) // #E1FF25
+            sender.setTitleColor(isDefaultZoom ? .white : highlightColor, for: .normal)
             
             onZoomChanged?(nextZoom)
         } else {
@@ -145,7 +146,7 @@ class RightSideToolBar: UIView {
     
     private func setButtonActive(_ button: UIButton, active: Bool) {
         if active {
-            button.backgroundColor = .ultralyticsLime
+            button.backgroundColor = UIColor(red: 0.882, green: 1.0, blue: 0.145, alpha: 1.0) // #E1FF25
             button.layer.borderWidth = 0
             button.tintColor = .black
             button.setTitleColor(.black, for: .normal)
@@ -171,7 +172,8 @@ class RightSideToolBar: UIView {
         if let zoomButton = buttons[safe: Tool.zoom.rawValue] {
             zoomButton.setTitle(String(format: "%.1fx", level), for: .normal)
             let isDefaultZoom = abs(level - 1.0) < 0.1
-            zoomButton.setTitleColor(isDefaultZoom ? .white : .ultralyticsLime, for: .normal)
+            let highlightColor = UIColor(red: 0.882, green: 1.0, blue: 0.145, alpha: 1.0) // #E1FF25
+            zoomButton.setTitleColor(isDefaultZoom ? .white : highlightColor, for: .normal)
         }
     }
 }

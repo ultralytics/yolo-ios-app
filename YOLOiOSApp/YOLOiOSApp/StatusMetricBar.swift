@@ -180,7 +180,10 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         modelStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             modelStack.centerXAnchor.constraint(equalTo: modelContainer.centerXAnchor),
-            modelStack.centerYAnchor.constraint(equalTo: modelContainer.centerYAnchor)
+            // Remove centerY constraint to allow manual positioning
+            modelStack.topAnchor.constraint(equalTo: modelContainer.topAnchor),
+            // Align model button baseline with size label baseline
+            modelButton.firstBaselineAnchor.constraint(equalTo: sizeLabel.firstBaselineAnchor)
         ])
         
         sizeStack.translatesAutoresizingMaskIntoConstraints = false

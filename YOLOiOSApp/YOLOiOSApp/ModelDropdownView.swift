@@ -51,7 +51,7 @@ class ModelDropdownView: UIView {
         // Container
         containerView.backgroundColor = UIColor.black.withAlphaComponent(0.98)
         containerView.layer.cornerRadius = 16
-        containerView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        containerView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]  // Bottom corners only
         containerView.layer.shadowColor = UIColor.black.cgColor
         containerView.layer.shadowOffset = CGSize(width: 0, height: 10)
         containerView.layer.shadowRadius = 20
@@ -61,18 +61,28 @@ class ModelDropdownView: UIView {
         // TableView
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
+        tableView.separatorInset = .zero
+        tableView.separatorColor = .clear
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(ModelDropdownCell.self, forCellReuseIdentifier: ModelDropdownCell.identifier)
         tableView.register(ModelDropdownHeaderView.self, forHeaderFooterViewReuseIdentifier: ModelDropdownHeaderView.identifier)
         tableView.layer.cornerRadius = 16
-        tableView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        tableView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]  // Bottom corners only
         tableView.clipsToBounds = true
+        tableView.bounces = false  // Disable bounce to prevent overlap
+        tableView.showsVerticalScrollIndicator = true
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // Remove padding for now
         
         // Add subviews
         addSubview(overlayView)
         addSubview(containerView)
         containerView.addSubview(tableView)
+        
+        // Add swipe up gesture to dismiss
+        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeUp))
+        swipeUp.direction = .up
+        containerView.addGestureRecognizer(swipeUp)
         
         // Layout
         overlayView.translatesAutoresizingMaskIntoConstraints = false
@@ -80,14 +90,14 @@ class ModelDropdownView: UIView {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            // Overlay
-            overlayView.topAnchor.constraint(equalTo: topAnchor),
+            // Overlay - starts below status bar to not cover it
+            overlayView.topAnchor.constraint(equalTo: topAnchor, constant: 44),
             overlayView.leadingAnchor.constraint(equalTo: leadingAnchor),
             overlayView.trailingAnchor.constraint(equalTo: trailingAnchor),
             overlayView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
-            // Container
-            containerView.topAnchor.constraint(equalTo: topAnchor),
+            // Container - positioned below status bar with extra padding
+            containerView.topAnchor.constraint(equalTo: topAnchor, constant: 54),
             containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
             
@@ -128,30 +138,44 @@ class ModelDropdownView: UIView {
         print("ModelDropdownView: isHidden = \(isHidden)")
         print("ModelDropdownView: superview = \(superview != nil ? "exists" : "nil")")
         
-        // Ensure view is visible and on top
+        // Ensure view is visible
         isHidden = false
-        superview?.bringSubviewToFront(self)
         
         // Enable interaction when showing
         isUserInteractionEnabled = true
         
-        // Calculate height
-        let maxHeight = UIScreen.main.bounds.height * 0.6
-        let contentHeight = calculateContentHeight()
-        let finalHeight = min(contentHeight, maxHeight)
+        // Calculate height more accurately
+        let calculatedHeight = calculateContentHeight()
+        let finalHeight = calculatedHeight
         
         print("ModelDropdownView: Calculated height = \(finalHeight)")
-        print("ModelDropdownView: Frame = \(frame)")
         
-        containerHeightConstraint?.constant = finalHeight
+        // Check if content fits on screen
+        let statusBarOffset: CGFloat = 54 // Status bar height + padding
+        let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
+        let bottomPadding: CGFloat = safeAreaBottom // Just safe area, no extra padding
+        let availableHeight = UIScreen.main.bounds.height - statusBarOffset - bottomPadding
+        
+        print("ModelDropdownView: Screen height = \(UIScreen.main.bounds.height)")
+        print("ModelDropdownView: Available height = \(availableHeight)")
+        print("ModelDropdownView: Content height = \(finalHeight)")
+        
+        // Use full content height if it fits, otherwise use available height with scroll
+        if finalHeight <= availableHeight {
+            tableView.isScrollEnabled = false
+            containerHeightConstraint?.constant = finalHeight
+        } else {
+            tableView.isScrollEnabled = true
+            containerHeightConstraint?.constant = availableHeight
+        }
         
         UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut) {
             self.overlayView.alpha = 1
             self.layoutIfNeeded()
         } completion: { _ in
             print("ModelDropdownView: Animation completed")
-            print("ModelDropdownView: Final frame = \(self.frame)")
-            print("ModelDropdownView: Container frame = \(self.containerView.frame)")
+            print("ModelDropdownView: Final container frame = \(self.containerView.frame)")
+            print("ModelDropdownView: Final tableView contentSize = \(self.tableView.contentSize)")
         }
     }
     
@@ -173,7 +197,7 @@ class ModelDropdownView: UIView {
         
         containerHeightConstraint?.constant = 0
         
-        UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut, animations: {
+        UIView.animate(withDuration: 0.4, delay: 0, options: .curveEaseInOut, animations: {
             self.overlayView.alpha = 0
             self.layoutIfNeeded()
         }) { _ in
@@ -203,7 +227,7 @@ class ModelDropdownView: UIView {
         groupedModels = []
         
         if !selected.isEmpty {
-            groupedModels.append(("SELECTED", selected))
+            groupedModels.append(("", selected))  // Empty string for no header
         }
         if !downloaded.isEmpty {
             groupedModels.append(("DOWNLOADED", downloaded))
@@ -219,19 +243,44 @@ class ModelDropdownView: UIView {
         print("ModelDropdownView: Calculating content height")
         print("ModelDropdownView: Number of sections: \(groupedModels.count)")
         
-        for section in groupedModels {
+        // Top padding
+        height += 20
+        
+        for (index, section) in groupedModels.enumerated() {
             print("ModelDropdownView: Section '\(section.title)' has \(section.models.count) models")
-            height += 44 // Header height
-            height += CGFloat(section.models.count) * 52 // Row height
+            
+            // Header height (including padding)
+            if !(index == 0 && section.title.isEmpty) {
+                height += 30 // Reduced header height
+            }
+            
+            // Cell heights - each cell is 52pt + separator
+            height += CGFloat(section.models.count) * 53 // 52pt cell + 1pt for separators
+            
+            // Footer height for selected section divider
+            if index == 0 && section.title.isEmpty {
+                height += 6 // Minimal footer height
+            }
+            
+            // Section bottom padding (except for first section which has footer)
+            if !(index == 0 && section.title.isEmpty) {
+                height += 2  // Minimal padding
+            }
         }
         
-        let totalHeight = height + 20 // Extra padding
-        print("ModelDropdownView: Total calculated height: \(totalHeight)")
+        // Bottom padding for corner radius and safe area
+        height += 30
         
-        return totalHeight
+        print("ModelDropdownView: Total calculated height: \(height)")
+        
+        return height
     }
     
     @objc private func overlayTapped() {
+        hide()
+    }
+    
+    @objc private func handleSwipeUp() {
         hide()
     }
 }
@@ -254,8 +303,17 @@ extension ModelDropdownView: UITableViewDataSource {
         let model = groupedModels[indexPath.section].models[indexPath.row]
         let isSelected = model.identifier == currentModelIdentifier
         let isDownloaded = model.isLocalBundle || (model.isRemote && ModelCacheManager.shared.isModelDownloaded(key: model.identifier))
+        let isFirstInSection = indexPath.row == 0
+        let isLastInSection = indexPath.row == groupedModels[indexPath.section].models.count - 1
         
-        cell.configure(with: model, status: isSelected ? .selected : (isDownloaded ? .downloaded : .notDownloaded))
+        // For selected items in the first section, always treat as last to hide border
+        // Also hide border for last item in each section
+        let hideBottomBorder = isLastInSection || (isSelected && indexPath.section == 0)
+        
+        cell.configure(with: model, 
+                      status: isSelected ? .selected : (isDownloaded ? .downloaded : .notDownloaded),
+                      isFirstInSection: isFirstInSection,
+                      isLastInSection: hideBottomBorder)
         
         return cell
     }
@@ -267,12 +325,16 @@ extension ModelDropdownView: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let header = tableView.dequeueReusableHeaderFooterView(withIdentifier: ModelDropdownHeaderView.identifier) as! ModelDropdownHeaderView
-        header.configure(title: groupedModels[section].title)
+        header.configure(title: groupedModels[section].title, showDivider: section > 0)
         return header
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 44
+        // No header for first section (selected)
+        if section == 0 && groupedModels[section].title.isEmpty {
+            return 0
+        }
+        return 30  // Reduced header height
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -285,6 +347,37 @@ extension ModelDropdownView: UITableViewDelegate {
         let model = groupedModels[indexPath.section].models[indexPath.row]
         delegate?.modelDropdown(self, didSelectModel: model)
         hide()
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        // Add thick divider after selected section
+        if section == 0 && groupedModels[section].title.isEmpty {
+            let footerView = UIView()
+            footerView.backgroundColor = .clear
+            
+            let divider = UIView()
+            divider.backgroundColor = UIColor.systemGray.withAlphaComponent(0.5)
+            footerView.addSubview(divider)
+            divider.translatesAutoresizingMaskIntoConstraints = false
+            
+            NSLayoutConstraint.activate([
+                divider.leadingAnchor.constraint(equalTo: footerView.leadingAnchor, constant: 16),
+                divider.trailingAnchor.constraint(equalTo: footerView.trailingAnchor, constant: -16),
+                divider.topAnchor.constraint(equalTo: footerView.topAnchor, constant: 1),  // Minimal padding
+                divider.heightAnchor.constraint(equalToConstant: 4)  // Thicker divider
+            ])
+            
+            return footerView
+        }
+        return nil
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        // Height for thick divider after selected section
+        if section == 0 && groupedModels[section].title.isEmpty {
+            return 6  // Minimal space for divider
+        }
+        return 0
     }
 }
 
@@ -305,6 +398,7 @@ class ModelDropdownCell: UITableViewCell {
     private let nameLabel = UILabel()
     private let sizeLabel = UILabel()
     private let progressView = UIProgressView()
+    private let borderView = UIView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -315,9 +409,18 @@ class ModelDropdownCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        borderView.isHidden = false
+        borderView.backgroundColor = UIColor.systemGray.withAlphaComponent(0.2)
+    }
+    
     private func setupUI() {
         backgroundColor = .clear
         selectionStyle = .none
+        
+        // Remove any default separators
+        separatorInset = UIEdgeInsets(top: 0, left: UIScreen.main.bounds.width, bottom: 0, right: 0)
         
         // Status Image
         statusImageView.contentMode = .scaleAspectFit
@@ -327,9 +430,10 @@ class ModelDropdownCell: UITableViewCell {
         nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         nameLabel.textColor = .white
         
-        // Size Label
+        // Size Label - hidden since we don't need it
         sizeLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         sizeLabel.textColor = .systemGray
+        sizeLabel.isHidden = true
         
         // Progress View
         progressView.progressTintColor = .ultralyticsLime
@@ -344,25 +448,24 @@ class ModelDropdownCell: UITableViewCell {
         
         // Layout
         NSLayoutConstraint.activate([
-            statusImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            statusImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            statusImageView.widthAnchor.constraint(equalToConstant: 24),
-            statusImageView.heightAnchor.constraint(equalToConstant: 24),
-            
-            nameLabel.leadingAnchor.constraint(equalTo: statusImageView.trailingAnchor, constant: 12),
-            nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: -8),
+            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),  // Center without offset
             
             sizeLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             sizeLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
             
-            progressView.leadingAnchor.constraint(equalTo: statusImageView.trailingAnchor, constant: 12),
-            progressView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            statusImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            statusImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            statusImageView.widthAnchor.constraint(equalToConstant: 24),
+            statusImageView.heightAnchor.constraint(equalToConstant: 24),
+            
+            progressView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            progressView.trailingAnchor.constraint(equalTo: statusImageView.leadingAnchor, constant: -12),
             progressView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             progressView.heightAnchor.constraint(equalToConstant: 2)
         ])
         
-        // Bottom border
-        let borderView = UIView()
+        // Bottom border setup
         borderView.backgroundColor = UIColor.systemGray.withAlphaComponent(0.2)
         contentView.addSubview(borderView)
         borderView.translatesAutoresizingMaskIntoConstraints = false
@@ -374,35 +477,47 @@ class ModelDropdownCell: UITableViewCell {
         ])
     }
     
-    func configure(with model: ModelEntry, status: Status) {
+    func configure(with model: ModelEntry, status: Status, isFirstInSection: Bool = false, isLastInSection: Bool = false) {
         nameLabel.text = model.displayName.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").uppercased()
         sizeLabel.text = ModelSizeHelper.getModelSize(from: model.displayName)
         
         switch status {
         case .selected:
-            statusImageView.image = UIImage(systemName: "checkmark.circle.fill")
+            statusImageView.image = UIImage(systemName: "checkmark")
             statusImageView.tintColor = .ultralyticsLime
-            contentView.backgroundColor = UIColor.ultralyticsLime.withAlphaComponent(0.1)
+            nameLabel.textColor = .ultralyticsLime
+            sizeLabel.textColor = .ultralyticsLime
+            contentView.backgroundColor = .clear
             progressView.isHidden = true
+            borderView.isHidden = true  // Hide border for selected item
             
         case .downloaded:
-            statusImageView.image = UIImage(systemName: "circle")
+            statusImageView.image = nil  // No icon for downloaded models
             statusImageView.tintColor = .white
+            nameLabel.textColor = .white
+            sizeLabel.textColor = .systemGray
             contentView.backgroundColor = .clear
             progressView.isHidden = true
+            borderView.isHidden = isLastInSection  // Hide border for last item in section
             
         case .notDownloaded:
-            statusImageView.image = UIImage(systemName: "arrow.down.circle")
+            statusImageView.image = UIImage(systemName: "arrow.down.circle.dotted")
             statusImageView.tintColor = .white
+            nameLabel.textColor = .white
+            sizeLabel.textColor = .systemGray
             contentView.backgroundColor = .clear
             progressView.isHidden = true
+            borderView.isHidden = isLastInSection  // Hide border for last item in section
             
         case .downloading(let progress):
-            statusImageView.image = UIImage(systemName: "circle")
+            statusImageView.image = UIImage(systemName: "circle.dotted")
             statusImageView.tintColor = .ultralyticsLime
+            nameLabel.textColor = .white
+            sizeLabel.textColor = .systemGray
             contentView.backgroundColor = .clear
             progressView.isHidden = false
             progressView.progress = progress
+            borderView.isHidden = isLastInSection  // Hide border for last item in section
         }
     }
 }
@@ -414,6 +529,7 @@ class ModelDropdownHeaderView: UITableViewHeaderFooterView {
     static let identifier = "ModelDropdownHeaderView"
     
     private let titleLabel = UILabel()
+    private let dividerView = UIView()
     
     override init(reuseIdentifier: String?) {
         super.init(reuseIdentifier: reuseIdentifier)
@@ -427,10 +543,13 @@ class ModelDropdownHeaderView: UITableViewHeaderFooterView {
     private func setupUI() {
         contentView.backgroundColor = UIColor.black.withAlphaComponent(0.98)
         
-        titleLabel.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         titleLabel.textColor = .systemGray
         
+        dividerView.backgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
+        
         contentView.addSubview(titleLabel)
+        // Don't add divider view at all
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
@@ -439,7 +558,8 @@ class ModelDropdownHeaderView: UITableViewHeaderFooterView {
         ])
     }
     
-    func configure(title: String) {
+    func configure(title: String, showDivider: Bool = false) {
         titleLabel.text = title
+        // Divider is no longer used
     }
 }

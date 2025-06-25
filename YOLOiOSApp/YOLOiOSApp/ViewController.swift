@@ -904,14 +904,18 @@ extension ViewController {
     cameraPreviewContainer.clipsToBounds = true
     
     // Add components to view (order matters for z-index)
-    [statusMetricBar, cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, thresholdSlider].forEach {
+    [cameraPreviewContainer, taskTabStrip, shutterBar, rightSideToolBar, thresholdSlider].forEach {
       view.addSubview($0)
       $0.translatesAutoresizingMaskIntoConstraints = false
     }
     
-    // Add model dropdown last so it appears on top
+    // Add model dropdown before status bar
     view.addSubview(modelDropdown)
     modelDropdown.translatesAutoresizingMaskIntoConstraints = false
+    
+    // Add status bar last so it stays on top
+    view.addSubview(statusMetricBar)
+    statusMetricBar.translatesAutoresizingMaskIntoConstraints = false
     
     // Move YOLOView to camera preview container
     if let yoloView = yoloView {
@@ -1105,6 +1109,9 @@ extension ViewController {
     // Configure and toggle dropdown
     modelDropdown.configure(with: currentModels, currentModel: currentModelIdentifier)
     modelDropdown.toggle()
+    
+    // Ensure status bar stays on top
+    view.bringSubviewToFront(statusMetricBar)
   }
   
   private func handleTaskChange(to task: TaskTabStrip.Task) {

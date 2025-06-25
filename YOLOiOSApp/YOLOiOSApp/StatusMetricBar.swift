@@ -86,7 +86,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         
         // Stack View
         stackView.axis = .horizontal
-        stackView.spacing = 0
+        stackView.spacing = 8  // Small spacing between elements
         stackView.alignment = .center
         stackView.distribution = .fillEqually
         stackView.isUserInteractionEnabled = true
@@ -125,15 +125,8 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         sizeStack.alignment = .center
         sizeStack.distribution = .fill
         
-        let sizeSubtitleStack = UIStackView()
-        sizeSubtitleStack.axis = .vertical
-        sizeSubtitleStack.spacing = -2  // Negative spacing to bring elements closer
-        sizeSubtitleStack.alignment = .center
-        sizeSubtitleStack.addArrangedSubview(sizeSubtitleLabel)
-        sizeSubtitleStack.addArrangedSubview(sizeDropdownIcon)
-        
         sizeStack.addArrangedSubview(sizeLabel)
-        sizeStack.addArrangedSubview(sizeSubtitleStack)
+        sizeStack.addArrangedSubview(sizeSubtitleLabel)
         
         let fpsStack = UIStackView()
         fpsStack.axis = .vertical
@@ -211,8 +204,8 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
             heightAnchor.constraint(equalToConstant: 44),
             

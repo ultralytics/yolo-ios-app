@@ -1095,119 +1095,28 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
   
   /// Sets the zoom level for the camera
-  /// - Parameter zoomFactor: The desired zoom factor (0.5 = ultra-wide, 1.0 = wide, 3.0 = telephoto)
+  /// - Parameter zoomFactor: The desired zoom factor (1.0 to 10.0)
   public func setZoomLevel(_ zoomFactor: Float) {
-    // Determine target camera and zoom
-    let targetZoom: CGFloat
-    let needsUltraWide = zoomFactor < 0.75
-    
-    if needsUltraWide {
-      // Try ultra-wide camera at 1.0x
-      if let ultraWideDevice = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) {
-        if videoCapture.captureDevice?.deviceType != .builtInUltraWideCamera {
-          switchToDevice(ultraWideDevice)
-        }
-        targetZoom = 1.0
-        self.labelZoom.text = "0.50x"
-      } else {
-        // Fallback to wide camera at 1.0x if no ultra-wide
-        if let wideDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-          if videoCapture.captureDevice?.deviceType != .builtInWideAngleCamera {
-            switchToDevice(wideDevice)
-          }
-        }
-        targetZoom = 1.0
-        self.labelZoom.text = "1.00x"
-      }
-    } else {
-      // Use wide camera with appropriate zoom
-      if let wideDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
-        if videoCapture.captureDevice?.deviceType != .builtInWideAngleCamera {
-          switchToDevice(wideDevice)
-        }
-      }
-      targetZoom = CGFloat(max(1.0, zoomFactor))
-      self.labelZoom.text = String(format: "%.2fx", targetZoom)
-    }
-    
-    // Apply the zoom to current device
     guard let device = videoCapture.captureDevice else { return }
+    
+    let clampedZoom = CGFloat(max(1.0, min(zoomFactor, 10.0)))
     
     do {
       try device.lockForConfiguration()
-      
-      // Clamp to device limits
-      let maxZoom = device.activeFormat.videoMaxZoomFactor
-      let finalZoom = max(1.0, min(targetZoom, maxZoom))
-      
-      // Apply zoom
-      device.videoZoomFactor = finalZoom
-      
-      // Update lastZoomFactor for pinch gesture consistency
-      lastZoomFactor = finalZoom
-      
+      device.videoZoomFactor = clampedZoom
+      lastZoomFactor = clampedZoom
       device.unlockForConfiguration()
       
-      // Reset pinch gesture scale
-      if let pinchGesture = self.gestureRecognizers?.first(where: { $0 is UIPinchGestureRecognizer }) as? UIPinchGestureRecognizer {
-        pinchGesture.scale = 1.0
-      }
-      
-      // Update label font
-      self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
-      
+      self.labelZoom.text = String(format: "%.2fx", clampedZoom)
     } catch {
       print("Error setting zoom: \(error)")
     }
   }
   
-  private func switchToDevice(_ newDevice: AVCaptureDevice) {
-    videoCapture.captureSession.beginConfiguration()
-    
-    // Remove current input
-    if let currentInput = videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput {
-      videoCapture.captureSession.removeInput(currentInput)
-    }
-    
-    // Add new input
-    do {
-      let newInput = try AVCaptureDeviceInput(device: newDevice)
-      if videoCapture.captureSession.canAddInput(newInput) {
-        videoCapture.captureSession.addInput(newInput)
-        videoCapture.captureDevice = newDevice
-        
-        // Reset lastZoomFactor when switching cameras
-        lastZoomFactor = 1.0
-        
-        // Ensure the new device has default zoom
-        try newDevice.lockForConfiguration()
-        newDevice.videoZoomFactor = 1.0
-        newDevice.unlockForConfiguration()
-      }
-    } catch {
-      print("Error switching camera: \(error)")
-    }
-    
-    videoCapture.captureSession.commitConfiguration()
-    
-    // Update video orientation for the new camera
-    if let connection = videoCapture.previewLayer?.connection {
-      if connection.isVideoOrientationSupported {
-        connection.videoOrientation = .portrait
-      }
-    }
-  }
-  
   /// Gets the current zoom level
-  /// - Returns: The current zoom factor (0.5 for ultra-wide, otherwise actual zoom factor)
+  /// - Returns: The current zoom factor
   public func getZoomLevel() -> Float {
     guard let device = videoCapture.captureDevice else { return 1.0 }
-    
-    // If using ultra-wide camera, return 0.5
-    if device.deviceType == .builtInUltraWideCamera {
-      return 0.5
-    }
-    
     return Float(device.videoZoomFactor)
   }
   

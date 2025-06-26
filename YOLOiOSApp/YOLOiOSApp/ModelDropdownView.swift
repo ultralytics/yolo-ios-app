@@ -73,9 +73,10 @@ class ModelDropdownView: UIView {
         tableView.layer.cornerRadius = 16
         tableView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]  // Bottom corners only
         tableView.clipsToBounds = true
-        tableView.bounces = false  // Disable bounce to prevent overlap
+        tableView.bounces = true  // Enable bounce for better scroll feedback
         tableView.showsVerticalScrollIndicator = true
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // Remove padding for now
+        tableView.indicatorStyle = .white  // White scroll indicator for dark background
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)  // Add bottom padding for better scrolling
         
         // Add subviews
         addSubview(overlayView)
@@ -164,9 +165,9 @@ class ModelDropdownView: UIView {
         
         print("ModelDropdownView: Calculated height = \(finalHeight)")
         
-        // In landscape, limit height to 60% of screen height for better usability
+        // In landscape, limit height to 85% of screen height to show more items while leaving space for interaction
         if isLandscape {
-            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.6
+            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
             finalHeight = min(finalHeight, maxLandscapeHeight)
             print("ModelDropdownView: Landscape mode - limiting height to \(finalHeight)")
         }
@@ -230,7 +231,7 @@ class ModelDropdownView: UIView {
             var finalHeight = calculatedHeight
             
             if isLandscape {
-                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.6
+                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
                 finalHeight = min(finalHeight, maxLandscapeHeight)
             }
             

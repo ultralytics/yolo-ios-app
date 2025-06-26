@@ -171,6 +171,11 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     "itemsMax": 30,
     "lineThickness": 3.0
   ]
+  
+  // Constraint management for orientation
+  private var portraitConstraints: [NSLayoutConstraint] = []
+  private var landscapeConstraints: [NSLayoutConstraint] = []
+  private var commonConstraints: [NSLayoutConstraint] = []
 
   var shareButton = UIButton()
   var recordButton = UIButton()
@@ -325,6 +330,36 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     // Maintain white text color even when appearance mode changes
     enforceWhiteTextColor()
   }
+  
+  // Called when orientation changes
+  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    super.viewWillTransition(to: size, with: coordinator)
+    
+    // Only handle orientation for new UI
+    guard isNewUIActive else { return }
+    
+    let isLandscape = size.width > size.height
+    
+    coordinator.animate(alongsideTransition: { _ in
+      // Deactivate all orientation-specific constraints
+      NSLayoutConstraint.deactivate(self.portraitConstraints)
+      NSLayoutConstraint.deactivate(self.landscapeConstraints)
+      
+      // Activate appropriate constraints
+      if isLandscape {
+        NSLayoutConstraint.activate(self.landscapeConstraints)
+      } else {
+        NSLayoutConstraint.activate(self.portraitConstraints)
+      }
+      
+      // Force layout update
+      self.view.layoutIfNeeded()
+      
+      // Debug: Print current orientation
+      print("Orientation changed to: \(isLandscape ? "Landscape" : "Portrait")")
+    }, completion: nil)
+  }
+  
 
   // Common method to set label text color to white
   private func enforceWhiteTextColor() {
@@ -954,31 +989,15 @@ extension ViewController {
   }
   
   private func setupNewUIConstraints() {
-    NSLayoutConstraint.activate([
+    // Common constraints (always active regardless of orientation)
+    commonConstraints = [
       // Status Bar
       statusMetricBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: -8),
       statusMetricBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       
-      // Shutter Bar (set this first as reference)
-      shutterBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-      shutterBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      shutterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      
-      // Task Tab Strip (position above shutter bar)
-      taskTabStrip.bottomAnchor.constraint(equalTo: shutterBar.topAnchor),
-      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      
-      // Camera Preview (fill space between status bar and task tab strip)
+      // Camera Preview (top and leading are common)
       cameraPreviewContainer.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor, constant: 2),
       cameraPreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 6),
-      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
-      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -2),
-      
-      // Right Tool Bar (positioned near bottom of camera preview)
-      rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
-      rightSideToolBar.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor, constant: -20),
       
       // Threshold Slider (overlay)
       thresholdSlider.topAnchor.constraint(equalTo: view.topAnchor),
@@ -991,7 +1010,63 @@ extension ViewController {
       modelDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       modelDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       modelDropdown.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-    ])
+    ]
+    
+    // Portrait-specific constraints
+    portraitConstraints = [
+      // Status Bar
+      statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Shutter Bar at bottom
+      shutterBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+      shutterBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      shutterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      shutterBar.heightAnchor.constraint(equalToConstant: 96),
+      
+      // Task Tab Strip above shutter bar
+      taskTabStrip.bottomAnchor.constraint(equalTo: shutterBar.topAnchor),
+      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      
+      // Camera Preview
+      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -6),
+      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -2),
+      
+      // Right Tool Bar
+      rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
+      rightSideToolBar.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor, constant: -20)
+    ]
+    
+    // Landscape-specific constraints
+    landscapeConstraints = [
+      // Status Bar - make room for shutter bar on right
+      statusMetricBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -96),
+      
+      // Shutter Bar on right side
+      shutterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      shutterBar.topAnchor.constraint(equalTo: view.topAnchor),
+      shutterBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      shutterBar.widthAnchor.constraint(equalToConstant: 96),
+      
+      // Task Tab Strip at bottom with margin for shutter bar
+      taskTabStrip.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+      taskTabStrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      taskTabStrip.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -96),
+      
+      // Camera Preview adjusted for shutter bar
+      cameraPreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -102),
+      cameraPreviewContainer.bottomAnchor.constraint(equalTo: taskTabStrip.topAnchor, constant: -2),
+      
+      // Right Tool Bar adjusted position
+      rightSideToolBar.trailingAnchor.constraint(equalTo: cameraPreviewContainer.trailingAnchor, constant: -12),
+      rightSideToolBar.bottomAnchor.constraint(equalTo: cameraPreviewContainer.bottomAnchor, constant: -20)
+    ]
+    
+    // Activate common constraints
+    NSLayoutConstraint.activate(commonConstraints)
+    
+    // Activate portrait constraints by default
+    NSLayoutConstraint.activate(portraitConstraints)
   }
   
   private func setupNewUIActions() {

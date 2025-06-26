@@ -164,4 +164,5 @@ class ShutterBar: UIView {
             innerCircle.backgroundColor = isRecording ? .red : .white
         }
     }
+    
 }

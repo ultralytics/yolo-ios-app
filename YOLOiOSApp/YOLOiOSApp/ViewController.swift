@@ -355,6 +355,9 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       // Update ShutterBar layout
       self.shutterBar.updateLayoutForOrientation(isLandscape: isLandscape)
       
+      // Update ModelDropdown layout
+      self.modelDropdown.updateLayoutForOrientation(isLandscape: isLandscape)
+      
       // Force layout update
       self.view.layoutIfNeeded()
       

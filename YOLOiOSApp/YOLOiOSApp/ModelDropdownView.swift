@@ -22,6 +22,7 @@ class ModelDropdownView: UIView {
     private var currentModelIdentifier: String?
     
     private var containerHeightConstraint: NSLayoutConstraint?
+    private var containerTopConstraint: NSLayoutConstraint?
     private var isExpanded = false
     
     // MARK: - Initialization
@@ -89,6 +90,9 @@ class ModelDropdownView: UIView {
         containerView.translatesAutoresizingMaskIntoConstraints = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
+        // Create the container top constraint separately so we can update it
+        containerTopConstraint = containerView.topAnchor.constraint(equalTo: topAnchor, constant: 54)
+        
         NSLayoutConstraint.activate([
             // Overlay - starts below status bar to not cover it
             overlayView.topAnchor.constraint(equalTo: topAnchor, constant: 44),
@@ -97,7 +101,7 @@ class ModelDropdownView: UIView {
             overlayView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
             // Container - positioned below status bar with extra padding
-            containerView.topAnchor.constraint(equalTo: topAnchor, constant: 54),
+            containerTopConstraint!,
             containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
             
@@ -185,6 +189,13 @@ class ModelDropdownView: UIView {
         } else {
             show()
         }
+    }
+    
+    func updateLayoutForOrientation(isLandscape: Bool) {
+        // In landscape, position dropdown right after the status bar (44 points)
+        // In portrait, keep the original spacing (54 points)
+        containerTopConstraint?.constant = isLandscape ? 44 : 54
+        layoutIfNeeded()
     }
     
     var isShowing: Bool {

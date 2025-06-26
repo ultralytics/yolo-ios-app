@@ -8,6 +8,11 @@ class ShutterBar: UIView {
     private let shutterButton = UIButton(type: .custom)
     private let flipCameraButton = UIButton(type: .custom)
     
+    // Constraints for orientation
+    private var heightConstraint: NSLayoutConstraint?
+    private var portraitConstraints: [NSLayoutConstraint] = []
+    private var landscapeConstraints: [NSLayoutConstraint] = []
+    
     // Callbacks
     var onThumbnailTap: (() -> Void)?
     var onShutterTap: (() -> Void)?
@@ -22,6 +27,28 @@ class ShutterBar: UIView {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // Debug print to check if buttons are visible
+        print("ShutterBar frame: \(frame)")
+        print("Thumbnail button frame: \(thumbnailButton.frame)")
+        print("Shutter button frame: \(shutterButton.frame)")
+        print("Flip camera button frame: \(flipCameraButton.frame)")
+    }
+    
+    func updateLayoutForOrientation(isLandscape: Bool) {
+        NSLayoutConstraint.deactivate(portraitConstraints)
+        NSLayoutConstraint.deactivate(landscapeConstraints)
+        
+        if isLandscape {
+            NSLayoutConstraint.activate(landscapeConstraints)
+        } else {
+            NSLayoutConstraint.activate(portraitConstraints)
+        }
+        
+        layoutIfNeeded()
     }
     
     private func setupUI() {
@@ -83,28 +110,45 @@ class ShutterBar: UIView {
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
         
-        NSLayoutConstraint.activate([
-            // Container height
-            heightAnchor.constraint(equalToConstant: 96),
-            
-            // Thumbnail
-            thumbnailButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 24),
-            thumbnailButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+        // Common constraints (button sizes)
+        let commonConstraints = [
             thumbnailButton.widthAnchor.constraint(equalToConstant: 48),
             thumbnailButton.heightAnchor.constraint(equalToConstant: 48),
-            
-            // Shutter
-            shutterButton.centerXAnchor.constraint(equalTo: centerXAnchor),
-            shutterButton.centerYAnchor.constraint(equalTo: centerYAnchor),
             shutterButton.widthAnchor.constraint(equalToConstant: 68),
             shutterButton.heightAnchor.constraint(equalToConstant: 68),
-            
-            // Flip Camera
-            flipCameraButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -24),
-            flipCameraButton.centerYAnchor.constraint(equalTo: centerYAnchor),
             flipCameraButton.widthAnchor.constraint(equalToConstant: 44),
             flipCameraButton.heightAnchor.constraint(equalToConstant: 44)
-        ])
+        ]
+        
+        // Portrait constraints - horizontal layout
+        portraitConstraints = [
+            thumbnailButton.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 24),
+            thumbnailButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            
+            shutterButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            shutterButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            
+            flipCameraButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -24),
+            flipCameraButton.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ]
+        
+        // Landscape constraints - vertical layout
+        landscapeConstraints = [
+            thumbnailButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            thumbnailButton.topAnchor.constraint(equalTo: topAnchor, constant: 24),
+            
+            shutterButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            shutterButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            
+            flipCameraButton.centerXAnchor.constraint(equalTo: centerXAnchor),
+            flipCameraButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -24)
+        ]
+        
+        // Activate common constraints
+        NSLayoutConstraint.activate(commonConstraints)
+        
+        // Default to portrait
+        NSLayoutConstraint.activate(portraitConstraints)
     }
     
     @objc private func thumbnailTapped() {

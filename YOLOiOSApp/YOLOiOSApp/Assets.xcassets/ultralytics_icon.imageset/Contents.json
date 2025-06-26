@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "ultralytics_icon.png",
+      "filename" : "Ultralytics_Logomark_Reverse_Crop.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ultralytics_icon@2x.png",
+      "filename" : "Ultralytics_Logomark_Reverse_Crop 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ultralytics_icon@3x.png",
+      "filename" : "Ultralytics_Logomark_Reverse_Crop 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

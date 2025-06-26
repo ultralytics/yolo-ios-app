@@ -23,7 +23,9 @@ class ModelDropdownView: UIView {
     
     private var containerHeightConstraint: NSLayoutConstraint?
     private var containerTopConstraint: NSLayoutConstraint?
+    private var containerTrailingConstraint: NSLayoutConstraint?
     private var isExpanded = false
+    private var isLandscape = false
     
     // MARK: - Initialization
     
@@ -80,10 +82,14 @@ class ModelDropdownView: UIView {
         addSubview(containerView)
         containerView.addSubview(tableView)
         
-        // Add swipe up gesture to dismiss
+        // Add swipe gestures to dismiss
         let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeUp))
         swipeUp.direction = .up
         containerView.addGestureRecognizer(swipeUp)
+        
+        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeDown))
+        swipeDown.direction = .down
+        tableView.addGestureRecognizer(swipeDown)
         
         // Layout
         overlayView.translatesAutoresizingMaskIntoConstraints = false
@@ -93,6 +99,9 @@ class ModelDropdownView: UIView {
         // Create the container top constraint separately so we can update it
         // In both portrait and landscape, position at safe area top + 36 (to account for StatusMetricBar)
         containerTopConstraint = containerView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 36)
+        
+        // Create trailing constraint separately for landscape adjustment
+        containerTrailingConstraint = containerView.trailingAnchor.constraint(equalTo: trailingAnchor)
         
         NSLayoutConstraint.activate([
             // Overlay - starts at safe area top
@@ -104,7 +113,7 @@ class ModelDropdownView: UIView {
             // Container - positioned below StatusMetricBar
             containerTopConstraint!,
             containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            containerTrailingConstraint!,
             
             // TableView
             tableView.topAnchor.constraint(equalTo: containerView.topAnchor),
@@ -151,9 +160,16 @@ class ModelDropdownView: UIView {
         
         // Calculate height more accurately
         let calculatedHeight = calculateContentHeight()
-        let finalHeight = calculatedHeight
+        var finalHeight = calculatedHeight
         
         print("ModelDropdownView: Calculated height = \(finalHeight)")
+        
+        // In landscape, limit height to 60% of screen height for better usability
+        if isLandscape {
+            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.6
+            finalHeight = min(finalHeight, maxLandscapeHeight)
+            print("ModelDropdownView: Landscape mode - limiting height to \(finalHeight)")
+        }
         
         // Check if content fits on screen
         let statusBarOffset: CGFloat = 54 // Status bar height + padding
@@ -165,7 +181,7 @@ class ModelDropdownView: UIView {
         print("ModelDropdownView: Available height = \(availableHeight)")
         print("ModelDropdownView: Content height = \(finalHeight)")
         
-        // Use full content height if it fits, otherwise use available height with scroll
+        // Use calculated height (already limited for landscape)
         if finalHeight <= availableHeight {
             tableView.isScrollEnabled = false
             containerHeightConstraint?.constant = finalHeight
@@ -200,6 +216,27 @@ class ModelDropdownView: UIView {
         // The dropdown should always be positioned at 36 points from safe area top
         // to align perfectly with the bottom of StatusMetricBar
         containerTopConstraint?.constant = 36
+        
+        // Store orientation state for use in height calculation
+        self.isLandscape = isLandscape
+        
+        // In landscape, leave space for ShutterBar on the right (96 points)
+        containerTrailingConstraint?.constant = isLandscape ? -96 : 0
+        
+        // If already showing, update the height
+        if isExpanded {
+            // Recalculate and apply height limit for landscape
+            let calculatedHeight = calculateContentHeight()
+            var finalHeight = calculatedHeight
+            
+            if isLandscape {
+                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.6
+                finalHeight = min(finalHeight, maxLandscapeHeight)
+            }
+            
+            containerHeightConstraint?.constant = finalHeight
+            tableView.isScrollEnabled = finalHeight < calculatedHeight
+        }
         
         layoutIfNeeded()
     }
@@ -298,6 +335,10 @@ class ModelDropdownView: UIView {
     }
     
     @objc private func handleSwipeUp() {
+        hide()
+    }
+    
+    @objc private func handleSwipeDown() {
         hide()
     }
 }

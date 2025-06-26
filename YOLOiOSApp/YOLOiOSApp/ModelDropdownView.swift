@@ -91,16 +91,17 @@ class ModelDropdownView: UIView {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
         // Create the container top constraint separately so we can update it
-        containerTopConstraint = containerView.topAnchor.constraint(equalTo: topAnchor, constant: 54)
+        // In both portrait and landscape, position at safe area top + 36 (to account for StatusMetricBar)
+        containerTopConstraint = containerView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 36)
         
         NSLayoutConstraint.activate([
-            // Overlay - starts below status bar to not cover it
-            overlayView.topAnchor.constraint(equalTo: topAnchor, constant: 44),
+            // Overlay - starts at safe area top
+            overlayView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
             overlayView.leadingAnchor.constraint(equalTo: leadingAnchor),
             overlayView.trailingAnchor.constraint(equalTo: trailingAnchor),
             overlayView.bottomAnchor.constraint(equalTo: bottomAnchor),
             
-            // Container - positioned below status bar with extra padding
+            // Container - positioned below StatusMetricBar
             containerTopConstraint!,
             containerView.leadingAnchor.constraint(equalTo: leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -192,9 +193,14 @@ class ModelDropdownView: UIView {
     }
     
     func updateLayoutForOrientation(isLandscape: Bool) {
-        // In landscape, position dropdown right after the status bar (44 points)
-        // In portrait, keep the original spacing (54 points)
-        containerTopConstraint?.constant = isLandscape ? 44 : 54
+        // StatusMetricBar is at -8 from safe area top and has height of 44
+        // So the bottom of StatusMetricBar is at: -8 + 44 = 36 from safe area top
+        // This is the same for both orientations since we're using safe area
+        
+        // The dropdown should always be positioned at 36 points from safe area top
+        // to align perfectly with the bottom of StatusMetricBar
+        containerTopConstraint?.constant = 36
+        
         layoutIfNeeded()
     }
     

@@ -266,30 +266,51 @@ class ModelDropdownView: UIView {
     
     private func groupModels() {
         var selected: [ModelEntry] = []
-        var downloaded: [ModelEntry] = []
-        var available: [ModelEntry] = []
+        var yolo11Models: [ModelEntry] = []
+        var legacyModels: [ModelEntry] = []  // YOLOv8 + YOLOv5
+        var customModels: [ModelEntry] = []
+        
+        // Check if selected model is YOLO11
+        var isSelectedYOLO11 = false
         
         for model in models {
             if model.identifier == currentModelIdentifier {
                 selected.append(model)
-            } else if model.isLocalBundle || (model.isRemote && ModelCacheManager.shared.isModelDownloaded(key: model.identifier)) {
-                downloaded.append(model)
+                if model.modelVersion == "YOLO11" {
+                    isSelectedYOLO11 = true
+                }
             } else {
-                available.append(model)
+                switch model.modelVersion {
+                case "YOLO11":
+                    yolo11Models.append(model)
+                case "YOLOv8", "YOLOv5":
+                    legacyModels.append(model)
+                default:
+                    customModels.append(model)
+                }
             }
         }
         
         groupedModels = []
         
+        // Always show selected model first (without header)
         if !selected.isEmpty {
-            groupedModels.append(("", selected))  // Empty string for no header
+            groupedModels.append(("", selected))
         }
-        if !downloaded.isEmpty {
-            groupedModels.append(("DOWNLOADED", downloaded))
+        
+        // Show LATEST MODEL section with YOLO11 if YOLO11 is not selected
+        if !isSelectedYOLO11 && !yolo11Models.isEmpty {
+            groupedModels.append(("LATEST MODEL", yolo11Models))
         }
-        if !available.isEmpty {
-            groupedModels.append(("AVAILABLE", available))
+        
+        // Show LEGACY MODELS section with YOLOv8 and YOLOv5
+        if !legacyModels.isEmpty {
+            groupedModels.append(("LEGACY MODELS", legacyModels))
         }
+        
+        // Always show USE CUSTOM MODELS section at the bottom
+        // This will either show custom models or be a clickable item to show instructions
+        groupedModels.append(("USE CUSTOM MODELS", customModels))
     }
     
     private func calculateContentHeight() -> CGFloat {
@@ -302,7 +323,11 @@ class ModelDropdownView: UIView {
         height += 20
         
         for (index, section) in groupedModels.enumerated() {
-            print("ModelDropdownView: Section '\(section.title)' has \(section.models.count) models")
+            let modelCount = section.models.count
+            // For USE CUSTOM MODELS with no models, we show 1 placeholder row
+            let rowCount = (section.title == "USE CUSTOM MODELS" && modelCount == 0) ? 1 : modelCount
+            
+            print("ModelDropdownView: Section '\(section.title)' has \(modelCount) models (showing \(rowCount) rows)")
             
             // Header height (including padding)
             if !(index == 0 && section.title.isEmpty) {
@@ -310,7 +335,7 @@ class ModelDropdownView: UIView {
             }
             
             // Cell heights - each cell is 52pt + separator
-            height += CGFloat(section.models.count) * 53 // 52pt cell + 1pt for separators
+            height += CGFloat(rowCount) * 53 // 52pt cell + 1pt for separators
             
             // Footer height for selected section divider
             if index == 0 && section.title.isEmpty {
@@ -353,17 +378,37 @@ extension ModelDropdownView: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return groupedModels[section].models.count
+        let sectionData = groupedModels[section]
+        // Show at least 1 row for USE CUSTOM MODELS section even if empty
+        if sectionData.title == "USE CUSTOM MODELS" && sectionData.models.isEmpty {
+            return 1
+        }
+        return sectionData.models.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ModelDropdownCell.identifier, for: indexPath) as! ModelDropdownCell
         
-        let model = groupedModels[indexPath.section].models[indexPath.row]
+        let sectionData = groupedModels[indexPath.section]
+        
+        // Handle placeholder cell for empty USE CUSTOM MODELS section
+        if sectionData.title == "USE CUSTOM MODELS" && sectionData.models.isEmpty {
+            // Create a placeholder model entry for the instruction
+            let placeholderModel = ModelEntry(
+                displayName: "Add Custom Model",
+                identifier: "custom_model_placeholder",
+                isLocalBundle: false,
+                isRemote: false
+            )
+            cell.configureAsPlaceholder(with: placeholderModel)
+            return cell
+        }
+        
+        let model = sectionData.models[indexPath.row]
         let isSelected = model.identifier == currentModelIdentifier
         let isDownloaded = model.isLocalBundle || (model.isRemote && ModelCacheManager.shared.isModelDownloaded(key: model.identifier))
         let isFirstInSection = indexPath.row == 0
-        let isLastInSection = indexPath.row == groupedModels[indexPath.section].models.count - 1
+        let isLastInSection = indexPath.row == sectionData.models.count - 1
         
         // For selected items in the first section, always treat as last to hide border
         // Also hide border for last item in each section
@@ -403,7 +448,18 @@ extension ModelDropdownView: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let model = groupedModels[indexPath.section].models[indexPath.row]
+        let sectionData = groupedModels[indexPath.section]
+        
+        // Handle tap on placeholder cell
+        if sectionData.title == "USE CUSTOM MODELS" && sectionData.models.isEmpty {
+            // Notify delegate about custom model instruction request
+            // For now, just hide the dropdown - the instruction screen will be implemented later
+            hide()
+            // TODO: Implement custom model instruction screen
+            return
+        }
+        
+        let model = sectionData.models[indexPath.row]
         delegate?.modelDropdown(self, didSelectModel: model)
         hide()
     }
@@ -472,6 +528,7 @@ class ModelDropdownCell: UITableViewCell {
         super.prepareForReuse()
         borderView.isHidden = false
         borderView.backgroundColor = UIColor.systemGray.withAlphaComponent(0.2)
+        sizeLabel.isHidden = false  // Reset size label visibility
     }
     
     private func setupUI() {
@@ -537,7 +594,16 @@ class ModelDropdownCell: UITableViewCell {
     }
     
     func configure(with model: ModelEntry, status: Status, isFirstInSection: Bool = false, isLastInSection: Bool = false) {
-        nameLabel.text = model.displayName.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").uppercased()
+        // Display only the model version without size
+        let displayName: String
+        if model.modelVersion == "Custom" {
+            // Keep original name for custom models
+            displayName = model.displayName.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").uppercased()
+        } else {
+            // Show only version for standard models
+            displayName = model.modelVersion
+        }
+        nameLabel.text = displayName
         sizeLabel.text = ModelSizeHelper.getModelSize(from: model.displayName)
         
         switch status {
@@ -546,6 +612,7 @@ class ModelDropdownCell: UITableViewCell {
             statusImageView.tintColor = .ultralyticsLime
             nameLabel.textColor = .ultralyticsLime
             sizeLabel.textColor = .ultralyticsLime
+            sizeLabel.isHidden = true  // Hide size label for selected model
             contentView.backgroundColor = .clear
             progressView.isHidden = true
             borderView.isHidden = true  // Hide border for selected item
@@ -578,6 +645,17 @@ class ModelDropdownCell: UITableViewCell {
             progressView.progress = progress
             borderView.isHidden = isLastInSection  // Hide border for last item in section
         }
+    }
+    
+    func configureAsPlaceholder(with model: ModelEntry) {
+        nameLabel.text = model.displayName.uppercased()
+        sizeLabel.isHidden = true
+        statusImageView.image = UIImage(systemName: "plus.circle")
+        statusImageView.tintColor = .systemGray
+        nameLabel.textColor = .systemGray
+        contentView.backgroundColor = .clear
+        progressView.isHidden = true
+        borderView.isHidden = true
     }
 }
 

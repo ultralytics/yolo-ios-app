@@ -15,6 +15,8 @@ import AVFoundation
 import AudioToolbox
 import CoreML
 import CoreMedia
+import Photos
+import PhotosUI
 import ReplayKit
 import UIKit
 import YOLO
@@ -141,7 +143,7 @@ class ModelTableViewCell: UITableViewCell {
 }
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
-class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDelegate {
+class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDelegate, PHPickerViewControllerDelegate {
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet var View0: UIView!
@@ -162,6 +164,11 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   private let parameterEditView = ParameterEditView()
   private let thresholdSlider = ThresholdSliderView()
   private let modelDropdown = ModelDropdownView()
+  private let modelSizeFilterBar = ModelSizeFilterBar()
+  
+  // Photo library inference model cache
+  private var photoInferenceModel: YOLO?
+  private var photoInferenceModelKey: String?
   
   // UI State
   private var isNewUIActive = true // Toggle for new/old UI
@@ -171,6 +178,8 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     "itemsMax": 30,
     "lineThickness": 3.0
   ]
+  private var currentSizeFilter: ModelSizeFilterBar.ModelSize = .small
+  private var isSizeFilterShowing = false
   
   // Constraint management for orientation
   private var portraitConstraints: [NSLayoutConstraint] = []
@@ -310,6 +319,82 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         let percentage = Int(progress * 100)
         self.downloadProgressLabel.text = "Downloading \(percentage)%"
       }
+    }
+  }
+  
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    
+    // Load latest photo for thumbnail
+    loadLatestPhotoThumbnail()
+    
+    // Add observer for when app becomes active
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(appDidBecomeActive),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil)
+  }
+  
+  override func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    
+    // Remove observer
+    NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
+  }
+  
+  @objc private func appDidBecomeActive() {
+    // Refresh thumbnail when app becomes active
+    loadLatestPhotoThumbnail()
+  }
+  
+  private func loadLatestPhotoThumbnail() {
+    // Check photo library authorization
+    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    
+    switch status {
+    case .authorized, .limited:
+      fetchLatestPhoto()
+    case .notDetermined:
+      PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] newStatus in
+        if newStatus == .authorized || newStatus == .limited {
+          DispatchQueue.main.async {
+            self?.fetchLatestPhoto()
+          }
+        }
+      }
+    default:
+      // No access, show default thumbnail
+      break
+    }
+  }
+  
+  private func fetchLatestPhoto() {
+    let fetchOptions = PHFetchOptions()
+    fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+    fetchOptions.fetchLimit = 1
+    
+    let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+    
+    guard let latestAsset = fetchResult.firstObject else { return }
+    
+    let options = PHImageRequestOptions()
+    options.version = .current
+    options.deliveryMode = .opportunistic
+    options.resizeMode = .exact
+    
+    let targetSize = CGSize(width: 96, height: 96) // 2x the button size for retina
+    
+    PHImageManager.default().requestImage(
+      for: latestAsset,
+      targetSize: targetSize,
+      contentMode: .aspectFill,
+      options: options) { [weak self] image, _ in
+        if let image = image {
+          DispatchQueue.main.async {
+            self?.shutterBar.updateThumbnail(image)
+          }
+        }
     }
   }
 
@@ -954,6 +1039,11 @@ extension ViewController {
     view.addSubview(modelDropdown)
     modelDropdown.translatesAutoresizingMaskIntoConstraints = false
     
+    // Add model size filter bar
+    view.addSubview(modelSizeFilterBar)
+    modelSizeFilterBar.translatesAutoresizingMaskIntoConstraints = false
+    modelSizeFilterBar.alpha = 0 // Start hidden
+    
     // Add status bar last so it stays on top
     view.addSubview(statusMetricBar)
     statusMetricBar.translatesAutoresizingMaskIntoConstraints = false
@@ -1015,7 +1105,13 @@ extension ViewController {
       modelDropdown.topAnchor.constraint(equalTo: view.topAnchor),
       modelDropdown.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       modelDropdown.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      modelDropdown.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      modelDropdown.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      
+      // Model Size Filter Bar
+      modelSizeFilterBar.topAnchor.constraint(equalTo: statusMetricBar.bottomAnchor),
+      modelSizeFilterBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      modelSizeFilterBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      modelSizeFilterBar.heightAnchor.constraint(equalToConstant: 36)
     ]
     
     // Portrait-specific constraints
@@ -1084,7 +1180,12 @@ extension ViewController {
       self?.showModelSelector()
     }
     
-    print("ViewController: onModelTap closure set")
+    statusMetricBar.onSizeTap = { [weak self] in
+      print("ViewController: onSizeTap closure called")
+      self?.toggleSizeFilter()
+    }
+    
+    print("ViewController: onModelTap and onSizeTap closures set")
     
     // Model dropdown delegate
     modelDropdown.delegate = self
@@ -1130,6 +1231,11 @@ extension ViewController {
       UIView.animate(withDuration: 0.2) {
         self?.taskTabStrip.alpha = 1
       }
+    }
+    
+    // Model size filter actions
+    modelSizeFilterBar.onSizeSelected = { [weak self] size in
+      self?.handleSizeFilterChange(to: size)
     }
   }
   
@@ -1187,8 +1293,18 @@ extension ViewController {
     print("Model dropdown frame: \(modelDropdown.frame)")
     print("Model dropdown superview: \(modelDropdown.superview != nil)")
     
-    // Configure and toggle dropdown
-    modelDropdown.configure(with: currentModels, currentModel: currentModelIdentifier)
+    // Filter models based on current size filter
+    let filteredModels = currentModels.filter { model in
+      // Always show custom models
+      if model.modelVersion == "Custom" {
+        return true
+      }
+      // Show models matching the current size filter
+      return model.modelSize == currentSizeFilter.rawValue
+    }
+    
+    // Configure and toggle dropdown with filtered models
+    modelDropdown.configure(with: filteredModels, currentModel: currentModelIdentifier)
     modelDropdown.toggle()
     
     // Ensure status bar stays on top
@@ -1200,6 +1316,10 @@ extension ViewController {
     if modelDropdown.isShowing {
       modelDropdown.hide()
     }
+    
+    // Clear cached photo inference model when switching tasks
+    photoInferenceModel = nil
+    photoInferenceModelKey = nil
     
     let taskName: String
     switch task {
@@ -1217,6 +1337,75 @@ extension ViewController {
     
     currentTask = taskName
     reloadModelEntriesAndLoadFirst(for: taskName)
+  }
+  
+  private func toggleSizeFilter() {
+    if isSizeFilterShowing {
+      // Hide the size filter
+      modelSizeFilterBar.hide { [weak self] in
+        self?.isSizeFilterShowing = false
+      }
+    } else {
+      // Show the size filter
+      isSizeFilterShowing = true
+      modelSizeFilterBar.show()
+      
+      // Hide model dropdown if it's showing
+      if modelDropdown.isShowing {
+        modelDropdown.hide()
+      }
+    }
+  }
+  
+  private func handleSizeFilterChange(to size: ModelSizeFilterBar.ModelSize) {
+    currentSizeFilter = size
+    
+    // Update status bar to reflect new size
+    let sizeString = size.displayName
+    statusMetricBar.updateModel(name: extractModelVersion(from: currentModelName), size: sizeString)
+    
+    // Hide size filter
+    modelSizeFilterBar.hide { [weak self] in
+      self?.isSizeFilterShowing = false
+    }
+    
+    // Find and load a model matching the new size
+    loadModelForCurrentSizeFilter()
+  }
+  
+  private func loadModelForCurrentSizeFilter() {
+    // Get current model version
+    let currentVersion = extractModelVersion(from: currentModelName)
+    
+    // Find a model matching the current version and new size
+    if let matchingModel = currentModels.first(where: { model in
+      let modelVersion = model.modelVersion
+      let modelSize = model.modelSize
+      return modelVersion == currentVersion && modelSize == currentSizeFilter.rawValue
+    }) {
+      // Load the matching model
+      loadModel(entry: matchingModel, forTask: currentTask)
+    } else {
+      // No exact match found - try to find any model with the selected size
+      if let sizeMatchingModel = currentModels.first(where: { model in
+        return model.modelSize == currentSizeFilter.rawValue
+      }) {
+        loadModel(entry: sizeMatchingModel, forTask: currentTask)
+      }
+    }
+  }
+  
+  private func extractModelVersion(from modelName: String) -> String {
+    let name = modelName.lowercased()
+    if name.contains("yolo11") {
+      return "YOLO11"
+    } else if name.contains("yolov8") {
+      return "YOLOv8"
+    } else if name.contains("yolov5") {
+      return "YOLOv5"
+    } else {
+      return "Custom"
+    }
   }
   
   private func capturePhoto() {
@@ -1276,8 +1465,255 @@ extension ViewController {
   }
   
   private func showLastCapture() {
-    // Placeholder for showing last capture
-    print("Show last capture")
+    // Show photo picker
+    showPhotoPicker()
+  }
+  
+  private func showPhotoPicker() {
+    var configuration = PHPickerConfiguration()
+    configuration.selectionLimit = 1
+    configuration.filter = .images
+    
+    let picker = PHPickerViewController(configuration: configuration)
+    picker.delegate = self
+    present(picker, animated: true)
+  }
+  
+  // MARK: - PHPickerViewControllerDelegate
+  
+  func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+    picker.dismiss(animated: true)
+    
+    guard let result = results.first else { return }
+    
+    result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+      if let image = object as? UIImage {
+        DispatchQueue.main.async {
+          self?.processSelectedImage(image)
+        }
+      }
+    }
+  }
+  
+  private func processSelectedImage(_ image: UIImage) {
+    // Fix image orientation if needed
+    let orientedImage = image.fixedOrientation()
+    
+    // Show loading indicator
+    let loadingView = UIView(frame: view.bounds)
+    loadingView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+    let spinner = UIActivityIndicatorView(style: .large)
+    spinner.color = .white
+    spinner.center = loadingView.center
+    spinner.startAnimating()
+    loadingView.addSubview(spinner)
+    view.addSubview(loadingView)
+    
+    // Get current model info
+    guard let currentModel = currentModels.first(where: { $0.displayName == currentModelName }) else {
+      loadingView.removeFromSuperview()
+      showResultPopup(image: orientedImage)
+      return
+    }
+    
+    // Create a unique key for this model and task combination
+    let modelKey = "\(currentTask)_\(currentModel.identifier)"
+    
+    // Check if we already have a cached model for this combination
+    if let cachedModel = photoInferenceModel, photoInferenceModelKey == modelKey {
+      // Use cached model for faster inference
+      print("Using cached model for inference")
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        let result = cachedModel(orientedImage)
+        
+        DispatchQueue.main.async {
+          loadingView.removeFromSuperview()
+          
+          // Debug: Print inference results
+          print("YOLO Inference Results (cached model):")
+          print("- Number of detections: \(result.boxes.count)")
+          print("- Annotated image exists: \(result.annotatedImage != nil)")
+          
+          if result.boxes.isEmpty {
+            print("No objects detected in the image")
+          } else {
+            for (index, box) in result.boxes.prefix(5).enumerated() {
+              print("  Box \(index): \(box.cls) (conf: \(String(format: "%.2f", box.conf)))")
+            }
+          }
+          
+          // Check if we have an annotated image
+          if let annotatedImage = result.annotatedImage {
+            self?.showResultPopup(image: annotatedImage)
+          } else {
+            // If no annotated image, show original
+            print("Warning: No annotated image generated")
+            self?.showResultPopup(image: orientedImage)
+          }
+        }
+      }
+      return
+    }
+    
+    // No cached model, need to load it
+    print("Loading new model for inference")
+    
+    // Get model path
+    let modelPath: String
+    if currentModel.isLocalBundle {
+      // For local bundle models, construct the full path like YOLOView expects
+      guard let taskInfo = tasks.first(where: { $0.name == currentTask }),
+            let folderURL = Bundle.main.url(forResource: taskInfo.folder, withExtension: nil) else {
+        print("Error: Could not find task folder for \(currentTask)")
+        loadingView.removeFromSuperview()
+        showResultPopup(image: orientedImage)
+        return
+      }
+      let modelURL = folderURL.appendingPathComponent(currentModel.identifier)
+      modelPath = modelURL.path
+    } else {
+      // For remote models, provide the full path to the downloaded model
+      modelPath = getDocumentsDirectory().appendingPathComponent(currentModel.identifier)
+                                        .appendingPathExtension("mlmodelc").path
+    }
+    
+    // Determine task type
+    let taskType: YOLOTask
+    switch currentTask {
+    case "Classify":
+      taskType = .classify
+    case "Segment":
+      taskType = .segment
+    case "Pose":
+      taskType = .pose
+    case "OBB":
+      taskType = .obb
+    default:
+      taskType = .detect
+    }
+    
+    // Debug: Print model path
+    print("Model path: \(modelPath)")
+    print("File exists: \(FileManager.default.fileExists(atPath: modelPath))")
+    
+    // Create YOLO model and run inference
+    let yolo = YOLO(modelPath, task: taskType) { [weak self] result in
+      DispatchQueue.main.async {
+        switch result {
+        case .success(let model):
+          // Cache the model for future use
+          self?.photoInferenceModel = model
+          self?.photoInferenceModelKey = modelKey
+          print("Model cached for future use")
+          
+          // Run inference on the image
+          DispatchQueue.global(qos: .userInitiated).async {
+            let result = model(orientedImage)
+            
+            DispatchQueue.main.async {
+              loadingView.removeFromSuperview()
+              
+              // Debug: Print inference results
+              print("YOLO Inference Results:")
+              print("- Number of detections: \(result.boxes.count)")
+              print("- Task type: \(taskType)")
+              print("- Annotated image exists: \(result.annotatedImage != nil)")
+              
+              if result.boxes.isEmpty {
+                print("No objects detected in the image")
+              } else {
+                for (index, box) in result.boxes.prefix(5).enumerated() {
+                  print("  Box \(index): \(box.cls) (conf: \(String(format: "%.2f", box.conf)))")
+                }
+              }
+              
+              // Check if we have an annotated image
+              if let annotatedImage = result.annotatedImage {
+                self?.showResultPopup(image: annotatedImage)
+              } else {
+                // If no annotated image, show original
+                print("Warning: No annotated image generated")
+                self?.showResultPopup(image: orientedImage)
+              }
+            }
+          }
+          
+        case .failure(let error):
+          loadingView.removeFromSuperview()
+          print("Error loading model: \(error)")
+          self?.showResultPopup(image: orientedImage)
+        }
+      }
+    }
+  }
+  
+  private func showResultPopup(image: UIImage) {
+    // Create popup view controller
+    let popupVC = UIViewController()
+    let imageView = UIImageView(image: image)
+    imageView.contentMode = .scaleAspectFit
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    
+    popupVC.view.backgroundColor = UIColor.black.withAlphaComponent(0.9)
+    popupVC.view.addSubview(imageView)
+    
+    // Add close button
+    let closeButton = UIButton(type: .system)
+    closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+    closeButton.tintColor = .white
+    closeButton.translatesAutoresizingMaskIntoConstraints = false
+    closeButton.addAction(UIAction { _ in
+      popupVC.dismiss(animated: true)
+    }, for: .touchUpInside)
+    popupVC.view.addSubview(closeButton)
+    
+    // Add save button
+    let saveButton = UIButton(type: .system)
+    saveButton.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
+    saveButton.tintColor = .white
+    saveButton.translatesAutoresizingMaskIntoConstraints = false
+    saveButton.addAction(UIAction { [weak self] _ in
+      self?.saveImageToPhotos(image)
+    }, for: .touchUpInside)
+    popupVC.view.addSubview(saveButton)
+    
+    NSLayoutConstraint.activate([
+      imageView.leadingAnchor.constraint(equalTo: popupVC.view.leadingAnchor, constant: 20),
+      imageView.trailingAnchor.constraint(equalTo: popupVC.view.trailingAnchor, constant: -20),
+      imageView.topAnchor.constraint(equalTo: popupVC.view.safeAreaLayoutGuide.topAnchor, constant: 60),
+      imageView.bottomAnchor.constraint(equalTo: popupVC.view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+      
+      closeButton.topAnchor.constraint(equalTo: popupVC.view.safeAreaLayoutGuide.topAnchor, constant: 20),
+      closeButton.trailingAnchor.constraint(equalTo: popupVC.view.trailingAnchor, constant: -20),
+      closeButton.widthAnchor.constraint(equalToConstant: 40),
+      closeButton.heightAnchor.constraint(equalToConstant: 40),
+      
+      saveButton.topAnchor.constraint(equalTo: popupVC.view.safeAreaLayoutGuide.topAnchor, constant: 20),
+      saveButton.leadingAnchor.constraint(equalTo: popupVC.view.leadingAnchor, constant: 20),
+      saveButton.widthAnchor.constraint(equalToConstant: 40),
+      saveButton.heightAnchor.constraint(equalToConstant: 40)
+    ])
+    
+    popupVC.modalPresentationStyle = .fullScreen
+    popupVC.modalTransitionStyle = .crossDissolve
+    present(popupVC, animated: true)
+  }
+  
+  private func saveImageToPhotos(_ image: UIImage) {
+    UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
+  }
+  
+  @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+    if let error = error {
+      print("Error saving image: \(error)")
+    } else {
+      // Play sound effect
+      AudioServicesPlaySystemSound(1108)
+      // Update thumbnail with newly saved image
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        self?.loadLatestPhotoThumbnail()
+      }
+    }
   }
   
   private func handleZoomChange(to zoomLevel: Float) {
@@ -1315,6 +1751,10 @@ extension ViewController {
     
     // Deactivate the toolbar after selection
     rightSideToolBar.deactivateAll()
+  }
+  
+  private func getDocumentsDirectory() -> URL {
+    return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
   }
   
   private func handleSliderValueChange(_ normalizedValue: Float) {
@@ -1386,6 +1826,14 @@ extension ViewController {
       // Update status bar with model info
       let modelSize = ModelSizeHelper.getModelSize(from: modelName)
       statusMetricBar.updateModel(name: processString(modelName), size: modelSize)
+      
+      // Update current size filter based on loaded model
+      if let loadedModel = currentModels.first(where: { $0.displayName == modelName }),
+         let modelSizeRaw = loadedModel.modelSize,
+         let size = ModelSizeFilterBar.ModelSize(rawValue: modelSizeRaw) {
+        currentSizeFilter = size
+        modelSizeFilterBar.setSelectedSize(size, animated: false)
+      }
     }
   }
 }
@@ -1393,10 +1841,31 @@ extension ViewController {
 // MARK: - ModelDropdownViewDelegate
 extension ViewController {
   func modelDropdown(_ dropdown: ModelDropdownView, didSelectModel model: ModelEntry) {
+    // Clear cached photo inference model when switching models
+    photoInferenceModel = nil
+    photoInferenceModelKey = nil
     loadModel(entry: model, forTask: currentTask)
   }
   
   func modelDropdownDidDismiss(_ dropdown: ModelDropdownView) {
     // Handle dropdown dismissal if needed
+  }
+}
+
+// MARK: - UIImage Extension for Orientation Fix
+extension UIImage {
+  func fixedOrientation() -> UIImage {
+    // If image orientation is already correct, return as is
+    if imageOrientation == .up {
+      return self
+    }
+    
+    // We need to redraw the image in the correct orientation
+    UIGraphicsBeginImageContextWithOptions(size, false, scale)
+    draw(in: CGRect(origin: .zero, size: size))
+    let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return normalizedImage ?? self
   }
 }

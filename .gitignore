@@ -1,4 +1,7 @@
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
+# Strategy and planning documents
+*_STRATEGY.md
+*_PLAN.md
 
 
 # Xcode GitIgnore ------------------------------------------------------------------------------------------------------
@@ -242,3 +245,6 @@ fabric.properties
 .swiftpm/xcode/xcuserdata/
 Tests/YOLOTests/Resources/*.mlpackage
 *.xcuserdatad/
+.build/
+build/
+DerivedData/

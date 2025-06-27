@@ -28,6 +28,7 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
     
     // Properties
     var onModelTap: (() -> Void)?
+    var onSizeTap: (() -> Void)?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -77,12 +78,16 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         latencySubtitleLabel.text = "MS"
         
         // Configure dropdown icons
-        [modelDropdownIcon, sizeDropdownIcon].forEach { label in
-            label.text = "⌄"
-            label.textColor = .ultralyticsTextSubtle
-            label.font = UIFont.systemFont(ofSize: 8, weight: .regular)  // Smaller font for dropdown icon
-            label.textAlignment = .center
-        }
+        modelDropdownIcon.text = "⌄"
+        modelDropdownIcon.textColor = .ultralyticsTextSubtle
+        modelDropdownIcon.font = UIFont.systemFont(ofSize: 8, weight: .regular)
+        modelDropdownIcon.textAlignment = .center
+        
+        // Configure size dropdown icon
+        sizeDropdownIcon.text = "⌄"
+        sizeDropdownIcon.textColor = .ultralyticsTextSubtle
+        sizeDropdownIcon.font = UIFont.systemFont(ofSize: 8, weight: .regular)
+        sizeDropdownIcon.textAlignment = .center
         
         // Stack View
         stackView.axis = .horizontal
@@ -125,8 +130,16 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         sizeStack.alignment = .center
         sizeStack.distribution = .fill
         
+        // Create a stack for size subtitle and checkmark
+        let sizeSubtitleStack = UIStackView()
+        sizeSubtitleStack.axis = .vertical
+        sizeSubtitleStack.spacing = -2
+        sizeSubtitleStack.alignment = .center
+        sizeSubtitleStack.addArrangedSubview(sizeSubtitleLabel)
+        sizeSubtitleStack.addArrangedSubview(sizeDropdownIcon)
+        
         sizeStack.addArrangedSubview(sizeLabel)
-        sizeStack.addArrangedSubview(sizeSubtitleLabel)
+        sizeStack.addArrangedSubview(sizeSubtitleStack)
         
         let fpsStack = UIStackView()
         fpsStack.axis = .vertical
@@ -167,6 +180,17 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         
         print("StatusMetricBar: Added tap gesture to modelContainer")
         print("StatusMetricBar: modelContainer.isUserInteractionEnabled = \(modelContainer.isUserInteractionEnabled)")
+        
+        // Add tap gesture to size container
+        let sizeTapGesture = UITapGestureRecognizer(target: self, action: #selector(sizeButtonTapped))
+        sizeTapGesture.delegate = self
+        sizeContainer.addGestureRecognizer(sizeTapGesture)
+        sizeContainer.isUserInteractionEnabled = true
+        
+        // Disable user interaction on size child views
+        sizeStack.isUserInteractionEnabled = false
+        sizeLabel.isUserInteractionEnabled = false
+        sizeSubtitleLabel.isUserInteractionEnabled = false
         
         // Center elements in their containers
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
@@ -248,6 +272,12 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         onModelTap?()
     }
     
+    @objc private func sizeButtonTapped() {
+        print("StatusMetricBar: sizeButtonTapped called")
+        print("StatusMetricBar: onSizeTap is \(onSizeTap != nil ? "set" : "nil")")
+        onSizeTap?()
+    }
+    
     @objc private func logoLongPressed(_ gesture: UILongPressGestureRecognizer) {
         if gesture.state == .began {
             // Show hidden info page
@@ -261,17 +291,25 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
         print("StatusMetricBar: Frame = \(frame)")
         print("StatusMetricBar: Bounds = \(bounds)")
         print("StatusMetricBar: modelContainer frame = \(modelContainer.frame)")
+        print("StatusMetricBar: sizeContainer frame = \(sizeContainer.frame)")
         
         // Check if tap is in the horizontal range of modelContainer
-        // Since height is 0, we check X position and use parent's height
         let modelContainerX = modelContainer.frame.minX
         let modelContainerMaxX = modelContainer.frame.maxX
         
+        // Check if tap is in the horizontal range of sizeContainer
+        let sizeContainerX = sizeContainer.frame.minX
+        let sizeContainerMaxX = sizeContainer.frame.maxX
+        
         print("StatusMetricBar: Checking if tap X \(location.x) is between \(modelContainerX) and \(modelContainerMaxX)")
+        print("StatusMetricBar: Checking if tap X \(location.x) is between \(sizeContainerX) and \(sizeContainerMaxX)")
         
         if location.x >= modelContainerX && location.x <= modelContainerMaxX {
             print("StatusMetricBar: Tap is in modelContainer X range - triggering model tap")
             modelButtonTapped()
+        } else if location.x >= sizeContainerX && location.x <= sizeContainerMaxX {
+            print("StatusMetricBar: Tap is in sizeContainer X range - triggering size tap")
+            sizeButtonTapped()
         }
     }
     

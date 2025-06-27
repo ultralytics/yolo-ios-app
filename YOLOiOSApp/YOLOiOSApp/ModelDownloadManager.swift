@@ -41,6 +41,40 @@ struct ModelEntry {
     self.isRemote = isRemote
     self.remoteURL = remoteURL
   }
+  
+  /// Extract the model version (e.g., "YOLO11", "YOLOv8", "YOLOv5", "Custom")
+  var modelVersion: String {
+    let name = displayName.lowercased()
+    if name.hasPrefix("yolo11") {
+      return "YOLO11"
+    } else if name.hasPrefix("yolov8") {
+      return "YOLOv8"
+    } else if name.hasPrefix("yolov5") {
+      return "YOLOv5"
+    } else {
+      return "Custom"
+    }
+  }
+  
+  /// Extract the model size (e.g., "n", "s", "m", "l", "x", nil for custom)
+  var modelSize: String? {
+    let name = displayName.lowercased()
+    
+    // Look for size indicator before task suffix
+    if name.contains("n-") || name.hasSuffix("n") {
+      return "n"
+    } else if name.contains("s-") || name.hasSuffix("s") {
+      return "s"
+    } else if name.contains("m-") || name.hasSuffix("m") {
+      return "m"
+    } else if name.contains("l-") || name.hasSuffix("l") {
+      return "l"
+    } else if name.contains("x-") || name.hasSuffix("x") {
+      return "x"
+    }
+    
+    return nil
+  }
 }
 
 class ModelCacheManager {

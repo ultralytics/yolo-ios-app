@@ -166,9 +166,9 @@ class ModelDropdownView: UIView {
         
         print("ModelDropdownView: Calculated height = \(finalHeight)")
         
-        // In landscape, limit height to 70% of screen height to ensure it's not cut off
+        // In landscape, limit height to 85% of screen height to show more items
         if isLandscape {
-            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.70
+            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
             finalHeight = min(finalHeight, maxLandscapeHeight)
             print("ModelDropdownView: Landscape mode - limiting height to \(finalHeight)")
         }
@@ -177,8 +177,8 @@ class ModelDropdownView: UIView {
         let statusBarOffset: CGFloat = 36 // Position from safe area top
         let safeAreaTop = window?.safeAreaInsets.top ?? 0
         let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
-        let tabBarHeight: CGFloat = 49 // Standard tab bar height
-        let bottomPadding: CGFloat = tabBarHeight - 5 // Tab bar minus small overlap
+        // No tab bar in this app - using custom TaskTabStrip instead
+        let bottomPadding: CGFloat = safeAreaBottom + 10 // Safe area + small padding
         let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
         
         print("ModelDropdownView: Screen height = \(UIScreen.main.bounds.height)")
@@ -187,8 +187,10 @@ class ModelDropdownView: UIView {
         
         // Use calculated height (already limited for landscape)
         if finalHeight <= availableHeight {
+            // Add minimal buffer to ensure all content is visible without being too spacious
+            let bufferHeight = min(finalHeight + 10, availableHeight)
             tableView.isScrollEnabled = false
-            containerHeightConstraint?.constant = finalHeight
+            containerHeightConstraint?.constant = bufferHeight
         } else {
             tableView.isScrollEnabled = true
             containerHeightConstraint?.constant = availableHeight
@@ -234,7 +236,7 @@ class ModelDropdownView: UIView {
             var finalHeight = calculatedHeight
             
             if isLandscape {
-                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.70
+                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
                 finalHeight = min(finalHeight, maxLandscapeHeight)
             }
             
@@ -242,12 +244,14 @@ class ModelDropdownView: UIView {
             let statusBarOffset: CGFloat = 36
             let safeAreaTop = window?.safeAreaInsets.top ?? 0
             let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
-            let tabBarHeight: CGFloat = 49
-            let bottomPadding: CGFloat = tabBarHeight - 5
+            // No tab bar in this app - using custom TaskTabStrip instead
+            let bottomPadding: CGFloat = safeAreaBottom + 10
             let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
             
             if finalHeight <= availableHeight {
-                containerHeightConstraint?.constant = finalHeight
+                // Add minimal buffer to ensure all content is visible without being too spacious
+                let bufferHeight = min(finalHeight + 10, availableHeight)
+                containerHeightConstraint?.constant = bufferHeight
                 tableView.isScrollEnabled = false
             } else {
                 containerHeightConstraint?.constant = availableHeight

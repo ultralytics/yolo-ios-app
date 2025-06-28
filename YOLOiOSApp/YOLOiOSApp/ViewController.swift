@@ -145,15 +145,7 @@ class ModelTableViewCell: UITableViewCell {
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDelegate, PHPickerViewControllerDelegate {
 
-  @IBOutlet weak var yoloView: YOLOView!
-  @IBOutlet var View0: UIView!
-  @IBOutlet var segmentedControl: UISegmentedControl!
-  @IBOutlet weak var labelName: UILabel!
-  @IBOutlet weak var labelFPS: UILabel!
-  @IBOutlet weak var labelVersion: UILabel!
-  @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var forcus: UIImageView!
-  @IBOutlet weak var logoImage: UIImageView!
+  var yoloView: YOLOView!
   
   // New UI Components
   private let statusMetricBar = StatusMetricBar()
@@ -186,8 +178,6 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   private var landscapeConstraints: [NSLayoutConstraint] = []
   private var commonConstraints: [NSLayoutConstraint] = []
 
-  var shareButton = UIButton()
-  var recordButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
 
@@ -304,51 +294,48 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
   private var isLoadingModel = false
 
-  private let modelTableView: UITableView = {
-    let table = UITableView()
-    table.isHidden = true
-    table.layer.cornerRadius = 5  // 他の要素のcorner radiusに合わせる
-    table.clipsToBounds = true
-    return table
-  }()
-
-  private let tableViewBGView = UIView()
 
   private var selectedIndexPath: IndexPath?
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    yoloView = YOLOView(frame: view.bounds, modelPathOrName: "", task: .detect)
+      
+
     setupTaskSegmentedControl()
     loadModelsForAllTasks()
 
     if tasks.indices.contains(2) {
-      segmentedControl.selectedSegmentIndex = 2
+      // segmentedControl no longer exists in new UI
       currentTask = tasks[2].name
       reloadModelEntriesAndLoadFirst(for: currentTask)
     }
 
-    setupTableView()
-    setupButtons()
+    // Old UI setup methods - no longer needed with new UI
+    // setupTableView()
+    // setupButtons()
 
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
-
-    // ラベルのテキスト色を白色に強制設定
-    labelName.textColor = .white
-    labelFPS.textColor = .white
-    labelVersion.textColor = .white
-
-    // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
-    labelName.overrideUserInterfaceStyle = .dark
-    labelFPS.overrideUserInterfaceStyle = .dark
-    labelVersion.overrideUserInterfaceStyle = .dark
+    
+    // Hide all default YOLOView UI elements
+    yoloView.toolbar.isHidden = true
+    yoloView.sliderNumItems.isHidden = true
+    yoloView.sliderConf.isHidden = true
+    yoloView.sliderIoU.isHidden = true
+    yoloView.labelSliderNumItems.isHidden = true
+    yoloView.labelSliderConf.isHidden = true
+    yoloView.labelSliderIoU.isHidden = true
+    yoloView.labelZoom.isHidden = true
+    yoloView.playButton.isHidden = true
+    yoloView.pauseButton.isHidden = true
+    yoloView.switchCameraButton.isHidden = true
     
     // Setup new UI if active
     if isNewUIActive {
       setupNewUI()
-      hideOldUI()
     }
 
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
@@ -466,8 +453,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
 
-    // Force text color to white whenever the screen appears
-    enforceWhiteTextColor()
+    // Old UI text color enforcement - no longer needed
 
     // Override system appearance mode setting to ensure consistent styling
     view.overrideUserInterfaceStyle = .dark
@@ -477,8 +463,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
     super.traitCollectionDidChange(previousTraitCollection)
 
-    // Maintain white text color even when appearance mode changes
-    enforceWhiteTextColor()
+    // Old UI text color enforcement - no longer needed
   }
   
   // Called when orientation changes
@@ -517,18 +502,8 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   }
   
 
-  // Common method to set label text color to white
-  private func enforceWhiteTextColor() {
-    labelName.textColor = .white
-    labelFPS.textColor = .white
-    labelVersion.textColor = .white
-  }
-
   private func setupTaskSegmentedControl() {
-    segmentedControl.removeAllSegments()
-    for (index, taskInfo) in tasks.enumerated() {
-      segmentedControl.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
-    }
+    // Old UI segmented control setup - no longer needed
   }
 
   private func loadModelsForAllTasks() {
@@ -606,19 +581,15 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     currentModels = makeModelEntries(for: taskName)
 
     if !currentModels.isEmpty {
-      modelTableView.isHidden = false
-      modelTableView.reloadData()
-
+      // Old UI table view code removed
       DispatchQueue.main.async {
         let firstIndex = IndexPath(row: 0, section: 0)
-        self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
         self.selectedIndexPath = firstIndex
         let firstModel = self.currentModels[0]
         self.loadModel(entry: firstModel, forTask: taskName)
       }
     } else {
       print("No models found for task: \(taskName)")
-      modelTableView.isHidden = true
     }
   }
 
@@ -663,13 +634,10 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     if firstLoad {
       firstLoad = false
     }
-
-    self.activityIndicator.startAnimating()
     self.downloadProgressView.progress = 0.0
     self.downloadProgressView.isHidden = true
     self.downloadProgressLabel.isHidden = true
     self.view.isUserInteractionEnabled = false
-    self.modelTableView.isUserInteractionEnabled = false
 
     print("Start loading model: \(entry.displayName)")
 
@@ -764,7 +732,6 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
   private func finishLoadingModel(success: Bool, modelName: String) {
     DispatchQueue.main.async {
-      self.activityIndicator.stopAnimating()
       self.downloadProgressView.isHidden = true
 
       self.downloadProgressLabel.isHidden = true
@@ -772,14 +739,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       //            self.downloadProgressLabel.text = "Loading \(modelName)"
 
       self.view.isUserInteractionEnabled = true
-      self.modelTableView.isUserInteractionEnabled = true
       self.isLoadingModel = false
-
-      self.modelTableView.reloadData()
-
-      if let ip = self.selectedIndexPath {
-        self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
-      }
       // Always hide loading overlay
       self.hideLoadingOverlay()
       self.yoloView.setInferenceFlag(ok: true)
@@ -788,9 +748,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
         DispatchQueue.main.async {
-          self.labelName.text = processString(modelName)
-          // テキスト色を白色に強制設定
-          self.labelName.textColor = .white
+          // Old UI label update - no longer needed
           
           // Update new UI
           self.updateUIAfterModelLoad(success: true, modelName: modelName)
@@ -857,12 +815,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
-    )
+    // Old UI table view background update - removed
   }
 
   @objc func logoButton() {
@@ -872,58 +825,12 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     }
   }
 
-  private func setupTableView() {
-    modelTableView.delegate = self
-    modelTableView.dataSource = self
-    modelTableView.register(
-      ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
-
-    modelTableView.backgroundColor = .clear
-    modelTableView.separatorStyle = .none
-    modelTableView.isScrollEnabled = false
-
-    tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
-    tableViewBGView.layer.cornerRadius = 5  // 選択時の枠のcorner radiusに合わせる
-    tableViewBGView.clipsToBounds = true
-
-    view.addSubview(tableViewBGView)
-    view.addSubview(modelTableView)
-
-    modelTableView.translatesAutoresizingMaskIntoConstraints = false
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
-    )
-  }
-
-  private func setupButtons() {
-    // Only setup old UI buttons if not using new UI
-    if !isNewUIActive {
-      let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-      shareButton.setImage(
-        UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
-      shareButton.addGestureRecognizer(
-        UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
-      view.addSubview(shareButton)
-
-      recordButton.setImage(UIImage(systemName: "video", withConfiguration: config), for: .normal)
-      recordButton.addGestureRecognizer(
-        UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
-      view.addSubview(recordButton)
-
-      logoImage.isUserInteractionEnabled = true
-      logoImage.addGestureRecognizer(
-        UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-    }
-  }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    // Only layout old UI elements if not using new UI
-    if !isNewUIActive {
+    // Old UI layout code removed - now using Auto Layout constraints
+    /*
       if view.bounds.width > view.bounds.height {
         shareButton.tintColor = .darkGray
         recordButton.tintColor = .darkGray
@@ -960,7 +867,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         width: modelTableView.frame.width + 2,
         height: CGFloat(currentModels.count * 30 + 2)
       )
-    }
+    */
   }
 
   @objc func shareButtonTapped() {
@@ -972,7 +879,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
           let activityViewController = UIActivityViewController(
             activityItems: [image], applicationActivities: nil
           )
-          activityViewController.popoverPresentationController?.sourceView = self.View0
+          activityViewController.popoverPresentationController?.sourceView = self.view
           self.present(activityViewController, animated: true, completion: nil)
         }
       } else {
@@ -987,7 +894,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
     if !recorder.isRecording {
       AudioServicesPlaySystemSound(1117)
-      recordButton.tintColor = .red
+      // recordButton.tintColor = .red
       recorder.startRecording { error in
         if let error = error {
           print("Screen recording start error: \(error)")
@@ -997,11 +904,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       }
     } else {
       AudioServicesPlaySystemSound(1118)
-      if view.bounds.width > view.bounds.height {
-        recordButton.tintColor = .darkGray
-      } else {
-        recordButton.tintColor = .systemGray
-      }
+      // Old UI button color update - removed
       recorder.stopRecording { previewVC, error in
         if let error = error {
           print("Stop recording error: \(error)")
@@ -1068,8 +971,8 @@ extension ViewController: RPPreviewViewControllerDelegate {
 // MARK: - YOLOViewDelegate
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-    labelFPS.textColor = .white
+    // Old UI FPS label update - no longer needed
+    // FPS is now handled by statusMetricBar in new UI
     
     // Update new UI metrics
     if isNewUIActive {
@@ -1304,33 +1207,6 @@ extension ViewController {
     }
   }
   
-  private func hideOldUI() {
-    // Hide old UI elements
-    segmentedControl.isHidden = true
-    labelName.isHidden = true
-    labelFPS.isHidden = true
-    labelVersion.isHidden = true
-    shareButton.isHidden = true
-    recordButton.isHidden = true
-    modelTableView.isHidden = true
-    tableViewBGView.isHidden = true
-    forcus.isHidden = true
-    logoImage.isHidden = true
-    activityIndicator.isHidden = true
-    
-    // Hide YOLOView's built-in UI elements
-    yoloView.toolbar.isHidden = true
-    yoloView.sliderConf.isHidden = true
-    yoloView.sliderIoU.isHidden = true
-    yoloView.sliderNumItems.isHidden = true
-    yoloView.labelSliderConf.isHidden = true
-    yoloView.labelSliderIoU.isHidden = true
-    yoloView.labelSliderNumItems.isHidden = true
-    yoloView.playButton.isHidden = true
-    yoloView.pauseButton.isHidden = true
-    yoloView.switchCameraButton.isHidden = true
-    yoloView.labelZoom.isHidden = true
-  }
   
   // MARK: - New UI Actions
   

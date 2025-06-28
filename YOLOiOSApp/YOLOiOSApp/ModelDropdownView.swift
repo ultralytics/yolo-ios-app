@@ -77,7 +77,7 @@ class ModelDropdownView: UIView {
         tableView.bounces = true  // Enable bounce for better scroll feedback
         tableView.showsVerticalScrollIndicator = true
         tableView.indicatorStyle = .white  // White scroll indicator for dark background
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 8, right: 0)  // Small bottom padding for better scrolling
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)  // No padding to prevent cutoff
         
         // Add subviews
         addSubview(overlayView)
@@ -178,7 +178,7 @@ class ModelDropdownView: UIView {
         let safeAreaTop = window?.safeAreaInsets.top ?? 0
         let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
         let tabBarHeight: CGFloat = 49 // Standard tab bar height
-        let bottomPadding: CGFloat = tabBarHeight // Just tab bar, no extra padding
+        let bottomPadding: CGFloat = tabBarHeight - 5 // Tab bar minus small overlap
         let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
         
         print("ModelDropdownView: Screen height = \(UIScreen.main.bounds.height)")
@@ -243,7 +243,7 @@ class ModelDropdownView: UIView {
             let safeAreaTop = window?.safeAreaInsets.top ?? 0
             let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
             let tabBarHeight: CGFloat = 49
-            let bottomPadding: CGFloat = tabBarHeight
+            let bottomPadding: CGFloat = tabBarHeight - 5
             let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
             
             if finalHeight <= availableHeight {
@@ -364,8 +364,8 @@ class ModelDropdownView: UIView {
             }
         }
         
-        // Bottom padding for corner radius
-        height += 16
+        // Bottom padding for corner radius and extra space
+        height += 30  // Increased from 16 to account for tableView content
         
         print("ModelDropdownView: Total calculated height: \(height)")
         

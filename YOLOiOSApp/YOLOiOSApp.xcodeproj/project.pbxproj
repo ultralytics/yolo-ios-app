@@ -12,7 +12,8 @@
 		636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 636EFCB821E62E3900DE43BC /* Assets.xcassets */; };
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
 		63CF37202514455300E2DEA1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44F22186177008AE681 /* Main.storyboard */; };
-		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
+		73183F2A2E0F674E00D269A5 /* ModelSizeFilterBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73183F292E0F674E00D269A5 /* ModelSizeFilterBar.swift */; };
+		73183F2C2E0F86FB00D269A5 /* CustomModelGuideViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73183F2B2E0F86FB00D269A5 /* CustomModelGuideViewController.swift */; };
 		73220ED32D373C2E00A94B92 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73220ED22D373C2E00A94B92 /* YOLO */; };
 		73A992102E029C7A0051C61F /* StatusMetricBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920D2E029C7A0051C61F /* StatusMetricBar.swift */; };
 		73A992112E029C7A0051C61F /* RightSideToolBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A9920B2E029C7A0051C61F /* RightSideToolBar.swift */; };
@@ -39,11 +40,12 @@
 /* Begin PBXFileReference section */
 		6323C44D22186177008AE681 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6323C44F22186177008AE681 /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
-		6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ultralytics_yolo_logotype.png; sourceTree = "<group>"; };
 		632892DF22EB3DB100A12D9C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.info; path = Info.plist; sourceTree = "<group>"; };
 		633BC6FA22EDE73D00821BCA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		636EFC9C21E62DD300DE43BC /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		73183F292E0F674E00D269A5 /* ModelSizeFilterBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSizeFilterBar.swift; sourceTree = "<group>"; };
+		73183F2B2E0F86FB00D269A5 /* CustomModelGuideViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomModelGuideViewController.swift; sourceTree = "<group>"; };
 		734B44432D42F7CF00D2CA6A /* DetectModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = DetectModels; sourceTree = "<group>"; };
 		734B44442D42F7CF00D2CA6A /* ClassifyModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ClassifyModels; sourceTree = "<group>"; };
 		734B44452D42F7CF00D2CA6A /* OBBModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OBBModels; sourceTree = "<group>"; };
@@ -82,6 +84,8 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
+				73183F2B2E0F86FB00D269A5 /* CustomModelGuideViewController.swift */,
+				73183F292E0F674E00D269A5 /* ModelSizeFilterBar.swift */,
 				73A9927C2E093F680051C61F /* ThresholdSliderView.swift */,
 				73BFE0A52E07BDD000CF6FEC /* AppDelegate.swift */,
 				73BFE0A62E07BDD000CF6FEC /* ModelSizeHelper.swift */,
@@ -102,7 +106,6 @@
 				633BC6FA22EDE73D00821BCA /* Settings.bundle */,
 				632892DF22EB3DB100A12D9C /* Info.plist */,
 				636EFCB821E62E3900DE43BC /* Assets.xcassets */,
-				6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */,
 			);
 			path = YOLOiOSApp;
 			sourceTree = "<group>";
@@ -199,7 +202,6 @@
 				73A992772E06AF930051C61F /* OBBModels in Resources */,
 				636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */,
 				63CF37202514455300E2DEA1 /* Main.storyboard in Resources */,
-				63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */,
 				63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */,
 				633BC6FB22EDE73D00821BCA /* Settings.bundle in Resources */,
 			);
@@ -243,7 +245,9 @@
 				73A992132E029C7A0051C61F /* ShutterBar.swift in Sources */,
 				73A9927D2E093F680051C61F /* ThresholdSliderView.swift in Sources */,
 				73A992142E029C7A0051C61F /* HiddenInfoViewController.swift in Sources */,
+				73183F2A2E0F674E00D269A5 /* ModelSizeFilterBar.swift in Sources */,
 				73BFE0A72E07BDD000CF6FEC /* AppDelegate.swift in Sources */,
+				73183F2C2E0F86FB00D269A5 /* CustomModelGuideViewController.swift in Sources */,
 				73BFE0A82E07BDD000CF6FEC /* ModelSizeHelper.swift in Sources */,
 				73A992162E029C7A0051C61F /* TaskTabStrip.swift in Sources */,
 				73A992172E029C7A0051C61F /* Typography.swift in Sources */,

@@ -109,20 +109,21 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
   drawContext.draw(cgImage, in: CGRect(origin: .zero, size: imageSize))
   drawContext.restoreGState()
 
-  // Calculate line width and font size proportionally to image dimensions
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
-
   for box in result.boxes {
     let colorIndex = box.index % ultralyticsColors.count
     let color = ultralyticsColors[colorIndex]
+    let lineWidth = CGFloat(width) * 0.01
     drawContext.setStrokeColor(color.cgColor)
-    drawContext.setLineWidth(CGFloat(lineWidth))
+    drawContext.setLineWidth(lineWidth)
     let rect = box.xywh
-    drawContext.stroke(rect)
+    // Draw rounded rectangle with corner radius
+    let cornerRadius: CGFloat = 12.0
+    let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+    drawContext.addPath(path.cgPath)
+    drawContext.strokePath()
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
+    let font = UIFont.systemFont(ofSize: CGFloat(width) * 0.03, weight: .semibold)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
@@ -445,15 +446,14 @@ func drawKeypoints(
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
 ) {
-  // Scale radius dynamically based on the current view size rather than original image size
-  let dynamicRadius = max(imageViewSize.width, imageViewSize.height) / 100
+  let _radius = max(originalImageSize.width, originalImageSize.height) / 300
   for (i, keypoints) in keypointsList.enumerated() {
     drawSinglePersonKeypoints(
       keypoints: keypoints, confs: confsList[i], boundingBox: boundingBoxes[i],
       on: layer,
       imageViewSize: imageViewSize,
       originalImageSize: originalImageSize,
-      radius: dynamicRadius,
+      radius: _radius,
       confThreshold: confThreshold,
       drawSkeleton: drawSkeleton
     )
@@ -548,8 +548,7 @@ func drawLine(
   path.addLine(to: end)
 
   lineLayer.path = path.cgPath
-  // Ensure minimum line width for visibility
-  lineLayer.lineWidth = max(lineWidth, 1.5)
+  lineLayer.lineWidth = lineWidth
 
   let color = posePalette[index].map { $0 / 255.0 }
   lineLayer.strokeColor =
@@ -578,8 +577,7 @@ func drawPoseOnCIImage(
   let renderedHeight = cgImage.height
   let renderedSize = CGSize(width: renderedWidth, height: renderedHeight)
 
-  // Calculate radius scaled to the rendered image size
-  let circleRadius = CGFloat(max(renderedWidth, renderedHeight) / 100)
+  let _radius = max(originalImageSize.width, originalImageSize.height) / 300
 
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
   guard let currentContext = UIGraphicsGetCurrentContext() else {
@@ -598,7 +596,7 @@ func drawPoseOnCIImage(
     on: rootLayer,
     imageViewSize: renderedSize,
     originalImageSize: originalImageSize,
-    radius: circleRadius,
+    radius: _radius,
     confThreshold: confThreshold,
     drawSkeleton: drawSkeleton
   )
@@ -676,9 +674,6 @@ class OBBRenderer {
     let scaleX = imageViewSize.width
     let scaleY = imageViewSize.height
 
-    // Calculate line width and font size dynamically based on image dimensions
-    let dynamicLineWidth = max(imageViewSize.width, imageViewSize.height) / 200
-    let dynamicFontSize = max(imageViewSize.width, imageViewSize.height) / 50
 
     for detection in obbDetections {
       let bundle = getLayerBundle(for: layer)
@@ -705,11 +700,11 @@ class OBBRenderer {
       shapeLayer.path = path.cgPath
       shapeLayer.strokeColor = color.cgColor
       shapeLayer.fillColor = UIColor.clear.cgColor
-      shapeLayer.lineWidth = dynamicLineWidth
+      shapeLayer.lineWidth = lineWidth
       shapeLayer.isHidden = false
 
       let text = detection.cls + String(format: " %.2f", detection.confidence)
-      let font = UIFont.systemFont(ofSize: dynamicFontSize)
+      let font = UIFont.systemFont(ofSize: textLayer.fontSize)
 
       let attributes: [NSAttributedString.Key: Any] = [
         .font: font
@@ -717,15 +712,14 @@ class OBBRenderer {
       let textSize = (text as NSString).size(withAttributes: attributes)
 
       textLayer.font = CGFont(font.fontName as CFString)
-      textLayer.fontSize = dynamicFontSize
       textLayer.contentsScale = UIScreen.main.scale
       textLayer.string = text
 
       textLayer.backgroundColor = color.withAlphaComponent(0.6).cgColor
       textLayer.isHidden = false
 
-      let horizontalPadding: CGFloat = dynamicFontSize / 2
-      let verticalPadding: CGFloat = dynamicFontSize / 5
+      let horizontalPadding: CGFloat = 10
+      let verticalPadding: CGFloat = 4
 
       if let firstCorner = corners.first {
         let px = firstCorner.x * scaleX
@@ -761,9 +755,8 @@ func drawOBBsOnCIImage(
     return nil
   }
 
-  // Calculate line width and font size proportionally to image dimensions
-  let lineWidth: CGFloat = max(extent.width, extent.height) / 200
-  let fontSize = max(extent.width, extent.height) / 50
+  let lineWidth: CGFloat = max(extent.width, extent.height) / 500
+  let fontSize = max(extent.width, extent.height) / 70
   let outputSize = targetSize ?? CGSize(width: extent.width, height: extent.height)
 
   UIGraphicsBeginImageContextWithOptions(outputSize, false, 1.0)
@@ -867,9 +860,9 @@ public func drawYOLOPoseWithBoxes(
     drawContext.setStrokeColor(color.cgColor)
     drawContext.setLineWidth(lineWidth)
 
-    // Calculate corner radius (about 5% of box size, minimum 2 pixels)
     let rect = box.xywh
-    let cornerRadius = max(min(rect.width, rect.height) * 0.05, 2.0)
+    // Draw rounded rectangle with corner radius
+    let cornerRadius: CGFloat = 12.0
 
     // Draw rounded rectangle
     let boxPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
@@ -960,8 +953,8 @@ public func drawYOLOSegmentationWithBoxes(
   let renderedSize = CGSize(width: width, height: height)
 
   // 2. Calculate drawing sizes
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  let lineWidth = width * 0.01
+  let fontSize = width * 0.03
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -1010,9 +1003,9 @@ public func drawYOLOSegmentationWithBoxes(
     drawContext.setStrokeColor(color.cgColor)
     drawContext.setLineWidth(lineWidth)
 
-    // Calculate corner radius (about 5% of box size, minimum 2 pixels)
     let rect = box.xywh
-    let cornerRadius = max(min(rect.width, rect.height) * 0.05, 2.0)
+    // Draw rounded rectangle with corner radius
+    let cornerRadius: CGFloat = 12.0
 
     // Draw rounded rectangle
     let boxPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)

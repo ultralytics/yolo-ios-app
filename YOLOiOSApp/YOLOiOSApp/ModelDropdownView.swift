@@ -5,6 +5,7 @@ import UIKit
 protocol ModelDropdownViewDelegate: AnyObject {
     func modelDropdown(_ dropdown: ModelDropdownView, didSelectModel model: ModelEntry)
     func modelDropdownDidDismiss(_ dropdown: ModelDropdownView)
+    func modelDropdownDidRequestCustomModelGuide(_ dropdown: ModelDropdownView)
 }
 
 class ModelDropdownView: UIView {
@@ -76,7 +77,7 @@ class ModelDropdownView: UIView {
         tableView.bounces = true  // Enable bounce for better scroll feedback
         tableView.showsVerticalScrollIndicator = true
         tableView.indicatorStyle = .white  // White scroll indicator for dark background
-        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)  // Add bottom padding for better scrolling
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 8, right: 0)  // Small bottom padding for better scrolling
         
         // Add subviews
         addSubview(overlayView)
@@ -165,18 +166,20 @@ class ModelDropdownView: UIView {
         
         print("ModelDropdownView: Calculated height = \(finalHeight)")
         
-        // In landscape, limit height to 85% of screen height to show more items while leaving space for interaction
+        // In landscape, limit height to 70% of screen height to ensure it's not cut off
         if isLandscape {
-            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
+            let maxLandscapeHeight = UIScreen.main.bounds.height * 0.70
             finalHeight = min(finalHeight, maxLandscapeHeight)
             print("ModelDropdownView: Landscape mode - limiting height to \(finalHeight)")
         }
         
         // Check if content fits on screen
-        let statusBarOffset: CGFloat = 54 // Status bar height + padding
+        let statusBarOffset: CGFloat = 36 // Position from safe area top
+        let safeAreaTop = window?.safeAreaInsets.top ?? 0
         let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
-        let bottomPadding: CGFloat = safeAreaBottom // Just safe area, no extra padding
-        let availableHeight = UIScreen.main.bounds.height - statusBarOffset - bottomPadding
+        let tabBarHeight: CGFloat = 49 // Standard tab bar height
+        let bottomPadding: CGFloat = tabBarHeight // Just tab bar, no extra padding
+        let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
         
         print("ModelDropdownView: Screen height = \(UIScreen.main.bounds.height)")
         print("ModelDropdownView: Available height = \(availableHeight)")
@@ -231,12 +234,25 @@ class ModelDropdownView: UIView {
             var finalHeight = calculatedHeight
             
             if isLandscape {
-                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.85
+                let maxLandscapeHeight = UIScreen.main.bounds.height * 0.70
                 finalHeight = min(finalHeight, maxLandscapeHeight)
             }
             
-            containerHeightConstraint?.constant = finalHeight
-            tableView.isScrollEnabled = finalHeight < calculatedHeight
+            // Re-check available height
+            let statusBarOffset: CGFloat = 36
+            let safeAreaTop = window?.safeAreaInsets.top ?? 0
+            let safeAreaBottom = window?.safeAreaInsets.bottom ?? 0
+            let tabBarHeight: CGFloat = 49
+            let bottomPadding: CGFloat = tabBarHeight
+            let availableHeight = UIScreen.main.bounds.height - safeAreaTop - statusBarOffset - bottomPadding
+            
+            if finalHeight <= availableHeight {
+                containerHeightConstraint?.constant = finalHeight
+                tableView.isScrollEnabled = false
+            } else {
+                containerHeightConstraint?.constant = availableHeight
+                tableView.isScrollEnabled = true
+            }
         }
         
         layoutIfNeeded()
@@ -348,8 +364,8 @@ class ModelDropdownView: UIView {
             }
         }
         
-        // Bottom padding for corner radius and safe area
-        height += 30
+        // Bottom padding for corner radius
+        height += 16
         
         print("ModelDropdownView: Total calculated height: \(height)")
         
@@ -453,9 +469,8 @@ extension ModelDropdownView: UITableViewDelegate {
         // Handle tap on placeholder cell
         if sectionData.title == "USE CUSTOM MODELS" && sectionData.models.isEmpty {
             // Notify delegate about custom model instruction request
-            // For now, just hide the dropdown - the instruction screen will be implemented later
             hide()
-            // TODO: Implement custom model instruction screen
+            delegate?.modelDropdownDidRequestCustomModelGuide(self)
             return
         }
         

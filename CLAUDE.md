@@ -34,6 +34,11 @@ Tests/YOLOTests/Resources/download-test-models.sh
 
 # Run a specific test
 xcodebuild test -scheme YOLO -destination 'platform=iOS Simulator,name=iPhone 14' -only-testing:YOLOTests/YOLOv11Tests/testObjectDetection
+
+# Generate code coverage report (from CI workflow)
+xcrun llvm-cov export -format="lcov" \
+  -instr-profile="$PROFILE_PATH" \
+  "$EXECUTABLE_PATH" > coverage.lcov
 ```
 
 ### iOS App Commands
@@ -107,3 +112,14 @@ This repository provides a comprehensive YOLO implementation for iOS, consisting
 - Zoom controls with 0.5x, 1x, 2x, 3x levels
 - Model size selector in navigation bar
 - Tab bar for task switching
+
+## Testing Environment
+- Test models must be downloaded separately using the provided script
+- Tests can run with or without models by setting `SKIP_MODEL_TESTS` flag
+- CI/CD uses macOS-15 with iPhone 14 simulator
+- Code coverage is tracked via Codecov integration
+- For tests requiring environment variables, create a `.env` file with:
+  ```
+  API_URL=your_api_url
+  FIREBASE_API_KEY=your_firebase_key
+  ```

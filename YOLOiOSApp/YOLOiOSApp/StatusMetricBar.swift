@@ -319,7 +319,20 @@ class StatusMetricBar: UIView, UIGestureRecognizerDelegate {
     }
     
     func updateModel(name: String, size: String) {
-        modelButton.setTitle(name, for: .normal)
+        // Extract just the version name for official models
+        let displayName: String
+        if name.contains("YOLO11") {
+            displayName = "YOLO11"
+        } else if name.contains("YOLOv8") || name.contains("YOLOV8") {
+            displayName = "YOLOv8"
+        } else if name.contains("YOLOv5") || name.contains("YOLOV5") {
+            displayName = "YOLOv5"
+        } else {
+            // For custom models, keep the original name
+            displayName = name
+        }
+        
+        modelButton.setTitle(displayName, for: .normal)
         sizeLabel.text = size.uppercased()
     }
     

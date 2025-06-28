@@ -195,6 +195,8 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     let pv = UIProgressView(progressViewStyle: .default)
     pv.progress = 0.0
     pv.isHidden = true
+    pv.progressTintColor = .ultralyticsLime
+    pv.trackTintColor = UIColor.white.withAlphaComponent(0.3)
     return pv
   }()
 
@@ -202,8 +204,8 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     let label = UILabel()
     label.text = ""
     label.textAlignment = .center
-    label.textColor = .systemGray
-    label.font = UIFont.systemFont(ofSize: 14)
+    label.textColor = .white
+    label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
     label.isHidden = true
     return label
   }()
@@ -212,20 +214,76 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
   func showLoadingOverlay() {
     guard loadingOverlayView == nil else { return }
+    
+    // Create overlay
     let overlay = UIView(frame: view.bounds)
-    overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-
+    overlay.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+    overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    
+    // Create container for loading indicator
+    let containerView = UIView()
+    containerView.backgroundColor = UIColor.ultralyticsSurfaceDark.withAlphaComponent(0.95)
+    containerView.layer.cornerRadius = 12
+    containerView.translatesAutoresizingMaskIntoConstraints = false
+    
+    // Create activity indicator
+    let loadingIndicator = UIActivityIndicatorView(style: .large)
+    loadingIndicator.color = .ultralyticsLime
+    loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+    loadingIndicator.startAnimating()
+    
+    // Create loading label
+    let loadingLabel = UILabel()
+    loadingLabel.text = "Loading Model..."
+    loadingLabel.textColor = .white
+    loadingLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+    loadingLabel.translatesAutoresizingMaskIntoConstraints = false
+    
+    // Add views
+    overlay.addSubview(containerView)
+    containerView.addSubview(loadingIndicator)
+    containerView.addSubview(loadingLabel)
+    
     view.addSubview(overlay)
     loadingOverlayView = overlay
+    
+    // Layout
+    NSLayoutConstraint.activate([
+      containerView.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+      containerView.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+      containerView.widthAnchor.constraint(equalToConstant: 200),
+      containerView.heightAnchor.constraint(equalToConstant: 120),
+      
+      loadingIndicator.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+      loadingIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor, constant: -15),
+      
+      loadingLabel.topAnchor.constraint(equalTo: loadingIndicator.bottomAnchor, constant: 12),
+      loadingLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor)
+    ])
+    
+    // Bring progress views to front
     view.bringSubviewToFront(downloadProgressView)
     view.bringSubviewToFront(downloadProgressLabel)
-
+    
+    // Animate in
+    overlay.alpha = 0
+    UIView.animate(withDuration: 0.2) {
+      overlay.alpha = 1
+    }
+    
     view.isUserInteractionEnabled = false
   }
 
   func hideLoadingOverlay() {
-    loadingOverlayView?.removeFromSuperview()
-    loadingOverlayView = nil
+    guard let overlay = loadingOverlayView else { return }
+    
+    UIView.animate(withDuration: 0.2, animations: {
+      overlay.alpha = 0
+    }) { _ in
+      overlay.removeFromSuperview()
+      self.loadingOverlayView = nil
+    }
+    
     view.isUserInteractionEnabled = true
   }
 
@@ -301,23 +359,30 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
     NSLayoutConstraint.activate([
       downloadProgressView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      downloadProgressView.topAnchor.constraint(
-        equalTo: activityIndicator.bottomAnchor, constant: 8),
+      downloadProgressView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
       downloadProgressView.widthAnchor.constraint(equalToConstant: 200),
-      downloadProgressView.heightAnchor.constraint(equalToConstant: 2),
+      downloadProgressView.heightAnchor.constraint(equalToConstant: 4),
 
       downloadProgressLabel.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
       downloadProgressLabel.topAnchor.constraint(
-        equalTo: downloadProgressView.bottomAnchor, constant: 8),
+        equalTo: downloadProgressView.bottomAnchor, constant: 12),
     ])
 
     ModelDownloadManager.shared.progressHandler = { [weak self] progress in
       guard let self = self else { return }
       DispatchQueue.main.async {
         self.downloadProgressView.progress = Float(progress)
+        self.downloadProgressView.isHidden = false
         self.downloadProgressLabel.isHidden = false
         let percentage = Int(progress * 100)
         self.downloadProgressLabel.text = "Downloading \(percentage)%"
+        
+        // Update loading label if it exists
+        if let overlay = self.loadingOverlayView,
+           let container = overlay.subviews.first,
+           let label = container.subviews.first(where: { $0 is UILabel && ($0 as? UILabel)?.text?.contains("Loading") == true }) as? UILabel {
+          label.text = "Downloading Model..."
+        }
       }
     }
   }
@@ -591,10 +656,11 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     }
     isLoadingModel = true
     yoloView.resetLayers()
-    if !firstLoad {
-      showLoadingOverlay()
-      yoloView.setInferenceFlag(ok: false)
-    } else {
+    // Always show loading overlay
+    showLoadingOverlay()
+    yoloView.setInferenceFlag(ok: false)
+    
+    if firstLoad {
       firstLoad = false
     }
 
@@ -714,9 +780,8 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       if let ip = self.selectedIndexPath {
         self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
       }
-      if !self.firstLoad {
-        self.hideLoadingOverlay()
-      }
+      // Always hide loading overlay
+      self.hideLoadingOverlay()
       self.yoloView.setInferenceFlag(ok: true)
 
       if success {
@@ -1416,16 +1481,59 @@ extension ViewController {
         // Update thumbnail
         self.shutterBar.updateThumbnail(image)
         
-        // Share functionality
-        DispatchQueue.main.async {
-          let activityViewController = UIActivityViewController(
-            activityItems: [image], applicationActivities: nil
-          )
-          activityViewController.popoverPresentationController?.sourceView = self.shutterBar
-          self.present(activityViewController, animated: true, completion: nil)
-        }
+        // Save to photo library
+        UIImageWriteToSavedPhotosAlbum(image, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
       } else {
         print("error capturing photo")
+      }
+    }
+  }
+  
+  @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+    DispatchQueue.main.async {
+      if let error = error {
+        // Show error alert
+        let alert = UIAlertController(title: "Save Error", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alert, animated: true)
+      } else {
+        // Show success feedback
+        let feedback = UINotificationFeedbackGenerator()
+        feedback.notificationOccurred(.success)
+        
+        // Don't play sound - AVCapturePhotoOutput already plays shutter sound
+        // AudioServicesPlaySystemSound(1108)
+        
+        // Update thumbnail with newly saved image
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+          self?.loadLatestPhotoThumbnail()
+        }
+        
+        // Optionally show a brief success message
+        let successView = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 50))
+        successView.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        successView.layer.cornerRadius = 25
+        successView.center = self.view.center
+        
+        let label = UILabel(frame: successView.bounds)
+        label.text = "Saved to Photos"
+        label.textColor = .white
+        label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        successView.addSubview(label)
+        
+        self.view.addSubview(successView)
+        successView.alpha = 0
+        
+        UIView.animate(withDuration: 0.3, animations: {
+          successView.alpha = 1
+        }) { _ in
+          UIView.animate(withDuration: 0.3, delay: 1.0, options: [], animations: {
+            successView.alpha = 0
+          }) { _ in
+            successView.removeFromSuperview()
+          }
+        }
       }
     }
   }
@@ -1703,18 +1811,6 @@ extension ViewController {
     UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
   }
   
-  @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-    if let error = error {
-      print("Error saving image: \(error)")
-    } else {
-      // Play sound effect
-      AudioServicesPlaySystemSound(1108)
-      // Update thumbnail with newly saved image
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-        self?.loadLatestPhotoThumbnail()
-      }
-    }
-  }
   
   private func handleZoomChange(to zoomLevel: Float) {
     // Apply zoom using the new public method
@@ -1849,6 +1945,13 @@ extension ViewController {
   
   func modelDropdownDidDismiss(_ dropdown: ModelDropdownView) {
     // Handle dropdown dismissal if needed
+  }
+  
+  func modelDropdownDidRequestCustomModelGuide(_ dropdown: ModelDropdownView) {
+    let guideVC = CustomModelGuideViewController()
+    guideVC.modalPresentationStyle = .fullScreen
+    guideVC.modalTransitionStyle = .crossDissolve
+    present(guideVC, animated: true)
   }
 }
 

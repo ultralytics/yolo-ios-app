@@ -39,8 +39,9 @@ class ModelSizeFilterBar: UIView {
   private let stackView: UIStackView = {
     let stack = UIStackView()
     stack.axis = .horizontal
-    stack.distribution = .fillProportionally
-    stack.spacing = 8
+    stack.distribution = .equalSpacing
+    stack.alignment = .center
+    stack.spacing = 4
     stack.translatesAutoresizingMaskIntoConstraints = false
     return stack
   }()
@@ -49,10 +50,6 @@ class ModelSizeFilterBar: UIView {
   /// Collection of size buttons
   private var buttons: [UIButton] = []
   
-  /// Underline view for selected size
-  private let underlineView = UIView()
-  private var underlineLeadingConstraint: NSLayoutConstraint?
-  private var underlineWidthConstraint: NSLayoutConstraint?
   
   // MARK: - Initialization
   
@@ -86,14 +83,9 @@ class ModelSizeFilterBar: UIView {
       stackView.addArrangedSubview(button)
     }
     
-    // Configure underline
-    underlineView.backgroundColor = .ultralyticsLime
-    underlineView.translatesAutoresizingMaskIntoConstraints = false
-    
     // Add views
     addSubview(scrollView)
     scrollView.addSubview(stackView)
-    scrollView.addSubview(underlineView)
     
     // Setup constraints
     NSLayoutConstraint.activate([
@@ -103,23 +95,14 @@ class ModelSizeFilterBar: UIView {
       scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
       
-      // Stack view
+      // Stack view - centered
       stackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-      stackView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
-      stackView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
+      stackView.leadingAnchor.constraint(greaterThanOrEqualTo: scrollView.leadingAnchor, constant: 8),
+      stackView.trailingAnchor.constraint(lessThanOrEqualTo: scrollView.trailingAnchor, constant: -8),
       stackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
       stackView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
-      
-      // Underline
-      underlineView.bottomAnchor.constraint(equalTo: bottomAnchor),
-      underlineView.heightAnchor.constraint(equalToConstant: 3),
+      stackView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
     ])
-    
-    // Create underline constraints (will be updated later)
-    underlineLeadingConstraint = underlineView.leadingAnchor.constraint(equalTo: leadingAnchor)
-    underlineWidthConstraint = underlineView.widthAnchor.constraint(equalToConstant: 0)
-    underlineLeadingConstraint?.isActive = true
-    underlineWidthConstraint?.isActive = true
     
     // Set initial selection
     updateSelection()
@@ -131,7 +114,7 @@ class ModelSizeFilterBar: UIView {
     button.titleLabel?.font = Typography.tabLabelFont
     button.addTarget(self, action: #selector(sizeButtonTapped(_:)), for: .touchUpInside)
     button.tag = ModelSize.allCases.firstIndex(of: size) ?? 0
-    button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
+    button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
     return button
   }
   
@@ -161,36 +144,8 @@ class ModelSizeFilterBar: UIView {
       let isSelected = index == ModelSize.allCases.firstIndex(of: selectedSize)
       button.setTitleColor(isSelected ? .white : .ultralyticsTextSubtle, for: .normal)
     }
-    
-    // Animate underline
-    updateUnderlinePosition(animated: true)
   }
   
-  private func updateUnderlinePosition(animated: Bool) {
-    guard let selectedIndex = ModelSize.allCases.firstIndex(of: selectedSize),
-          selectedIndex < buttons.count else { return }
-    
-    let selectedButton = buttons[selectedIndex]
-    
-    layoutIfNeeded()
-    
-    let buttonFrame = selectedButton.convert(selectedButton.bounds, to: self)
-    underlineLeadingConstraint?.constant = buttonFrame.minX
-    underlineWidthConstraint?.constant = buttonFrame.width
-    
-    if animated {
-      UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-        self.layoutIfNeeded()
-      }
-    } else {
-      layoutIfNeeded()
-    }
-  }
-  
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    updateUnderlinePosition(animated: false)
-  }
   
   // MARK: - Public Methods
   

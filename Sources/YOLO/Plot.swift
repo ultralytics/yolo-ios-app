@@ -116,28 +116,32 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
   drawContext.draw(cgImage, in: CGRect(origin: .zero, size: imageSize))
   drawContext.restoreGState()
 
+  // Calculate adaptive drawing sizes
+  let imageDiagonal = sqrt(CGFloat(width * width + height * height))
+  let lineWidth = max(3.0, imageDiagonal * 0.008)
+  let fontSize = max(48.0, min(imageDiagonal * 0.1, 120.0))
+  
   for box in result.boxes {
     let colorIndex = box.index % ultralyticsColors.count
     let color = ultralyticsColors[colorIndex]
-    let lineWidth = CGFloat(width) * 0.01
     drawContext.setStrokeColor(color.cgColor)
     drawContext.setLineWidth(lineWidth)
     let rect = box.xywh
-    // Draw rounded rectangle with corner radius
-    let cornerRadius: CGFloat = 12.0
+    // Draw rounded rectangle with corner radius (scale with image size)
+    let cornerRadius = min(30.0, lineWidth * 3)
     let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
     drawContext.addPath(path.cgPath)
     drawContext.strokePath()
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: CGFloat(width) * 0.03, weight: .semibold)
+    let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
     ]
     let textSize = labelText.size(withAttributes: attrs)
-    let labelWidth = textSize.width + 10
-    let labelHeight = textSize.height + 4
+    let labelWidth = textSize.width + 30
+    let labelHeight = textSize.height + 12
     var labelRect = CGRect(
       x: rect.minX,
       y: rect.minY - labelHeight,
@@ -150,7 +154,7 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
     drawContext.setFillColor(color.cgColor)
     drawContext.fill(labelRect)
     let textPoint = CGPoint(
-      x: labelRect.origin.x + 5,
+      x: labelRect.origin.x + 15,
       y: labelRect.origin.y + (labelHeight - textSize.height) / 2
     )
     labelText.draw(at: textPoint, withAttributes: attrs)
@@ -390,8 +394,9 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
   }
 
   // Calculate line width and font size proportionally to image dimensions
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  let imageDiagonal = sqrt(CGFloat(width * width + height * height))
+  let lineWidth = max(3.0, imageDiagonal * 0.005)
+  let fontSize = max(52.0, min(imageDiagonal * 0.11, 140.0))
   let labelMargin = CGFloat(fontSize / 2)
 
   for (i, candidate) in top5.enumerated() {
@@ -404,14 +409,14 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     drawContext.setLineWidth(CGFloat(lineWidth))
     let confidencePercent = round((result.probs?.top5Confs[safe: i] ?? 0) * 1000) / 10
     let labelText = " \(candidate) \(confidencePercent)% "
-    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
+    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .bold)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
     ]
     let textSize = labelText.size(withAttributes: attrs)
     let labelWidth = textSize.width + 10
-    let labelHeight = CGFloat(textSize.height + 4)
+    let labelHeight = CGFloat(textSize.height + 12)
     var labelRect = CGRect(
       x: labelMargin,
       y: labelMargin + (labelHeight + labelMargin) * CGFloat(i),
@@ -422,7 +427,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     drawContext.setFillColor(color.cgColor)
     drawContext.fill(labelRect)
     let textPoint = CGPoint(
-      x: labelRect.origin.x + 5,
+      x: labelRect.origin.x + 15,
       y: labelRect.origin.y + (labelHeight - textSize.height) / 2
     )
     labelText.draw(at: textPoint, withAttributes: attrs)
@@ -463,7 +468,8 @@ func drawKeypoints(
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
 ) {
-  let _radius = max(originalImageSize.width, originalImageSize.height) / 300
+  // Use the passed radius parameter instead of calculating a fixed value
+  let _radius = radius
   for (i, keypoints) in keypointsList.enumerated() {
     drawSinglePersonKeypoints(
       keypoints: keypoints, confs: confsList[i], boundingBox: boundingBoxes[i],
@@ -488,11 +494,9 @@ func drawSinglePersonKeypoints(
   confThreshold: Float,
   drawSkeleton: Bool
 ) {
-  //      guard keypoints.count == 17 else {
-  //        print("Keypoints array must have 51 elements.")
-  //        return
-  //      }
-  let lineWidth = radius * 0.4
+  // Calculate adaptive line width based on radius
+  // Ensure minimum visibility while maintaining proportions
+  let lineWidth = max(3.0, radius * 0.6)
   let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
   let scaleYToView = Float(imageViewSize.height / originalImageSize.height)
 
@@ -776,8 +780,10 @@ func drawOBBsOnCIImage(
     return nil
   }
 
-  let lineWidth: CGFloat = max(extent.width, extent.height) / 500
-  let fontSize = max(extent.width, extent.height) / 70
+  // Calculate adaptive drawing sizes
+  let imageDiagonal = sqrt(extent.width * extent.width + extent.height * extent.height)
+  let lineWidth = max(3.0, imageDiagonal * 0.008)
+  let fontSize = max(48.0, min(imageDiagonal * 0.1, 120.0))
   let outputSize = targetSize ?? CGSize(width: extent.width, height: extent.height)
 
   UIGraphicsBeginImageContextWithOptions(outputSize, false, 1.0)
@@ -857,10 +863,18 @@ public func drawYOLOPoseWithBoxes(
   let height = CGFloat(cgImage.height)
   let renderedSize = CGSize(width: width, height: height)
 
-  // 2. Calculate drawing sizes
-  let circleRadius = max(width, height) / 100
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  // 2. Calculate drawing sizes adaptively based on image dimensions
+  // Use dynamic scaling for better visualization across different image sizes
+  let imageDiagonal = sqrt(width * width + height * height)
+  
+  // Circle radius: scale between 2% and 4% of diagonal for better visibility
+  let circleRadius = max(8.0, min(imageDiagonal * 0.03, 40.0))
+  
+  // Line width: 50% of circle radius for better visibility
+  let lineWidth = max(3.0, circleRadius * 0.5)
+  
+  // Font size: scale appropriately with image (larger for better readability)
+  let fontSize = max(48.0, min(imageDiagonal * 0.1, 120.0))
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -884,8 +898,8 @@ public func drawYOLOPoseWithBoxes(
     drawContext.setLineWidth(lineWidth)
 
     let rect = box.xywh
-    // Draw rounded rectangle with corner radius
-    let cornerRadius: CGFloat = 12.0
+    // Draw rounded rectangle with corner radius (scale with image size)
+    let cornerRadius = min(30.0, lineWidth * 3)
 
     // Draw rounded rectangle
     let boxPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
@@ -895,14 +909,14 @@ public func drawYOLOPoseWithBoxes(
     // Prepare label
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+    let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
     ]
     let textSize = labelText.size(withAttributes: attrs)
-    let labelWidth = textSize.width + 10
-    let labelHeight = textSize.height + 4
+    let labelWidth = textSize.width + 30
+    let labelHeight = textSize.height + 12
 
     // Determine label position
     var labelRect = CGRect(
@@ -923,7 +937,7 @@ public func drawYOLOPoseWithBoxes(
 
     // Draw text
     let textPoint = CGPoint(
-      x: labelRect.origin.x + 5,
+      x: labelRect.origin.x + 15,
       y: labelRect.origin.y + (labelHeight - textSize.height) / 2
     )
     labelText.draw(at: textPoint, withAttributes: attrs)
@@ -977,9 +991,10 @@ public func drawYOLOSegmentationWithBoxes(
   let height = CGFloat(cgImage.height)
   let renderedSize = CGSize(width: width, height: height)
 
-  // 2. Calculate drawing sizes
-  let lineWidth = width * 0.01
-  let fontSize = width * 0.03
+  // 2. Calculate drawing sizes adaptively
+  let imageDiagonal = sqrt(width * width + height * height)
+  let lineWidth = max(3.0, imageDiagonal * 0.008)
+  let fontSize = max(48.0, min(imageDiagonal * 0.1, 120.0))
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -1029,8 +1044,8 @@ public func drawYOLOSegmentationWithBoxes(
     drawContext.setLineWidth(lineWidth)
 
     let rect = box.xywh
-    // Draw rounded rectangle with corner radius
-    let cornerRadius: CGFloat = 12.0
+    // Draw rounded rectangle with corner radius (scale with image size)
+    let cornerRadius = min(30.0, lineWidth * 3)
 
     // Draw rounded rectangle
     let boxPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
@@ -1040,14 +1055,14 @@ public func drawYOLOSegmentationWithBoxes(
     // Prepare label
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+    let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
     ]
     let textSize = labelText.size(withAttributes: attrs)
-    let labelWidth = textSize.width + 10
-    let labelHeight = textSize.height + 4
+    let labelWidth = textSize.width + 30
+    let labelHeight = textSize.height + 12
 
     // Determine label position
     var labelRect = CGRect(
@@ -1068,7 +1083,7 @@ public func drawYOLOSegmentationWithBoxes(
 
     // Draw text
     let textPoint = CGPoint(
-      x: labelRect.origin.x + 5,
+      x: labelRect.origin.x + 15,
       y: labelRect.origin.y + (labelHeight - textSize.height) / 2
     )
     labelText.draw(at: textPoint, withAttributes: attrs)

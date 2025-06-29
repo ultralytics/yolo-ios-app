@@ -170,7 +170,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     "itemsMax": 30,
     "lineThickness": 3.0
   ]
-  private var currentSizeFilter: ModelSizeFilterBar.ModelSize = .small
+  private var currentSizeFilter: ModelSizeFilterBar.ModelSize = .nano
   private var isSizeFilterShowing = false
   
   // Constraint management for orientation
@@ -661,10 +661,14 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
           self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
             switch result {
-            case .success():
-              self.finishLoadingModel(success: true, modelName: entry.displayName)
+            case .success(let loadResult):
+              // Cache metadata for bundle models
+              if let metadata = loadResult.metadata {
+                ModelCacheManager.shared.cacheMetadata(for: entry.identifier, metadata: metadata)
+              }
+              
+              self.finishLoadingModel(success: true, modelName: entry.displayName, metadata: loadResult.metadata)
             case .failure(let error):
-              print(error)
               self.finishLoadingModel(success: false, modelName: entry.displayName)
             }
           }
@@ -720,17 +724,16 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       self.downloadProgressLabel.text = "Loading \(displayName)"
       self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
         switch result {
-        case .success():
-          self.finishLoadingModel(success: true, modelName: displayName)
+        case .success(let loadResult):
+          self.finishLoadingModel(success: true, modelName: displayName, metadata: loadResult.metadata)
         case .failure(let error):
-          print(error)
           self.finishLoadingModel(success: false, modelName: displayName)
         }
       }
     }
   }
 
-  private func finishLoadingModel(success: Bool, modelName: String) {
+  private func finishLoadingModel(success: Bool, modelName: String, metadata: [String: String]? = nil) {
     DispatchQueue.main.async {
       self.downloadProgressView.isHidden = true
 
@@ -745,13 +748,12 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       self.yoloView.setInferenceFlag(ok: true)
 
       if success {
-        print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
         DispatchQueue.main.async {
           // Old UI label update - no longer needed
           
-          // Update new UI
-          self.updateUIAfterModelLoad(success: true, modelName: modelName)
+          // Update new UI with metadata
+          self.updateUIAfterModelLoad(success: true, modelName: modelName, metadata: metadata)
         }
 
         self.downloadProgressLabel.text = "Finished loading model \(modelName)"
@@ -762,7 +764,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         }
 
       } else {
-        print("Failed to load model: \(modelName)")
+        // Failed to load model
       }
     }
   }
@@ -1792,19 +1794,45 @@ extension ViewController {
     present(hiddenInfoVC, animated: true)
   }
   
-  private func updateUIAfterModelLoad(success: Bool, modelName: String) {
+  private func updateUIAfterModelLoad(success: Bool, modelName: String, metadata: [String: String]? = nil) {
     
     if success && isNewUIActive {
-      // Update status bar with model info
-      let modelSize = ModelSizeHelper.getModelSize(from: modelName)
-      statusMetricBar.updateModel(name: processString(modelName), size: modelSize)
+      // Don't update status bar here - wait until we determine the actual size
       
       // Update current size filter based on loaded model
-      if let loadedModel = currentModels.first(where: { $0.displayName == modelName }),
-         let modelSizeRaw = loadedModel.modelSize,
-         let size = ModelSizeFilterBar.ModelSize(rawValue: modelSizeRaw) {
-        currentSizeFilter = size
-        modelSizeFilterBar.setSelectedSize(size, animated: false)
+      if let loadedModel = currentModels.first(where: { $0.displayName == modelName }) {
+        if let modelSizeRaw = loadedModel.modelSize,
+           let size = ModelSizeFilterBar.ModelSize(rawValue: modelSizeRaw) {
+          // Standard model with known size
+          currentSizeFilter = size
+          modelSizeFilterBar.setSelectedSize(size, animated: false)
+        } else {
+          // For custom models, first check the metadata from model loading
+          var detectedSize: ModelSizeFilterBar.ModelSize? = nil
+          
+          // Try to extract size from metadata
+          if let metadata = metadata {
+            detectedSize = ModelMetadataHelper.extractModelSizeFromMetadata(metadata)
+          }
+          
+          if let size = detectedSize {
+            currentSizeFilter = size
+            modelSizeFilterBar.setSelectedSize(size, animated: false)
+          } else if let cachedSize = ModelCacheManager.shared.getCachedModelSize(for: loadedModel.identifier),
+             let size = ModelSizeFilterBar.ModelSize(rawValue: cachedSize) {
+            // Fallback to cached metadata
+            currentSizeFilter = size
+            modelSizeFilterBar.setSelectedSize(size, animated: false)
+          } else {
+            // Default to nano if metadata doesn't provide size info
+            currentSizeFilter = .nano
+            modelSizeFilterBar.setSelectedSize(.nano, animated: false)
+          }
+        }
+        
+        // Update status bar with the determined size
+        let sizeString = currentSizeFilter.displayName
+        statusMetricBar.updateModel(name: processString(modelName), size: sizeString)
       }
     }
   }

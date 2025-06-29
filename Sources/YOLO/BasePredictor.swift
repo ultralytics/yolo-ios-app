@@ -102,7 +102,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
-    completion: @escaping (Result<BasePredictor, Error>) -> Void
+    completion: @escaping (Result<BasePredictor, Error>) -> Void,
+    metadataCompletion: ((Result<[String: String]?, Error>) -> Void)? = nil
   ) {
     // Create an instance (synchronously, cheap)
     let predictor = Self.init()
@@ -131,6 +132,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
             .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
         else {
           throw PredictorError.modelFileNotFound
+        }
+        
+        // Return metadata to the caller if requested
+        DispatchQueue.main.async {
+          metadataCompletion?(.success(userDefined))
         }
 
         // (2) Extract class labels
@@ -194,6 +200,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         // If anything goes wrong, call completion with the error
         DispatchQueue.main.async {
           completion(.failure(error))
+          metadataCompletion?(.failure(error))
         }
       }
     }

@@ -60,17 +60,24 @@ struct ModelEntry {
   var modelSize: String? {
     let name = displayName.lowercased()
     
-    // Look for size indicator before task suffix
-    if name.contains("n-") || name.hasSuffix("n") {
-      return "n"
-    } else if name.contains("s-") || name.hasSuffix("s") {
-      return "s"
-    } else if name.contains("m-") || name.hasSuffix("m") {
-      return "m"
-    } else if name.contains("l-") || name.hasSuffix("l") {
-      return "l"
-    } else if name.contains("x-") || name.hasSuffix("x") {
-      return "x"
+    // Check if this is a standard YOLO model with size indicator
+    // Look for patterns like "yolo11n", "yolov8s-seg", etc.
+    let yoloPattern = #"yolo(v?\d+)?([nsmxl])([-_]|$)"#
+    if let regex = try? NSRegularExpression(pattern: yoloPattern, options: .caseInsensitive) {
+      let matches = regex.matches(in: name, options: [], range: NSRange(location: 0, length: name.count))
+      if let match = matches.first, match.numberOfRanges > 2 {
+        let sizeRange = match.range(at: 2)
+        if let range = Range(sizeRange, in: name) {
+          return String(name[range])
+        }
+      }
+    }
+    
+    // For custom models, try to get size from cached metadata
+    if isLocalBundle && modelVersion == "Custom" {
+      if let cachedSize = ModelCacheManager.shared.getCachedModelSize(for: identifier) {
+        return cachedSize
+      }
     }
     
     return nil
@@ -80,6 +87,7 @@ struct ModelEntry {
 class ModelCacheManager {
   static let shared = ModelCacheManager()
   var modelCache: [String: MLModel] = [:]
+  private var metadataCache: [String: [String: String]] = [:]  // Cache for model metadata
   private var accessOrder: [String] = []
   private let cacheLimit: Int = 3
   private var currentSelectedModelKey: String?
@@ -189,9 +197,15 @@ class ModelCacheManager {
     if modelCache.count >= cacheLimit {
       let oldKey = accessOrder.removeFirst()
       modelCache.removeValue(forKey: oldKey)
+      metadataCache.removeValue(forKey: oldKey)
     }
     modelCache[key] = model
     accessOrder.append(key)
+    
+    // Cache metadata from model
+    if let userDefined = model.modelDescription.metadata[.creatorDefinedKey] as? [String: String] {
+      metadataCache[key] = userDefined
+    }
   }
 
   func isModelDownloaded(key: String) -> Bool {
@@ -214,6 +228,24 @@ class ModelCacheManager {
 
   func getCurrentSelectedModelKey() -> String? {
     return currentSelectedModelKey
+  }
+  
+  /// Get model size from cached metadata
+  func getCachedModelSize(for key: String) -> String? {
+    guard let metadata = metadataCache[key] else { 
+      return nil 
+    }
+    
+    // Use ModelMetadataHelper to extract size from metadata
+    if let size = ModelMetadataHelper.extractModelSizeFromMetadata(metadata) {
+      return size.rawValue
+    }
+    return nil
+  }
+  
+  /// Cache metadata for a model
+  func cacheMetadata(for key: String, metadata: [String: String]) {
+    metadataCache[key] = metadata
   }
 }
 

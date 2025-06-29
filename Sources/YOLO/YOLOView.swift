@@ -15,6 +15,15 @@ import AVFoundation
 import UIKit
 import Vision
 
+/// Model loading result that includes metadata
+public struct ModelLoadResult {
+  public let metadata: [String: String]?
+  
+  public init(metadata: [String: String]? = nil) {
+    self.metadata = metadata
+  }
+}
+
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
@@ -179,13 +188,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setModel(
     modelPathOrName: String,
     task: YOLOTask,
-    completion: ((Result<Void, Error>) -> Void)? = nil
+    completion: ((Result<ModelLoadResult, Error>) -> Void)? = nil
   ) {
     // Handle empty string case - just update task without loading model
     if modelPathOrName.isEmpty {
       self.task = task
       setupSublayers()
-      completion?(.success(()))
+      completion?(.success(ModelLoadResult()))
       return
     }
     
@@ -228,74 +237,139 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
 
+    // Store metadata from model loading
+    var modelMetadata: [String: String]? = nil
+    let metadataGroup = DispatchGroup()
+    
     // Common success handling for all tasks
     func handleSuccess(predictor: Predictor) {
       self.videoCapture.predictor = predictor
       self.activityIndicator.stopAnimating()
       self.labelName.text = processString(modelName)
-      completion?(.success(()))
+      
+      // Wait for metadata to be set before calling completion
+      metadataGroup.notify(queue: .main) {
+        completion?(.success(ModelLoadResult(metadata: modelMetadata)))
+      }
     }
 
     // Common failure handling for all tasks
     func handleFailure(_ error: Error) {
       print("Failed to load model with error: \(error)")
       self.activityIndicator.stopAnimating()
+      // Make sure to leave the metadata group if entered
+      if metadataGroup.wait(timeout: .now()) == .timedOut {
+        metadataGroup.leave()
+      }
       completion?(.failure(error))
     }
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      Classifier.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      Segmenter.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .pose:
-      PoseEstimater.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      PoseEstimater.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        [weak self] result in
-        switch result {
-        case .success(let predictor):
-          self?.obbLayer?.isHidden = false
-
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      ObbDetector.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { [weak self] result in
+          switch result {
+          case .success(let predictor):
+            self?.obbLayer?.isHidden = false
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      ObjectDetector.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
     }
   }
 

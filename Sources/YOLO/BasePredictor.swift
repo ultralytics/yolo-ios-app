@@ -238,11 +238,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
       t0 = CACurrentMediaTime()  // inference start
       do {
-        if visionRequest != nil {
-          try handler.perform([visionRequest!])
+        if let request = visionRequest {
+          try handler.perform([request])
         }
       } catch {
+        // Error handling without printing in production
+        #if DEBUG
         print(error)
+        #endif
       }
       t1 = CACurrentMediaTime() - t0  // inference dt
 
@@ -321,7 +324,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
     guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
+      #if DEBUG
       print("can not find input description")
+      #endif
       return (0, 0)
     }
 
@@ -340,7 +345,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("an not find input size")
+    #if DEBUG
+    print("can not find input size")
+    #endif
     return (0, 0)
   }
 }

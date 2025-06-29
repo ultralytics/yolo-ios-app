@@ -197,7 +197,9 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         return result
       }
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
     return result
   }
@@ -238,10 +240,11 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       // Class probabilities
       var classProbs = [Float](repeating: 0, count: numClasses)
       classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
+        guard let baseAddress = classProbsPointer.baseAddress else { return }
         vDSP_mtrans(
           pointerWrapper.pointer + 4 * numAnchors + j,
           numAnchors,
-          classProbsPointer.baseAddress!,
+          baseAddress,
           1,
           1,
           vDSP_Length(numClasses)

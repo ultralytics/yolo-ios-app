@@ -255,7 +255,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     // Common failure handling for all tasks
     func handleFailure(_ error: Error) {
+      #if DEBUG
       print("Failed to load model with error: \(error)")
+      #endif
       self.activityIndicator.stopAnimating()
       // Make sure to leave the metadata group if entered
       if metadataGroup.wait(timeout: .now()) == .timedOut {
@@ -495,8 +497,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       setupPoseLayerIfNeeded()
     case .obb:
       setupObbLayerIfNeeded()
-      overlayLayer.addSublayer(obbLayer!)
-      obbLayer?.isHidden = false
+      if let obbLayer = obbLayer {
+        overlayLayer.addSublayer(obbLayer)
+        obbLayer.isHidden = false
+      }
     default: break
     }
   }
@@ -588,7 +592,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
               width: rect.width,
               height: rect.height)
           case .unknown:
+            #if DEBUG
             print("The device orientation is unknown, the predictions may be affected")
+            #endif
             fallthrough
           default: break
           }
@@ -1103,7 +1109,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         }
         device.videoZoomFactor = factor
       } catch {
+        #if DEBUG
         print("\(error.localizedDescription)")
+        #endif
       }
     }
 
@@ -1138,9 +1146,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   @objc func switchCameraTapped() {
 
     self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    guard let currentPosition = currentInput?.device.position else { return }
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput else {
+      self.videoCapture.captureSession.commitConfiguration()
+      return
+    }
+    self.videoCapture.captureSession.removeInput(currentInput)
+    let currentPosition = currentInput.device.position
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
@@ -1197,7 +1208,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       
       self.labelZoom.text = String(format: "%.2fx", clampedZoom)
     } catch {
+      #if DEBUG
       print("Error setting zoom: \(error)")
+      #endif
     }
   }
   
@@ -1230,13 +1243,15 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     if let error = error {
+      #if DEBUG
       print("error occurred : \(error.localizedDescription)")
+      #endif
     }
-    if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
-        intent: .defaultIntent)
+    if let dataImage = photo.fileDataRepresentation(),
+       let dataProvider = CGDataProvider(data: dataImage as CFData),
+       let cgImageRef = CGImage(
+        jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
+        intent: .defaultIntent) {
       var isCameraFront = false
       if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
         currentInput.device.position == .front
@@ -1409,7 +1424,9 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       photoCaptureCompletion?(img)
       photoCaptureCompletion = nil
     } else {
+      #if DEBUG
       print("AVCapturePhotoCaptureDelegate Error")
+      #endif
     }
   }
 }

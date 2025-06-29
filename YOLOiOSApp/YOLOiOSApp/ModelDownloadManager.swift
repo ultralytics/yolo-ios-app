@@ -107,15 +107,23 @@ class ModelCacheManager {
       do {
         if !FileManager.default.fileExists(atPath: destinationURL.path) {
           try FileManager.default.copyItem(at: url, to: destinationURL)
+          #if DEBUG
           print("File copied to documents directory: \(destinationURL.path)")
+          #endif
         } else {
+          #if DEBUG
           print("File already exists in documents directory: \(destinationURL.path)")
+          #endif
         }
       } catch {
+        #if DEBUG
         print("Error copying file: \(error)")
+        #endif
       }
     } else {
+      #if DEBUG
       print("Failed to load bundled model")
+      #endif
     }
   }
 
@@ -137,7 +145,9 @@ class ModelCacheManager {
         addModelToCache(model, for: key)
         completion(model, key)
       } catch let error {
+        #if DEBUG
         print(error)
+        #endif
       }
     }
   }
@@ -185,7 +195,9 @@ class ModelCacheManager {
           completion(model)
         }
       } catch {
+        #if DEBUG
         print("Failed to load model: \(error)")
+        #endif
         DispatchQueue.main.async {
           completion(nil)
         }
@@ -317,7 +329,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     else { return }
     do {
       let zipURL = destinationURL
+      #if DEBUG
       print("zipURL: \(zipURL)")
+      #endif
       if fileExists(at: zipURL) {
         try FileManager.default.removeItem(at: zipURL)
       }
@@ -330,18 +344,24 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       do {
         try unzipSkippingMacOSX(at: zipURL, to: getDocumentsDirectory())
         let modelURL = unzipDestinationURL
+        #if DEBUG
         print("modelURL: \(modelURL)")
+        #endif
         loadModel(from: modelURL, key: key) { model in
           self.downloadCompletionHandlers[downloadTask]?(model, key)
           self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
         }
       } catch {
+        #if DEBUG
         print("Extraction of ZIP archive failed with error: \(error)")
+        #endif
         self.downloadCompletionHandlers[downloadTask]?(nil, key)
         self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
       }
     } catch {
+      #if DEBUG
       print("Error moving downloaded file: \(error)")
+      #endif
       self.downloadCompletionHandlers[downloadTask]?(nil, key)
       self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
     }
@@ -361,7 +381,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           completion(model)
         }
       } catch {
+        #if DEBUG
         print("Failed to load model: \(error)")
+        #endif
         DispatchQueue.main.async {
           completion(nil)
         }

@@ -19,6 +19,13 @@ import Foundation
 import QuartzCore
 import UIKit
 
+// MARK: - Safe Array Access Extension
+extension Array {
+  subscript(safe index: Int) -> Element? {
+    return indices.contains(index) ? self[index] : nil
+  }
+}
+
 let ultralyticsColors: [UIColor] = [
   UIColor(red: 4 / 255, green: 42 / 255, blue: 255 / 255, alpha: 0.6),
   UIColor(red: 11 / 255, green: 219 / 255, blue: 235 / 255, alpha: 0.6),
@@ -172,7 +179,9 @@ func generateCombinedMaskImage(
     maskWidth > 0,
     maskChannels > 0
   else {
+    #if DEBUG
     print("Invalid protos shape!")
+    #endif
     return nil
   }
 
@@ -202,10 +211,15 @@ func generateCombinedMaskImage(
   // 5) Batch computation with vDSP_mmul: (N x C) * (C x HW) => (N x HW)
   coeffsArray.withUnsafeBufferPointer { Abuf in
     combinedMask.withUnsafeMutableBufferPointer { Cbuf in
+      guard let aPtr = Abuf.baseAddress,
+            let cPtr = Cbuf.baseAddress else {
+        return
+      }
+      
       vDSP_mmul(
-        Abuf.baseAddress!, 1,  // A
+        aPtr, 1,  // A
         protosPointer, 1,  // B
-        Cbuf.baseAddress!, 1,  // C
+        cPtr, 1,  // C
         vDSP_Length(N),
         vDSP_Length(HW),
         vDSP_Length(maskChannels)
@@ -253,7 +267,10 @@ func generateCombinedMaskImage(
 
     // Get class color
     let _colorIndex = classID % ultralyticsColors.count
-    let color = ultralyticsColors[_colorIndex].toRGBComponents()!
+    guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
+      // Use default color if conversion fails
+      continue
+    }
     let r = UInt8(color.red)
     let g = UInt8(color.green)
     let b = UInt8(color.blue)
@@ -385,7 +402,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     let color = ultralyticsColors[colorIndex]
     drawContext.setStrokeColor(color.cgColor)
     drawContext.setLineWidth(CGFloat(lineWidth))
-    let confidencePercent = round(result.probs!.top5Confs[i] * 1000) / 10
+    let confidencePercent = round((result.probs?.top5Confs[safe: i] ?? 0) * 1000) / 10
     let labelText = " \(candidate) \(confidencePercent)% "
     let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
     let attrs: [NSAttributedString.Key: Any] = [
@@ -503,7 +520,9 @@ func drawSinglePersonKeypoints(
       let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
 
       guard startIdx < points.count, endIdx < points.count else {
+        #if DEBUG
         print("Invalid skeleton indices: \(startIdx), \(endIdx)")
+        #endif
         continue
       }
 
@@ -751,7 +770,9 @@ func drawOBBsOnCIImage(
   let context = CIContext(options: nil)
   let extent = ciImage.extent
   guard let cgImage = context.createCGImage(ciImage, from: extent) else {
+    #if DEBUG
     print("Failed to create CGImage from CIImage")
+    #endif
     return nil
   }
 
@@ -826,7 +847,9 @@ public func drawYOLOPoseWithBoxes(
   let context = CIContext(options: nil)
   let extent = ciImage.extent
   guard let cgImage = context.createCGImage(ciImage, from: extent) else {
+    #if DEBUG
     print("Failed to create CGImage from CIImage")
+    #endif
     return nil
   }
 
@@ -944,7 +967,9 @@ public func drawYOLOSegmentationWithBoxes(
   let context = CIContext(options: nil)
   let extent = ciImage.extent
   guard let cgImage = context.createCGImage(ciImage, from: extent) else {
+    #if DEBUG
     print("Failed to create CGImage from CIImage")
+    #endif
     return nil
   }
 

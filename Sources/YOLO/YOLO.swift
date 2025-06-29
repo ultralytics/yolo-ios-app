@@ -56,7 +56,9 @@ public class YOLO {
 
     // Common failure handling for all tasks
     func handleFailure(_ error: Error) {
+      #if DEBUG
       print("Failed to load model with error: \(error)")
+      #endif
       completion?(.failure(error))
     }
 

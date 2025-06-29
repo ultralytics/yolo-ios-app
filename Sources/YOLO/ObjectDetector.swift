@@ -146,7 +146,9 @@ class ObjectDetector: BasePredictor {
         }
       }
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
     let speed = Date().timeIntervalSince(start)
 

@@ -199,7 +199,9 @@ class Classifier: BasePredictor {
       }
 
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
 
     var result = YOLOResult(

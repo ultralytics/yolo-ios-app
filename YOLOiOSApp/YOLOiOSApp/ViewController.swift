@@ -643,6 +643,12 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         remoteURL: url
       )
     }
+    
+    #if DEBUG
+    print("\n=== Model Entries for \(taskName) ===")
+    print("Local models: \(localEntries.map { $0.displayName })")
+    print("Remote models: \(remoteEntries.map { $0.displayName })")
+    #endif
 
     return localEntries + remoteEntries
   }
@@ -1376,6 +1382,14 @@ extension ViewController {
       taskName = "OBB"
     }
     
+    #if DEBUG
+    print("\n=== Task Change ===")
+    print("Previous task: \(currentTask)")
+    print("New task: \(taskName)")
+    print("Current model: \(currentModelName)")
+    print("Current size filter: \(currentSizeFilter.rawValue)")
+    #endif
+    
     currentTask = taskName
     reloadModelEntriesAndLoadFirst(for: taskName)
   }
@@ -1415,31 +1429,64 @@ extension ViewController {
   }
   
   private func loadModelForCurrentSizeFilter() {
-    // Get current model version
+    // Get current model version AND task suffix from the current model name
     let currentVersion = extractModelVersion(from: currentModelName)
+    let currentTaskSuffix = extractTaskSuffix(from: currentModelName)
     
-    // First priority: Find a model matching the current version and new size
+    #if DEBUG
+    print("\n=== Size Filter Change ===")
+    print("Current model: \(currentModelName)")
+    print("Current version: \(currentVersion)")
+    print("Current task suffix: \(currentTaskSuffix ?? "none")")
+    print("Target size: \(currentSizeFilter.rawValue)")
+    print("Current task: \(currentTask)")
+    #endif
+    
+    // First priority: Find a model matching the current version, task, and new size
     if let matchingModel = currentModels.first(where: { model in
       let modelVersion = model.modelVersion
       let modelSize = model.modelSize
-      return modelVersion == currentVersion && modelSize == currentSizeFilter.rawValue
+      let modelTaskSuffix = extractTaskSuffix(from: model.displayName)
+      
+      // For task-specific models, ensure the suffix matches
+      let taskMatches = (currentTaskSuffix == modelTaskSuffix)
+      
+      return modelVersion == currentVersion && 
+             modelSize == currentSizeFilter.rawValue && 
+             taskMatches
     }) {
-      // Load the matching model
+      #if DEBUG
+      print("Found exact match: \(matchingModel.displayName)")
+      #endif
       loadModel(entry: matchingModel, forTask: currentTask)
     } else {
-      // Second priority: Find any non-custom model with the selected size
+      // Second priority: Find any non-custom model with the selected size and correct task
       if let sizeMatchingModel = currentModels.first(where: { model in
-        return model.modelVersion != "Custom" && model.modelSize == currentSizeFilter.rawValue
+        let modelTaskSuffix = extractTaskSuffix(from: model.displayName)
+        let taskMatches = (currentTaskSuffix == modelTaskSuffix)
+        
+        return model.modelVersion != "Custom" && 
+               model.modelSize == currentSizeFilter.rawValue && 
+               taskMatches
       }) {
+        #if DEBUG
+        print("Found size and task match: \(sizeMatchingModel.displayName)")
+        #endif
         loadModel(entry: sizeMatchingModel, forTask: currentTask)
       } else {
         // Third priority: Find any model with the selected size (including custom)
         if let anyMatchingModel = currentModels.first(where: { model in
           return model.modelSize == currentSizeFilter.rawValue
         }) {
+          #if DEBUG
+          print("Found size-only match: \(anyMatchingModel.displayName)")
+          #endif
           loadModel(entry: anyMatchingModel, forTask: currentTask)
         }
         // If still no match, keep the current model
+        #if DEBUG
+        print("No matching model found, keeping current")
+        #endif
       }
     }
   }
@@ -1455,6 +1502,25 @@ extension ViewController {
     } else {
       return "Custom"
     }
+  }
+  
+  private func extractTaskSuffix(from modelName: String) -> String? {
+    let name = modelName.lowercased()
+    
+    // Check for task-specific suffixes
+    if name.hasSuffix("-seg") {
+      return "-seg"
+    } else if name.hasSuffix("-cls") {
+      return "-cls"
+    } else if name.hasSuffix("-pose") {
+      return "-pose"
+    } else if name.hasSuffix("-obb") {
+      return "-obb"
+    }
+    
+    // No suffix means it's a detection model
+    // Return nil for detection models to distinguish from task-specific models
+    return nil
   }
   
   private func capturePhoto() {
@@ -1969,6 +2035,15 @@ extension ViewController {
     // Clear cached photo inference model when switching models
     photoInferenceModel = nil
     photoInferenceModelKey = nil
+    
+    #if DEBUG
+    print("\n=== Model Selected from Dropdown ===")
+    print("Selected model: \(model.displayName)")
+    print("Model identifier: \(model.identifier)")
+    print("Current task: \(currentTask)")
+    print("Task suffix: \(extractTaskSuffix(from: model.displayName) ?? "none")")
+    #endif
+    
     loadModel(entry: model, forTask: currentTask)
   }
   

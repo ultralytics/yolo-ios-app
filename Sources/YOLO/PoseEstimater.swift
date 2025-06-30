@@ -108,7 +108,9 @@ class PoseEstimater: BasePredictor, @unchecked Sendable {
         }
       }
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
     return result
   }

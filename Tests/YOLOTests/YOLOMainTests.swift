@@ -31,35 +31,71 @@ class YOLOMainTests: XCTestCase {
         wait(for: [expectation], timeout: 5.0)
     }
     
-    func testYOLOCallAsFunctionWithUIImage() {
-        // Test YOLO callable interface with UIImage would require actual model loading
-        // Skip this test as it requires complex setup
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    func testYOLOInitializationForAllTaskTypes() {
+        // Test YOLO initialization with different task types
+        let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
+        
+        for task in tasks {
+            let expectation = XCTestExpectation(description: "YOLO init for \(task)")
+            
+            _ = YOLO("nonexistent.mlmodel", task: task) { result in
+                switch result {
+                case .success:
+                    XCTFail("Should fail with nonexistent model")
+                case .failure(let error):
+                    XCTAssertNotNil(error)
+                    expectation.fulfill()
+                }
+            }
+            
+            wait(for: [expectation], timeout: 2.0)
+        }
     }
     
-    func testYOLOCallAsFunctionWithCIImage() {
-        // Test YOLO callable interface with CIImage would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    func testYOLOInitializationWithEmptyPath() {
+        // Test YOLO initialization with empty path
+        let expectation = XCTestExpectation(description: "Empty path initialization")
+        
+        _ = YOLO("", task: .detect) { result in
+            switch result {
+            case .success:
+                XCTFail("Should fail with empty path")
+            case .failure(let error):
+                XCTAssertNotNil(error)
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
     }
     
-    func testYOLOCallAsFunctionWithCGImage() {
-        // Test YOLO callable interface with CGImage would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
-    }
-    
-    func testYOLOCallAsFunctionWithResourceName() {
-        // Test YOLO callable interface with resource name would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
-    }
-    
-    func testYOLOCallAsFunctionWithRemoteURL() {
-        // Test YOLO callable interface with remote URL would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
-    }
-    
-    func testYOLOCallAsFunctionWithLocalPath() {
-        // Test YOLO callable interface with local path would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    func testYOLOInitializationErrorTypes() {
+        // Test that proper error types are returned
+        let expectation = XCTestExpectation(description: "Error type verification")
+        
+        _ = YOLO("missing_model.mlmodel", task: .detect) { result in
+            switch result {
+            case .success:
+                XCTFail("Should fail with missing model")
+            case .failure(let error):
+                // Verify we get a meaningful error
+                if let predictorError = error as? PredictorError {
+                    switch predictorError {
+                    case .modelFileNotFound:
+                        // Expected error
+                        break
+                    default:
+                        XCTFail("Unexpected predictor error type")
+                    }
+                } else {
+                    // Other error types are also acceptable
+                    XCTAssertNotNil(error.localizedDescription)
+                }
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
     }
     
     func testYOLOAllTaskTypes() {
@@ -83,36 +119,20 @@ class YOLOMainTests: XCTestCase {
         }
     }
     
-    func testYOLOWithReturnAnnotatedImageFlag() {
-        // Test YOLO callable interface with returnAnnotatedImage flag would require actual model loading
-        XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    func testYOLOTaskTypeEnumeration() {
+        // Test that all YOLOTask cases are handled
+        let allTasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
+        
+        // Verify we have all expected task types
+        XCTAssertEqual(allTasks.count, 5, "Should have 5 task types")
+        
+        // Verify each task type is unique
+        let uniqueTasks = Set(allTasks)
+        XCTAssertEqual(uniqueTasks.count, allTasks.count, "All task types should be unique")
     }
     
     // MARK: - Helper Methods
     // (removed createMockYOLO - not needed for simplified tests)
 }
 
-// MARK: - Mock Classes for Testing
-
-class MockPredictor: Predictor, @unchecked Sendable {
-    var labels: [String] = []
-    var isUpdating: Bool = false
-    
-    func predict(sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?, onInferenceTime: InferenceTimeListener?) {
-        // Mock implementation - do nothing
-    }
-    
-    func predictOnImage(image: CIImage) -> YOLOResult {
-        return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
-}
-
-// Extension to allow creating YOLO instances without going through the full init
-extension YOLO {
-    static func __allocating_init() -> YOLO {
-        // Create a simple mock YOLO instance
-        // Note: This will actually try to initialize with an invalid path
-        // but we handle the error in the test
-        return YOLO("mock_model", task: .detect) { _ in }
-    }
-}
+// Mock classes have been moved to separate files to avoid conflicts

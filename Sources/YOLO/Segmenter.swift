@@ -197,7 +197,9 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         return result
       }
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
     return result
   }
@@ -219,7 +221,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
 
-    let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+    let segmentResultsQueue = DispatchQueue(label: "segmentResultsQueue", attributes: .concurrent)
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
       // Use pointerWrapper here
@@ -238,10 +240,11 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       // Class probabilities
       var classProbs = [Float](repeating: 0, count: numClasses)
       classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
+        guard let baseAddress = classProbsPointer.baseAddress else { return }
         vDSP_mtrans(
           pointerWrapper.pointer + 4 * numAnchors + j,
           numAnchors,
-          classProbsPointer.baseAddress!,
+          baseAddress,
           1,
           1,
           vDSP_Length(numClasses)
@@ -263,13 +266,13 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
 
-        resultsQueue.async(flags: .barrier) {
+        segmentResultsQueue.async(flags: .barrier) {
           results.append(result)
         }
       }
     }
 
-    resultsQueue.sync(flags: .barrier) {}
+    segmentResultsQueue.sync(flags: .barrier) {}
 
     var selectedBoxesAndFeatures = [(CGRect, Int, Float, MLMultiArray)]()
 

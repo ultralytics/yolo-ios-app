@@ -459,18 +459,39 @@ class ModelDownloadManager: NSObject {
   func processExistingZip(zipURL: URL, key: String, completion: @escaping (MLModel?, String) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
+        #if DEBUG
+        print("\n=== Processing Existing ZIP ===")
+        print("ZIP URL: \(zipURL.lastPathComponent)")
+        print("Key: \(key)")
+        #endif
+        
         // Remove any existing mlpackage directory first
         let mlpackageURL = self.getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension("mlpackage")
         if FileManager.default.fileExists(atPath: mlpackageURL.path) {
           try FileManager.default.removeItem(at: mlpackageURL)
+          #if DEBUG
+          print("Removed existing mlpackage")
+          #endif
         }
         
         // Unzip
+        #if DEBUG
+        print("Unzipping...")
+        #endif
         try unzipSkippingMacOSX(at: zipURL, to: self.getDocumentsDirectory())
         
         // Find and compile the model
         let documentsDir = self.getDocumentsDirectory()
         let contents = try FileManager.default.contentsOfDirectory(at: documentsDir, includingPropertiesForKeys: nil)
+        
+        #if DEBUG
+        print("Looking for mlpackage after unzip:")
+        for item in contents {
+          if item.pathExtension == "mlpackage" {
+            print("  Found: \(item.lastPathComponent)")
+          }
+        }
+        #endif
         
         var modelURL: URL? = nil
         for item in contents {
@@ -478,11 +499,17 @@ class ModelDownloadManager: NSObject {
              (item.lastPathComponent.lowercased().contains(key.lowercased()) ||
               item.lastPathComponent.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased()) {
             modelURL = item
+            #if DEBUG
+            print("Selected mlpackage: \(item.lastPathComponent)")
+            #endif
             break
           }
         }
         
         guard let foundModelURL = modelURL else {
+          #if DEBUG
+          print("ERROR: No mlpackage found for key: \(key)")
+          #endif
           throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found"])
         }
         

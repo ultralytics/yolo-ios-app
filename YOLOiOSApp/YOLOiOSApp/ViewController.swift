@@ -656,8 +656,17 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   private func loadModel(entry: ModelEntry, forTask task: String) {
     guard !isLoadingModel else {
       print("Model is already loading. Please wait.")
+      print("Attempting to load: \(entry.displayName) while loading: \(currentModelName)")
       return
     }
+    
+    #if DEBUG
+    print("\n=== Starting Model Load ===")
+    print("Loading: \(entry.displayName)")
+    print("Task: \(task)")
+    print("Is remote: \(entry.isRemote)")
+    #endif
+    
     isLoadingModel = true
     yoloView.resetLayers()
     // Always show loading overlay
@@ -817,9 +826,20 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
+      
+      #if DEBUG
+      print("\n=== Loading Model into YOLOView ===")
+      print("Model path: \(localModelURL.path)")
+      print("Display name: \(displayName)")
+      print("Task: \(yoloTask)")
+      #endif
+      
       self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
         switch result {
         case .success(let loadResult):
+          #if DEBUG
+          print("Model loaded successfully: \(displayName)")
+          #endif
           self.finishLoadingModel(success: true, modelName: displayName, metadata: loadResult.metadata)
         case .failure(let error):
           print("Error loading model: \(error)")
@@ -844,6 +864,12 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       self.yoloView.setInferenceFlag(ok: true)
 
       if success {
+        #if DEBUG
+        print("\n=== Model Load Success ===")
+        print("Previous model: \(self.currentModelName)")
+        print("New model: \(modelName)")
+        #endif
+        
         self.currentModelName = modelName
         DispatchQueue.main.async {
           // Old UI label update - no longer needed
@@ -861,6 +887,10 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
       } else {
         // Failed to load model
+        #if DEBUG
+        print("\n=== Model Load Failed ===")
+        print("Failed to load: \(modelName)")
+        #endif
       }
     }
   }

@@ -68,11 +68,13 @@ class ObjectDetectorTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Process empty observations")
         
         // Set up listener to capture results
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             XCTAssertEqual(result.boxes.count, 0)
-            XCTAssertGreaterThan(result.fps, 0)
+            XCTAssertGreaterThan(result.fps ?? 0, 0)
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -89,7 +91,8 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Process observations with detections")
         
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             XCTAssertEqual(result.boxes.count, 3)
             
             // Check first detection
@@ -106,6 +109,7 @@ class ObjectDetectorTests: XCTestCase {
             
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -122,10 +126,12 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Process observations with item threshold")
         
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             XCTAssertEqual(result.boxes.count, 2) // Should be limited by numItemsThreshold
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -138,11 +144,13 @@ class ObjectDetectorTests: XCTestCase {
         
         let inferenceExpectation = XCTestExpectation(description: "Inference time callback")
         
-        detector.setOnInferenceTimeListener { inferenceTime, fpsRate in
+        let mockListener = MockInferenceTimeListener()
+        mockListener.onInferenceTimeHandler = { inferenceTime, fpsRate in
             XCTAssertGreaterThanOrEqual(inferenceTime, 0)
             XCTAssertGreaterThan(fpsRate, 0)
             inferenceExpectation.fulfill()
         }
+        detector.currentOnInferenceTimeListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -206,7 +214,8 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Check coordinate conversion")
         
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             guard let box = result.boxes.first else {
                 XCTFail("No boxes found")
                 return
@@ -226,6 +235,7 @@ class ObjectDetectorTests: XCTestCase {
             
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -278,11 +288,12 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "End to end detection")
         
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             // Only 2 detections should pass the confidence threshold
             XCTAssertEqual(result.boxes.count, 2)
             XCTAssertEqual(result.names.count, 5)
-            XCTAssertGreaterThan(result.fps, 0)
+            XCTAssertGreaterThan(result.fps ?? 0, 0)
             XCTAssertGreaterThanOrEqual(result.speed, 0)
             
             // Verify boxes are sorted by confidence
@@ -292,6 +303,7 @@ class ObjectDetectorTests: XCTestCase {
             
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         
@@ -301,7 +313,7 @@ class ObjectDetectorTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestImage(width: CGFloat = 640, height: CGFloat = 480) -> CIImage {
-        return CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 0.0, green: 0.0, blue: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
     
     private func createMockObservations() -> [VNRecognizedObjectObservation] {
@@ -331,97 +343,3 @@ class ObjectDetectorTests: XCTestCase {
     }
 }
 
-// MARK: - Mock Classes
-
-class MockVNRequestWithResults: VNRequest, @unchecked Sendable {
-    private var mockResults: [VNObservation]?
-    
-    init(results: [Any]) {
-        super.init(completionHandler: nil)
-        // Convert Any results to VNObservation
-        self.mockResults = results.compactMap { $0 as? VNObservation }
-    }
-    
-    override var results: [VNObservation]? {
-        return mockResults
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class MockVNCoreMLRequest: VNCoreMLRequest, @unchecked Sendable {
-    private var mockResults: [VNObservation]?
-    
-    init(results: [Any]) {
-        // Create a dummy model for initialization
-        let config = MLModelConfiguration()
-        if let dummyModel = try? MLModel(contentsOf: Bundle.main.bundleURL, configuration: config) {
-            super.init(model: dummyModel)
-        } else {
-            // If we can't create a dummy model, we need to handle this differently
-            // This is a limitation of testing CoreML requests
-            fatalError("Cannot create mock VNCoreMLRequest without a valid model")
-        }
-        self.mockResults = results.compactMap { $0 as? VNObservation }
-    }
-    
-    override var results: [VNObservation]? {
-        return mockResults
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class MockVNRecognizedObjectObservation: VNRecognizedObjectObservation {
-    private let mockBoundingBox: CGRect
-    private let mockLabels: [VNClassificationObservation]
-    
-    init(boundingBox: CGRect, labels: [VNClassificationObservation]) {
-        self.mockBoundingBox = boundingBox
-        self.mockLabels = labels
-        super.init()
-    }
-    
-    override var boundingBox: CGRect {
-        return mockBoundingBox
-    }
-    
-    override var labels: [VNClassificationObservation] {
-        return mockLabels
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class MockVNClassificationObservation: VNClassificationObservation {
-    private let mockIdentifier: String
-    private let mockConfidence: VNConfidence
-    
-    init(identifier: String, confidence: VNConfidence) {
-        self.mockIdentifier = identifier
-        self.mockConfidence = confidence
-        super.init()
-    }
-    
-    override var identifier: String {
-        return mockIdentifier
-    }
-    
-    override var confidence: VNConfidence {
-        return mockConfidence
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}

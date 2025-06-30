@@ -57,7 +57,7 @@ class BasePredictorTests: XCTestCase {
     func testBasePredictOnImage() {
         // Test base predictOnImage method returns empty result
         let predictor = BasePredictor()
-        let image = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let image = CIImage(color: CIColor(red: 1.0, green: 0.0, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
         let result = predictor.predictOnImage(image: image)
         

@@ -55,7 +55,7 @@ class SegmenterTests: XCTestCase {
         // Test processing with valid segmentation outputs
         segmenter.labels = ["person", "car", "dog"]
         segmenter.inputSize = CGSize(width: 640, height: 480)
-        segmenter.modelInputSize = CGSize(width: 640, height: 640)
+        segmenter.modelInputSize = (width: 640, height: 640)
         
         // Create mock predictions (detection output)
         let numClasses = 3
@@ -83,12 +83,15 @@ class SegmenterTests: XCTestCase {
         let expectation = XCTestExpectation(description: "Process segmentation observations")
         expectation.isInverted = true // We expect this NOT to be fulfilled since processObservations runs async
         
-        segmenter.setOnResultsListener { result in
+        // Set up a mock results listener
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             // This should be called when processing completes
             XCTAssertGreaterThan(result.boxes.count, 0)
             XCTAssertNotNil(result.masks)
             expectation.fulfill()
         }
+        segmenter.currentOnResultsListener = mockListener
         
         segmenter.processObservations(for: request, error: nil)
         
@@ -218,11 +221,14 @@ class SegmenterTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Timing update")
         
-        segmenter.setOnInferenceTimeListener { inferenceTime, fpsRate in
+        // Set up a mock inference time listener
+        let mockListener = MockInferenceTimeListener()
+        mockListener.onInferenceTimeHandler = { inferenceTime, fpsRate in
             XCTAssertGreaterThan(inferenceTime, 0)
             XCTAssertGreaterThan(fpsRate, 0)
             expectation.fulfill()
         }
+        segmenter.currentOnInferenceTimeListener = mockListener
         
         // Call private updateTime through a detection flow
         segmenter.processObservations(for: MockVNRequestWithResults(results: []), error: nil)
@@ -237,7 +243,7 @@ class SegmenterTests: XCTestCase {
         segmenter.labels = ["person", "bicycle", "car"]
         segmenter.setConfidenceThreshold(confidence: 0.4)
         segmenter.setIouThreshold(iou: 0.5)
-        segmenter.modelInputSize = CGSize(width: 640, height: 640)
+        segmenter.modelInputSize = (width: 640, height: 640)
         
         let numAnchors = 20
         let numClasses = 3
@@ -285,7 +291,7 @@ class SegmenterTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestImage(width: CGFloat = 640, height: CGFloat = 480) -> CIImage {
-        return CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 1.0, green: 0.0, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
     
     private func createMockMLMultiArray(shape: [NSNumber], values: [Double]) -> MLMultiArray {

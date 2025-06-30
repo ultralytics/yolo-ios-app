@@ -352,7 +352,7 @@ class ClassifierTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestImage(width: CGFloat = 224, height: CGFloat = 224) -> CIImage {
-        return CIImage(color: .green).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 0.0, green: 1.0, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
     
     private func createMockMLMultiArray(values: [Double]) -> MLMultiArray {
@@ -369,25 +369,6 @@ class ClassifierTests: XCTestCase {
     }
 }
 
-// MARK: - Mock Classes for Classification
-
-class MockVNCoreMLFeatureValueObservation: VNCoreMLFeatureValueObservation {
-    private let mockFeatureValue: MLFeatureValue
-    
-    init(multiArray: MLMultiArray) {
-        self.mockFeatureValue = MLFeatureValue(multiArray: multiArray)
-        super.init()
-    }
-    
-    override var featureValue: MLFeatureValue {
-        return mockFeatureValue
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
 
 // Simplified mock for testing without actual CoreML model
 class MockVNCoreMLRequestForTesting: VNRequest, @unchecked Sendable {

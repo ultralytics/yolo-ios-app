@@ -134,6 +134,6 @@ class PlotAdaptiveSizeTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestCIImage(width: CGFloat, height: CGFloat) -> CIImage {
-        return CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 1.0, green: 1.0, blue: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
 }

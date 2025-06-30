@@ -283,7 +283,7 @@ class ObbDetectorTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestImage(width: CGFloat = 640, height: CGFloat = 480) -> CIImage {
-        return CIImage(color: .cyan).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 0.0, green: 1.0, blue: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
     
     private func createMockMLMultiArray(shape: [NSNumber], values: [Double]) -> MLMultiArray {

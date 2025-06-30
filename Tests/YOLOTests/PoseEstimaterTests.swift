@@ -61,12 +61,15 @@ class PoseEstimaterTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Process pose observations")
         
-        poseEstimater.setOnResultsListener { result in
+        // Set up a mock results listener
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             // Verify result structure
-            XCTAssertNotNil(result.keypointsList)
+            XCTAssertFalse(result.keypointsList.isEmpty)
             XCTAssertGreaterThanOrEqual(result.boxes.count, 0)
             expectation.fulfill()
         }
+        poseEstimater.currentOnResultsListener = mockListener
         
         poseEstimater.processObservations(for: request, error: nil)
         
@@ -93,11 +96,14 @@ class PoseEstimaterTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Timing update")
         
-        poseEstimater.setOnInferenceTimeListener { inferenceTime, fpsRate in
+        // Set up a mock inference time listener
+        let mockListener = MockInferenceTimeListener()
+        mockListener.onInferenceTimeHandler = { inferenceTime, fpsRate in
             XCTAssertGreaterThan(inferenceTime, 0)
             XCTAssertGreaterThan(fpsRate, 0)
             expectation.fulfill()
         }
+        poseEstimater.currentOnInferenceTimeListener = mockListener
         
         // Trigger timing update through observation processing
         let request = MockVNRequestWithResults(results: [])
@@ -115,7 +121,7 @@ class PoseEstimaterTests: XCTestCase {
         let result = poseEstimater.predictOnImage(image: image)
         
         XCTAssertEqual(result.boxes.count, 0)
-        XCTAssertNil(result.keypointsList)
+        XCTAssertTrue(result.keypointsList.isEmpty)
         XCTAssertEqual(result.speed, 0, accuracy: 0.001)
     }
     
@@ -178,8 +184,8 @@ class PoseEstimaterTests: XCTestCase {
             XCTAssertGreaterThan(result.box.conf, 0.3)
             
             // Verify keypoints
-            XCTAssertEqual(result.keypoints.x.count, 17) // 17 keypoints for human pose
-            XCTAssertEqual(result.keypoints.y.count, 17)
+            XCTAssertEqual(result.keypoints.xyn.count, 17) // 17 keypoints for human pose
+            XCTAssertEqual(result.keypoints.xy.count, 17)
             XCTAssertEqual(result.keypoints.conf.count, 17)
         }
     }
@@ -204,27 +210,28 @@ class PoseEstimaterTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "End to end pose estimation")
         
-        poseEstimater.setOnResultsListener { result in
-            XCTAssertNotNil(result.keypointsList)
-            if let keypointsList = result.keypointsList {
-                XCTAssertGreaterThan(keypointsList.count, 0)
+        // Set up a mock results listener
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
+            XCTAssertFalse(result.keypointsList.isEmpty)
+            XCTAssertGreaterThan(result.keypointsList.count, 0)
+            
+            // Verify first person's keypoints
+            if let firstPerson = result.keypointsList.first {
+                XCTAssertEqual(firstPerson.xyn.count, 17)
+                XCTAssertEqual(firstPerson.xy.count, 17)
+                XCTAssertEqual(firstPerson.conf.count, 17)
                 
-                // Verify first person's keypoints
-                if let firstPerson = keypointsList.first {
-                    XCTAssertEqual(firstPerson.x.count, 17)
-                    XCTAssertEqual(firstPerson.y.count, 17)
-                    XCTAssertEqual(firstPerson.conf.count, 17)
-                    
-                    // Check that keypoints have reasonable confidence values
-                    for conf in firstPerson.conf {
-                        XCTAssertGreaterThanOrEqual(conf, 0.0)
-                        XCTAssertLessThanOrEqual(conf, 1.0)
-                    }
+                // Check that keypoints have reasonable confidence values
+                for conf in firstPerson.conf {
+                    XCTAssertGreaterThanOrEqual(conf, 0.0)
+                    XCTAssertLessThanOrEqual(conf, 1.0)
                 }
             }
             
             expectation.fulfill()
         }
+        poseEstimater.currentOnResultsListener = mockListener
         
         poseEstimater.processObservations(for: request, error: nil)
         
@@ -234,7 +241,7 @@ class PoseEstimaterTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func createTestImage(width: CGFloat = 640, height: CGFloat = 480) -> CIImage {
-        return CIImage(color: .orange).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+        return CIImage(color: CIColor(red: 1.0, green: 0.5, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
     }
     
     private func createMockMLMultiArray(shape: [NSNumber], values: [Double]) -> MLMultiArray {

@@ -162,6 +162,9 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
   private var photoInferenceModel: YOLO?
   private var photoInferenceModelKey: String?
   
+  // Watermark
+  private let watermarkImageView = UIImageView()
+  
   // UI State
   private var isNewUIActive = true // Toggle for new/old UI
   private var currentThresholds: [String: Float] = [
@@ -1035,6 +1038,9 @@ extension ViewController {
       yoloView.isUserInteractionEnabled = true
     }
     
+    // Add watermark AFTER YOLOView so it appears on top
+    setupWatermark()
+    
     setupNewUIConstraints()
     setupNewUIActions()
     
@@ -1792,6 +1798,25 @@ extension ViewController {
     let hiddenInfoVC = HiddenInfoViewController()
     hiddenInfoVC.modalPresentationStyle = .pageSheet
     present(hiddenInfoVC, animated: true)
+  }
+  
+  private func setupWatermark() {
+    watermarkImageView.image = UIImage(named: "ultralytics_yolo_white")
+    watermarkImageView.contentMode = .scaleAspectFit
+    watermarkImageView.alpha = 0.4
+    watermarkImageView.isUserInteractionEnabled = false  // Allow gestures to pass through
+    watermarkImageView.translatesAutoresizingMaskIntoConstraints = false
+    
+    // Add to camera preview container, above YOLOView
+    cameraPreviewContainer.addSubview(watermarkImageView)
+    
+    // Constraints to center it
+    NSLayoutConstraint.activate([
+      watermarkImageView.centerXAnchor.constraint(equalTo: cameraPreviewContainer.centerXAnchor),
+      watermarkImageView.centerYAnchor.constraint(equalTo: cameraPreviewContainer.centerYAnchor),
+      watermarkImageView.widthAnchor.constraint(equalTo: cameraPreviewContainer.widthAnchor, multiplier: 0.7),
+      watermarkImageView.heightAnchor.constraint(equalTo: cameraPreviewContainer.heightAnchor, multiplier: 0.35)
+    ])
   }
   
   private func updateUIAfterModelLoad(success: Bool, modelName: String, metadata: [String: String]? = nil) {

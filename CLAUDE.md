@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Code Modification Policy
+- Do not modify any code until explicitly instructed to do so
+- Review code thoroughly before making any changes
+- Confirm with user before implementing major structural changes
+
+## Git Commit Policy
+- Never include Claude-related attribution or "Generated with Claude Code" in commit messages
+- Write professional, standard git commit messages without AI tool references
+
 ## Model Files
 The YOLOiOSApp includes pre-trained YOLO11 CoreML models organized by task type:
 - **Location**: `YOLOiOSApp/YOLOiOSApp/Models/`
@@ -11,6 +20,21 @@ The YOLOiOSApp includes pre-trained YOLO11 CoreML models organized by task type:
 - **Git**: Model files are excluded from version control via `.gitignore` to keep repository size manageable
 
 ## Build and Test Commands
+
+### Quick Start
+```bash
+# Install dependencies and build
+xcodebuild -resolvePackageDependencies
+xcodebuild -scheme YOLO -sdk iphonesimulator build
+
+# Run tests (without models)
+SKIP_MODEL_TESTS=1 xcodebuild test -scheme YOLO -destination 'platform=iOS Simulator,name=iPhone 14'
+
+# Download models and run full test suite
+chmod +x Tests/YOLOTests/Resources/download-test-models.sh
+Tests/YOLOTests/Resources/download-test-models.sh
+xcodebuild test -scheme YOLO -destination 'platform=iOS Simulator,name=iPhone 14'
+```
 
 ### Swift Package Commands
 ```bash
@@ -123,3 +147,43 @@ This repository provides a comprehensive YOLO implementation for iOS, consisting
   API_URL=your_api_url
   FIREBASE_API_KEY=your_firebase_key
   ```
+
+## Code Style Guidelines
+- Follow Swift/iOS conventions and Swift API Design Guidelines
+- Import order: Foundation/UIKit, third-party frameworks, local imports
+- Use `// MARK: -` comments to organize code sections
+- Prefer `guard` for early returns and unwrapping optionals
+- Use meaningful variable names following camelCase convention
+- Add documentation comments (///) for public APIs
+- Keep lines under 120 characters when possible
+- Use trailing closures for single closure parameters
+- Leverage Swift's type inference where it improves readability
+
+## Common Development Tasks
+
+### Adding a New YOLO Model
+1. Export your model to CoreML format (.mlpackage)
+2. Place it in the appropriate task folder: `YOLOiOSApp/YOLOiOSApp/Models/{TaskType}Models/`
+3. Ensure the model follows naming convention: `yolo11{size}-{task}.mlpackage`
+4. Model will be automatically discovered by the app
+
+### Implementing a New Feature
+1. For UI changes, work in the appropriate view controller or SwiftUI view
+2. For model inference changes, modify the relevant Predictor implementation
+3. For camera features, update VideoCapture or YOLOCamera components
+4. Add unit tests for new functionality
+5. Update example apps if the feature affects the public API
+
+### Performance Optimization
+- Use Instruments to profile CPU and memory usage
+- Enable GPU acceleration for CoreML models
+- Implement proper image resizing before inference
+- Use concurrent queues for non-UI operations
+- Monitor FPS and latency metrics in real-time views
+
+## Debugging Tips
+- Set `SKIP_MODEL_TESTS=1` environment variable to run tests without downloading models
+- Use `po` in LLDB to print Swift objects during debugging
+- Enable Metal validation for GPU debugging
+- Check CoreML model compatibility with `coremlcompiler compile` command
+- Use `xcodebuild -showBuildSettings` to debug build configuration issues

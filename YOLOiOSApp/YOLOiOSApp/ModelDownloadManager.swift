@@ -474,19 +474,22 @@ class ModelDownloadManager: NSObject {
           #endif
         }
         
-        // Unzip
+        // Create temp directory for unzipping
+        let tempDir = self.getDocumentsDirectory().appendingPathComponent("temp_\(key)_\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+        
+        // Unzip to temp directory
         #if DEBUG
-        print("Unzipping...")
+        print("Unzipping to temp directory...")
         #endif
-        try unzipSkippingMacOSX(at: zipURL, to: self.getDocumentsDirectory())
+        try unzipSkippingMacOSX(at: zipURL, to: tempDir)
         
-        // Find and compile the model
-        let documentsDir = self.getDocumentsDirectory()
-        let contents = try FileManager.default.contentsOfDirectory(at: documentsDir, includingPropertiesForKeys: nil)
+        // Find the model in temp directory
+        let tempContents = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
         
         #if DEBUG
-        print("Looking for mlpackage after unzip:")
-        for item in contents {
+        print("Looking for mlpackage in temp directory:")
+        for item in tempContents {
           if item.pathExtension == "mlpackage" {
             print("  Found: \(item.lastPathComponent)")
           }
@@ -494,7 +497,7 @@ class ModelDownloadManager: NSObject {
         #endif
         
         var modelURL: URL? = nil
-        for item in contents {
+        for item in tempContents {
           if item.pathExtension == "mlpackage" && 
              (item.lastPathComponent.lowercased().contains(key.lowercased()) ||
               item.lastPathComponent.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased()) {
@@ -510,10 +513,26 @@ class ModelDownloadManager: NSObject {
           #if DEBUG
           print("ERROR: No mlpackage found for key: \(key)")
           #endif
+          // Clean up temp directory
+          try? FileManager.default.removeItem(at: tempDir)
           throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found"])
         }
         
-        self.loadModel(from: foundModelURL, key: key) { model in
+        // Move the mlpackage to documents directory
+        let destinationURL = self.getDocumentsDirectory().appendingPathComponent(foundModelURL.lastPathComponent)
+        if FileManager.default.fileExists(atPath: destinationURL.path) {
+          try FileManager.default.removeItem(at: destinationURL)
+        }
+        try FileManager.default.moveItem(at: foundModelURL, to: destinationURL)
+        
+        // Clean up temp directory
+        try? FileManager.default.removeItem(at: tempDir)
+        
+        #if DEBUG
+        print("Moved mlpackage to: \(destinationURL.lastPathComponent)")
+        #endif
+        
+        self.loadModel(from: destinationURL, key: key) { model in
           DispatchQueue.main.async {
             completion(model, key)
           }
@@ -561,18 +580,20 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         try FileManager.default.removeItem(at: unzipDestinationURL)
       }
       do {
-        try unzipSkippingMacOSX(at: zipURL, to: getDocumentsDirectory())
+        // Create temp directory for unzipping
+        let tempDir = getDocumentsDirectory().appendingPathComponent("temp_download_\(key)_\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
         
-        // After unzipping, find the .mlpackage in the documents directory
-        // The unzipped content might have different naming patterns
-        let documentsDir = getDocumentsDirectory()
-        let contents = try FileManager.default.contentsOfDirectory(at: documentsDir, includingPropertiesForKeys: nil)
+        try unzipSkippingMacOSX(at: zipURL, to: tempDir)
+        
+        // Find the .mlpackage in the temp directory
+        let tempContents = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
         
         #if DEBUG
         print("\n=== After Unzip Debug ===")
         print("Key: \(key)")
-        print("Documents directory contents:")
-        for item in contents {
+        print("Temp directory contents:")
+        for item in tempContents {
           print("  - \(item.lastPathComponent)")
         }
         #endif
@@ -580,27 +601,18 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         // Look for .mlpackage files that match our key
         var modelURL: URL? = nil
         
-        // First try exact match
-        let exactMatch = documentsDir.appendingPathComponent("\(key).mlpackage")
-        if FileManager.default.fileExists(atPath: exactMatch.path) {
-          modelURL = exactMatch
-          #if DEBUG
-          print("Found exact match: \(exactMatch.lastPathComponent)")
-          #endif
-        } else {
-          // Look for any .mlpackage that contains the key
-          for item in contents {
-            if item.pathExtension == "mlpackage" {
-              let filename = item.lastPathComponent
-              // Check if this mlpackage is related to our key
-              if filename.lowercased().contains(key.lowercased()) ||
-                 filename.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased() {
-                modelURL = item
-                #if DEBUG
-                print("Found matching mlpackage: \(filename)")
-                #endif
-                break
-              }
+        // Look for any .mlpackage in temp directory
+        for item in tempContents {
+          if item.pathExtension == "mlpackage" {
+            let filename = item.lastPathComponent
+            // Check if this mlpackage is related to our key
+            if filename.lowercased().contains(key.lowercased()) ||
+               filename.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased() {
+              modelURL = item
+              #if DEBUG
+              print("Found matching mlpackage: \(filename)")
+              #endif
+              break
             }
           }
         }
@@ -609,10 +621,27 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           #if DEBUG
           print("ERROR: No .mlpackage found for key: \(key)")
           #endif
+          // Clean up temp directory
+          try? FileManager.default.removeItem(at: tempDir)
           throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found after extraction"])
         }
         
-        loadModel(from: foundModelURL, key: key) { model in
+        // Move the mlpackage to documents directory
+        let documentsDir = getDocumentsDirectory()
+        let destinationModelURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
+        if FileManager.default.fileExists(atPath: destinationModelURL.path) {
+          try FileManager.default.removeItem(at: destinationModelURL)
+        }
+        try FileManager.default.moveItem(at: foundModelURL, to: destinationModelURL)
+        
+        // Clean up temp directory
+        try? FileManager.default.removeItem(at: tempDir)
+        
+        #if DEBUG
+        print("Moved mlpackage to documents: \(destinationModelURL.lastPathComponent)")
+        #endif
+        
+        loadModel(from: destinationModelURL, key: key) { model in
           self.downloadCompletionHandlers[downloadTask]?(model, key)
           self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
         }

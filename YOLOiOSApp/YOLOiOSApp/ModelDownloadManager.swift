@@ -490,49 +490,83 @@ class ModelDownloadManager: NSObject {
         #if DEBUG
         print("Looking for mlpackage in temp directory:")
         for item in tempContents {
-          if item.pathExtension == "mlpackage" {
-            print("  Found: \(item.lastPathComponent)")
-          }
+          var isDir: ObjCBool = false
+          FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+          print("  - \(item.lastPathComponent) \(isDir.boolValue ? "[DIR]" : "[FILE]")")
         }
         #endif
         
         var modelURL: URL? = nil
-        for item in tempContents {
-          if item.pathExtension == "mlpackage" && 
-             (item.lastPathComponent.lowercased().contains(key.lowercased()) ||
-              item.lastPathComponent.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased()) {
-            modelURL = item
+        let documentsDir = self.getDocumentsDirectory()
+        
+        // Check if the ZIP contained the mlpackage contents directly
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          // The temp directory itself is the mlpackage contents
+          let destinationURL = documentsDir.appendingPathComponent("\(key).mlpackage")
+          
+          #if DEBUG
+          print("ZIP contains mlpackage contents directly")
+          print("Creating mlpackage at: \(destinationURL.lastPathComponent)")
+          #endif
+          
+          // Remove existing mlpackage if exists
+          if FileManager.default.fileExists(atPath: destinationURL.path) {
+            try FileManager.default.removeItem(at: destinationURL)
+          }
+          
+          // Move the entire temp directory as the mlpackage
+          try FileManager.default.moveItem(at: tempDir, to: destinationURL)
+          modelURL = destinationURL
+          
+        } else {
+          // Look for .mlpackage directory
+          for item in tempContents {
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+            
+            if isDir.boolValue && item.pathExtension == "mlpackage" && 
+               (item.lastPathComponent.lowercased().contains(key.lowercased()) ||
+                item.lastPathComponent.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased()) {
+              modelURL = item
+              #if DEBUG
+              print("Selected mlpackage: \(item.lastPathComponent)")
+              #endif
+              break
+            }
+          }
+          
+          if let foundModelURL = modelURL {
+            // Move the mlpackage to documents directory
+            let destinationURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+              try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.moveItem(at: foundModelURL, to: destinationURL)
+            
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            
+            modelURL = destinationURL
+          } else {
             #if DEBUG
-            print("Selected mlpackage: \(item.lastPathComponent)")
+            print("ERROR: No mlpackage found for key: \(key)")
             #endif
-            break
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found"])
           }
         }
         
-        guard let foundModelURL = modelURL else {
-          #if DEBUG
-          print("ERROR: No mlpackage found for key: \(key)")
-          #endif
-          // Clean up temp directory
-          try? FileManager.default.removeItem(at: tempDir)
-          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found"])
-        }
-        
-        // Move the mlpackage to documents directory
-        let destinationURL = self.getDocumentsDirectory().appendingPathComponent(foundModelURL.lastPathComponent)
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-          try FileManager.default.removeItem(at: destinationURL)
-        }
-        try FileManager.default.moveItem(at: foundModelURL, to: destinationURL)
-        
-        // Clean up temp directory
-        try? FileManager.default.removeItem(at: tempDir)
-        
         #if DEBUG
-        print("Moved mlpackage to: \(destinationURL.lastPathComponent)")
+        print("Final mlpackage location: \(modelURL?.lastPathComponent ?? "nil")")
         #endif
         
-        self.loadModel(from: destinationURL, key: key) { model in
+        guard let finalModelURL = modelURL else {
+          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model URL is nil after processing"])
+        }
+        
+        self.loadModel(from: finalModelURL, key: key) { model in
           DispatchQueue.main.async {
             completion(model, key)
           }
@@ -594,54 +628,95 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         print("Key: \(key)")
         print("Temp directory contents:")
         for item in tempContents {
-          print("  - \(item.lastPathComponent)")
+          var isDir: ObjCBool = false
+          FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+          print("  - \(item.lastPathComponent) \(isDir.boolValue ? "[DIR]" : "[FILE]")")
+        }
+        
+        // If the mlpackage is extracted as a directory in the temp folder
+        // Check if the temp directory itself is the mlpackage
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          print("Detected mlpackage structure directly in temp directory")
         }
         #endif
         
         // Look for .mlpackage files that match our key
         var modelURL: URL? = nil
+        let documentsDir = getDocumentsDirectory()
         
-        // Look for any .mlpackage in temp directory
-        for item in tempContents {
-          if item.pathExtension == "mlpackage" {
-            let filename = item.lastPathComponent
-            // Check if this mlpackage is related to our key
-            if filename.lowercased().contains(key.lowercased()) ||
-               filename.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased() {
-              modelURL = item
-              #if DEBUG
-              print("Found matching mlpackage: \(filename)")
-              #endif
-              break
+        // Check if the ZIP contained the mlpackage contents directly
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          // The temp directory itself is the mlpackage contents
+          // Create the .mlpackage directory in documents
+          let destinationModelURL = documentsDir.appendingPathComponent("\(key).mlpackage")
+          
+          #if DEBUG
+          print("ZIP contains mlpackage contents directly")
+          print("Creating mlpackage at: \(destinationModelURL.lastPathComponent)")
+          #endif
+          
+          // Remove existing mlpackage if exists
+          if FileManager.default.fileExists(atPath: destinationModelURL.path) {
+            try FileManager.default.removeItem(at: destinationModelURL)
+          }
+          
+          // Move the entire temp directory as the mlpackage
+          try FileManager.default.moveItem(at: tempDir, to: destinationModelURL)
+          modelURL = destinationModelURL
+          
+        } else {
+          // Look for any .mlpackage directory in temp directory
+          for item in tempContents {
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+            
+            if isDir.boolValue && item.pathExtension == "mlpackage" {
+              let filename = item.lastPathComponent
+              // Check if this mlpackage is related to our key
+              if filename.lowercased().contains(key.lowercased()) ||
+                 filename.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased() {
+                modelURL = item
+                #if DEBUG
+                print("Found matching mlpackage directory: \(filename)")
+                #endif
+                break
+              }
             }
+          }
+          
+          if let foundModelURL = modelURL {
+            // Move the mlpackage to documents directory
+            let destinationModelURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationModelURL.path) {
+              try FileManager.default.removeItem(at: destinationModelURL)
+            }
+            try FileManager.default.moveItem(at: foundModelURL, to: destinationModelURL)
+            
+            // Clean up remaining temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            
+            modelURL = destinationModelURL
+          } else {
+            #if DEBUG
+            print("ERROR: No .mlpackage found for key: \(key)")
+            #endif
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found after extraction"])
           }
         }
         
-        guard let foundModelURL = modelURL else {
-          #if DEBUG
-          print("ERROR: No .mlpackage found for key: \(key)")
-          #endif
-          // Clean up temp directory
-          try? FileManager.default.removeItem(at: tempDir)
-          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found after extraction"])
-        }
-        
-        // Move the mlpackage to documents directory
-        let documentsDir = getDocumentsDirectory()
-        let destinationModelURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
-        if FileManager.default.fileExists(atPath: destinationModelURL.path) {
-          try FileManager.default.removeItem(at: destinationModelURL)
-        }
-        try FileManager.default.moveItem(at: foundModelURL, to: destinationModelURL)
-        
-        // Clean up temp directory
-        try? FileManager.default.removeItem(at: tempDir)
-        
         #if DEBUG
-        print("Moved mlpackage to documents: \(destinationModelURL.lastPathComponent)")
+        print("Final mlpackage location: \(modelURL?.lastPathComponent ?? "nil")")
         #endif
         
-        loadModel(from: destinationModelURL, key: key) { model in
+        guard let finalModelURL = modelURL else {
+          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model URL is nil after processing"])
+        }
+        
+        loadModel(from: finalModelURL, key: key) { model in
           self.downloadCompletionHandlers[downloadTask]?(model, key)
           self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
         }

@@ -706,45 +706,107 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
       let key = entry.identifier  // "yolov8n", "yolov8m-seg", etc.
 
-      if ModelCacheManager.shared.isModelDownloaded(key: key) {
+      // Check if model is truly ready (compiled .mlmodelc exists)
+      let compiledModelURL = ModelCacheManager.shared.getDocumentsDirectory()
+        .appendingPathComponent(key)
+        .appendingPathExtension("mlmodelc")
+      
+      if FileManager.default.fileExists(atPath: compiledModelURL.path) {
+        // Model is compiled and ready
         loadCachedModelAndSetToYOLOView(
           key: key, yoloTask: yoloTask, displayName: entry.displayName)
-      } else {
-        guard let remoteURL = entry.remoteURL else {
-          self.finishLoadingModel(success: false, modelName: entry.displayName)
-          return
-        }
-
-        self.downloadProgressView.progress = 0.0
+      } else if ModelCacheManager.shared.isModelDownloaded(key: key) {
+        // Model files exist but need processing
         self.downloadProgressView.isHidden = false
         self.downloadProgressLabel.isHidden = false
-
-        let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
-
-        ModelCacheManager.shared.loadModel(
-          from: localZipFileName,
-          remoteURL: remoteURL,
-          key: key
-        ) { [weak self] mlModel, loadedKey in
-          guard let self = self else { return }
-          if mlModel == nil {
-            self.finishLoadingModel(success: false, modelName: entry.displayName)
-            return
+        self.downloadProgressLabel.text = "Processing \(entry.displayName)..."
+        
+        // Try to process existing files
+        let zipURL = ModelCacheManager.shared.getDocumentsDirectory()
+          .appendingPathComponent("\(key).mlpackage.zip")
+        let mlpackageURL = ModelCacheManager.shared.getDocumentsDirectory()
+          .appendingPathComponent(key)
+          .appendingPathExtension("mlpackage")
+        
+        if FileManager.default.fileExists(atPath: zipURL.path) {
+          ModelDownloadManager.shared.processExistingZip(
+            zipURL: zipURL, key: key
+          ) { [weak self] mlModel, loadedKey in
+            guard let self = self else { return }
+            if mlModel != nil {
+              self.loadCachedModelAndSetToYOLOView(
+                key: loadedKey,
+                yoloTask: yoloTask,
+                displayName: entry.displayName)
+            } else {
+              self.finishLoadingModel(success: false, modelName: entry.displayName)
+            }
           }
-          self.loadCachedModelAndSetToYOLOView(
-            key: loadedKey,
-            yoloTask: yoloTask,
-            displayName: entry.displayName)
+        } else if FileManager.default.fileExists(atPath: mlpackageURL.path) {
+          ModelDownloadManager.shared.compileExistingModel(
+            modelURL: mlpackageURL, key: key
+          ) { [weak self] mlModel, loadedKey in
+            guard let self = self else { return }
+            if mlModel != nil {
+              self.loadCachedModelAndSetToYOLOView(
+                key: loadedKey,
+                yoloTask: yoloTask,
+                displayName: entry.displayName)
+            } else {
+              self.finishLoadingModel(success: false, modelName: entry.displayName)
+            }
+          }
+        } else {
+          // Something went wrong, re-download
+          self.startModelDownload(entry: entry, key: key, yoloTask: yoloTask)
         }
+      } else {
+        self.startModelDownload(entry: entry, key: key, yoloTask: yoloTask)
       }
     }
   }
 
+  private func startModelDownload(entry: ModelEntry, key: String, yoloTask: YOLOTask) {
+    guard let remoteURL = entry.remoteURL else {
+      self.finishLoadingModel(success: false, modelName: entry.displayName)
+      return
+    }
+
+    self.downloadProgressView.progress = 0.0
+    self.downloadProgressView.isHidden = false
+    self.downloadProgressLabel.isHidden = false
+
+    let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
+
+    ModelCacheManager.shared.loadModel(
+      from: localZipFileName,
+      remoteURL: remoteURL,
+      key: key
+    ) { [weak self] mlModel, loadedKey in
+      guard let self = self else { return }
+      if mlModel == nil {
+        self.finishLoadingModel(success: false, modelName: entry.displayName)
+        return
+      }
+      self.loadCachedModelAndSetToYOLOView(
+        key: loadedKey,
+        yoloTask: yoloTask,
+        displayName: entry.displayName)
+    }
+  }
+  
   private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String)
   {
     let localModelURL = ModelCacheManager.shared.getDocumentsDirectory()
       .appendingPathComponent(key)
       .appendingPathExtension("mlmodelc")
+
+    // Double-check that the compiled model exists before loading
+    guard FileManager.default.fileExists(atPath: localModelURL.path) else {
+      print("Error: Compiled model not found at \(localModelURL.path)")
+      self.finishLoadingModel(success: false, modelName: displayName)
+      return
+    }
 
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
@@ -754,6 +816,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
         case .success(let loadResult):
           self.finishLoadingModel(success: true, modelName: displayName, metadata: loadResult.metadata)
         case .failure(let error):
+          print("Error loading model: \(error)")
           self.finishLoadingModel(success: false, modelName: displayName)
         }
       }

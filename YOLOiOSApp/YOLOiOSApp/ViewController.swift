@@ -577,7 +577,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
       return indexA < indexB
     }
 
-    return customModels + officialModels
+    return officialModels + customModels
   }
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
@@ -586,10 +586,34 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
     if !currentModels.isEmpty {
       // Old UI table view code removed
       DispatchQueue.main.async {
-        let firstIndex = IndexPath(row: 0, section: 0)
-        self.selectedIndexPath = firstIndex
-        let firstModel = self.currentModels[0]
-        self.loadModel(entry: firstModel, forTask: taskName)
+        // Find the best model to load based on current size filter
+        var modelToLoad: ModelEntry?
+        var indexToSelect = 0
+        
+        // First, try to find a model matching the current size filter
+        if let sizeFilteredModel = self.currentModels.enumerated().first(where: { index, model in
+          return model.modelSize == self.currentSizeFilter.rawValue
+        }) {
+          modelToLoad = sizeFilteredModel.element
+          indexToSelect = sizeFilteredModel.offset
+        } else {
+          // If no model matches the size filter, load the first non-custom model if available
+          if let firstNonCustomModel = self.currentModels.enumerated().first(where: { index, model in
+            return model.modelVersion != "Custom"
+          }) {
+            modelToLoad = firstNonCustomModel.element
+            indexToSelect = firstNonCustomModel.offset
+          } else {
+            // Fall back to first model (might be custom)
+            modelToLoad = self.currentModels[0]
+            indexToSelect = 0
+          }
+        }
+        
+        self.selectedIndexPath = IndexPath(row: indexToSelect, section: 0)
+        if let model = modelToLoad {
+          self.loadModel(entry: model, forTask: taskName)
+        }
       }
     } else {
       print("No models found for task: \(taskName)")
@@ -1244,8 +1268,13 @@ extension ViewController {
     
     // Filter models based on current size filter
     let filteredModels = currentModels.filter { model in
-      // Always show custom models
+      // For custom models
       if model.modelVersion == "Custom" {
+        // If the custom model has size metadata, respect the filter
+        if let modelSize = model.modelSize {
+          return modelSize == currentSizeFilter.rawValue
+        }
+        // If no size metadata, show it but mark it as size-unknown
         return true
       }
       // Show models matching the current size filter
@@ -1326,7 +1355,7 @@ extension ViewController {
     // Get current model version
     let currentVersion = extractModelVersion(from: currentModelName)
     
-    // Find a model matching the current version and new size
+    // First priority: Find a model matching the current version and new size
     if let matchingModel = currentModels.first(where: { model in
       let modelVersion = model.modelVersion
       let modelSize = model.modelSize
@@ -1335,11 +1364,19 @@ extension ViewController {
       // Load the matching model
       loadModel(entry: matchingModel, forTask: currentTask)
     } else {
-      // No exact match found - try to find any model with the selected size
+      // Second priority: Find any non-custom model with the selected size
       if let sizeMatchingModel = currentModels.first(where: { model in
-        return model.modelSize == currentSizeFilter.rawValue
+        return model.modelVersion != "Custom" && model.modelSize == currentSizeFilter.rawValue
       }) {
         loadModel(entry: sizeMatchingModel, forTask: currentTask)
+      } else {
+        // Third priority: Find any model with the selected size (including custom)
+        if let anyMatchingModel = currentModels.first(where: { model in
+          return model.modelSize == currentSizeFilter.rawValue
+        }) {
+          loadModel(entry: anyMatchingModel, forTask: currentTask)
+        }
+        // If still no match, keep the current model
       }
     }
   }

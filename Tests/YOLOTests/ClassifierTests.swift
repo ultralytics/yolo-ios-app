@@ -211,7 +211,7 @@ class ClassifierTests: XCTestCase {
         
         let mockMultiArray = createMockMLMultiArray(values: [0.05, 0.1, 0.6, 0.2, 0.05])
         let observation = MockVNCoreMLFeatureValueObservation(multiArray: mockMultiArray)
-        let mockRequest = MockVNCoreMLRequestForTesting(results: [observation])
+        let mockRequest = MockVNRequestWithResults(results: [observation])
         classifier.visionRequest = mockRequest
         
         let image = createTestImage()
@@ -234,7 +234,7 @@ class ClassifierTests: XCTestCase {
             MockVNClassificationObservation(identifier: "bird", confidence: 0.01)
         ]
         
-        let mockRequest = MockVNCoreMLRequestForTesting(results: mockObservations)
+        let mockRequest = MockVNRequestWithResults(results: mockObservations)
         classifier.visionRequest = mockRequest
         
         let image = createTestImage()
@@ -366,25 +366,5 @@ class ClassifierTests: XCTestCase {
         }
         
         return multiArray
-    }
-}
-
-
-// Simplified mock for testing without actual CoreML model
-class MockVNCoreMLRequestForTesting: VNRequest, @unchecked Sendable {
-    private var mockResults: [VNObservation]?
-    
-    init(results: [Any]) {
-        super.init(completionHandler: nil)
-        self.mockResults = results.compactMap { $0 as? VNObservation }
-    }
-    
-    override var results: [VNObservation]? {
-        return mockResults
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }

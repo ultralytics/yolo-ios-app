@@ -186,7 +186,7 @@ class ObjectDetectorTests: XCTestCase {
         
         // Create a mock vision request that returns results
         let mockObservations = createMockObservations()
-        let mockRequest = MockVNCoreMLRequest(results: mockObservations)
+        let mockRequest = MockVNRequestWithResults(results: mockObservations)
         detector.visionRequest = mockRequest
         
         let image = createTestImage()

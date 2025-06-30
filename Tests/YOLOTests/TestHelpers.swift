@@ -57,32 +57,8 @@ class MockVNCoreMLFeatureValueObservation: VNCoreMLFeatureValueObservation, @unc
     }
 }
 
-class MockVNCoreMLRequest: VNCoreMLRequest, @unchecked Sendable {
-    private var mockResults: [VNObservation]?
-    
-    init(results: [Any]) {
-        // Create a dummy model for initialization
-        let config = MLModelConfiguration()
-        if let dummyModel = try? MLModel(contentsOf: Bundle.main.bundleURL, configuration: config),
-           let vncoreModel = try? VNCoreMLModel(for: dummyModel) {
-            super.init(model: vncoreModel)
-        } else {
-            // If we can't create a dummy model, we need to handle this differently
-            // This is a limitation of testing CoreML requests
-            fatalError("Cannot create mock VNCoreMLRequest without a valid model")
-        }
-        self.mockResults = results.compactMap { $0 as? VNObservation }
-    }
-    
-    override var results: [VNObservation]? {
-        return mockResults
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
+// We'll use MockVNRequestWithResults instead of MockVNCoreMLRequest
+// since VNCoreMLRequest requires a valid model which is difficult to mock
 
 class MockVNRecognizedObjectObservation: VNRecognizedObjectObservation {
     private let mockBoundingBox: CGRect

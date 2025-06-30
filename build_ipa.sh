@@ -1,4 +1,5 @@
 #!/bin/bash
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 # Build Flutter app for iOS with specified flavor and target
 flutter build ios --release --flavor production --target lib/main_production.dart

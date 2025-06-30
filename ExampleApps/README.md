@@ -42,7 +42,6 @@ Follow these steps to get the examples up and running:
     #### Obtaining YOLO Core ML Models
 
     You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
-
     - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
     - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 

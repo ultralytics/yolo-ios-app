@@ -349,7 +349,7 @@ class ViewController: UIViewController, YOLOViewDelegate, ModelDropdownViewDeleg
 
     NSLayoutConstraint.activate([
       downloadProgressView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      downloadProgressView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 20),
+      downloadProgressView.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 80),
       downloadProgressView.widthAnchor.constraint(equalToConstant: 200),
       downloadProgressView.heightAnchor.constraint(equalToConstant: 4),
 

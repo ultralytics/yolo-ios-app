@@ -61,14 +61,14 @@ class ObbDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Process OBB observations")
         
-        obbDetector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             // Verify result structure
-            XCTAssertNotNil(result.obb)
-            if let obbResults = result.obb {
-                XCTAssertGreaterThanOrEqual(obbResults.count, 0)
-            }
+            let obbResults = result.obb
+            XCTAssertGreaterThanOrEqual(obbResults.count, 0)
             expectation.fulfill()
         }
+        obbDetector.currentOnResultsListener = mockListener
         
         obbDetector.processObservations(for: request, error: nil)
         
@@ -95,11 +95,13 @@ class ObbDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "Timing update")
         
-        obbDetector.setOnInferenceTimeListener { inferenceTime, fpsRate in
+        let mockTimeListener = MockInferenceTimeListener()
+        mockTimeListener.onInferenceTimeHandler = { inferenceTime, fpsRate in
             XCTAssertGreaterThan(inferenceTime, 0)
             XCTAssertGreaterThan(fpsRate, 0)
             expectation.fulfill()
         }
+        obbDetector.currentOnInferenceTimeListener = mockTimeListener
         
         // Trigger timing update through observation processing
         let mockArray = createMockMLMultiArray(shape: [1, 10, 1], values: [0.0])
@@ -119,7 +121,7 @@ class ObbDetectorTests: XCTestCase {
         let result = obbDetector.predictOnImage(image: image)
         
         XCTAssertEqual(result.boxes.count, 0)
-        XCTAssertNil(result.obb)
+        XCTAssertEqual(result.obb.count, 0)
         XCTAssertEqual(result.speed, 0, accuracy: 0.001)
     }
     
@@ -178,8 +180,8 @@ class ObbDetectorTests: XCTestCase {
         
         // Verify result structure
         for result in results {
-            XCTAssertGreaterThan(result.box.width, 0)
-            XCTAssertGreaterThan(result.box.height, 0)
+            XCTAssertGreaterThan(result.box.w, 0)
+            XCTAssertGreaterThan(result.box.h, 0)
             XCTAssertGreaterThan(result.score, 0.3)
             XCTAssertGreaterThanOrEqual(result.box.angle, -Float.pi)
             XCTAssertLessThanOrEqual(result.box.angle, Float.pi)
@@ -191,20 +193,20 @@ class ObbDetectorTests: XCTestCase {
     
     func testIOURotatedBoxes() {
         // Test IOU calculation for rotated boxes
-        let box1 = RotatedBox(x: 100, y: 100, width: 50, height: 30, angle: 0)
-        let box2 = RotatedBox(x: 100, y: 100, width: 50, height: 30, angle: 0)
+        let box1 = OBB(cx: 100, cy: 100, w: 50, h: 30, angle: 0)
+        let box2 = OBB(cx: 100, cy: 100, w: 50, h: 30, angle: 0)
         
-        let iou = obbDetector.iouRotatedBoxes(boxA: box1, boxB: box2)
+        let iou = obbIoU(box1, box2)
         XCTAssertEqual(iou, 1.0, accuracy: 0.001) // Identical boxes should have IOU = 1.0
         
         // Test non-overlapping boxes
-        let box3 = RotatedBox(x: 200, y: 200, width: 50, height: 30, angle: 0)
-        let iou2 = obbDetector.iouRotatedBoxes(boxA: box1, boxB: box3)
+        let box3 = OBB(cx: 200, cy: 200, w: 50, h: 30, angle: 0)
+        let iou2 = obbIoU(box1, box3)
         XCTAssertEqual(iou2, 0.0, accuracy: 0.001) // Non-overlapping boxes should have IOU = 0.0
         
         // Test partially overlapping rotated boxes
-        let box4 = RotatedBox(x: 120, y: 100, width: 50, height: 30, angle: Float.pi / 4)
-        let iou3 = obbDetector.iouRotatedBoxes(boxA: box1, boxB: box4)
+        let box4 = OBB(cx: 120, cy: 100, w: 50, h: 30, angle: Float.pi / 4)
+        let iou3 = obbIoU(box1, box4)
         XCTAssertGreaterThan(iou3, 0.0)
         XCTAssertLessThan(iou3, 1.0)
     }
@@ -225,11 +227,11 @@ class ObbDetectorTests: XCTestCase {
             CGPoint(x: 5, y: 15)
         ]
         
-        let intersection = obbDetector.sutherlandHodgman(subjectPolygon: square1, clipPolygon: square2)
+        let intersection = polygonIntersection(subjectPolygon: square1, clipPolygon: square2)
         
         // The intersection should be a 5x5 square
         XCTAssertEqual(intersection.count, 4)
-        let area = obbDetector.polygonArea(polygon: intersection)
+        let area = polygonArea(intersection)
         XCTAssertEqual(area, 25.0, accuracy: 0.001)
     }
     
@@ -254,26 +256,26 @@ class ObbDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "End to end OBB detection")
         
-        obbDetector.setOnResultsListener { result in
-            XCTAssertNotNil(result.obb)
-            if let obbResults = result.obb {
-                XCTAssertGreaterThan(obbResults.count, 0)
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
+            let obbResults = result.obb
+            XCTAssertGreaterThan(obbResults.count, 0)
+            
+            // Verify first detection
+            if let firstOBB = obbResults.first {
+                XCTAssertGreaterThan(firstOBB.confidence, 0.4)
+                XCTAssertNotNil(firstOBB.cls)
+                XCTAssertGreaterThan(firstOBB.box.w, 0)
+                XCTAssertGreaterThan(firstOBB.box.h, 0)
                 
-                // Verify first detection
-                if let firstOBB = obbResults.first {
-                    XCTAssertGreaterThan(firstOBB.confidence, 0.4)
-                    XCTAssertNotNil(firstOBB.cls)
-                    XCTAssertGreaterThan(firstOBB.box.width, 0)
-                    XCTAssertGreaterThan(firstOBB.box.height, 0)
-                    
-                    // Verify class name is valid
-                    let validClasses = ["vehicle", "ship", "plane", "storage-tank", "bridge"]
-                    XCTAssertTrue(validClasses.contains(firstOBB.cls))
-                }
+                // Verify class name is valid
+                let validClasses = ["vehicle", "ship", "plane", "storage-tank", "bridge"]
+                XCTAssertTrue(validClasses.contains(firstOBB.cls))
             }
             
             expectation.fulfill()
         }
+        obbDetector.currentOnResultsListener = mockListener
         
         obbDetector.processObservations(for: request, error: nil)
         

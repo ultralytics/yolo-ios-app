@@ -211,12 +211,12 @@ class YOLOIntegrationTests: XCTestCase {
             
             // Test color conversion
             if let rgbComponents = color.toRGBComponents() {
-                XCTAssertGreaterThanOrEqual(rgbComponents.red, 0)
-                XCTAssertLessThanOrEqual(rgbComponents.red, 255)
-                XCTAssertGreaterThanOrEqual(rgbComponents.green, 0)
-                XCTAssertLessThanOrEqual(rgbComponents.green, 255)
-                XCTAssertGreaterThanOrEqual(rgbComponents.blue, 0)
-                XCTAssertLessThanOrEqual(rgbComponents.blue, 255)
+                XCTAssertGreaterThanOrEqual(rgbComponents.red, UInt8(0))
+                XCTAssertLessThanOrEqual(rgbComponents.red, UInt8(255))
+                XCTAssertGreaterThanOrEqual(rgbComponents.green, UInt8(0))
+                XCTAssertLessThanOrEqual(rgbComponents.green, UInt8(255))
+                XCTAssertGreaterThanOrEqual(rgbComponents.blue, UInt8(0))
+                XCTAssertLessThanOrEqual(rgbComponents.blue, UInt8(255))
             }
         }
     }
@@ -233,9 +233,9 @@ class YOLOIntegrationTests: XCTestCase {
         // Verify skeleton connections are valid indices
         for bone in skeleton {
             XCTAssertEqual(bone.count, 2)
-            XCTAssertGreaterThan(bone[0], 0)
+            XCTAssertGreaterThanOrEqual(bone[0], 1)
             XCTAssertLessThanOrEqual(bone[0], 17)
-            XCTAssertGreaterThan(bone[1], 0)
+            XCTAssertGreaterThanOrEqual(bone[1], 1)
             XCTAssertLessThanOrEqual(bone[1], 17)
         }
         
@@ -243,8 +243,8 @@ class YOLOIntegrationTests: XCTestCase {
         for color in posePalette {
             XCTAssertEqual(color.count, 3) // RGB values
             for component in color {
-                XCTAssertGreaterThanOrEqual(component, 0)
-                XCTAssertLessThanOrEqual(component, 255)
+                XCTAssertGreaterThanOrEqual(component, CGFloat(0))
+                XCTAssertLessThanOrEqual(component, CGFloat(255))
             }
         }
     }
@@ -252,7 +252,7 @@ class YOLOIntegrationTests: XCTestCase {
     func testThreadSafety() {
         // Test thread safety of data structures
         let dispatchGroup = DispatchGroup()
-        let results = ThreadSafeArray<YOLOResult>()
+        var results = [YOLOResult]()
         let queue = DispatchQueue.global(qos: .background)
         
         // Create multiple results concurrently
@@ -274,7 +274,9 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                results.append(result)
+                DispatchQueue.main.sync {
+                    results.append(result)
+                }
                 dispatchGroup.leave()
             }
         }

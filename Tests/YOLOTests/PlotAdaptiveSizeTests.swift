@@ -61,9 +61,9 @@ class PlotAdaptiveSizeTests: XCTestCase {
         let circleRadius = max(8.0, min(imageDiagonal * 0.03, 40.0))
         XCTAssertEqual(circleRadius, 40.0) // Should be capped at max
         
-        // Font size calculation (capped at 50)
+        // Font size calculation (capped at 120)
         let fontSize = max(48.0, min(imageDiagonal * 0.1, 120.0))
-        XCTAssertEqual(fontSize, 50.0) // Should be capped at max
+        XCTAssertEqual(fontSize, 120.0) // Should be capped at max
     }
     
     func testAdaptiveSizingForTinyImage() {

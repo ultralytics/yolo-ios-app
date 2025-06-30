@@ -293,23 +293,24 @@ class MockVideoCapturePredictor: Predictor {
     var didCallPredictOnImage = false
     var didCallProcessBuffer = false
     
-    func predictOnImage(image: CIImage) -> YOLOResult {
-        didCallPredictOnImage = true
-        return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    // Required by Predictor protocol
+    var labels: [String] = []
+    var isUpdating: Bool = false
+    
+    func predict(
+        sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
+        onInferenceTime: InferenceTimeListener?
+    ) {
+        didCallProcessBuffer = true
+        // Simulate a prediction result
+        let result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
+        onResultsListener?.on(result: result)
+        onInferenceTime?.on(inferenceTime: 0.01, fpsRate: 30.0)
     }
     
-    func setConfidenceThreshold(confidence: Double) {}
-    
-    func setIouThreshold(iou: Double) {}
-    
-    func setLabels(labels: [String]) {}
-    
-    func setOnInferenceTime(listener: @escaping (Double, Double) -> Void) {}
-    
-    func setOnResults(listener: @escaping (YOLOResult) -> Void) {}
-    
-    func loadModel(url: URL) async throws -> ModelLoadResult {
-        return ModelLoadResult()
+    func predictOnImage(image: CIImage) -> YOLOResult {
+        didCallPredictOnImage = true
+        return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
     }
 }
 

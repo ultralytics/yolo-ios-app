@@ -125,15 +125,16 @@ class Classifier: BasePredictor {
 
   override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
+    
+    let imageWidth = image.extent.width
+    let imageHeight = image.extent.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    
     guard let request = visionRequest else {
       let defaultSize = inputSize ?? CGSize(width: 640, height: 640)
       let emptyResult = YOLOResult(orig_shape: defaultSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
-
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
     do {
       try requestHandler.perform([request])

@@ -115,15 +115,16 @@ class ObjectDetector: BasePredictor {
   /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
   override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
+    
+    let imageWidth = image.extent.width
+    let imageHeight = image.extent.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
     var boxes = [Box]()
-
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
     let start = Date()
 
     do {

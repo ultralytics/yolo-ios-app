@@ -9,8 +9,8 @@ import UIKit
 /// Comprehensive tests for VideoCapture functionality
 class VideoCaptureTests: XCTestCase {
     
-    override class func setUp() throws {
-        try super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
         // Skip all VideoCapture tests in CI environment
         if ProcessInfo.processInfo.environment["CI"] != nil {
             throw XCTSkip("Skipping VideoCapture tests in CI environment")

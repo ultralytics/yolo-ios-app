@@ -35,8 +35,10 @@ class ObjectDetector: BasePredictor {
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   /// Sets the IoU threshold and updates the model's feature provider.
@@ -47,8 +49,10 @@ class ObjectDetector: BasePredictor {
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   /// Processes the results from the Vision framework's object detection request.

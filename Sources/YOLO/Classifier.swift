@@ -21,14 +21,18 @@ class Classifier: BasePredictor {
 
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   override func processObservations(for request: VNRequest, error: Error?) {

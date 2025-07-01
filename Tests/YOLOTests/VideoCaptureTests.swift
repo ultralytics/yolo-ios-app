@@ -308,6 +308,7 @@ class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
     private var _labels: [String] = []
     private var _isUpdating: Bool = false
     
+    // Override stored properties with computed properties to fix Swift compilation error
     override var labels: [String] {
         get { return _labels }
         set { _labels = newValue }

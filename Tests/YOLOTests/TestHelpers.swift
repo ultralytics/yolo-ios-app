@@ -39,9 +39,9 @@ class MockVNRequestWithResults: VNRequest, @unchecked Sendable {
     }
 }
 
-// Create a wrapper that holds MLMultiArray data
-// We'll use this instead of trying to mock VNCoreMLFeatureValueObservation
-class MockFeatureValueWrapper {
+// We cannot properly subclass VNCoreMLFeatureValueObservation
+// Create a simple mock that won't be used as VNObservation
+class MockFeatureValueObservation {
     let multiArray: MLMultiArray
     
     init(multiArray: MLMultiArray) {

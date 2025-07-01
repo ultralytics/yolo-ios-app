@@ -15,6 +15,13 @@ class VideoCaptureTests: XCTestCase {
     @MainActor
     override func setUp() {
         super.setUp()
+        
+        // Skip camera tests in CI environment
+        if ProcessInfo.processInfo.environment["CI"] != nil {
+            continueAfterFailure = false
+            XCTSkip("Skipping camera tests in CI environment")
+        }
+        
         videoCapture = VideoCapture()
         mockDelegate = MockVideoCaptureDelegate()
     }
@@ -43,6 +50,11 @@ class VideoCaptureTests: XCTestCase {
     }
     
     func testCaptureSessionInitialization() {
+        // Skip in CI environment
+        if ProcessInfo.processInfo.environment["CI"] != nil {
+            XCTSkip("Skipping camera tests in CI environment")
+        }
+        
         // Verify capture session is created
         XCTAssertNotNil(videoCapture.captureSession)
         XCTAssertFalse(videoCapture.captureSession.isRunning)

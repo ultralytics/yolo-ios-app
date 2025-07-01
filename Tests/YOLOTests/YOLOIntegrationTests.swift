@@ -274,14 +274,15 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                DispatchQueue.main.sync {
+                DispatchQueue.main.async {
                     results.append(result)
+                    dispatchGroup.leave()
                 }
-                dispatchGroup.leave()
             }
         }
         
-        dispatchGroup.wait()
+        let waitResult = dispatchGroup.wait(timeout: .now() + 5.0)
+        XCTAssertEqual(waitResult, .success, "Thread safety test timed out")
         XCTAssertEqual(results.count, 10)
     }
 }

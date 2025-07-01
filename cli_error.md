@@ -1,4 +1,4 @@
-n IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone._" | head -1 | sed -E 's/._\(([A-Z0-9-]+)\).\*/\1/')
+n IOS*SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.\_\(([A-Z0-9-]+)\).\*/\1/')
 Command line invocation:
 /Applications/Xcode_16.app/Contents/Developer/usr/bin/xcodebuild -scheme YOLO -sdk iphonesimulator -derivedDataPath Build/ -destination "platform=iOS Simulator,id=90E278CC-85E7-441E-B70A-555309863DE9" -enableCodeCoverage YES clean build test
 
@@ -129,10 +129,11 @@ cd /Users/runner/work/yolo-ios-app/yolo-ios-app/.swiftpm/xcode
 /Users/runner/work/yolo-ios-app/yolo-ios-app/Sources/YOLO/Plot.swift:258:37: warning: immutable value 'score' was never used; consider replacing with '*' or removing it
 for (originalIndex, box, classID, score) in sortedObjects {
 ^~~~~
-_
+\_
 /Users/runner/work/yolo-ios-app/yolo-ios-app/Sources/YOLO/Plot.swift:420:9: warning: variable 'labelRect' was never mutated; consider changing to 'let' constant
 var labelRect = CGRect(
-~~~ ^
+
+````^
 let
 /Users/runner/work/yolo-ios-app/yolo-ios-app/Sources/YOLO/Plot.swift:500:7: warning: initialization of immutable value 'scaleXToView' was never used; consider replacing with assignment to '_' or removing it
 let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
@@ -710,3 +711,4 @@ Test session results, code coverage, and logs:
 
 Error: Process completed with exit code 65.
 ```
+````

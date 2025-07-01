@@ -26,36 +26,30 @@ class MockInferenceTimeListener: InferenceTimeListener {
 // MARK: - Mock VNRequest Classes
 
 class MockVNRequestWithResults: VNRequest, @unchecked Sendable {
-    private var mockResults: [VNObservation]?
+    private var mockResults: [Any]?
     
     init(results: [Any]) {
         super.init(completionHandler: nil)
-        // Convert Any results to VNObservation
-        self.mockResults = results.compactMap { $0 as? VNObservation }
+        self.mockResults = results
     }
     
     override var results: [VNObservation]? {
-        return mockResults
+        // Return VNObservation types only
+        return mockResults?.compactMap { $0 as? VNObservation }
     }
 }
 
-// We cannot properly subclass VNCoreMLFeatureValueObservation
-// Use a simple VNObservation subclass instead
-class MockFeatureValueObservation: VNObservation, @unchecked Sendable {
+// Create a wrapper that holds MLMultiArray data
+// We'll use this instead of trying to mock VNCoreMLFeatureValueObservation
+class MockFeatureValueWrapper {
     let multiArray: MLMultiArray
     
     init(multiArray: MLMultiArray) {
         self.multiArray = multiArray
-        super.init()
     }
     
     var featureValue: MLFeatureValue {
         return MLFeatureValue(multiArray: multiArray)
-    }
-    
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
 }
 

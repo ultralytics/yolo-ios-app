@@ -49,7 +49,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   weak var currentOnInferenceTimeListener: InferenceTimeListener?
 
   /// The size of the input image or camera frame.
-  var inputSize: CGSize!
+  var inputSize: CGSize = CGSize(width: 640, height: 640)
 
   /// The required input dimensions for the model (width and height in pixels).
   var modelInputSize: (width: Int, height: Int) = (0, 0)

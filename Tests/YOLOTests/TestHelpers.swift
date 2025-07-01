@@ -39,7 +39,9 @@ class MockVNRequestWithResults: VNRequest, @unchecked Sendable {
     }
 }
 
-class MockVNCoreMLFeatureValueObservation: VNCoreMLFeatureValueObservation, @unchecked Sendable {
+// We cannot properly subclass VNCoreMLFeatureValueObservation
+// Use a simple VNObservation subclass instead
+class MockFeatureValueObservation: VNObservation, @unchecked Sendable {
     let multiArray: MLMultiArray
     
     init(multiArray: MLMultiArray) {
@@ -47,7 +49,7 @@ class MockVNCoreMLFeatureValueObservation: VNCoreMLFeatureValueObservation, @unc
         super.init()
     }
     
-    override var featureValue: MLFeatureValue {
+    var featureValue: MLFeatureValue {
         return MLFeatureValue(multiArray: multiArray)
     }
     

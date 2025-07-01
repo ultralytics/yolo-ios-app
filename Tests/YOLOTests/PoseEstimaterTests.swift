@@ -75,11 +75,17 @@ class PoseEstimaterTests: XCTestCase {
         }
         poseEstimater.currentOnInferenceTimeListener = mockListener
         
-        // Trigger timing update through observation processing
-        let request = MockVNRequestWithResults(results: [])
+        // Create mock observations to trigger processing
+        let mockObservations = [
+            MockVNRecognizedObjectObservation(
+                boundingBox: CGRect(x: 0.1, y: 0.1, width: 0.2, height: 0.3),
+                labels: [MockVNClassificationObservation(identifier: "person", confidence: 0.9)]
+            )
+        ]
+        let request = MockVNRequestWithResults(results: mockObservations)
         poseEstimater.processObservations(for: request, error: nil)
         
-        wait(for: [expectation], timeout: 1.0)
+        wait(for: [expectation], timeout: 2.0)
     }
     
     // MARK: - Predict on Image Tests

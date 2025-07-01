@@ -52,7 +52,26 @@ class ClassifierTests: XCTestCase {
         // Without a loaded model, result should have default values
         XCTAssertEqual(result.boxes.count, 0)
         XCTAssertEqual(result.speed, 0, accuracy: 0.001)
-        XCTAssertNil(result.probs)
+        XCTAssertEqual(result.orig_shape?.width, 640, accuracy: 0.001)
+        XCTAssertEqual(result.orig_shape?.height, 640, accuracy: 0.001)
+    }
+    
+    func testPredictOnImageWithMLMultiArray() {
+        // Test prediction with MLMultiArray results
+        classifier.labels = ["apple", "banana", "orange", "grape", "strawberry"]
+        
+        let mockMultiArray = createMockMLMultiArray(values: [0.05, 0.1, 0.6, 0.2, 0.05])
+        let observation = MockVNCoreMLFeatureValueObservation(multiArray: mockMultiArray)
+        let mockRequest = MockVNCoreMLRequestForTesting(results: [observation])
+        classifier.visionRequest = mockRequest
+        
+        let image = createTestImage()
+        let result = classifier.predictOnImage(image: image)
+        
+        XCTAssertNotNil(result.probs)
+        XCTAssertEqual(result.probs?.top1, "orange")
+        XCTAssertEqual(result.probs?.top1Conf ?? 0, 0.6, accuracy: 0.001)
+        XCTAssertNotNil(result.annotatedImage)
         XCTAssertEqual(result.names, classifier.labels)
         // Should use default size when inputSize is nil
         XCTAssertEqual(result.orig_shape.width, 640)
@@ -66,6 +85,16 @@ class ClassifierTests: XCTestCase {
         
         // Without a model loaded, inputSize remains nil
         XCTAssertNil(classifier.inputSize)
+    }
+    
+    func testPredictOnImageWithLargeImage() {
+        // Test prediction with large image
+        let image = createTestImage(width: 4000, height: 3000)
+        
+        let result = classifier.predictOnImage(image: image)
+        
+        XCTAssertEqual(result.orig_shape?.width, 640, accuracy: 0.001)
+        XCTAssertEqual(result.orig_shape?.height, 640, accuracy: 0.001)
     }
     
     // MARK: - Listener Tests

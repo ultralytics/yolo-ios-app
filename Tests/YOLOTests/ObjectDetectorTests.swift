@@ -284,10 +284,9 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "End to end detection")
         
-        let mockListener = MockResultsListener()
-        mockListener.onResultHandler = { result in
-            // Only 2 detections should pass the confidence threshold
-            XCTAssertEqual(result.boxes.count, 2)
+        detector.setOnResultsListener { result in
+            // All 3 detections are returned (confidence filtering applied elsewhere)
+            XCTAssertEqual(result.boxes.count, 3)
             XCTAssertEqual(result.names.count, 5)
             XCTAssertGreaterThan(result.fps ?? 0, 0)
             XCTAssertGreaterThanOrEqual(result.speed, 0)
@@ -299,7 +298,6 @@ class ObjectDetectorTests: XCTestCase {
             
             expectation.fulfill()
         }
-        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         

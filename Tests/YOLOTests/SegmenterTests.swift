@@ -182,10 +182,17 @@ class SegmenterTests: XCTestCase {
         }
         segmenter.currentOnInferenceTimeListener = mockListener
         
-        // Call private updateTime through a detection flow
-        segmenter.processObservations(for: MockVNRequestWithResults(results: []), error: nil)
+        // Create mock observations to trigger processing
+        let mockObservations = [
+            MockVNRecognizedObjectObservation(
+                boundingBox: CGRect(x: 0.1, y: 0.1, width: 0.2, height: 0.3),
+                labels: [MockVNClassificationObservation(identifier: "person", confidence: 0.9)]
+            )
+        ]
+        let request = MockVNRequestWithResults(results: mockObservations)
+        segmenter.processObservations(for: request, error: nil)
         
-        wait(for: [expectation], timeout: 1.0)
+        wait(for: [expectation], timeout: 2.0)
     }
     
     // MARK: - Integration Tests

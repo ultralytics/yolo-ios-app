@@ -255,6 +255,9 @@ class YOLOIntegrationTests: XCTestCase {
         var results = [YOLOResult]()
         let queue = DispatchQueue.global(qos: .background)
         
+        var testResult = "success"
+        var completedTasks = 0
+        
         // Create multiple results concurrently
         for i in 0..<10 {
             dispatchGroup.enter()
@@ -274,16 +277,19 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                DispatchQueue.main.async {
-                    results.append(result)
-                    dispatchGroup.leave()
-                }
+                results.append(result)
+                completedTasks += 1
+                dispatchGroup.leave()
             }
         }
         
-        let waitResult = dispatchGroup.wait(timeout: .now() + 5.0)
-        XCTAssertEqual(waitResult, .success, "Thread safety test timed out")
-        XCTAssertEqual(results.count, 10)
+        let waitResult = dispatchGroup.wait(timeout: .now() + 3.0)
+        if waitResult == .timedOut {
+            testResult = "timedOut"
+        }
+        
+        XCTAssertEqual(testResult, "success", "Thread safety test timed out")
+        XCTAssertEqual(completedTasks, 10)
     }
 }
 

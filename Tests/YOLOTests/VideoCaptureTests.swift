@@ -302,24 +302,13 @@ class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
     }
 }
 
-class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
+class MockVideoCapturePredictor: NSObject, Predictor, @unchecked Sendable {
     var didCallPredictOnImage = false
     var didCallProcessBuffer = false
-    private var _labels: [String] = []
-    private var _isUpdating: Bool = false
+    var labels: [String] = []
+    var isUpdating: Bool = false
     
-    // Override stored properties with computed properties to fix Swift compilation error
-    override var labels: [String] {
-        get { return _labels }
-        set { _labels = newValue }
-    }
-    
-    override var isUpdating: Bool {
-        get { return _isUpdating }
-        set { _isUpdating = newValue }
-    }
-    
-    override func predict(
+    func predict(
         sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
         onInferenceTime: InferenceTimeListener?
     ) {
@@ -330,7 +319,7 @@ class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
         onInferenceTime?.on(inferenceTime: 0.01, fpsRate: 30.0)
     }
     
-    override func predictOnImage(image: CIImage) -> YOLOResult {
+    func predictOnImage(image: CIImage) -> YOLOResult {
         didCallPredictOnImage = true
         return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
     }

@@ -305,8 +305,18 @@ class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
 class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
     var didCallPredictOnImage = false
     var didCallProcessBuffer = false
-    var labels: [String] = []
-    var isUpdating: Bool = false
+    private var _labels: [String] = []
+    private var _isUpdating: Bool = false
+    
+    override var labels: [String] {
+        get { return _labels }
+        set { _labels = newValue }
+    }
+    
+    override var isUpdating: Bool {
+        get { return _isUpdating }
+        set { _isUpdating = newValue }
+    }
     
     override func predict(
         sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,

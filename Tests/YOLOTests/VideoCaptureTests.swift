@@ -281,7 +281,6 @@ class VideoCaptureTests: XCTestCase {
 
 // MARK: - Mock Classes
 
-@MainActor
 class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
     var lastResult: YOLOResult?
     var lastInferenceTime: Double?
@@ -289,11 +288,13 @@ class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
     var predictCallCount = 0
     var inferenceTimeCallCount = 0
     
+    @MainActor
     func onPredict(result: YOLOResult) {
         lastResult = result
         predictCallCount += 1
     }
     
+    @MainActor
     func onInferenceTime(speed: Double, fps: Double) {
         lastInferenceTime = speed
         lastFPS = fps
@@ -304,6 +305,8 @@ class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
 class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
     var didCallPredictOnImage = false
     var didCallProcessBuffer = false
+    var labels: [String] = []
+    var isUpdating: Bool = false
     
     override func predict(
         sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,

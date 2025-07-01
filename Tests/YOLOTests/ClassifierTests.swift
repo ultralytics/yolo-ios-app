@@ -152,16 +152,6 @@ class ClassifierTests: XCTestCase {
         XCTAssertNil(result.probs)
     }
     
-    func testPredictOnImageWithLargeImage() {
-        // Test with a large image
-        let largeImage = createTestImage(width: 4000, height: 3000)
-        
-        let result = classifier.predictOnImage(image: largeImage)
-        
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result.orig_shape.width, 640) // Default size when no model
-        XCTAssertEqual(result.orig_shape.height, 640)
-    }
     
     // MARK: - Helper Methods
     

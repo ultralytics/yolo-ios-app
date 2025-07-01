@@ -155,14 +155,14 @@ class ClassifierTests: XCTestCase {
         }
         
         // Fill with a test pattern
-        context.setFillColor(CIColor(red: 0.5, green: 0.5, blue: 0.5).cgColor!)
+        context.setFillColor(UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0).cgColor)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         
         // Add some colored rectangles
-        context.setFillColor(CIColor(red: 1.0, green: 0.0, blue: 0.0).cgColor!)
+        context.setFillColor(UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0).cgColor)
         context.fill(CGRect(x: 100, y: 100, width: 200, height: 200))
         
-        context.setFillColor(CIColor(red: 0.0, green: 1.0, blue: 0.0).cgColor!)
+        context.setFillColor(UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0).cgColor)
         context.fill(CGRect(x: 400, y: 300, width: 150, height: 150))
         
         guard let cgImage = context.makeImage() else {

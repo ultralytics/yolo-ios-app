@@ -56,7 +56,7 @@ class ObbDetectorTests: XCTestCase {
         let predValues = createMockOBBPredictionValues(numAnchors: numAnchors, numClasses: numClasses)
         let predArray = createMockMLMultiArray(shape: shape, values: predValues)
         
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: predArray)
+        let observation = MockFeatureValueObservation(multiArray: predArray)
         let request = MockVNRequestWithResults(results: [observation])
         
         let expectation = XCTestExpectation(description: "Process OBB observations")
@@ -105,7 +105,7 @@ class ObbDetectorTests: XCTestCase {
         
         // Trigger timing update through observation processing
         let mockArray = createMockMLMultiArray(shape: [1, 10, 1], values: [0.0])
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: mockArray)
+        let observation = MockFeatureValueObservation(multiArray: mockArray)
         let request = MockVNRequestWithResults(results: [observation])
         obbDetector.processObservations(for: request, error: nil)
         
@@ -251,7 +251,7 @@ class ObbDetectorTests: XCTestCase {
         let predValues = createRealisticOBBPredictionValues(numAnchors: numAnchors, numClasses: numClasses)
         let predArray = createMockMLMultiArray(shape: shape, values: predValues)
         
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: predArray)
+        let observation = MockFeatureValueObservation(multiArray: predArray)
         let request = MockVNRequestWithResults(results: [observation])
         
         let expectation = XCTestExpectation(description: "End to end OBB detection")

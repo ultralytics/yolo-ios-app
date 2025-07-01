@@ -44,7 +44,7 @@ class SegmenterTests: XCTestCase {
     func testProcessObservationsWithWrongNumberOfOutputs() {
         // Test handling when model outputs wrong number of arrays
         let mockArray = createMockMLMultiArray(shape: [1, 10, 100], values: Array(repeating: 0.5, count: 1000))
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: mockArray)
+        let observation = MockFeatureValueObservation(multiArray: mockArray)
         let request = MockVNRequestWithResults(results: [observation]) // Only 1 output instead of 2
         
         // Should not crash and handle gracefully
@@ -74,8 +74,8 @@ class SegmenterTests: XCTestCase {
         let maskArray = createMockMLMultiArray(shape: maskShape, values: maskValues.map { Double($0) })
         
         let observations = [
-            MockVNCoreMLFeatureValueObservation(multiArray: predArray),
-            MockVNCoreMLFeatureValueObservation(multiArray: maskArray)
+            MockFeatureValueObservation(multiArray: predArray),
+            MockFeatureValueObservation(multiArray: maskArray)
         ]
         
         let request = MockVNRequestWithResults(results: observations)

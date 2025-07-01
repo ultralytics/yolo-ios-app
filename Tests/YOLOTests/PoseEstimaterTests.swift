@@ -56,7 +56,7 @@ class PoseEstimaterTests: XCTestCase {
         let predValues = createMockPosePredictionValues(numAnchors: numAnchors)
         let predArray = createMockMLMultiArray(shape: shape, values: predValues)
         
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: predArray)
+        let observation = MockFeatureValueObservation(multiArray: predArray)
         let request = MockVNRequestWithResults(results: [observation])
         
         let expectation = XCTestExpectation(description: "Process pose observations")
@@ -205,7 +205,7 @@ class PoseEstimaterTests: XCTestCase {
         let predValues = createRealisticPosePredictionValues(numAnchors: numAnchors)
         let predArray = createMockMLMultiArray(shape: shape, values: predValues)
         
-        let observation = MockVNCoreMLFeatureValueObservation(multiArray: predArray)
+        let observation = MockFeatureValueObservation(multiArray: predArray)
         let request = MockVNRequestWithResults(results: [observation])
         
         let expectation = XCTestExpectation(description: "End to end pose estimation")

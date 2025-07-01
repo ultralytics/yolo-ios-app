@@ -11,7 +11,10 @@ class VideoCaptureTests: XCTestCase {
     
     override func setUpWithError() throws {
         try super.setUpWithError()
-        // Skip all VideoCapture tests in CI environment
+        // Skip all VideoCapture tests in CI environment or when no camera is available
+        #if targetEnvironment(simulator)
+            throw XCTSkip("Skipping VideoCapture tests in simulator environment")
+        #endif
         if ProcessInfo.processInfo.environment["CI"] != nil {
             throw XCTSkip("Skipping VideoCapture tests in CI environment")
         }

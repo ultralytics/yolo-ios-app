@@ -1,4 +1,6 @@
 #!/bin/bash
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
 # Script to prevent creation of .DS_Store files on network volumes
 # and help manage them in the repository
 
@@ -10,15 +12,15 @@ defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
 # Add .DS_Store to global gitignore if not already present
 GLOBAL_GITIGNORE="$HOME/.gitignore_global"
 if [ ! -f "$GLOBAL_GITIGNORE" ]; then
-    echo ".DS_Store" > "$GLOBAL_GITIGNORE"
-    echo "Created global gitignore with .DS_Store"
+  echo ".DS_Store" > "$GLOBAL_GITIGNORE"
+  echo "Created global gitignore with .DS_Store"
 else
-    if ! grep -q "^\.DS_Store$" "$GLOBAL_GITIGNORE"; then
-        echo ".DS_Store" >> "$GLOBAL_GITIGNORE"
-        echo "Added .DS_Store to global gitignore"
-    else
-        echo ".DS_Store already in global gitignore"
-    fi
+  if ! grep -q "^\.DS_Store$" "$GLOBAL_GITIGNORE"; then
+    echo ".DS_Store" >> "$GLOBAL_GITIGNORE"
+    echo "Added .DS_Store to global gitignore"
+  else
+    echo ".DS_Store already in global gitignore"
+  fi
 fi
 
 # Set global gitignore

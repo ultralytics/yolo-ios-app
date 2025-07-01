@@ -51,7 +51,8 @@ class PoseEstimater: BasePredictor, @unchecked Sendable {
     }
     self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
     self.t3 = CACurrentMediaTime()
-
+    
+    // Notify inference time listener
     self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
 
   }

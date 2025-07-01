@@ -4,153 +4,108 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the Ultralytics YOLO iOS repository providing a comprehensive YOLO implementation for iOS. It consists of a reusable Swift Package (Sources/YOLO/) and demonstration applications including a main iOS app (YOLOiOSApp/) and four example apps (ExampleApps/). The project leverages YOLO11 models for real-time object detection, classification, segmentation, pose estimation, and oriented bounding box detection.
-
-## Model Files
-
-The YOLOiOSApp includes pre-trained YOLO11 CoreML models organized by task type:
-
-- **Location**: `YOLOiOSApp/YOLOiOSApp/Models/`
-- **Structure**: Models are organized in folders by task (DetectModels, SegmentModels, ClassifyModels, PoseModels, OBBModels)
-- **Format**: `.mlpackage` files (CoreML format)
-- **Sizes**: Each task includes models in NANO (n), SMALL (s), MEDIUM (m), LARGE (l), and XLARGE (x) sizes
-- **Git**: Model files are excluded from version control via `.gitignore` to keep repository size manageable
-- **Test Models**: Located in `Tests/YOLOTests/Resources/` and downloaded via automated script
+This is the Ultralytics YOLO iOS app - a Swift-based computer vision application providing real-time object detection, segmentation, pose estimation, and classification using CoreML. The project includes both a standalone iOS app and a reusable Swift Package for developers.
 
 ## Build and Test Commands
 
-### Swift Package Commands
+### Swift Package Manager
+- Run all tests: `swift test`
+- Build package: `swift build`
+- Clean build: `swift package clean`
 
+### Xcode Commands
+- Build and test with simulator: `xcodebuild -scheme YOLO -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 14" clean build test`
+- Resolve dependencies: `xcodebuild -resolvePackageDependencies`
+- Run tests in Xcode: `Cmd+U`
+- Build in Xcode: `Cmd+B`
+
+### Test Setup
+Before running tests, download required CoreML models:
 ```bash
-# Resolve Swift Package dependencies
-xcodebuild -resolvePackageDependencies
-
-# Build the Swift Package
-xcodebuild -scheme YOLO -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 14" build
-
-# Run tests with coverage
-xcodebuild \
-  -scheme YOLO \
-  -sdk iphonesimulator \
-  -destination "platform=iOS Simulator,name=iPhone 14" \
-  -enableCodeCoverage YES \
-  clean build test
-
-# Download test models (required for full test suite)
 chmod +x Tests/YOLOTests/Resources/download-test-models.sh
 Tests/YOLOTests/Resources/download-test-models.sh
-
-# Run a specific test
-xcodebuild test -scheme YOLO -destination 'platform=iOS Simulator,name=iPhone 14' -only-testing:YOLOTests/YOLOv11Tests/testObjectDetection
-
-# Generate code coverage report (from CI workflow)
-xcrun llvm-cov export -format="lcov" \
-  -instr-profile="$PROFILE_PATH" \
-  "$EXECUTABLE_PATH" > coverage.lcov
 ```
 
-### iOS App Commands
+## High-Level Architecture
 
-```bash
-# Build YOLOiOSApp target
-xcodebuild -scheme YOLOiOSApp -sdk iphonesimulator build
+### Core Components
 
-# Build for device
-xcodebuild -scheme YOLOiOSApp -sdk iphoneos build
+1. **Entry Point (`YOLO.swift`)**
+   - Main API class with `callAsFunction` for elegant syntax
+   - Factory pattern for creating task-specific predictors
+   - Supports multiple input formats (UIImage, CIImage, CGImage, paths, URLs)
 
-# Build example apps
-xcodebuild -scheme YOLORealTimeSwiftUI -sdk iphonesimulator build
-xcodebuild -scheme YOLORealTimeUIKit -sdk iphonesimulator build
-xcodebuild -scheme YOLOSingleImageSwiftUI -sdk iphonesimulator build
-xcodebuild -scheme YOLOSingleImageUIKit -sdk iphonesimulator build
-```
+2. **Task System (`YOLOTask.swift`)**
+   - `.detect`: Object detection with bounding boxes
+   - `.segment`: Instance segmentation with masks
+   - `.pose`: Human pose estimation
+   - `.obb`: Oriented bounding box detection
+   - `.classify`: Image classification
 
-## Architecture Overview
+3. **Prediction Architecture**
+   - **`Predictor` Protocol**: Contract for all predictors
+   - **`BasePredictor`**: Abstract base implementing common functionality
+     - Async CoreML model loading
+     - Vision framework integration
+     - Performance monitoring
+   - **Task-specific predictors**: ObjectDetector, Segmenter, PoseEstimater, ObbDetector, Classifier
 
-This repository provides a comprehensive YOLO implementation for iOS, consisting of a reusable Swift Package and demonstration applications.
+4. **UI Layer**
+   - **`YOLOCamera`**: SwiftUI camera wrapper
+   - **`YOLOView`**: UIKit view with camera management and result visualization
+   - **`VideoCapture`**: AVFoundation-based camera handling
 
-### Repository Structure
-
-- **Sources/YOLO/**: Swift Package containing the core YOLO library
-  - `Predictor` protocol: Unified interface for all YOLO tasks
-  - Task implementations: ObjectDetector, Classifier, Segmenter, PoseEstimater, ObbDetector
-  - UI components: YOLOView (UIKit), YOLOCamera (SwiftUI), BoundingBoxView
-  - Utilities: VideoCapture, NonMaxSuppression, ThresholdProvider
-  - Model management: Download manager for remote models
-
-- **YOLOiOSApp/**: Main iOS application demonstrating YOLO capabilities
-  - Pre-packaged YOLO11 CoreML models organized by task type
-  - Modern UI with dark theme and gradient backgrounds
-  - Multi-level zoom and real-time performance metrics
-  - Model size selector (NANO to XLARGE)
-  - Tab-based task switching
-
-- **ExampleApps/**: Four example implementations
-  - YOLORealTimeSwiftUI: Real-time detection with SwiftUI
-  - YOLORealTimeUIKit: Real-time detection with UIKit
-  - YOLOSingleImageSwiftUI: Single image processing with SwiftUI
-  - YOLOSingleImageUIKit: Single image processing with UIKit
-
-### Key Design Patterns
-
-1. **Protocol-Based Architecture**: All YOLO tasks conform to the `Predictor` protocol, enabling polymorphic model usage
-
-2. **Callable Syntax**: Swift's callable syntax for intuitive inference:
-
-   ```swift
-   let result = model(image)  // Direct call syntax
+5. **Data Flow**
+   ```
+   Camera → VideoCapture → Predictor → Vision Request → processObservations → YOLOResult → UI
    ```
 
-3. **Multi-Input Support**: Models accept UIImage, CIImage, CGImage, SwiftUI.Image, file paths, and URLs
+### Key Design Patterns
+- Factory Pattern for model creation
+- Protocol-Oriented Design for extensibility
+- Delegate Pattern for result callbacks
+- Async/Await for background operations
 
-4. **Task-Specific Results**: Structured result types for each task (DetectionResult, ClassificationResult, etc.)
+## Development Guidelines
 
-5. **Camera Integration**: YOLOCamera SwiftUI view provides complete real-time inference with minimal code
+### Requirements
+- Swift 5.7+
+- Xcode 14.0+
+- iOS 16.0+ deployment target
+- CoreML models in `.mlpackage` format
 
-6. **Delegate Pattern**: VideoCapture uses delegates for frame processing callbacks
+### Code Style
+- Follow standard Swift conventions
+- Use `///` documentation comments for public APIs
+- Implement proper error handling with `PredictorError`
+- Each component should have corresponding tests
 
-### Model Architecture
+### Adding New Features
+To add a new YOLO task:
+1. Add case to `YOLOTask` enum
+2. Create predictor class inheriting from `BasePredictor`
+3. Implement `processObservations()` and `predictOnImage()`
+4. Add case to YOLO.init() switch
 
-- CoreML format required (.mlpackage)
-- Input size: 640x640 (standard YOLO input)
-- Supported tasks: Detection, Classification, Segmentation, Pose Estimation, OBB
-- Model sizes: NANO (n), SMALL (s), MEDIUM (m), LARGE (l), XLARGE (x)
-- INT8 quantization for optimal performance
+### Testing
+- Models required: yolo11n.mlpackage (and variants for each task)
+- Set `SKIP_MODEL_TESTS = true` if models unavailable
+- Tests organized by functionality in Tests/YOLOTests/
 
-### Current UI State (feat/uikit-modern-ui branch)
+### Camera Usage
+Add to Info.plist: "Privacy - Camera Usage Description"
 
-- Modern dark theme with gradient backgrounds
-- Yellow bounding boxes for detections
-- Real-time FPS and latency metrics
-- Zoom controls with 0.5x, 1x, 2x, 3x levels
-- Model size selector in navigation bar
-- Tab bar for task switching
+## Project Structure
+```
+├── Sources/YOLO/          # Swift Package library
+├── YOLOiOSApp/           # Main iOS application
+├── ExampleApps/          # Example implementations
+├── Tests/YOLOTests/      # Unit tests
+└── .github/workflows/    # CI/CD configuration
+```
 
-## Testing Environment
-
-- **Test Models**: Must be downloaded separately using the provided script at `Tests/YOLOTests/Resources/download-test-models.sh`
-- **Test Configuration**: Tests can run with or without models by setting `SKIP_MODEL_TESTS` flag
-- **CI/CD Environment**: Uses macOS-15 with iPhone 14 simulator (or first available iPhone simulator)
-- **Code Coverage**: Tracked via Codecov integration with comprehensive test suite
-- **Environment Variables**: For tests requiring API access, create a `.env` file with:
-  ```
-  API_URL=your_api_url
-  FIREBASE_API_KEY=your_firebase_key
-  ```
-
-## Development Requirements
-
-- **Platform**: iOS 16.0+ (Swift Package and all apps)
-- **Swift Version**: 5.10+ (required for GitHub Actions CI)
-- **Xcode**: Latest version recommended with iOS Simulator support
-- **Dependencies**: Self-contained package with no external dependencies
-- **Frameworks**: Core ML, Vision, AVFoundation, SwiftUI/UIKit
-
-## Code Style and Conventions
-
-- Follow Swift standard formatting conventions
-- Protocol-based architecture with `Predictor` protocol as foundation
-- Task-specific result types for type safety
-- Delegate pattern for camera capture callbacks
-- Callable syntax for intuitive model inference: `let result = model(image)`
-- Multi-input support (UIImage, CIImage, CGImage, SwiftUI.Image, file paths, URLs)
+## CI/CD
+- Runs on macOS-15 with iPhone simulator
+- Automatic code formatting via GitHub Actions
+- Code coverage reporting to Codecov
+- Test models downloaded automatically in CI

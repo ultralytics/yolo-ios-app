@@ -82,9 +82,13 @@ class ObjectDetector: BasePredictor {
           let label = prediction.labels[0].identifier
           let index = self.labels.firstIndex(of: label) ?? 0
           let confidence = prediction.labels[0].confidence
-          let box = Box(
-            index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
-          boxes.append(box)
+          
+          // Only include detections above confidence threshold
+          if confidence >= Float(confidenceThreshold) {
+            let box = Box(
+              index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
+            boxes.append(box)
+          }
         }
       }
 

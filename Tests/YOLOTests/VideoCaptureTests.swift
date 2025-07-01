@@ -9,8 +9,8 @@ import UIKit
 /// Comprehensive tests for VideoCapture functionality
 class VideoCaptureTests: XCTestCase {
     
-    override class func setUp() {
-        super.setUp()
+    override class func setUp() throws {
+        try super.setUp()
         // Skip all VideoCapture tests in CI environment
         if ProcessInfo.processInfo.environment["CI"] != nil {
             throw XCTSkip("Skipping VideoCapture tests in CI environment")
@@ -324,7 +324,8 @@ class MockVideoCapturePredictor: BasePredictor, @unchecked Sendable {
 extension VideoCaptureTests {
     func testVideoCaptureAsAVCaptureVideoDataOutputDelegate() {
         // Verify VideoCapture conforms to AVCaptureVideoDataOutputSampleBufferDelegate
-        XCTAssertNotNil(videoCapture as? AVCaptureVideoDataOutputSampleBufferDelegate)
+        let delegate: AVCaptureVideoDataOutputSampleBufferDelegate = videoCapture
+        XCTAssertNotNil(delegate)
     }
     
     func testCaptureOutputDelegateMethod() {

@@ -53,8 +53,34 @@ class MockFeatureValueObservation {
     }
 }
 
-// We'll use MockVNRequestWithResults instead of MockVNCoreMLRequest
-// since VNCoreMLRequest requires a valid model which is difficult to mock
+// Mock for VNCoreMLFeatureValueObservation
+class MockVNCoreMLFeatureValueObservation: VNObservation {
+    let multiArray: MLMultiArray
+    
+    init(multiArray: MLMultiArray) {
+        self.multiArray = multiArray
+        super.init()
+    }
+    
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+// Mock for VNCoreMLRequest with test results
+class MockVNCoreMLRequestForTesting: VNRequest, @unchecked Sendable {
+    private var mockResults: [VNObservation]?
+    
+    init(results: [VNObservation]) {
+        super.init(completionHandler: nil)
+        self.mockResults = results
+    }
+    
+    override var results: [VNObservation]? {
+        return mockResults
+    }
+}
 
 class MockVNRecognizedObjectObservation: VNRecognizedObjectObservation {
     private let mockBoundingBox: CGRect

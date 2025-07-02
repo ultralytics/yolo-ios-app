@@ -9,18 +9,22 @@ This is the Ultralytics YOLO iOS app - a Swift-based computer vision application
 ## Build and Test Commands
 
 ### Swift Package Manager
+
 - Run all tests: `swift test`
 - Build package: `swift build`
 - Clean build: `swift package clean`
 
 ### Xcode Commands
+
 - Build and test with simulator: `xcodebuild -scheme YOLO -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 14" clean build test`
 - Resolve dependencies: `xcodebuild -resolvePackageDependencies`
 - Run tests in Xcode: `Cmd+U`
 - Build in Xcode: `Cmd+B`
 
 ### Test Setup
+
 Before running tests, download required CoreML models:
+
 ```bash
 chmod +x Tests/YOLOTests/Resources/download-test-models.sh
 Tests/YOLOTests/Resources/download-test-models.sh
@@ -61,6 +65,7 @@ Tests/YOLOTests/Resources/download-test-models.sh
    ```
 
 ### Key Design Patterns
+
 - Factory Pattern for model creation
 - Protocol-Oriented Design for extensibility
 - Delegate Pattern for result callbacks
@@ -69,33 +74,40 @@ Tests/YOLOTests/Resources/download-test-models.sh
 ## Development Guidelines
 
 ### Requirements
+
 - Swift 5.7+
 - Xcode 14.0+
 - iOS 16.0+ deployment target
 - CoreML models in `.mlpackage` format
 
 ### Code Style
+
 - Follow standard Swift conventions
 - Use `///` documentation comments for public APIs
 - Implement proper error handling with `PredictorError`
 - Each component should have corresponding tests
 
 ### Adding New Features
+
 To add a new YOLO task:
+
 1. Add case to `YOLOTask` enum
 2. Create predictor class inheriting from `BasePredictor`
 3. Implement `processObservations()` and `predictOnImage()`
 4. Add case to YOLO.init() switch
 
 ### Testing
+
 - Models required: yolo11n.mlpackage (and variants for each task)
 - Set `SKIP_MODEL_TESTS = true` if models unavailable
 - Tests organized by functionality in Tests/YOLOTests/
 
 ### Camera Usage
+
 Add to Info.plist: "Privacy - Camera Usage Description"
 
 ## Project Structure
+
 ```
 ├── Sources/YOLO/          # Swift Package library
 ├── YOLOiOSApp/           # Main iOS application
@@ -105,6 +117,7 @@ Add to Info.plist: "Privacy - Camera Usage Description"
 ```
 
 ## CI/CD
+
 - Runs on macOS-15 with iPhone simulator
 - Automatic code formatting via GitHub Actions
 - Code coverage reporting to Codecov

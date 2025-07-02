@@ -48,7 +48,7 @@ protocol InferenceTimeListener: AnyObject {
 /// This protocol defines the contract that all YOLO model prediction implementations must fulfill.
 /// It provides methods for processing both camera frames and static images, and managing prediction state.
 /// Specialized implementations exist for different model types (detection, segmentation, etc.).
-protocol Predictor {
+protocol Predictor: AnyObject {
   /// Processes a camera frame buffer and delivers results via callback.
   ///
   /// - Parameters:

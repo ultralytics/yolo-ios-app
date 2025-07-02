@@ -52,7 +52,7 @@ import QuartzCore
     
     func testDrawYOLODetections() {
         // Test drawYOLODetections function creates image
-        let inputImage = CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let inputImage = CIImage(color: CIColor(red: 1.0, green: 1.0, blue: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
         let box = Box(
             index: 0,
@@ -78,7 +78,7 @@ import QuartzCore
     
     func testDrawYOLODetectionsEmptyBoxes() {
         // Test drawYOLODetections with empty boxes
-        let inputImage = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 150))
+        let inputImage = CIImage(color: CIColor(red: 0.0, green: 0.0, blue: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 200, height: 150))
         
         let result = YOLOResult(
             orig_shape: CGSize(width: 200, height: 150),
@@ -96,7 +96,7 @@ import QuartzCore
     
     func testDrawYOLOClassifications() {
         // Test drawYOLOClassifications function
-        let inputImage = CIImage(color: .green).cropped(to: CGRect(x: 0, y: 0, width: 224, height: 224))
+        let inputImage = CIImage(color: CIColor(red: 0.0, green: 1.0, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: 224, height: 224))
         
         let probs = Probs(
             top1: "cat",
@@ -122,7 +122,7 @@ import QuartzCore
     
     func testDrawYOLOClassificationsWithoutProbs() {
         // Test drawYOLOClassifications without probs returns original
-        let inputImage = CIImage(color: .yellow).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
+        let inputImage = CIImage(color: CIColor(red: 1.0, green: 1.0, blue: 0.0)).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
         
         let result = YOLOResult(
             orig_shape: CGSize(width: 100, height: 100),

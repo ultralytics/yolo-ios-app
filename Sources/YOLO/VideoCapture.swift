@@ -40,7 +40,8 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice {
   {
     return device
   } else {
-    fatalError("Missing expected back camera device.")
+    // Return any available camera as fallback
+    return AVCaptureDevice.default(for: .video) ?? AVCaptureDevice.devices(for: .video).first!
   }
 }
 
@@ -85,10 +86,26 @@ class VideoCapture: NSObject, @unchecked Sendable {
     captureSession.sessionPreset = sessionPreset
 
     captureDevice = bestCaptureDevice(position: position)
-    videoInput = try! AVCaptureDeviceInput(device: captureDevice!)
+    guard let device = captureDevice else {
+      captureSession.commitConfiguration()
+      return false
+    }
+    
+    do {
+      videoInput = try AVCaptureDeviceInput(device: device)
+    } catch {
+      #if DEBUG
+      print("Failed to create video input: \(error)")
+      #endif
+      captureSession.commitConfiguration()
+      return false
+    }
 
-    if captureSession.canAddInput(videoInput!) {
-      captureSession.addInput(videoInput!)
+    if let input = videoInput, captureSession.canAddInput(input) {
+      captureSession.addInput(input)
+    } else {
+      captureSession.commitConfiguration()
+      return false
     }
     var videoOrientaion = AVCaptureVideoOrientation.portrait
     switch orientation {
@@ -132,20 +149,33 @@ class VideoCapture: NSObject, @unchecked Sendable {
     }
 
     // Configure captureDevice
+    guard let device = captureDevice else {
+      captureSession.commitConfiguration()
+      return false
+    }
+    
     do {
-      try captureDevice!.lockForConfiguration()
+      try device.lockForConfiguration()
+      
+      // Set focus mode if supported
+      if device.isFocusModeSupported(AVCaptureDevice.FocusMode.continuousAutoFocus),
+         device.isFocusPointOfInterestSupported {
+        device.focusMode = AVCaptureDevice.FocusMode.continuousAutoFocus
+        device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+      }
+      
+      // Set exposure mode if supported
+      if device.isExposureModeSupported(.continuousAutoExposure) {
+        device.exposureMode = .continuousAutoExposure
+      }
+      
+      device.unlockForConfiguration()
     } catch {
-      print("device configuration not working")
+      #if DEBUG
+      print("device configuration not working: \(error)")
+      #endif
+      // Continue even if configuration fails
     }
-    // captureDevice.setFocusModeLocked(lensPosition: 1.0, completionHandler: { (time) -> Void in })
-    if captureDevice!.isFocusModeSupported(AVCaptureDevice.FocusMode.continuousAutoFocus),
-      captureDevice!.isFocusPointOfInterestSupported
-    {
-      captureDevice!.focusMode = AVCaptureDevice.FocusMode.continuousAutoFocus
-      captureDevice!.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
-    }
-    captureDevice!.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure
-    captureDevice!.unlockForConfiguration()
 
     captureSession.commitConfiguration()
     return true
@@ -168,18 +198,30 @@ class VideoCapture: NSObject, @unchecked Sendable {
   }
 
   func setZoomRatio(ratio: CGFloat) {
+    guard let device = captureDevice else { return }
+    
     do {
-      try captureDevice!.lockForConfiguration()
+      try device.lockForConfiguration()
       defer {
-        captureDevice!.unlockForConfiguration()
+        device.unlockForConfiguration()
       }
-      captureDevice!.videoZoomFactor = ratio
-    } catch {}
+      
+      // Ensure the zoom factor is within the supported range
+      let maxZoom = min(device.maxAvailableVideoZoomFactor, 10.0)
+      let clampedRatio = max(1.0, min(ratio, maxZoom))
+      device.videoZoomFactor = clampedRatio
+    } catch {
+      #if DEBUG
+      print("Failed to set zoom ratio: \(error)")
+      #endif
+    }
   }
 
   private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
     guard let predictor = predictor else {
+      #if DEBUG
       print("predictor is nil")
+      #endif
       return
     }
     if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {

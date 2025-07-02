@@ -15,6 +15,15 @@ import AVFoundation
 import UIKit
 import Vision
 
+/// Model loading result that includes metadata
+public struct ModelLoadResult {
+  public let metadata: [String: String]?
+  
+  public init(metadata: [String: String]? = nil) {
+    self.metadata = metadata
+  }
+}
+
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
@@ -58,9 +67,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           maskLayer.frame = self.overlayLayer.bounds
           maskLayer.contents = maskImage
 
-          self.videoCapture.predictor.isUpdating = false
+          self.videoCapture.predictor?.isUpdating = false
         } else {
-          self.videoCapture.predictor.isUpdating = false
+          self.videoCapture.predictor?.isUpdating = false
         }
       }
     } else if task == .classify {
@@ -144,7 +153,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   ) {
     self.videoCapture = VideoCapture()
     super.init(frame: frame)
-    setModel(modelPathOrName: modelPathOrName, task: task)
+    // Only set model if a valid path is provided
+    if !modelPathOrName.isEmpty {
+      setModel(modelPathOrName: modelPathOrName, task: task)
+    } else {
+      // Initialize with default task for camera-only mode
+      self.task = task
+    }
     setUpOrientationChangeNotification()
     self.setUpBoundingBoxViews()
     self.setupUI()
@@ -173,8 +188,16 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setModel(
     modelPathOrName: String,
     task: YOLOTask,
-    completion: ((Result<Void, Error>) -> Void)? = nil
+    completion: ((Result<ModelLoadResult, Error>) -> Void)? = nil
   ) {
+    // Handle empty string case - just update task without loading model
+    if modelPathOrName.isEmpty {
+      self.task = task
+      setupSublayers()
+      completion?(.success(ModelLoadResult()))
+      return
+    }
+    
     activityIndicator.startAnimating()
     boundingBoxViews.forEach { box in
       box.hide()
@@ -214,74 +237,141 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
 
+    // Store metadata from model loading
+    var modelMetadata: [String: String]? = nil
+    let metadataGroup = DispatchGroup()
+    
     // Common success handling for all tasks
     func handleSuccess(predictor: Predictor) {
       self.videoCapture.predictor = predictor
       self.activityIndicator.stopAnimating()
       self.labelName.text = processString(modelName)
-      completion?(.success(()))
+      
+      // Wait for metadata to be set before calling completion
+      metadataGroup.notify(queue: .main) {
+        completion?(.success(ModelLoadResult(metadata: modelMetadata)))
+      }
     }
 
     // Common failure handling for all tasks
     func handleFailure(_ error: Error) {
+      #if DEBUG
       print("Failed to load model with error: \(error)")
+      #endif
       self.activityIndicator.stopAnimating()
+      // Make sure to leave the metadata group if entered
+      if metadataGroup.wait(timeout: .now()) == .timedOut {
+        metadataGroup.leave()
+      }
       completion?(.failure(error))
     }
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      Classifier.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      Segmenter.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .pose:
-      PoseEstimater.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      PoseEstimater.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        [weak self] result in
-        switch result {
-        case .success(let predictor):
-          self?.obbLayer?.isHidden = false
-
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      ObbDetector.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { [weak self] result in
+          switch result {
+          case .success(let predictor):
+            self?.obbLayer?.isHidden = false
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor: predictor)
-        case .failure(let error):
-          handleFailure(error)
+      metadataGroup.enter()  // Enter before starting
+      ObjectDetector.create(
+        unwrappedModelURL: unwrappedModelURL,
+        isRealTime: true,
+        completion: { result in
+          switch result {
+          case .success(let predictor):
+            handleSuccess(predictor: predictor)
+          case .failure(let error):
+            handleFailure(error)
+          }
+        },
+        metadataCompletion: { result in
+          defer { metadataGroup.leave() }
+          if case .success(let metadata) = result {
+            modelMetadata = metadata
+          }
         }
-      }
+      )
     }
   }
 
@@ -407,8 +497,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       setupPoseLayerIfNeeded()
     case .obb:
       setupObbLayerIfNeeded()
-      overlayLayer.addSublayer(obbLayer!)
-      obbLayer?.isHidden = false
+      if let obbLayer = obbLayer {
+        overlayLayer.addSublayer(obbLayer)
+        obbLayer.isHidden = false
+      }
     default: break
     }
   }
@@ -500,7 +592,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
               width: rect.width,
               height: rect.height)
           case .unknown:
+            #if DEBUG
             print("The device orientation is unknown, the predictions may be affected")
+            #endif
             fallthrough
           default: break
           }
@@ -1015,7 +1109,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         }
         device.videoZoomFactor = factor
       } catch {
+        #if DEBUG
         print("\(error.localizedDescription)")
+        #endif
       }
     }
 
@@ -1050,9 +1146,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   @objc func switchCameraTapped() {
 
     self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    guard let currentPosition = currentInput?.device.position else { return }
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput else {
+      self.videoCapture.captureSession.commitConfiguration()
+      return
+    }
+    self.videoCapture.captureSession.removeInput(currentInput)
+    let currentPosition = currentInput.device.position
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
@@ -1093,20 +1192,66 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
   }
+  
+  /// Sets the zoom level for the camera
+  /// - Parameter zoomFactor: The desired zoom factor (1.0 to 10.0)
+  public func setZoomLevel(_ zoomFactor: Float) {
+    guard let device = videoCapture.captureDevice else { return }
+    
+    let clampedZoom = CGFloat(max(1.0, min(zoomFactor, 10.0)))
+    
+    do {
+      try device.lockForConfiguration()
+      device.videoZoomFactor = clampedZoom
+      lastZoomFactor = clampedZoom
+      device.unlockForConfiguration()
+      
+      self.labelZoom.text = String(format: "%.2fx", clampedZoom)
+    } catch {
+      #if DEBUG
+      print("Error setting zoom: \(error)")
+      #endif
+    }
+  }
+  
+  /// Gets the current zoom level
+  /// - Returns: The current zoom factor
+  public func getZoomLevel() -> Float {
+    guard let device = videoCapture.captureDevice else { return 1.0 }
+    return Float(device.videoZoomFactor)
+  }
+  
+  /// Sets the line width for bounding box strokes
+  /// - Parameter width: The desired line width (1.0 to 10.0)
+  public func setLineWidth(_ width: Float) {
+    let clampedWidth = CGFloat(max(1.0, min(width, 10.0)))
+    for boundingBox in boundingBoxViews {
+      boundingBox.setLineWidth(clampedWidth)
+    }
+  }
+  
+  /// Gets the current line width for bounding boxes
+  /// - Returns: The current line width
+  public func getLineWidth() -> Float {
+    guard let firstBox = boundingBoxViews.first else { return 4.0 }
+    return Float(firstBox.getLineWidth())
+  }
 }
 
-extension YOLOView: AVCapturePhotoCaptureDelegate {
+extension YOLOView: @preconcurrency AVCapturePhotoCaptureDelegate {
   public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     if let error = error {
+      #if DEBUG
       print("error occurred : \(error.localizedDescription)")
+      #endif
     }
-    if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
-        intent: .defaultIntent)
+    if let dataImage = photo.fileDataRepresentation(),
+       let dataProvider = CGDataProvider(data: dataImage as CFData),
+       let cgImageRef = CGImage(
+        jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
+        intent: .defaultIntent) {
       var isCameraFront = false
       if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
         currentInput.device.position == .front
@@ -1134,6 +1279,125 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let imageLayer = imageView.layer
       self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
 
+      // Add mask layer if present (for segmentation task)
+      var tempMaskLayer: CALayer?
+      if let maskLayer = self.maskLayer, !maskLayer.isHidden {
+        // Create a temporary copy of the mask layer for capture
+        let tempLayer = CALayer()
+        // Calculate the correct frame relative to the main view
+        let overlayFrame = self.overlayLayer.frame
+        let maskFrame = maskLayer.frame
+
+        // Adjust mask frame to be relative to the main view, not overlayLayer
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x + maskFrame.origin.x,
+          y: overlayFrame.origin.y + maskFrame.origin.y,
+          width: maskFrame.width,
+          height: maskFrame.height
+        )
+        tempLayer.contents = maskLayer.contents
+        tempLayer.contentsGravity = maskLayer.contentsGravity
+        tempLayer.contentsRect = maskLayer.contentsRect
+        tempLayer.contentsCenter = maskLayer.contentsCenter
+        tempLayer.opacity = maskLayer.opacity
+        tempLayer.compositingFilter = maskLayer.compositingFilter
+        tempLayer.transform = maskLayer.transform
+        tempLayer.masksToBounds = maskLayer.masksToBounds
+        self.layer.insertSublayer(tempLayer, above: imageLayer)
+        tempMaskLayer = tempLayer
+      }
+
+      // Add pose layer if present (for pose task)
+      var tempPoseLayer: CALayer?
+      if let poseLayer = self.poseLayer {
+        // Create a temporary copy of the pose layer including all sublayers
+        let tempLayer = CALayer()
+        let overlayFrame = self.overlayLayer.frame
+
+        // Set frame relative to main view
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x,
+          y: overlayFrame.origin.y,
+          width: overlayFrame.width,
+          height: overlayFrame.height
+        )
+        tempLayer.opacity = poseLayer.opacity
+
+        // Copy all sublayers (keypoints and skeleton lines)
+        if let sublayers = poseLayer.sublayers {
+          for sublayer in sublayers {
+            let copyLayer = CALayer()
+            copyLayer.frame = sublayer.frame
+            copyLayer.backgroundColor = sublayer.backgroundColor
+            copyLayer.cornerRadius = sublayer.cornerRadius
+            copyLayer.opacity = sublayer.opacity
+
+            // If it's a shape layer (for lines), copy the path
+            if let shapeLayer = sublayer as? CAShapeLayer {
+              let copyShapeLayer = CAShapeLayer()
+              copyShapeLayer.frame = shapeLayer.frame
+              copyShapeLayer.path = shapeLayer.path
+              copyShapeLayer.strokeColor = shapeLayer.strokeColor
+              copyShapeLayer.lineWidth = shapeLayer.lineWidth
+              copyShapeLayer.fillColor = shapeLayer.fillColor
+              copyShapeLayer.opacity = shapeLayer.opacity
+              tempLayer.addSublayer(copyShapeLayer)
+            } else {
+              tempLayer.addSublayer(copyLayer)
+            }
+          }
+        }
+
+        self.layer.insertSublayer(tempLayer, above: imageLayer)
+        tempPoseLayer = tempLayer
+      }
+
+      // Add OBB layer if present (for OBB task)
+      var tempObbLayer: CALayer?
+      if let obbLayer = self.obbLayer, !obbLayer.isHidden {
+        // Create a temporary copy of the OBB layer including all sublayers
+        let tempLayer = CALayer()
+        let overlayFrame = self.overlayLayer.frame
+
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x,
+          y: overlayFrame.origin.y,
+          width: overlayFrame.width,
+          height: overlayFrame.height
+        )
+        tempLayer.opacity = obbLayer.opacity
+
+        // Copy all sublayers
+        if let sublayers = obbLayer.sublayers {
+          for sublayer in sublayers {
+            if let shapeLayer = sublayer as? CAShapeLayer {
+              let copyShapeLayer = CAShapeLayer()
+              copyShapeLayer.frame = shapeLayer.frame
+              copyShapeLayer.path = shapeLayer.path
+              copyShapeLayer.strokeColor = shapeLayer.strokeColor
+              copyShapeLayer.lineWidth = shapeLayer.lineWidth
+              copyShapeLayer.fillColor = shapeLayer.fillColor
+              copyShapeLayer.opacity = shapeLayer.opacity
+              tempLayer.addSublayer(copyShapeLayer)
+            } else if let textLayer = sublayer as? CATextLayer {
+              let copyTextLayer = CATextLayer()
+              copyTextLayer.frame = textLayer.frame
+              copyTextLayer.string = textLayer.string
+              copyTextLayer.font = textLayer.font
+              copyTextLayer.fontSize = textLayer.fontSize
+              copyTextLayer.foregroundColor = textLayer.foregroundColor
+              copyTextLayer.backgroundColor = textLayer.backgroundColor
+              copyTextLayer.alignmentMode = textLayer.alignmentMode
+              copyTextLayer.opacity = textLayer.opacity
+              tempLayer.addSublayer(copyTextLayer)
+            }
+          }
+        }
+
+        self.layer.insertSublayer(tempLayer, above: imageLayer)
+        tempObbLayer = tempLayer
+      }
+
       var tempViews = [UIView]()
       let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
       for info in boundingBoxInfos where !info.isHidden {
@@ -1148,14 +1412,21 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       self.drawHierarchy(in: bounds, afterScreenUpdates: true)
       let img = UIGraphicsGetImageFromCurrentImageContext()
       UIGraphicsEndImageContext()
+
+      // Clean up temporary layers and views
       imageLayer.removeFromSuperlayer()
+      tempMaskLayer?.removeFromSuperlayer()
+      tempPoseLayer?.removeFromSuperlayer()
+      tempObbLayer?.removeFromSuperlayer()
       for v in tempViews {
         v.removeFromSuperview()
       }
       photoCaptureCompletion?(img)
       photoCaptureCompletion = nil
     } else {
+      #if DEBUG
       print("AVCapturePhotoCaptureDelegate Error")
+      #endif
     }
   }
 }

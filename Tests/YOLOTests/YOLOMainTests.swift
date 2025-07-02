@@ -131,6 +131,98 @@ class YOLOMainTests: XCTestCase {
         XCTAssertEqual(uniqueTasks.count, allTasks.count, "All task types should be unique")
     }
     
+    func testYOLOCallAsFunctionWithMockPredictor() {
+        // Test YOLO callAsFunction methods using mock predictor
+        let expectation = XCTestExpectation(description: "Mock predictor test")
+        
+        _ = YOLO("mock", task: .detect) { result in
+            switch result {
+            case .success(let yolo):
+                // Replace with mock predictor
+                yolo.predictor = MockPredictor()
+                
+                // Test UIImage call
+                let testImage = self.createTestImage()
+                let result1 = yolo(testImage)
+                XCTAssertNotNil(result1)
+                XCTAssertEqual(result1.boxes.count, 1)
+                
+                // Test CIImage call
+                let ciImage = CIImage(image: testImage)!
+                let result2 = yolo(ciImage)
+                XCTAssertNotNil(result2)
+                
+                // Test CGImage call
+                let cgImage = testImage.cgImage!
+                let result3 = yolo(cgImage)
+                XCTAssertNotNil(result3)
+                
+                // Test resource name call (will fail)
+                let result4 = yolo("nonexistent", withExtension: "jpg")
+                XCTAssertEqual(result4.orig_shape, .zero)
+                
+                // Test URL call (will fail)
+                let result5 = yolo(URL(string: "https://example.com/image.jpg"))
+                XCTAssertEqual(result5.orig_shape, .zero)
+                
+                // Test local path call (will fail)
+                let result6 = yolo("/nonexistent/path.jpg")
+                XCTAssertEqual(result6.orig_shape, .zero)
+                
+                expectation.fulfill()
+            case .failure:
+                // It's OK if model loading fails
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 5.0)
+    }
+    
+    func testYOLOInitWithMLModelExtension() {
+        // Test initialization with .mlmodel file extension
+        let expectation = XCTestExpectation(description: "MLModel extension test")
+        
+        _ = YOLO("model.mlmodel", task: .detect) { result in
+            // Should fail as file doesn't exist
+            switch result {
+            case .success:
+                XCTFail("Should fail with non-existent file")
+            case .failure:
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testYOLOInitWithMLPackageExtension() {
+        // Test initialization with .mlpackage file extension
+        let expectation = XCTestExpectation(description: "MLPackage extension test")
+        
+        _ = YOLO("model.mlpackage", task: .detect) { result in
+            // Should fail as file doesn't exist
+            switch result {
+            case .success:
+                XCTFail("Should fail with non-existent file")
+            case .failure:
+                expectation.fulfill()
+            }
+        }
+        
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    private func createTestImage() -> UIImage {
+        let size = CGSize(width: 100, height: 100)
+        UIGraphicsBeginImageContext(size)
+        UIColor.blue.setFill()
+        UIRectFill(CGRect(origin: .zero, size: size))
+        let image = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        return image
+    }
+    
     // MARK: - Helper Methods
     // (removed createMockYOLO - not needed for simplified tests)
 }

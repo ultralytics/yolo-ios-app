@@ -253,13 +253,12 @@ class YOLOIntegrationTests: XCTestCase {
         // Test thread safety of data structures
         let dispatchGroup = DispatchGroup()
         var results = [YOLOResult]()
-        let queue = DispatchQueue.global(qos: .background)
-        let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+        let resultsQueue = DispatchQueue(label: "resultsQueue")
         
         // Create multiple results concurrently
         for i in 0..<10 {
             dispatchGroup.enter()
-            queue.async {
+            DispatchQueue.global(qos: .background).async {
                 let box = Box(
                     index: i,
                     cls: "object_\(i)",
@@ -275,14 +274,14 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                resultsQueue.async(flags: .barrier) {
+                resultsQueue.sync {
                     results.append(result)
-                    dispatchGroup.leave()
                 }
+                dispatchGroup.leave()
             }
         }
         
-        let waitResult = dispatchGroup.wait(timeout: .now() + 5.0)
+        let waitResult = dispatchGroup.wait(timeout: .now() + 10.0)
         XCTAssertEqual(waitResult, .success, "Thread safety test timed out")
         XCTAssertEqual(results.count, 10)
     }

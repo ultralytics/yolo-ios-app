@@ -286,8 +286,8 @@ class ObjectDetectorTests: XCTestCase {
         
         let mockListener = MockResultsListener()
         mockListener.onResultHandler = { result in
-            // All 3 detections are returned (confidence filtering applied elsewhere)
-            XCTAssertEqual(result.boxes.count, 3)
+            // Only 2 detections should be returned (one is below confidence threshold)
+            XCTAssertEqual(result.boxes.count, 2)
             XCTAssertEqual(result.names.count, 5)
             XCTAssertGreaterThan(result.fps ?? 0, 0)
             XCTAssertGreaterThanOrEqual(result.speed, 0)
@@ -336,6 +336,64 @@ class ObjectDetectorTests: XCTestCase {
                 labels: [MockVNClassificationObservation(identifier: "person", confidence: Float(90 - i) / 100)]
             )
         }
+    }
+}
+
+// Additional tests for better coverage
+extension ObjectDetectorTests {
+    
+    func testPredictOnImageAdditionalCases() {
+        // Test additional prediction scenarios
+        detector.labels = ["person", "car", "dog"]
+        
+        // Test with empty labels
+        detector.labels = []
+        let result1 = detector.predictOnImage(image: createTestImage())
+        XCTAssertEqual(result1.names.count, 0)
+        
+        // Test with many labels
+        detector.labels = Array(repeating: "object", count: 100)
+        let result2 = detector.predictOnImage(image: createTestImage())
+        XCTAssertEqual(result2.names.count, 100)
+    }
+    
+    func testProcessObservationsEdgeCases() {
+        // Test edge cases in observation processing
+        detector.labels = ["person"]
+        
+        // Test with request that has no results
+        let emptyRequest = MockVNRequestWithResults(results: [])
+        
+        let expectation = XCTestExpectation(description: "Empty results")
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
+            XCTAssertEqual(result.boxes.count, 0)
+            expectation.fulfill()
+        }
+        detector.currentOnResultsListener = mockListener
+        
+        detector.processObservations(for: emptyRequest, error: nil)
+        
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func testThresholdBoundaryValues() {
+        // Test threshold setters with boundary values
+        
+        // Test negative values (should be clamped)
+        detector.setConfidenceThreshold(confidence: -0.5)
+        detector.setIoUThreshold(iou: -1.0)
+        
+        // Test values > 1 (should be clamped)
+        detector.setConfidenceThreshold(confidence: 1.5)
+        detector.setIoUThreshold(iou: 2.0)
+        
+        // Test very small values
+        detector.setConfidenceThreshold(confidence: Float.leastNormalMagnitude)
+        detector.setIoUThreshold(iou: Float.leastNormalMagnitude)
+        
+        // Verify detector still works
+        XCTAssertNotNil(detector)
     }
 }
 

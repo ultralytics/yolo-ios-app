@@ -7,7 +7,7 @@ import CoreML
 
 // MARK: - Mock Classes
 
-class MockResultsListener: ResultsListener {
+class MockResultsListener: NSObject, ResultsListener {
     var onResultHandler: ((YOLOResult) -> Void)?
     
     func on(result: YOLOResult) {
@@ -15,7 +15,7 @@ class MockResultsListener: ResultsListener {
     }
 }
 
-class MockInferenceTimeListener: InferenceTimeListener {
+class MockInferenceTimeListener: NSObject, InferenceTimeListener {
     var onInferenceTimeHandler: ((Double, Double) -> Void)?
     
     func on(inferenceTime: Double, fpsRate: Double) {

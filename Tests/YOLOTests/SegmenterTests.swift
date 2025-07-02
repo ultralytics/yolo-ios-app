@@ -368,11 +368,11 @@ extension SegmenterTests {
     func testSegmenterAdditionalThresholds() {
         // Test additional threshold scenarios
         segmenter.setConfidenceThreshold(confidence: 0.99)
-        segmenter.setIoUThreshold(iou: 0.01)
+        segmenter.setIouThreshold(iou: 0.01)
         
         // Test with extreme precision values
         segmenter.setConfidenceThreshold(confidence: 0.123456789)
-        segmenter.setIoUThreshold(iou: 0.987654321)
+        segmenter.setIouThreshold(iou: 0.987654321)
         
         XCTAssertNotNil(segmenter)
     }

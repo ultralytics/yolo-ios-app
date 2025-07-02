@@ -382,15 +382,15 @@ extension ObjectDetectorTests {
         
         // Test negative values (should be clamped)
         detector.setConfidenceThreshold(confidence: -0.5)
-        detector.setIoUThreshold(iou: -1.0)
+        detector.setIouThreshold(iou: -1.0)
         
         // Test values > 1 (should be clamped)
         detector.setConfidenceThreshold(confidence: 1.5)
-        detector.setIoUThreshold(iou: 2.0)
+        detector.setIouThreshold(iou: 2.0)
         
         // Test very small values
         detector.setConfidenceThreshold(confidence: Float.leastNormalMagnitude)
-        detector.setIoUThreshold(iou: Float.leastNormalMagnitude)
+        detector.setIouThreshold(iou: Double(Float.leastNormalMagnitude))
         
         // Verify detector still works
         XCTAssertNotNil(detector)

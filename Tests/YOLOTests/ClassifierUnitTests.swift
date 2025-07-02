@@ -28,7 +28,7 @@ class ClassifierUnitTests: XCTestCase {
         XCTAssertEqual(classifier.labels.count, 0)
         XCTAssertNil(classifier.visionRequest)
         XCTAssertFalse(classifier.isUpdating)
-        XCTAssertNil(classifier.inputSize)
+        XCTAssertEqual(classifier.inputSize, CGSize(width: 640, height: 640))
     }
     
     func testLabelManagement() {

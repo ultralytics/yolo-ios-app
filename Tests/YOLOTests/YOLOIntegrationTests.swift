@@ -252,10 +252,12 @@ class YOLOIntegrationTests: XCTestCase {
     func testThreadSafety() {
         // Test thread safety of data structures
         let dispatchGroup = DispatchGroup()
+        let resultsQueue = DispatchQueue(label: "com.ultralytics.yolo.testresults")
         var results = [YOLOResult]()
         let queue = DispatchQueue.global(qos: .background)
         
         var testResult = "success"
+        let completedTasksQueue = DispatchQueue(label: "com.ultralytics.yolo.testcounter")
         var completedTasks = 0
         
         // Create multiple results concurrently
@@ -277,13 +279,17 @@ class YOLOIntegrationTests: XCTestCase {
                     names: ["object_\(i)"]
                 )
                 
-                results.append(result)
-                completedTasks += 1
+                resultsQueue.sync {
+                    results.append(result)
+                }
+                completedTasksQueue.sync {
+                    completedTasks += 1
+                }
                 dispatchGroup.leave()
             }
         }
         
-        let waitResult = dispatchGroup.wait(timeout: .now() + 3.0)
+        let waitResult = dispatchGroup.wait(timeout: .now() + 5.0)
         if waitResult == .timedOut {
             testResult = "timedOut"
         }

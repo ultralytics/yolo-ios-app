@@ -74,19 +74,22 @@ class VideoCaptureTests: XCTestCase {
     
     // MARK: - Integration Tests with Mocks
     
-    func testVideoCaptureWithMockPredictor() {
+    func testVideoCaptureWithMockPredictor() async {
         let videoCapture = TestableVideoCapture()
         let mockPredictor = MockPredictor()
-        let mockDelegate = MockVideoCaptureDelegate()
+        let mockDelegate = await MockVideoCaptureDelegate()
         
         // Configure mock predictor
         mockPredictor.labels = ["person", "car", "bicycle"]
         mockPredictor.mockResult = YOLOResult(
             orig_shape: CGSize(width: 640, height: 480),
             boxes: [
-                YOLOBoundingBox(
-                    x: 100, y: 100, width: 50, height: 100,
-                    confidence: 0.9, cls: 0, label: "person"
+                Box(
+                    index: 0,
+                    cls: "person",
+                    conf: 0.9,
+                    xywh: CGRect(x: 100, y: 100, width: 50, height: 100),
+                    xywhn: CGRect(x: 0.156, y: 0.208, width: 0.078, height: 0.208)
                 )
             ],
             speed: 15.5,
@@ -147,6 +150,7 @@ class VideoCaptureTests: XCTestCase {
 
 // MARK: - Mock Delegate
 
+@MainActor
 class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
     var lastResult: YOLOResult?
     var lastInferenceTime: Double?
@@ -154,13 +158,11 @@ class MockVideoCaptureDelegate: NSObject, VideoCaptureDelegate {
     var predictCallCount = 0
     var inferenceTimeCallCount = 0
     
-    @MainActor
     func onPredict(result: YOLOResult) {
         lastResult = result
         predictCallCount += 1
     }
     
-    @MainActor
     func onInferenceTime(speed: Double, fps: Double) {
         lastInferenceTime = speed
         lastFPS = fps

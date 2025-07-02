@@ -284,7 +284,8 @@ class ObjectDetectorTests: XCTestCase {
         
         let expectation = XCTestExpectation(description: "End to end detection")
         
-        detector.setOnResultsListener { result in
+        let mockListener = MockResultsListener()
+        mockListener.onResultHandler = { result in
             // All 3 detections are returned (confidence filtering applied elsewhere)
             XCTAssertEqual(result.boxes.count, 3)
             XCTAssertEqual(result.names.count, 5)
@@ -298,6 +299,7 @@ class ObjectDetectorTests: XCTestCase {
             
             expectation.fulfill()
         }
+        detector.currentOnResultsListener = mockListener
         
         detector.processObservations(for: request, error: nil)
         

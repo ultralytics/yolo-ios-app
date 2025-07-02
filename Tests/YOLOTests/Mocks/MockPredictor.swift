@@ -2,6 +2,8 @@
 
 import Foundation
 import CoreImage
+import AVFoundation
+import UIKit
 @testable import YOLO
 
 /// A simple mock predictor that implements the Predictor protocol for testing

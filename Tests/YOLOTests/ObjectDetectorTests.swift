@@ -389,7 +389,7 @@ extension ObjectDetectorTests {
         detector.setIouThreshold(iou: 2.0)
         
         // Test very small values
-        detector.setConfidenceThreshold(confidence: Float.leastNormalMagnitude)
+        detector.setConfidenceThreshold(confidence: Double(Float.leastNormalMagnitude))
         detector.setIouThreshold(iou: Double(Float.leastNormalMagnitude))
         
         // Verify detector still works

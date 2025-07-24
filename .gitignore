@@ -107,6 +107,7 @@ coverage.xml
 
 # Django stuff:
 *.log
+error.txt
 local_settings.py
 
 # Flask stuff:

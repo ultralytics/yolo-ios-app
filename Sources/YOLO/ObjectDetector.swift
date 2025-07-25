@@ -35,8 +35,10 @@ class ObjectDetector: BasePredictor {
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   /// Sets the IoU threshold and updates the model's feature provider.
@@ -47,8 +49,10 @@ class ObjectDetector: BasePredictor {
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
-    detector.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    if let detector = detector {
+      detector.featureProvider = ThresholdProvider(
+        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
+    }
   }
 
   /// Processes the results from the Vision framework's object detection request.
@@ -78,9 +82,13 @@ class ObjectDetector: BasePredictor {
           let label = prediction.labels[0].identifier
           let index = self.labels.firstIndex(of: label) ?? 0
           let confidence = prediction.labels[0].confidence
-          let box = Box(
-            index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
-          boxes.append(box)
+          
+          // Only include detections above confidence threshold
+          if confidence >= Float(confidenceThreshold) {
+            let box = Box(
+              index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
+            boxes.append(box)
+          }
         }
       }
 
@@ -111,15 +119,16 @@ class ObjectDetector: BasePredictor {
   /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
   override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
+    
+    let imageWidth = image.extent.width
+    let imageHeight = image.extent.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
     var boxes = [Box]()
-
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
     let start = Date()
 
     do {
@@ -146,7 +155,9 @@ class ObjectDetector: BasePredictor {
         }
       }
     } catch {
+      #if DEBUG
       print(error)
+      #endif
     }
     let speed = Date().timeIntervalSince(start)
 

@@ -121,6 +121,14 @@ If tests fail or you encounter other problems:
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
 5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).
 
+## Test Organization
+
+The test suite is organized into several categories:
+
+- **Unit Tests**: Pure logic tests that don't require models or hardware
+- **Integration Tests**: Tests that require actual models (may be skipped in CI)
+- **Mocks**: Clean protocol-based mocks for better testability
+
 ## Contributing
 
 Contributions to enhance the tests or improve the iOS application are welcome! Please see the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more information on how to get started. Thank you for helping improve Ultralytics YOLO!

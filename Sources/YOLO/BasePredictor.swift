@@ -49,7 +49,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   weak var currentOnInferenceTimeListener: InferenceTimeListener?
 
   /// The size of the input image or camera frame.
-  var inputSize: CGSize!
+  var inputSize: CGSize = CGSize(width: 640, height: 640)
 
   /// The required input dimensions for the model (width and height in pixels).
   var modelInputSize: (width: Int, height: Int) = (0, 0)
@@ -102,7 +102,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
-    completion: @escaping (Result<BasePredictor, Error>) -> Void
+    completion: @escaping (Result<BasePredictor, Error>) -> Void,
+    metadataCompletion: ((Result<[String: String]?, Error>) -> Void)? = nil
   ) {
     // Create an instance (synchronously, cheap)
     let predictor = Self.init()
@@ -131,6 +132,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
             .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
         else {
           throw PredictorError.modelFileNotFound
+        }
+        
+        // Return metadata to the caller if requested
+        DispatchQueue.main.async {
+          metadataCompletion?(.success(userDefined))
         }
 
         // (2) Extract class labels
@@ -194,6 +200,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         // If anything goes wrong, call completion with the error
         DispatchQueue.main.async {
           completion(.failure(error))
+          metadataCompletion?(.failure(error))
         }
       }
     }
@@ -231,11 +238,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
       t0 = CACurrentMediaTime()  // inference start
       do {
-        if visionRequest != nil {
-          try handler.perform([visionRequest!])
+        if let request = visionRequest {
+          try handler.perform([request])
         }
       } catch {
+        // Error handling without printing in production
+        #if DEBUG
         print(error)
+        #endif
       }
       t1 = CACurrentMediaTime() - t0  // inference dt
 
@@ -314,7 +324,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
     guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
+      #if DEBUG
       print("can not find input description")
+      #endif
       return (0, 0)
     }
 
@@ -333,7 +345,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("an not find input size")
+    #if DEBUG
+    print("can not find input size")
+    #endif
     return (0, 0)
   }
 }

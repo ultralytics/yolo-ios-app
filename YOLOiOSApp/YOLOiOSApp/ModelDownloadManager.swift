@@ -41,16 +41,110 @@ struct ModelEntry {
     self.isRemote = isRemote
     self.remoteURL = remoteURL
   }
+  
+  /// Extract the model version (e.g., "YOLO11", "YOLOv8", "YOLOv5", "Custom")
+  var modelVersion: String {
+    let name = displayName.lowercased()
+    if name.hasPrefix("yolo11") {
+      return "YOLO11"
+    } else if name.hasPrefix("yolov8") {
+      return "YOLOv8"
+    } else if name.hasPrefix("yolov5") {
+      return "YOLOv5"
+    } else {
+      return "Custom"
+    }
+  }
+  
+  /// Extract the model size (e.g., "n", "s", "m", "l", "x", nil for custom)
+  var modelSize: String? {
+    let name = displayName.lowercased()
+    
+    // Check if this is a standard YOLO model with size indicator
+    // Look for patterns like "yolo11n", "yolov8s-seg", etc.
+    let yoloPattern = #"yolo(v?\d+)?([nsmxl])([-_]|$)"#
+    if let regex = try? NSRegularExpression(pattern: yoloPattern, options: .caseInsensitive) {
+      let matches = regex.matches(in: name, options: [], range: NSRange(location: 0, length: name.count))
+      if let match = matches.first, match.numberOfRanges > 2 {
+        let sizeRange = match.range(at: 2)
+        if let range = Range(sizeRange, in: name) {
+          return String(name[range])
+        }
+      }
+    }
+    
+    // For custom models, try to get size from cached metadata
+    if isLocalBundle && modelVersion == "Custom" {
+      if let cachedSize = ModelCacheManager.shared.getCachedModelSize(for: identifier) {
+        return cachedSize
+      }
+    }
+    
+    return nil
+  }
 }
 
 class ModelCacheManager {
   static let shared = ModelCacheManager()
   var modelCache: [String: MLModel] = [:]
+  private var metadataCache: [String: [String: String]] = [:]  // Cache for model metadata
   private var accessOrder: [String] = []
   private let cacheLimit: Int = 3
   private var currentSelectedModelKey: String?
 
   private init() {
+    // Clean up incomplete downloads on startup
+    cleanupIncompleteDownloads()
+  }
+  
+  private func cleanupIncompleteDownloads() {
+    DispatchQueue.global(qos: .background).async {
+      do {
+        let documentsDir = self.getDocumentsDirectory()
+        let contents = try FileManager.default.contentsOfDirectory(at: documentsDir, includingPropertiesForKeys: nil)
+        
+        for item in contents {
+          let filename = item.lastPathComponent
+          
+          // Process any ZIP files that exist without corresponding mlmodelc
+          if item.pathExtension == "zip" && filename.contains(".mlpackage.zip") {
+            // Extract key from filename (e.g., "yolo11l-seg.mlpackage.zip" -> "yolo11l-seg")
+            let key = filename.replacingOccurrences(of: ".mlpackage.zip", with: "")
+            let mlmodelcURL = documentsDir.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+            
+            if !FileManager.default.fileExists(atPath: mlmodelcURL.path) {
+              #if DEBUG
+              print("Found unprocessed ZIP at startup: \(filename)")
+              #endif
+              // Process this ZIP in background
+              ModelDownloadManager.shared.processExistingZip(zipURL: item, key: key) { _, _ in
+                // Silent processing at startup
+              }
+            }
+          }
+          
+          // Process any mlpackage files that exist without corresponding mlmodelc
+          if item.pathExtension == "mlpackage" {
+            let key = item.deletingPathExtension().lastPathComponent
+            let mlmodelcURL = documentsDir.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+            
+            if !FileManager.default.fileExists(atPath: mlmodelcURL.path) {
+              #if DEBUG
+              print("Found uncompiled mlpackage at startup: \(filename)")
+              #endif
+              // Compile this model in background
+              ModelDownloadManager.shared.compileExistingModel(modelURL: item, key: key) { _, _ in
+                // Silent processing at startup
+              }
+            }
+          }
+        }
+      } catch {
+        #if DEBUG
+        print("Error during cleanup: \(error)")
+        #endif
+      }
+    }
   }
 
   func loadBundledModel() {
@@ -65,15 +159,23 @@ class ModelCacheManager {
       do {
         if !FileManager.default.fileExists(atPath: destinationURL.path) {
           try FileManager.default.copyItem(at: url, to: destinationURL)
+          #if DEBUG
           print("File copied to documents directory: \(destinationURL.path)")
+          #endif
         } else {
+          #if DEBUG
           print("File already exists in documents directory: \(destinationURL.path)")
+          #endif
         }
       } catch {
+        #if DEBUG
         print("Error copying file: \(error)")
+        #endif
       }
     } else {
+      #if DEBUG
       print("Failed to load bundled model")
+      #endif
     }
   }
 
@@ -95,7 +197,9 @@ class ModelCacheManager {
         addModelToCache(model, for: key)
         completion(model, key)
       } catch let error {
+        #if DEBUG
         print(error)
+        #endif
       }
     }
   }
@@ -120,8 +224,31 @@ class ModelCacheManager {
         completion(model, key)
       }
     } else {
-      ModelDownloadManager.shared.startDownload(
-        url: remoteURL, fileName: fileName, key: key, completion: completion)
+      // Check if ZIP file already exists
+      let zipURL = getDocumentsDirectory().appendingPathComponent(fileName)
+      let mlpackageURL = getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension("mlpackage")
+      
+      if FileManager.default.fileExists(atPath: zipURL.path) {
+        // ZIP exists, process it
+        #if DEBUG
+        print("\n=== Found existing ZIP ===")
+        print("Processing existing ZIP: \(fileName)")
+        #endif
+        ModelDownloadManager.shared.processExistingZip(
+          zipURL: zipURL, key: key, completion: completion)
+      } else if FileManager.default.fileExists(atPath: mlpackageURL.path) {
+        // MLPackage exists, compile it
+        #if DEBUG
+        print("\n=== Found existing MLPackage ===")
+        print("Compiling existing MLPackage: \(mlpackageURL.lastPathComponent)")
+        #endif
+        ModelDownloadManager.shared.compileExistingModel(
+          modelURL: mlpackageURL, key: key, completion: completion)
+      } else {
+        // Nothing exists, start download
+        ModelDownloadManager.shared.startDownload(
+          url: remoteURL, fileName: fileName, key: key, completion: completion)
+      }
     }
   }
 
@@ -143,7 +270,9 @@ class ModelCacheManager {
           completion(model)
         }
       } catch {
+        #if DEBUG
         print("Failed to load model: \(error)")
+        #endif
         DispatchQueue.main.async {
           completion(nil)
         }
@@ -155,15 +284,77 @@ class ModelCacheManager {
     if modelCache.count >= cacheLimit {
       let oldKey = accessOrder.removeFirst()
       modelCache.removeValue(forKey: oldKey)
+      metadataCache.removeValue(forKey: oldKey)
     }
     modelCache[key] = model
     accessOrder.append(key)
+    
+    // Cache metadata from model
+    if let userDefined = model.modelDescription.metadata[.creatorDefinedKey] as? [String: String] {
+      metadataCache[key] = userDefined
+    }
   }
 
   func isModelDownloaded(key: String) -> Bool {
+    // Check for compiled model first
     let modelURL = getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension(
       "mlmodelc")
-    return FileManager.default.fileExists(atPath: modelURL.path)
+    let exists = FileManager.default.fileExists(atPath: modelURL.path)
+    
+    #if DEBUG
+    print("\n=== Checking Model Cache ===")
+    print("Key: \(key)")
+    print("Expected file: \(key).mlmodelc")
+    print("Full path: \(modelURL.path)")
+    print("File exists: \(exists)")
+    
+    // List all files in documents directory for debugging
+    if !exists {
+      let documentsPath = getDocumentsDirectory()
+      do {
+        let files = try FileManager.default.contentsOfDirectory(at: documentsPath, includingPropertiesForKeys: nil)
+        print("\nAll files in documents directory:")
+        
+        var hasZip = false
+        var hasMLPackage = false
+        
+        for file in files {
+          print("  - \(file.lastPathComponent)")
+          // Check if this might be our model with different naming
+          if file.lastPathComponent.contains(key) {
+            print("    ^ This file contains the key '\(key)'")
+            
+            if file.pathExtension == "zip" {
+              hasZip = true
+            } else if file.pathExtension == "mlpackage" {
+              hasMLPackage = true
+            }
+          }
+        }
+        
+        if hasZip || hasMLPackage {
+          print("\nNote: Found related files but model is not compiled yet")
+          print("ZIP exists: \(hasZip), MLPackage exists: \(hasMLPackage)")
+        }
+      } catch {
+        print("Error listing files: \(error)")
+      }
+    }
+    print("========================\n")
+    #endif
+    
+    // For UI purposes, we should return true if any related file exists
+    // to prevent showing download icon when files are being processed
+    if !exists {
+      // Check if ZIP or mlpackage exists
+      let zipURL = getDocumentsDirectory().appendingPathComponent("\(key).mlpackage.zip")
+      let mlpackageURL = getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension("mlpackage")
+      
+      return FileManager.default.fileExists(atPath: zipURL.path) || 
+             FileManager.default.fileExists(atPath: mlpackageURL.path)
+    }
+    
+    return exists
   }
 
   func getDocumentsDirectory() -> URL {
@@ -181,6 +372,24 @@ class ModelCacheManager {
   func getCurrentSelectedModelKey() -> String? {
     return currentSelectedModelKey
   }
+  
+  /// Get model size from cached metadata
+  func getCachedModelSize(for key: String) -> String? {
+    guard let metadata = metadataCache[key] else { 
+      return nil 
+    }
+    
+    // Use ModelMetadataHelper to extract size from metadata
+    if let size = ModelMetadataHelper.extractModelSizeFromMetadata(metadata) {
+      return size.rawValue
+    }
+    return nil
+  }
+  
+  /// Cache metadata for a model
+  func cacheMetadata(for key: String, metadata: [String: String]) {
+    metadataCache[key] = metadata
+  }
 }
 
 class ModelDownloadManager: NSObject {
@@ -194,6 +403,13 @@ class ModelDownloadManager: NSObject {
   func startDownload(
     url: URL, fileName: String, key: String, completion: @escaping (MLModel?, String) -> Void
   ) {
+    #if DEBUG
+    print("\n=== Starting Download ===")
+    print("URL: \(url)")
+    print("FileName: \(fileName)")
+    print("Key: \(key)")
+    #endif
+    
     let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
     let downloadTask = session.downloadTask(with: url)
     let destinationURL = getDocumentsDirectory().appendingPathComponent(fileName)
@@ -239,6 +455,140 @@ class ModelDownloadManager: NSObject {
     priorityTask?.cancel()
     priorityTask = nil
   }
+  
+  func processExistingZip(zipURL: URL, key: String, completion: @escaping (MLModel?, String) -> Void) {
+    DispatchQueue.global(qos: .userInitiated).async {
+      do {
+        #if DEBUG
+        print("\n=== Processing Existing ZIP ===")
+        print("ZIP URL: \(zipURL.lastPathComponent)")
+        print("Key: \(key)")
+        #endif
+        
+        // Remove any existing mlpackage directory first
+        let mlpackageURL = self.getDocumentsDirectory().appendingPathComponent(key).appendingPathExtension("mlpackage")
+        if FileManager.default.fileExists(atPath: mlpackageURL.path) {
+          try FileManager.default.removeItem(at: mlpackageURL)
+          #if DEBUG
+          print("Removed existing mlpackage")
+          #endif
+        }
+        
+        // Create temp directory for unzipping
+        let tempDir = self.getDocumentsDirectory().appendingPathComponent("temp_\(key)_\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+        
+        // Unzip to temp directory
+        #if DEBUG
+        print("Unzipping to temp directory...")
+        #endif
+        try unzipSkippingMacOSX(at: zipURL, to: tempDir)
+        
+        // Find the model in temp directory
+        let tempContents = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+        
+        #if DEBUG
+        print("Looking for mlpackage in temp directory:")
+        for item in tempContents {
+          var isDir: ObjCBool = false
+          FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+          print("  - \(item.lastPathComponent) \(isDir.boolValue ? "[DIR]" : "[FILE]")")
+        }
+        #endif
+        
+        var modelURL: URL? = nil
+        let documentsDir = self.getDocumentsDirectory()
+        
+        // Check if the ZIP contained the mlpackage contents directly
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          // The temp directory itself is the mlpackage contents
+          let destinationURL = documentsDir.appendingPathComponent("\(key).mlpackage")
+          
+          #if DEBUG
+          print("ZIP contains mlpackage contents directly")
+          print("Creating mlpackage at: \(destinationURL.lastPathComponent)")
+          #endif
+          
+          // Remove existing mlpackage if exists
+          if FileManager.default.fileExists(atPath: destinationURL.path) {
+            try FileManager.default.removeItem(at: destinationURL)
+          }
+          
+          // Move the entire temp directory as the mlpackage
+          try FileManager.default.moveItem(at: tempDir, to: destinationURL)
+          modelURL = destinationURL
+          
+        } else {
+          // Look for .mlpackage directory
+          for item in tempContents {
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+            
+            if isDir.boolValue && item.pathExtension == "mlpackage" && 
+               (item.lastPathComponent.lowercased().contains(key.lowercased()) ||
+                item.lastPathComponent.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased()) {
+              modelURL = item
+              #if DEBUG
+              print("Selected mlpackage: \(item.lastPathComponent)")
+              #endif
+              break
+            }
+          }
+          
+          if let foundModelURL = modelURL {
+            // Move the mlpackage to documents directory
+            let destinationURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+              try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.moveItem(at: foundModelURL, to: destinationURL)
+            
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            
+            modelURL = destinationURL
+          } else {
+            #if DEBUG
+            print("ERROR: No mlpackage found for key: \(key)")
+            #endif
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found"])
+          }
+        }
+        
+        #if DEBUG
+        print("Final mlpackage location: \(modelURL?.lastPathComponent ?? "nil")")
+        #endif
+        
+        guard let finalModelURL = modelURL else {
+          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model URL is nil after processing"])
+        }
+        
+        self.loadModel(from: finalModelURL, key: key) { model in
+          DispatchQueue.main.async {
+            completion(model, key)
+          }
+        }
+      } catch {
+        #if DEBUG
+        print("Error processing existing ZIP: \(error)")
+        #endif
+        DispatchQueue.main.async {
+          completion(nil, key)
+        }
+      }
+    }
+  }
+  
+  func compileExistingModel(modelURL: URL, key: String, completion: @escaping (MLModel?, String) -> Void) {
+    loadModel(from: modelURL, key: key) { model in
+      DispatchQueue.main.async {
+        completion(model, key)
+      }
+    }
+  }
 }
 
 extension ModelDownloadManager: URLSessionDownloadDelegate {
@@ -251,7 +601,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     else { return }
     do {
       let zipURL = destinationURL
+      #if DEBUG
       print("zipURL: \(zipURL)")
+      #endif
       if fileExists(at: zipURL) {
         try FileManager.default.removeItem(at: zipURL)
       }
@@ -262,20 +614,123 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         try FileManager.default.removeItem(at: unzipDestinationURL)
       }
       do {
-        try unzipSkippingMacOSX(at: zipURL, to: getDocumentsDirectory())
-        let modelURL = unzipDestinationURL
-        print("modelURL: \(modelURL)")
-        loadModel(from: modelURL, key: key) { model in
+        // Create temp directory for unzipping
+        let tempDir = getDocumentsDirectory().appendingPathComponent("temp_download_\(key)_\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+        
+        try unzipSkippingMacOSX(at: zipURL, to: tempDir)
+        
+        // Find the .mlpackage in the temp directory
+        let tempContents = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+        
+        #if DEBUG
+        print("\n=== After Unzip Debug ===")
+        print("Key: \(key)")
+        print("Temp directory contents:")
+        for item in tempContents {
+          var isDir: ObjCBool = false
+          FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+          print("  - \(item.lastPathComponent) \(isDir.boolValue ? "[DIR]" : "[FILE]")")
+        }
+        
+        // If the mlpackage is extracted as a directory in the temp folder
+        // Check if the temp directory itself is the mlpackage
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          print("Detected mlpackage structure directly in temp directory")
+        }
+        #endif
+        
+        // Look for .mlpackage files that match our key
+        var modelURL: URL? = nil
+        let documentsDir = getDocumentsDirectory()
+        
+        // Check if the ZIP contained the mlpackage contents directly
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          // The temp directory itself is the mlpackage contents
+          // Create the .mlpackage directory in documents
+          let destinationModelURL = documentsDir.appendingPathComponent("\(key).mlpackage")
+          
+          #if DEBUG
+          print("ZIP contains mlpackage contents directly")
+          print("Creating mlpackage at: \(destinationModelURL.lastPathComponent)")
+          #endif
+          
+          // Remove existing mlpackage if exists
+          if FileManager.default.fileExists(atPath: destinationModelURL.path) {
+            try FileManager.default.removeItem(at: destinationModelURL)
+          }
+          
+          // Move the entire temp directory as the mlpackage
+          try FileManager.default.moveItem(at: tempDir, to: destinationModelURL)
+          modelURL = destinationModelURL
+          
+        } else {
+          // Look for any .mlpackage directory in temp directory
+          for item in tempContents {
+            var isDir: ObjCBool = false
+            FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir)
+            
+            if isDir.boolValue && item.pathExtension == "mlpackage" {
+              let filename = item.lastPathComponent
+              // Check if this mlpackage is related to our key
+              if filename.lowercased().contains(key.lowercased()) ||
+                 filename.lowercased().replacingOccurrences(of: ".mlpackage", with: "") == key.lowercased() {
+                modelURL = item
+                #if DEBUG
+                print("Found matching mlpackage directory: \(filename)")
+                #endif
+                break
+              }
+            }
+          }
+          
+          if let foundModelURL = modelURL {
+            // Move the mlpackage to documents directory
+            let destinationModelURL = documentsDir.appendingPathComponent(foundModelURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationModelURL.path) {
+              try FileManager.default.removeItem(at: destinationModelURL)
+            }
+            try FileManager.default.moveItem(at: foundModelURL, to: destinationModelURL)
+            
+            // Clean up remaining temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            
+            modelURL = destinationModelURL
+          } else {
+            #if DEBUG
+            print("ERROR: No .mlpackage found for key: \(key)")
+            #endif
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+            throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model package not found after extraction"])
+          }
+        }
+        
+        #if DEBUG
+        print("Final mlpackage location: \(modelURL?.lastPathComponent ?? "nil")")
+        #endif
+        
+        guard let finalModelURL = modelURL else {
+          throw NSError(domain: "ModelDownloadManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Model URL is nil after processing"])
+        }
+        
+        loadModel(from: finalModelURL, key: key) { model in
           self.downloadCompletionHandlers[downloadTask]?(model, key)
           self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
         }
       } catch {
+        #if DEBUG
         print("Extraction of ZIP archive failed with error: \(error)")
+        #endif
         self.downloadCompletionHandlers[downloadTask]?(nil, key)
         self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
       }
     } catch {
+      #if DEBUG
       print("Error moving downloaded file: \(error)")
+      #endif
       self.downloadCompletionHandlers[downloadTask]?(nil, key)
       self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
     }
@@ -284,18 +739,56 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
   private func loadModel(from url: URL, key: String, completion: @escaping (MLModel?) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
+        #if DEBUG
+        print("\n=== Model Compilation ===")
+        print("Compiling model from: \(url.lastPathComponent)")
+        print("Key: \(key)")
+        #endif
+        
         let compiledModelURL = try MLModel.compileModel(at: url)
+        
+        #if DEBUG
+        print("Compiled model at: \(compiledModelURL.path)")
+        #endif
+        
         let model = try MLModel(contentsOf: compiledModelURL)
         let localModelURL = self.getDocumentsDirectory().appendingPathComponent(key)
           .appendingPathExtension("mlmodelc")
+          
+        #if DEBUG
+        print("Will save to: \(localModelURL.lastPathComponent)")
+        #endif
+        
         ModelCacheManager.shared.addModelToCache(model, for: key)
         try FileManager.default.moveItem(at: compiledModelURL, to: localModelURL)
-        print("model copied to document directory")
+        
+        #if DEBUG
+        print("Model successfully saved to: \(localModelURL.path)")
+        #endif
+        
+        // Clean up the original .mlpackage after successful compilation
+        let mlpackageURL = self.getDocumentsDirectory().appendingPathComponent(key)
+          .appendingPathExtension("mlpackage")
+        if FileManager.default.fileExists(atPath: mlpackageURL.path) {
+          try? FileManager.default.removeItem(at: mlpackageURL)
+          print("Cleaned up .mlpackage")
+        }
+        
+        // Clean up the ZIP file
+        let zipURL = self.getDocumentsDirectory().appendingPathComponent(key)
+          .appendingPathExtension("mlpackage.zip")
+        if FileManager.default.fileExists(atPath: zipURL.path) {
+          try? FileManager.default.removeItem(at: zipURL)
+          print("Cleaned up .zip file")
+        }
+        
         DispatchQueue.main.async {
           completion(model)
         }
       } catch {
+        #if DEBUG
         print("Failed to load model: \(error)")
+        #endif
         DispatchQueue.main.async {
           completion(nil)
         }

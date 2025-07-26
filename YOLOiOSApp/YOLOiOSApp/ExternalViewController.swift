@@ -64,15 +64,19 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         print("📐 External display setup:")
         print("  - Screen size: \(screenSize)")
         print("  - Scale factor: \(scaleFactor)")
-        print("  - Model name font size: 180pt (fixed)")
-        print("  - FPS font size: 120pt (fixed)")
+        print("  - Model name font size: \(screenSize.height * 0.025)pt (2.5% of height)")
+        print("  - FPS font size: \(screenSize.height * 0.0167)pt (1.67% of height)")
         print("  - Segment control font size: 60pt (fixed)")
+        
+        // Calculate proportional font sizes based on screen height
+        let baseFontSizeModelName = screenSize.height * 0.025 // 2.5% of screen height
+        let baseFontSizeFPS = screenSize.height * 0.0167 // 1.67% of screen height
         
         // Model name label - reasonable size for external displays
         labelName = UILabel()
         labelName.text = currentModelName
         labelName.textAlignment = .center
-        labelName.font = UIFont.systemFont(ofSize: 72, weight: .bold) // Reasonable size
+        labelName.font = UIFont.systemFont(ofSize: baseFontSizeModelName, weight: .bold) // Proportional to screen
         labelName.textColor = .white
         labelName.adjustsFontSizeToFitWidth = true
         labelName.minimumScaleFactor = 0.5
@@ -85,7 +89,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         labelFPS.text = "0.0 FPS - 0.0 ms"
         labelFPS.textAlignment = .center
         labelFPS.textColor = .white
-        labelFPS.font = UIFont.systemFont(ofSize: 48, weight: .medium) // Reasonable size
+        labelFPS.font = UIFont.systemFont(ofSize: baseFontSizeFPS, weight: .medium) // Proportional to screen
         labelFPS.adjustsFontSizeToFitWidth = true
         labelFPS.minimumScaleFactor = 0.5
         labelFPS.numberOfLines = 1
@@ -150,13 +154,13 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             labelName.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             labelName.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: margin),
             labelName.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-            labelName.heightAnchor.constraint(equalToConstant: 80), // Reasonable height for 72pt font
+            labelName.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.1), // 10% of screen height like iPhone
             
             // FPS label - below model name
             labelFPS.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             labelFPS.topAnchor.constraint(equalTo: labelName.bottomAnchor, constant: 20),
             labelFPS.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-            labelFPS.heightAnchor.constraint(equalToConstant: 60), // Reasonable height for 48pt font
+            labelFPS.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.04), // 4% of screen height like iPhone
             
             // Segmented control - below FPS
             segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),

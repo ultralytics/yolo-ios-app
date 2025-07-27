@@ -257,20 +257,75 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
       downloadTasks.removeValue(forKey: downloadTask)
-      let unzipDestinationURL = destinationURL.deletingPathExtension()
-      if FileManager.default.fileExists(atPath: unzipDestinationURL.path) {
-        try FileManager.default.removeItem(at: unzipDestinationURL)
-      }
+      // Create a temporary directory for extraction
+      let tempDirName = "temp_download_\(key)_\(UUID().uuidString)"
+      let tempDir = getDocumentsDirectory().appendingPathComponent(tempDirName)
+      
       do {
-        try unzipSkippingMacOSX(at: zipURL, to: getDocumentsDirectory())
-        let modelURL = unzipDestinationURL
-        print("modelURL: \(modelURL)")
-        loadModel(from: modelURL, key: key) { model in
-          self.downloadCompletionHandlers[downloadTask]?(model, key)
-          self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
+        // Create temp directory
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+        
+        // Extract ZIP to temp directory
+        try unzipSkippingMacOSX(at: zipURL, to: tempDir)
+        
+        // Check the structure of the extracted content
+        let tempContents = try FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+        print("DEBUG: Temp directory contents: \(tempContents.map { $0.lastPathComponent })")
+        
+        var mlpackageURL: URL?
+        
+        // Check if the ZIP contained the mlpackage contents directly (Manifest.json + Data folder)
+        if tempContents.contains(where: { $0.lastPathComponent == "Manifest.json" }) &&
+           tempContents.contains(where: { $0.lastPathComponent == "Data" }) {
+          print("DEBUG: ZIP contains mlpackage contents directly")
+          // The temp directory itself is the mlpackage contents
+          let destinationURL = getDocumentsDirectory().appendingPathComponent("\(key).mlpackage")
+          
+          // Remove existing mlpackage if it exists
+          if FileManager.default.fileExists(atPath: destinationURL.path) {
+            try FileManager.default.removeItem(at: destinationURL)
+          }
+          
+          // Move the entire temp directory as the mlpackage
+          try FileManager.default.moveItem(at: tempDir, to: destinationURL)
+          mlpackageURL = destinationURL
+        } else {
+          // Look for .mlpackage directory in the extracted content
+          if let mlpackageItem = tempContents.first(where: { $0.pathExtension == "mlpackage" }) {
+            print("DEBUG: Found mlpackage directory: \(mlpackageItem.lastPathComponent)")
+            let destinationURL = getDocumentsDirectory().appendingPathComponent(mlpackageItem.lastPathComponent)
+            
+            // Remove existing mlpackage if it exists
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+              try FileManager.default.removeItem(at: destinationURL)
+            }
+            
+            // Move the mlpackage directory
+            try FileManager.default.moveItem(at: mlpackageItem, to: destinationURL)
+            mlpackageURL = destinationURL
+            
+            // Clean up temp directory
+            try? FileManager.default.removeItem(at: tempDir)
+          } else {
+            print("ERROR: No mlpackage found in extracted content")
+            try? FileManager.default.removeItem(at: tempDir)
+            self.downloadCompletionHandlers[downloadTask]?(nil, key)
+            self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
+            return
+          }
+        }
+        
+        if let mlpackageURL = mlpackageURL {
+          print("DEBUG: Loading model from: \(mlpackageURL)")
+          loadModel(from: mlpackageURL, key: key) { model in
+            self.downloadCompletionHandlers[downloadTask]?(model, key)
+            self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
+          }
         }
       } catch {
         print("Extraction of ZIP archive failed with error: \(error)")
+        // Clean up temp directory on error
+        try? FileManager.default.removeItem(at: tempDir)
         self.downloadCompletionHandlers[downloadTask]?(nil, key)
         self.downloadCompletionHandlers.removeValue(forKey: downloadTask)
       }

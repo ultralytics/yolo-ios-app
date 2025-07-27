@@ -316,6 +316,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark
 
+    // アプリバージョンを設定
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+      labelVersion.text = "v\(version)"
+      print("DEBUG: App version set to: v\(version)")
+    } else {
+      labelVersion.text = ""
+      print("DEBUG: Could not retrieve app version")
+    }
+
     downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(downloadProgressView)
 

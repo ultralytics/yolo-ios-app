@@ -64,13 +64,13 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         print("📐 External display setup:")
         print("  - Screen size: \(screenSize)")
         print("  - Scale factor: \(scaleFactor)")
-        print("  - Model name font size: \(screenSize.height * 0.025)pt (2.5% of height)")
-        print("  - FPS font size: \(screenSize.height * 0.0167)pt (1.67% of height)")
+        print("  - Model name font size: \(screenSize.height * 0.1)pt (2.5% of height)")
+        print("  - FPS font size: \(screenSize.height * 0.04)pt (1.67% of height)")
         print("  - Segment control font size: 60pt (fixed)")
         
         // Calculate proportional font sizes based on screen height
-        let baseFontSizeModelName = screenSize.height * 0.025 // 2.5% of screen height
-        let baseFontSizeFPS = screenSize.height * 0.0167 // 1.67% of screen height
+        let baseFontSizeModelName = screenSize.height * 0.1 // 2.5% of screen height
+        let baseFontSizeFPS = screenSize.height * 0.04 // 1.67% of screen height
         
         // Model name label - reasonable size for external displays
         labelName = UILabel()

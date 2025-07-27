@@ -16,6 +16,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     private var labelName: UILabel!
     private var labelFPS: UILabel!
     private var segmentedControl: UISegmentedControl!
+    private var logoImageView: UIImageView!
     
     // UI visibility state (controlled by iPhone)
     private var isUIVisible = true
@@ -34,7 +35,11 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         print("🟢 ExternalViewController viewDidLoad")
         
         // Set background color to verify view is visible
-        view.backgroundColor = .blue
+        view.backgroundColor = .black
+        
+        // Configure for full screen display
+        edgesForExtendedLayout = .all
+        extendedLayoutIncludesOpaqueBars = true
         
         setupUI()
         setupNotifications()
@@ -127,6 +132,15 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         segmentedControl.isHidden = true // Hide task segment control
         view.addSubview(segmentedControl)
         
+        // Logo ImageView - centered and semi-transparent
+        logoImageView = UIImageView()
+        logoImageView.image = UIImage(named: "Ultralytics_YOLO_Logotype_1_Reverse_Crop")
+        logoImageView.contentMode = .scaleAspectFit
+        logoImageView.alpha = 0.3 // Semi-transparent (30% opacity)
+        logoImageView.isUserInteractionEnabled = false // Allow touches to pass through
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(logoImageView)
+        
         // Ensure labels have proper content priority
         labelName.setContentHuggingPriority(.required, for: .vertical)
         labelName.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -166,7 +180,13 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             segmentedControl.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 30),
             segmentedControl.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7), // 70% width
-            segmentedControl.heightAnchor.constraint(equalToConstant: 60) // Reasonable height for 36pt font
+            segmentedControl.heightAnchor.constraint(equalToConstant: 60), // Reasonable height for 36pt font
+            
+            // Logo - centered in the screen
+            logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5), // 50% of screen width
+            logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3) // Maintain aspect ratio
         ])
     }
     
@@ -221,6 +241,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             self.labelName.isHidden = !visible
             self.labelFPS.isHidden = !visible
             // segmentedControl is always hidden
+            // Logo remains visible regardless of UI visibility toggle
             
             print("🟢 External display UI visibility: \(visible)")
         }
@@ -244,9 +265,10 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             
             yoloView = YOLOView(frame: view.bounds)
             yoloView?.delegate = self
+            yoloView?.backgroundColor = .clear // Make YOLOView background transparent
             
             if let yoloView = yoloView {
-                // Add YOLOView FIRST, at index 0
+                // Add YOLOView first at the bottom
                 view.insertSubview(yoloView, at: 0)
                 
                 // Add constraints for full screen display
@@ -264,6 +286,11 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                 print("🟢 YOLOView created with frame: \(yoloView.frame)")
                 
                 // Re-add UI elements on top of YOLOView to ensure they're visible
+                // Add logo on top of YOLOView (camera feed)
+                if let logoImageView = self.logoImageView {
+                    logoImageView.removeFromSuperview()
+                    view.addSubview(logoImageView)
+                }
                 if let labelName = self.labelName {
                     labelName.removeFromSuperview()
                     view.addSubview(labelName)
@@ -276,6 +303,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                 
                 // Force another layout update
                 view.layoutIfNeeded()
+                
+                // Debug: Print view hierarchy
+                print("🔍 View hierarchy after setup:")
+                for (index, subview) in view.subviews.enumerated() {
+                    print("  \(index): \(type(of: subview))")
+                }
                 
                 // Re-setup constraints since we re-added the views
                 let scaleFactor = calculateScaleFactor(for: view.bounds.size)

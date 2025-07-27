@@ -42,7 +42,16 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         // Create and set the external view controller
         let externalVC = ExternalViewController()
+        
+        // Configure for full screen without safe area
+        externalVC.modalPresentationStyle = .fullScreen
         window?.rootViewController = externalVC
+        
+        // Ignore safe area for full screen display
+        if #available(iOS 11.0, *) {
+            window?.insetsLayoutMarginsFromSafeArea = false
+            externalVC.additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        }
         
         window?.isHidden = false
         window?.makeKeyAndVisible()

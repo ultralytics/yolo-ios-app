@@ -136,7 +136,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         logoImageView = UIImageView()
         logoImageView.image = UIImage(named: "ultralytics_yolo_logo")
         logoImageView.contentMode = .scaleAspectFit
-        logoImageView.alpha = 0.3 // Semi-transparent (30% opacity)
+        logoImageView.alpha = 1.0 // Fully opaque
         logoImageView.isUserInteractionEnabled = false // Allow touches to pass through
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(logoImageView)

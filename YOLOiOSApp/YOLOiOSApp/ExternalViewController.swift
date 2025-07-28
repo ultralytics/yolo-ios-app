@@ -132,9 +132,9 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         segmentedControl.isHidden = true // Hide task segment control
         view.addSubview(segmentedControl)
         
-        // Logo ImageView - centered and semi-transparent
+        // Logo ImageView - bottom right corner, smaller
         logoImageView = UIImageView()
-        logoImageView.image = UIImage(named: "Ultralytics_YOLO_Logotype_1_Reverse_Crop")
+        logoImageView.image = UIImage(named: "ultralytics_yolo_logo")
         logoImageView.contentMode = .scaleAspectFit
         logoImageView.alpha = 0.3 // Semi-transparent (30% opacity)
         logoImageView.isUserInteractionEnabled = false // Allow touches to pass through
@@ -182,10 +182,10 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             segmentedControl.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7), // 70% width
             segmentedControl.heightAnchor.constraint(equalToConstant: 60), // Reasonable height for 36pt font
             
-            // Logo - centered in the screen
-            logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5), // 50% of screen width
+            // Logo - bottom right corner, 20% of screen width
+            logoImageView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -margin),
+            logoImageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -margin),
+            logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2), // 20% of screen width
             logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3) // Maintain aspect ratio
         ])
     }

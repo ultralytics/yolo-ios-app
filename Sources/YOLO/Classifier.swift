@@ -21,24 +21,20 @@ class Classifier: BasePredictor {
 
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
-    if let detector = detector {
-      detector.featureProvider = ThresholdProvider(
-        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
-    }
+    detector.featureProvider = ThresholdProvider(
+      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
-    if let detector = detector {
-      detector.featureProvider = ThresholdProvider(
-        iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
-    }
+    detector.featureProvider = ThresholdProvider(
+      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 
   override func processObservations(for request: VNRequest, error: Error?) {
-    // Use the model's input size, not the image size
     let imageWidth = inputSize.width
     let imageHeight = inputSize.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
 
     if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -115,7 +111,6 @@ class Classifier: BasePredictor {
 
     self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
     //                self.currentOnFpsRateListener?.on(fpsRate: 1 / self.t4)
-    // For real-time camera processing, use the current input size
     let result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)
@@ -126,18 +121,15 @@ class Classifier: BasePredictor {
 
   override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
-    
-    // Store the original image size but don't modify inputSize
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    let originalImageSize = CGSize(width: imageWidth, height: imageHeight)
-    
     guard let request = visionRequest else {
-      let emptyResult = YOLOResult(orig_shape: originalImageSize, boxes: [], speed: 0, names: labels)
+      let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
+
+    let imageWidth = image.extent.width
+    let imageHeight = image.extent.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
-    let t0 = CACurrentMediaTime()
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -207,14 +199,11 @@ class Classifier: BasePredictor {
       }
 
     } catch {
-      #if DEBUG
       print(error)
-      #endif
     }
-    
-    let t1 = CACurrentMediaTime() - t0
+
     var result = YOLOResult(
-      orig_shape: originalImageSize, boxes: [], probs: probs, speed: t1, names: labels)
+      orig_shape: inputSize, boxes: [], probs: probs, speed: t1, names: labels)
     let annotatedImage = drawYOLOClassifications(on: image, result: result)
     result.annotatedImage = annotatedImage
     return result

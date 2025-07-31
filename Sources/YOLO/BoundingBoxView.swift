@@ -20,15 +20,12 @@ class BoundingBoxView {
 
   /// The layer that displays the label and confidence score for the detected object.
   let textLayer: CATextLayer
-  
-  /// The line width for the bounding box stroke
-  private var _lineWidth: CGFloat = 4.0
 
   /// Initializes a new BoundingBoxView with configured shape and text layers.
   init() {
     shapeLayer = CAShapeLayer()
     shapeLayer.fillColor = UIColor.clear.cgColor  // No fill to only show the bounding outline
-    shapeLayer.lineWidth = _lineWidth  // Set the stroke line width
+    shapeLayer.lineWidth = 4  // Set the stroke line width
     shapeLayer.isHidden = true  // Initially hidden; shown when a detection occurs
 
     textLayer = CATextLayer()
@@ -37,19 +34,6 @@ class BoundingBoxView {
     textLayer.fontSize = 14  // Set font size for the label text
     textLayer.font = UIFont(name: "Avenir", size: textLayer.fontSize)  // Use Avenir font for labels
     textLayer.alignmentMode = .center  // Center-align the text within the layer
-  }
-  
-  /// Sets the line width for the bounding box stroke
-  /// - Parameter width: The desired line width
-  func setLineWidth(_ width: CGFloat) {
-    _lineWidth = max(1.0, min(width, 10.0))  // Clamp between 1.0 and 10.0
-    shapeLayer.lineWidth = _lineWidth
-  }
-  
-  /// Gets the current line width
-  /// - Returns: The current line width
-  func getLineWidth() -> CGFloat {
-    return _lineWidth
   }
 
   /// Adds the bounding box and text layers to a specified parent layer.

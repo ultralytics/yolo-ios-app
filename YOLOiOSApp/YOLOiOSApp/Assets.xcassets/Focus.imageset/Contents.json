@@ -1,7 +1,6 @@
 {
   "images": [
     {
-      "filename": "Ultralytics_HUB_Logotype_1_Original.svg",
       "idiom": "universal",
       "scale": "1x"
     },
@@ -11,6 +10,7 @@
     },
     {
       "idiom": "universal",
+      "filename": "ultralytics_square_focus_image.png",
       "scale": "3x"
     }
   ],

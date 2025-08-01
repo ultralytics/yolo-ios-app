@@ -2,8 +2,6 @@
 
 # 🚀 Ultralytics YOLO for iOS: App and Swift Package
 
-
-
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![CI](https://github.com/ultralytics/yolo-ios-app/actions/workflows/ci.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/ultralytics/yolo-ios-app/branch/main/graph/badge.svg)](https://codecov.io/gh/ultralytics/yolo-ios-app)

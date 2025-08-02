@@ -215,7 +215,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
-    table.layer.cornerRadius = 5  // 他の要素のcorner radiusに合わせる
+    table.layer.cornerRadius = 5  // Match corner radius of other elements
     table.clipsToBounds = true
     return table
   }()
@@ -243,7 +243,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
 
-    // ラベルのテキスト色を白色に強制設定
+    // Force label text color to white
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
@@ -581,7 +581,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.currentModelName = modelName
         DispatchQueue.main.async {
           self.labelName.text = processString(modelName)
-          // テキスト色を白色に強制設定
+          // Force text color to white
           self.labelName.textColor = .white
         }
 

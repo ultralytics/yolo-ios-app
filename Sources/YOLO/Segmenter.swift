@@ -42,11 +42,21 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let detectedObjects = postProcessSegment(
         feature: pred, confidenceThreshold: Float(confidenceThreshold),
         iouThreshold: Float(iouThreshold))
+      
+      let detectionsCount = detectedObjects.count
       var boxes: [Box] = []
+      boxes.reserveCapacity(detectionsCount)
       var alphas = [CGFloat]()
+      alphas.reserveCapacity(detectionsCount)
       
       let modelWidth = CGFloat(self.modelInputSize.width)
       let modelHeight = CGFloat(self.modelInputSize.height)
+      let inputWidth = Int(self.inputSize.width)
+      let inputHeight = Int(self.inputSize.height)
+      
+      // Pre-calculate alpha constants
+      let alphaScale: CGFloat = 0.9 / 0.8  // (1.0 - 0.2)
+      let alphaOffset: CGFloat = -0.2 * alphaScale
 
       for p in detectedObjects {
         let box = p.0
@@ -56,11 +66,10 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let confidence = p.2
         let bestClass = p.1
         let label = self.labels[bestClass]
-        let xywh = VNImageRectForNormalizedRect(
-          rect, Int(self.inputSize.width), Int(self.inputSize.height))
+        let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
         let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
-        let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+        let alpha = CGFloat(confidence) * alphaScale + alphaOffset
         boxes.append(boxResult)
         alphas.append(alpha)
       }
@@ -143,9 +152,14 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
 
         // 3. Construct bounding box information
+        let detectionsCount = detectedObjects.count
         var boxes: [Box] = []
+        boxes.reserveCapacity(detectionsCount)
+        
         let modelWidth = CGFloat(self.modelInputSize.width)
         let modelHeight = CGFloat(self.modelInputSize.height)
+        let inputWidth = Int(inputSize.width)
+        let inputHeight = Int(inputSize.height)
         
         for p in detectedObjects {
           let box = p.0
@@ -155,7 +169,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           let confidence = p.2
           let bestClass = p.1
           let label = labels[bestClass]
-          let xywh = VNImageRectForNormalizedRect(rect, Int(inputSize.width), Int(inputSize.height))
+          let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
           let boxResult = Box(
             index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
@@ -222,97 +236,95 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
-    var results = [(CGRect, Int, Float, MLMultiArray)]()
+    // Pre-allocate result arrays with estimated capacity
+    var results: [(CGRect, Int, Float, MLMultiArray)] = []
+    results.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-
     let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+    let resultsLock = NSLock()
+
+    // Pre-allocate reusable arrays outside the loop
+    let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
+    defer { classProbs.deallocate() }
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-      // Use pointerWrapper here
       let x = pointerWrapper.pointer[j]
       let y = pointerWrapper.pointer[numAnchors + j]
       let width = pointerWrapper.pointer[2 * numAnchors + j]
       let height = pointerWrapper.pointer[3 * numAnchors + j]
 
-      let boxWidth = CGFloat(width)
-      let boxHeight = CGFloat(height)
       let boxX = CGFloat(x - width / 2)
       let boxY = CGFloat(y - height / 2)
+      let boundingBox = CGRect(x: boxX, y: boxY, width: CGFloat(width), height: CGFloat(height))
 
-      let boundingBox = CGRect(x: boxX, y: boxY, width: boxWidth, height: boxHeight)
-
-      // Class probabilities
-      var classProbs = [Float](repeating: 0, count: numClasses)
-      classProbs.withUnsafeMutableBufferPointer { classProbsPointer in
-        vDSP_mtrans(
-          pointerWrapper.pointer + 4 * numAnchors + j,
-          numAnchors,
-          classProbsPointer.baseAddress!,
-          1,
-          1,
-          vDSP_Length(numClasses)
-        )
-      }
+      // Use thread-local storage for class probabilities
+      let localClassProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
+      defer { localClassProbs.deallocate() }
+      
+      vDSP_mtrans(
+        pointerWrapper.pointer + 4 * numAnchors + j,
+        numAnchors,
+        localClassProbs.baseAddress!,
+        1,
+        1,
+        vDSP_Length(numClasses)
+      )
+      
       var maxClassValue: Float = 0
       var maxClassIndex: vDSP_Length = 0
-      vDSP_maxvi(classProbs, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
+      vDSP_maxvi(localClassProbs.baseAddress!, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
 
       if maxClassValue > confidenceThreshold {
+        // Create MLMultiArray more efficiently
+        guard let maskProbs = try? MLMultiArray(shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32) else {
+          return
+        }
+        
         let maskProbsPointer = pointerWrapper.pointer + (4 + numClasses) * numAnchors + j
-        let maskProbs = try! MLMultiArray(
-          shape: [NSNumber(value: maskConfidenceLength)],
-          dataType: .float32
-        )
+        let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
+        
         for i in 0..<maskConfidenceLength {
-          maskProbs[i] = NSNumber(value: maskProbsPointer[i * numAnchors])
+          maskProbsData[i] = maskProbsPointer[i * numAnchors]
         }
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
-
-        resultsQueue.async(flags: .barrier) {
-          results.append(result)
-        }
+        
+        resultsLock.lock()
+        results.append(result)
+        resultsLock.unlock()
       }
     }
 
-    resultsQueue.sync(flags: .barrier) {}
+    // Optimize NMS by grouping results by class first
+    var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
+    for result in results {
+      let classIndex = result.1
+      if classBuckets[classIndex] == nil {
+        classBuckets[classIndex] = []
+        classBuckets[classIndex]!.reserveCapacity(results.count / numClasses + 1)
+      }
+      classBuckets[classIndex]!.append(result)
+    }
 
-    var selectedBoxesAndFeatures = [(CGRect, Int, Float, MLMultiArray)]()
+    var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []
+    selectedBoxesAndFeatures.reserveCapacity(results.count)
 
-    for classIndex in 0..<numClasses {
-      let classResults = results.filter { $0.1 == classIndex }
-      if !classResults.isEmpty {
-        let boxesOnly = classResults.map { $0.0 }
-        let scoresOnly = classResults.map { $0.2 }
-        let selectedIndices = nonMaxSuppression(
-          boxes: boxesOnly,
-          scores: scoresOnly,
-          threshold: iouThreshold
-        )
-        for idx in selectedIndices {
-          selectedBoxesAndFeatures.append(
-            (
-              classResults[idx].0,
-              classResults[idx].1,
-              classResults[idx].2,
-              classResults[idx].3
-            )
-          )
-        }
+    for (_, classResults) in classBuckets {
+      let boxesOnly = classResults.map { $0.0 }
+      let scoresOnly = classResults.map { $0.2 }
+      let selectedIndices = nonMaxSuppression(
+        boxes: boxesOnly,
+        scores: scoresOnly,
+        threshold: iouThreshold
+      )
+      for idx in selectedIndices {
+        selectedBoxesAndFeatures.append(classResults[idx])
       }
     }
 
     return selectedBoxesAndFeatures
-  }
-
-  func adjustBox(_ box: CGRect, toFitIn containerSize: CGSize) -> CGRect {
-    let xScale = containerSize.width / 640.0
-    let yScale = containerSize.height / 640.0
-    return CGRect(
-      x: box.origin.x * xScale, y: box.origin.y * yScale, width: box.size.width * xScale,
-      height: box.size.height * yScale)
   }
 
   func checkShapeDimensions(of multiArray: MLMultiArray) -> Int {

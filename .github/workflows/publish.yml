@@ -29,23 +29,45 @@ permissions:
 jobs:
   testflight: # Deploy to TestFlight by merging to testflight branch
     if: inputs.deploy_testflight
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Merge to testflight branch
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Resolve Package Dependencies
+        run: |
+          cd YOLOiOSApp
+          xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
+
+      - name: Commit Package.resolved if changed
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
+          
+          # Check if Package.resolved has changes
+          if ! git diff --quiet YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; then
+            echo "Package.resolved has changes, committing..."
+            git add YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+            git commit -m "Update Package.resolved for ${{ inputs.source_branch }}"
+          else
+            echo "Package.resolved unchanged"
+          fi
+
+      - name: Merge to testflight branch
+        run: |
           git checkout testflight
           git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
           git push origin testflight
 
   appstore: # Submit to App Store for review
-    if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-flutter-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

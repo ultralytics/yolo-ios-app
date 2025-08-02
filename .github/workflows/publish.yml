@@ -8,37 +8,22 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to merge into testflight'
+        description: 'Branch to publish'
         required: true
         default: 'main'
         type: string
       new_version:
-        description: 'Version (e.g., 8.6.0) - leave empty to auto-increment'
+        description: 'Version (e.g., 8.6.0) – leave empty to auto-increment'
         required: false
         type: string
-      deploy_testflight:
-        description: 'Deploy to TestFlight'
-        required: true
-        default: false
-        type: boolean
-      deploy_appstore:
-        description: 'Submit to App Store'
-        required: true
-        default: false
-        type: boolean
-      force_push:
-        description: 'Force update (if no changes)'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write # Push to testflight branch
 
 jobs:
-  testflight: # Deploy to TestFlight by merging to testflight branch
-    if: inputs.deploy_testflight
-    runs-on: macos-15
+  Publish:
+    if: github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,30 +35,26 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
-      - name: Merge to testflight branch
+      - name: Prepare testflight branch (reset to source branch)
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
-          git checkout testflight
-          git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
+          git fetch origin
+          git checkout -B testflight origin/${{ inputs.source_branch }}
 
-      - name: Update version and build number
+      - name: Update version and commit all changes
         run: |
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
           PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
-          
-          # Get current build number
+
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
-          
-          # Get current marketing version from project.pbxproj (not Info.plist which uses variables)
-          CURRENT_MARKETING=$(grep "MARKETING_VERSION = " "$PROJECT_PLIST" | head -1 | sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/')
-          
-          # Determine new marketing version
+          CURRENT_MARKETING=$(grep "MARKETING_VERSION = " "$PROJECT_PLIST" | head -1 |
+                              sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/')
+
           if [[ -n "${{ inputs.new_version }}" ]]; then
             NEW_MARKETING="${{ inputs.new_version }}"
             echo "Using specified version: $NEW_MARKETING"
           else
-            # Auto-increment patch version (8.5.9 → 8.5.10)
             IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_MARKETING"
             MAJOR=${VERSION_PARTS[0]}
             MINOR=${VERSION_PARTS[1]}
@@ -82,49 +63,23 @@ jobs:
             NEW_MARKETING="$MAJOR.$MINOR.$NEW_PATCH"
             echo "Auto-incrementing version: $CURRENT_MARKETING → $NEW_MARKETING"
           fi
-          
-          # Increment build number
-          NEW_BUILD=$((CURRENT_BUILD + 1))
-          
-          # Update build number in Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
-          
-          # Update MARKETING_VERSION in project.pbxproj using PlistBuddy-style replacement
-          sed -i '' "s/MARKETING_VERSION = $CURRENT_MARKETING;/MARKETING_VERSION = $NEW_MARKETING;/g" "$PROJECT_PLIST"
-          
-          echo "Updated to v$NEW_MARKETING ($NEW_BUILD)"
-          git add "$INFO_PLIST" "$PROJECT_PLIST"
-          git commit -m "Push v$NEW_MARKETING ($NEW_BUILD) for TestFlight"
 
-      - name: Resolve Package Dependencies and Commit
-        run: |
+          NEW_BUILD=$((CURRENT_BUILD + 1))
+
+          # Update version files
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
+          sed -i '' "s/MARKETING_VERSION = $CURRENT_MARKETING;/MARKETING_VERSION = $NEW_MARKETING;/g" "$PROJECT_PLIST"
+
+          # Resolve package dependencies
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
+
+          # Commit all changes in single commit
+          git add "$INFO_PLIST" "$PROJECT_PLIST"
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit -m "Update Package.resolved for TestFlight build" || echo "No Package.resolved changes"
+          git commit --allow-empty -m "Merge v$NEW_MARKETING ($NEW_BUILD) for Xcode Cloud"
 
-      - name: Force commit if requested
-        if: inputs.force_push
+      - name: Push to Xcode Cloud
         run: |
-          echo "Force push requested - creating empty commit to trigger TestFlight build"
-          git commit --allow-empty -m "Force TestFlight build (triggered manually)"
-
-      - name: Push to testflight
-        run: |
-          git push origin testflight
-
-  appstore: # Submit to App Store for review
-    if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Submit to App Store
-        run: |
-          echo "TODO: Implement App Store submission"
-          echo "This would typically involve:"
-          echo "- Building the app"
-          echo "- Code signing"
-          echo "- Uploading to App Store Connect"
-          echo "- Submitting for review"
+          git push origin HEAD:testflight --force-with-lease

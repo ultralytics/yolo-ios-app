@@ -248,7 +248,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelFPS.textColor = .white
     labelVersion.textColor = .white
 
-    // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
+    // Set app version
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+      labelVersion.text = "v\(version) (\(build))"
+    }
+
     labelName.overrideUserInterfaceStyle = .dark
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark

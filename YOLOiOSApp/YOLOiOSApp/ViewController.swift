@@ -129,7 +129,6 @@ class ModelTableViewCell: UITableViewCell {
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
 
     // Fine-tune frame to enforce center alignment
-    let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
       // Center completely when no icon is present
       modelNameLabel.center.x = bounds.width / 2

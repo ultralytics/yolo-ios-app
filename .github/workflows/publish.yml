@@ -12,6 +12,10 @@ on:
         required: true
         default: 'main'
         type: string
+      new_version:
+        description: 'Version (e.g., 8.6.0) - leave empty to auto-increment'
+        required: false
+        type: string
       deploy_testflight:
         description: 'Deploy to TestFlight'
         required: true
@@ -23,7 +27,7 @@ on:
         default: false
         type: boolean
       force_push:
-        description: 'Force push (for testing)'
+        description: 'Force update (if no changes)'
         required: false
         default: false
         type: boolean
@@ -34,7 +38,7 @@ permissions:
 jobs:
   testflight: # Deploy to TestFlight by merging to testflight branch
     if: inputs.deploy_testflight
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,15 +57,43 @@ jobs:
           git checkout testflight
           git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
 
-      - name: Auto-increment build number
+      - name: Update version and build number
         run: |
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
+          PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
+          
+          # Get current versions
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
+          CURRENT_MARKETING=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST")
+          
+          # Determine new marketing version
+          if [[ -n "${{ inputs.new_version }}" ]]; then
+            NEW_MARKETING="${{ inputs.new_version }}"
+            echo "Using specified version: $NEW_MARKETING"
+          else
+            # Auto-increment patch version (8.5.9 → 8.5.10)
+            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_MARKETING"
+            MAJOR=${VERSION_PARTS[0]}
+            MINOR=${VERSION_PARTS[1]}
+            PATCH=${VERSION_PARTS[2]}
+            NEW_PATCH=$((PATCH + 1))
+            NEW_MARKETING="$MAJOR.$MINOR.$NEW_PATCH"
+            echo "Auto-incrementing version: $CURRENT_MARKETING → $NEW_MARKETING"
+          fi
+          
+          # Increment build number
           NEW_BUILD=$((CURRENT_BUILD + 1))
+          
+          # Update Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_MARKETING" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
-          echo "Build number incremented: $CURRENT_BUILD → $NEW_BUILD"
-          git add "$INFO_PLIST"
-          git commit -m "Increment build number to $NEW_BUILD for TestFlight"
+          
+          # Update project.pbxproj MARKETING_VERSION
+          sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $NEW_MARKETING/g" "$PROJECT_PLIST"
+          
+          echo "Updated to v$NEW_MARKETING ($NEW_BUILD)"
+          git add "$INFO_PLIST" "$PROJECT_PLIST"
+          git commit -m "Push v$NEW_MARKETING ($NEW_BUILD) for TestFlight"
 
       - name: Resolve Package Dependencies and Commit
         run: |

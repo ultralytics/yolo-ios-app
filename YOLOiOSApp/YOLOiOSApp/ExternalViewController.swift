@@ -263,7 +263,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             print("🟢 Creating YOLOView for external display")
             print("🟢 View bounds at creation: \(view.bounds)")
             
-            yoloView = YOLOView(frame: view.bounds)
+            // Create YOLOView with initial model (will be updated later)
+            let detectFolderURL = Bundle.main.url(forResource: "DetectModels", withExtension: nil)
+            let yolo11nURL = detectFolderURL?.appendingPathComponent("yolo11n.mlmodel")
+            let initialModelPath = yolo11nURL?.path ?? ""
+            
+            yoloView = YOLOView(frame: view.bounds, modelPathOrName: initialModelPath, task: .detect)
             yoloView?.delegate = self
             yoloView?.backgroundColor = .clear // Make YOLOView background transparent
             
@@ -476,8 +481,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         yoloView.sliderIoU.value = Float(iou)
         yoloView.sliderNumItems.value = Float(maxItems)
         
-        // Trigger the slider changed method to apply thresholds
-        yoloView.sliderChanged(yoloView.sliderConf)
+        // Update slider labels
+        yoloView.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
+        yoloView.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+        
+        // The threshold values will be applied when the next frame is processed
+        // since YOLOView reads these slider values during inference
         
         print("📊 External display thresholds updated - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
     }

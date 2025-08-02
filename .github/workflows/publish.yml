@@ -28,7 +28,7 @@ on:
         type: boolean
 
 permissions:
-  contents: write   # Push to testflight branch
+  contents: write # Push to testflight branch
 
 jobs:
   Publish:

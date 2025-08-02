@@ -86,7 +86,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         obbDetections: obbDetections,
         on: obbLayer,
         imageViewSize: self.overlayLayer.frame.size,
-        originalImageSize: result.orig_shape,  // 例
+        originalImageSize: result.orig_shape,  // Example
         lineWidth: 3
       )
     }
@@ -652,7 +652,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let labelText = " \(top1) \(confidencePercent)% "
 
     let textLayer = CATextLayer()
-    textLayer.contentsScale = UIScreen.main.scale  // Retina対応
+    textLayer.contentsScale = UIScreen.main.scale  // Retina display support
     textLayer.alignmentMode = .left
     let fontSize = self.bounds.height * 0.02
     textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
@@ -699,12 +699,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderNumItems.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderNumItems)
 
-    sliderNumItems.minimumValue = 1
-    sliderNumItems.maximumValue = 100
-    sliderNumItems.value = 30
-    sliderNumItems.minimumTrackTintColor = .white
-    sliderNumItems.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
-    sliderNumItems.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
+    configureSlider(sliderNumItems, min: 1, max: 100, value: 30)
     self.addSubview(sliderNumItems)
 
     labelSliderConf.text = "0.25 Confidence Threshold"
@@ -713,12 +708,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderConf.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderConf)
 
-    sliderConf.minimumValue = 0
-    sliderConf.maximumValue = 1
-    sliderConf.value = 0.25
-    sliderConf.minimumTrackTintColor = .white
-    sliderConf.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
-    sliderConf.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
+    configureSlider(sliderConf, min: 0, max: 1, value: 0.25)
     self.addSubview(sliderConf)
 
     labelSliderIoU.text = "0.45 IoU Threshold"
@@ -727,12 +717,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
-    sliderIoU.minimumValue = 0
-    sliderIoU.maximumValue = 1
-    sliderIoU.value = 0.45
-    sliderIoU.minimumTrackTintColor = .white
-    sliderIoU.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
-    sliderIoU.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
+    configureSlider(sliderIoU, min: 0, max: 1, value: 0.45)
     self.addSubview(sliderIoU)
 
     self.labelSliderNumItems.text = "0 items (max " + String(Int(sliderNumItems.value)) + ")"
@@ -749,210 +734,195 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
 
     playButton.setImage(UIImage(systemName: "play.fill", withConfiguration: config), for: .normal)
-    playButton.tintColor = .white
     pauseButton.setImage(UIImage(systemName: "pause.fill", withConfiguration: config), for: .normal)
-    pauseButton.tintColor = .white
     switchCameraButton = UIButton()
     switchCameraButton.setImage(
       UIImage(systemName: "camera.rotate", withConfiguration: config), for: .normal)
-    switchCameraButton.tintColor = .white
+    
     playButton.isEnabled = false
     pauseButton.isEnabled = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
     pauseButton.addTarget(self, action: #selector(pauseTapped), for: .touchUpInside)
     switchCameraButton.addTarget(self, action: #selector(switchCameraTapped), for: .touchUpInside)
-    toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    self.addSubview(toolbar)
-    toolbar.addSubview(playButton)
-    toolbar.addSubview(pauseButton)
-    toolbar.addSubview(switchCameraButton)
-
+    
+    setupToolbar()
+    
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
+  }
+  
+  /// Configure a slider with common settings
+  private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
+    slider.minimumValue = min
+    slider.maximumValue = max
+    slider.value = value
+    slider.minimumTrackTintColor = .white
+    slider.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
+    slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
+  }
+  
+  /// Setup toolbar with consistent styling
+  private func setupToolbar() {
+    toolbar.backgroundColor = .black.withAlphaComponent(0.7)
+    [playButton, pauseButton, switchCameraButton].forEach { button in
+      button.tintColor = .white
+      toolbar.addSubview(button)
+    }
+    self.addSubview(toolbar)
   }
 
   public override func layoutSubviews() {
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
+    
+    // Apply consistent toolbar styling
+    applyToolbarStyling(isLandscape: isLandscape)
+    
     if isLandscape {
-      toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-      playButton.tintColor = .white
-      pauseButton.tintColor = .white
-      switchCameraButton.tintColor = .white
-
-      let width = bounds.width
-      let height = bounds.height
-
-      let topMargin: CGFloat = 0
-
-      let titleLabelHeight: CGFloat = height * 0.1
-      labelName.frame = CGRect(
-        x: 0,
-        y: topMargin,
-        width: width,
-        height: titleLabelHeight
-      )
-
-      let subLabelHeight: CGFloat = height * 0.04
-      labelFPS.frame = CGRect(
-        x: 0,
-        y: center.y - height * 0.24 - subLabelHeight,
-        width: width,
-        height: subLabelHeight
-      )
-
-      let sliderWidth: CGFloat = width * 0.2
-      let sliderHeight: CGFloat = height * 0.1
-
-      labelSliderNumItems.frame = CGRect(
-        x: width * 0.1,
-        y: labelFPS.frame.minY - sliderHeight,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      sliderNumItems.frame = CGRect(
-        x: width * 0.1,
-        y: labelSliderNumItems.frame.maxY + 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      labelSliderConf.frame = CGRect(
-        x: width * 0.1,
-        y: sliderNumItems.frame.maxY + 10,
-        width: sliderWidth * 1.5,
-        height: sliderHeight
-      )
-
-      sliderConf.frame = CGRect(
-        x: width * 0.1,
-        y: labelSliderConf.frame.maxY + 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      labelSliderIoU.frame = CGRect(
-        x: width * 0.1,
-        y: sliderConf.frame.maxY + 10,
-        width: sliderWidth * 1.5,
-        height: sliderHeight
-      )
-
-      sliderIoU.frame = CGRect(
-        x: width * 0.1,
-        y: labelSliderIoU.frame.maxY + 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      let zoomLabelWidth: CGFloat = width * 0.2
-      labelZoom.frame = CGRect(
-        x: center.x - zoomLabelWidth / 2,
-        y: self.bounds.maxY - 120,
-        width: zoomLabelWidth,
-        height: height * 0.03
-      )
-
-      let toolBarHeight: CGFloat = 66
-      let buttonHeihgt: CGFloat = toolBarHeight * 0.75
-      toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-      playButton.frame = CGRect(x: 0, y: 0, width: buttonHeihgt, height: buttonHeihgt)
-      pauseButton.frame = CGRect(
-        x: playButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
-      switchCameraButton.frame = CGRect(
-        x: pauseButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
+      layoutLandscape()
     } else {
-      toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-      playButton.tintColor = .white
-      pauseButton.tintColor = .white
-      switchCameraButton.tintColor = .white
-
-      let width = bounds.width
-      let height = bounds.height
-
-      let topMargin: CGFloat = 0
-
-      let titleLabelHeight: CGFloat = height * 0.1
-      labelName.frame = CGRect(
-        x: 0,
-        y: topMargin,
-        width: width,
-        height: titleLabelHeight
-      )
-
-      let subLabelHeight: CGFloat = height * 0.04
-      labelFPS.frame = CGRect(
-        x: 0,
-        y: labelName.frame.maxY + 15,
-        width: width,
-        height: subLabelHeight
-      )
-
-      let sliderWidth: CGFloat = width * 0.46
-      let sliderHeight: CGFloat = height * 0.02
-
-      sliderNumItems.frame = CGRect(
-        x: width * 0.01,
-        y: center.y - sliderHeight - height * 0.24,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      labelSliderNumItems.frame = CGRect(
-        x: width * 0.01,
-        y: sliderNumItems.frame.minY - sliderHeight - 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      labelSliderConf.frame = CGRect(
-        x: width * 0.01,
-        y: center.y + height * 0.24,
-        width: sliderWidth * 1.5,
-        height: sliderHeight
-      )
-
-      sliderConf.frame = CGRect(
-        x: width * 0.01,
-        y: labelSliderConf.frame.maxY + 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      labelSliderIoU.frame = CGRect(
-        x: width * 0.01,
-        y: sliderConf.frame.maxY + 10,
-        width: sliderWidth * 1.5,
-        height: sliderHeight
-      )
-
-      sliderIoU.frame = CGRect(
-        x: width * 0.01,
-        y: labelSliderIoU.frame.maxY + 10,
-        width: sliderWidth,
-        height: sliderHeight
-      )
-
-      let zoomLabelWidth: CGFloat = width * 0.2
-      labelZoom.frame = CGRect(
-        x: center.x - zoomLabelWidth / 2,
-        y: self.bounds.maxY - 120,
-        width: zoomLabelWidth,
-        height: height * 0.03
-      )
-
-      let toolBarHeight: CGFloat = 66
-      let buttonHeihgt: CGFloat = toolBarHeight * 0.75
-      toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-      playButton.frame = CGRect(x: 0, y: 0, width: buttonHeihgt, height: buttonHeihgt)
-      pauseButton.frame = CGRect(
-        x: playButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
-      switchCameraButton.frame = CGRect(
-        x: pauseButton.frame.maxX, y: 0, width: buttonHeihgt, height: buttonHeihgt)
+      layoutPortrait()
     }
 
     self.videoCapture.previewLayer?.frame = self.bounds
+  }
+  
+  /// Apply consistent toolbar and button styling
+  private func applyToolbarStyling(isLandscape: Bool) {
+    toolbar.backgroundColor = .black.withAlphaComponent(0.7)
+    let buttonColor: UIColor = isLandscape ? .white : .white
+    [playButton, pauseButton, switchCameraButton].forEach { button in
+      button.tintColor = buttonColor
+    }
+  }
+  
+  /// Layout views for landscape orientation
+  private func layoutLandscape() {
+    let width = bounds.width
+    let height = bounds.height
+    let topMargin: CGFloat = 0
+    let titleLabelHeight: CGFloat = height * 0.1
+    
+    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
+    
+    let subLabelHeight: CGFloat = height * 0.04
+    labelFPS.frame = CGRect(
+      x: 0, y: center.y - height * 0.24 - subLabelHeight,
+      width: width, height: subLabelHeight
+    )
+    
+    let sliderWidth: CGFloat = width * 0.2
+    let sliderHeight: CGFloat = height * 0.1
+    
+    labelSliderNumItems.frame = CGRect(
+      x: width * 0.1, y: labelFPS.frame.minY - sliderHeight,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    sliderNumItems.frame = CGRect(
+      x: width * 0.1, y: labelSliderNumItems.frame.maxY + 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    labelSliderConf.frame = CGRect(
+      x: width * 0.1, y: sliderNumItems.frame.maxY + 10,
+      width: sliderWidth * 1.5, height: sliderHeight
+    )
+    
+    sliderConf.frame = CGRect(
+      x: width * 0.1, y: labelSliderConf.frame.maxY + 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    labelSliderIoU.frame = CGRect(
+      x: width * 0.1, y: sliderConf.frame.maxY + 10,
+      width: sliderWidth * 1.5, height: sliderHeight
+    )
+    
+    sliderIoU.frame = CGRect(
+      x: width * 0.1, y: labelSliderIoU.frame.maxY + 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    let zoomLabelWidth: CGFloat = width * 0.2
+    labelZoom.frame = CGRect(
+      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
+      width: zoomLabelWidth, height: height * 0.03
+    )
+    
+    layoutToolbarButtons(width: width, height: height)
+  }
+  
+  /// Layout views for portrait orientation
+  private func layoutPortrait() {
+    let width = bounds.width
+    let height = bounds.height
+    let topMargin: CGFloat = 0
+    let titleLabelHeight: CGFloat = height * 0.1
+    
+    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
+    
+    let subLabelHeight: CGFloat = height * 0.04
+    labelFPS.frame = CGRect(
+      x: 0, y: labelName.frame.maxY + 15,
+      width: width, height: subLabelHeight
+    )
+    
+    let sliderWidth: CGFloat = width * 0.46
+    let sliderHeight: CGFloat = height * 0.02
+    
+    sliderNumItems.frame = CGRect(
+      x: width * 0.01, y: center.y - sliderHeight - height * 0.24,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    labelSliderNumItems.frame = CGRect(
+      x: width * 0.01, y: sliderNumItems.frame.minY - sliderHeight - 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    labelSliderConf.frame = CGRect(
+      x: width * 0.01, y: center.y + height * 0.24,
+      width: sliderWidth * 1.5, height: sliderHeight
+    )
+    
+    sliderConf.frame = CGRect(
+      x: width * 0.01, y: labelSliderConf.frame.maxY + 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    labelSliderIoU.frame = CGRect(
+      x: width * 0.01, y: sliderConf.frame.maxY + 10,
+      width: sliderWidth * 1.5, height: sliderHeight
+    )
+    
+    sliderIoU.frame = CGRect(
+      x: width * 0.01, y: labelSliderIoU.frame.maxY + 10,
+      width: sliderWidth, height: sliderHeight
+    )
+    
+    let zoomLabelWidth: CGFloat = width * 0.2
+    labelZoom.frame = CGRect(
+      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
+      width: zoomLabelWidth, height: height * 0.03
+    )
+    
+    layoutToolbarButtons(width: width, height: height)
+  }
+  
+  /// Layout toolbar buttons (shared between orientations)
+  private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
+    let toolBarHeight: CGFloat = 66
+    let buttonHeight: CGFloat = toolBarHeight * 0.75
+    
+    toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
+    playButton.frame = CGRect(x: 0, y: 0, width: buttonHeight, height: buttonHeight)
+    pauseButton.frame = CGRect(
+      x: playButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
+    )
+    switchCameraButton.frame = CGRect(
+      x: pauseButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
+    )
   }
 
   private func setUpOrientationChangeNotification() {

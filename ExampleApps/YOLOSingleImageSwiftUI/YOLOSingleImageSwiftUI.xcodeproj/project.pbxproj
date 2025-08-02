@@ -202,7 +202,7 @@
 			mainGroup = 73B032AC2D2E5F1E0003DB69;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				731432D82D361BC300919FF7 /* XCLocalSwiftPackageReference "../../../yolo-ios-app" */,
+				731432D82D361BC300919FF7 /* XCLocalSwiftPackageReference "../../" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 73B032B62D2E5F1F0003DB69 /* Products */;
@@ -571,9 +571,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		731432D82D361BC300919FF7 /* XCLocalSwiftPackageReference "../../../yolo-ios-app" */ = {
+		731432D82D361BC300919FF7 /* XCLocalSwiftPackageReference "../../" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../yolo-ios-app";
+			relativePath = "../../";
 		};
 /* End XCLocalSwiftPackageReference section */
 

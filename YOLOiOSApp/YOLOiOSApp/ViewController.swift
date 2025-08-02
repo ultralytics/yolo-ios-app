@@ -141,6 +141,20 @@ class ModelTableViewCell: UITableViewCell {
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
+  
+  // Override supported orientations based on external display connection
+  override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+    // Use SceneDelegate's state to determine orientation support
+    if SceneDelegate.hasExternalDisplay {
+      return [.landscapeLeft, .landscapeRight]
+    } else {
+      return [.portrait, .landscapeLeft, .landscapeRight]
+    }
+  }
+  
+  override var shouldAutorotate: Bool {
+    return true
+  }
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet var View0: UIView!
@@ -154,8 +168,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   var shareButton = UIButton()
   var recordButton = UIButton()
+  var externalUIToggleButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
+  
+  // External display UI state
+  private var isExternalUIVisible = true
+  
+  // Store current loading entry for external display notification
+  private var currentLoadingEntry: ModelEntry?
 
   private let downloadProgressView: UIProgressView = {
     let pv = UIProgressView(progressViewStyle: .default)
@@ -226,14 +247,67 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    
+    // Debug: Check model folders
+    debugCheckModelFolders()
+    
+    // Setup external display notifications
+    setupExternalDisplayNotifications()
+    
+    // Check for already connected external displays
+    checkForExternalDisplays()
+    
+    // If external display is already connected, ensure YOLOView doesn't interfere
+    if UIScreen.screens.count > 1 {
+      print("External display already connected at startup - deferring camera init")
+      yoloView.isHidden = true
+    }
 
     setupTaskSegmentedControl()
     loadModelsForAllTasks()
 
+    // Initialize task selection without loading model on main display
     if tasks.indices.contains(2) {
       segmentedControl.selectedSegmentIndex = 2
       currentTask = tasks[2].name
-      reloadModelEntriesAndLoadFirst(for: currentTask)
+      
+      // Don't load model on main YOLOView if external display is connected
+      if UIScreen.screens.count == 1 {
+        // Only load model on iPhone if no external display
+        if let detectFolderURL = Bundle.main.url(forResource: "DetectModels", withExtension: nil) {
+          let yolo11nURL = detectFolderURL.appendingPathComponent("yolo11n.mlmodel")
+          if FileManager.default.fileExists(atPath: yolo11nURL.path) {
+            print("Setting initial model: yolo11n.mlmodel")
+            yoloView.setModel(modelPathOrName: yolo11nURL.path, task: .detect) { result in
+              switch result {
+              case .success():
+                print("Initial model loaded successfully")
+              case .failure(let error):
+                print("Failed to load initial model: \(error)")
+              }
+            }
+          }
+        }
+      } else {
+        // External display connected - stop main YOLOView
+        print("External display detected at startup - stopping main YOLOView")
+        yoloView.stop()
+        yoloView.isHidden = true
+        
+        // Ensure camera is fully released
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          print("Main YOLOView fully stopped, external display can now use camera")
+        }
+      }
+      
+      // Always load model list for UI
+      currentModels = makeModelEntries(for: currentTask)
+      modelTableView.reloadData()
+      
+      // Show model table view if models are available
+      if !currentModels.isEmpty {
+        modelTableView.isHidden = false
+      }
     }
 
     setupTableView()
@@ -242,16 +316,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
+    
+    // Add target to sliders to monitor changes
+    yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
+    yoloView.sliderIoU.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
+    yoloView.sliderNumItems.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
 
     // Force label text color to white
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
 
-    // Set app version
-    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-      labelVersion.text = "v\(version) (\(build))"
+    // Set app version  
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+      labelVersion.text = "v\(version)"
+      print("DEBUG: App version set to: v\(version)")
+    } else {
+      labelVersion.text = ""
+      print("DEBUG: Could not retrieve app version")
     }
 
     labelName.overrideUserInterfaceStyle = .dark
@@ -465,6 +547,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     self.modelTableView.isUserInteractionEnabled = false
 
     print("Start loading model: \(entry.displayName)")
+    print("  - displayName: \(entry.displayName)")
+    print("  - identifier: \(entry.identifier)")
+    print("  - isLocalBundle: \(entry.isLocalBundle)")
+    print("  - task: \(task)")
+    
+    // Store current entry for external display notification
+    currentLoadingEntry = entry
 
     if entry.isLocalBundle {
       DispatchQueue.global().async { [weak self] in
@@ -567,6 +656,55 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.isLoadingModel = false
 
       self.modelTableView.reloadData()
+      
+      // Notify external display of model change
+      if success {
+        // Update currentModelName
+        self.currentModelName = processString(modelName)
+        
+        let yoloTask = self.convertTaskNameToYOLOTask(self.currentTask)
+        
+        // Determine the correct model path for external display
+        var fullModelPath = ""
+        
+        // Use the stored entry from loadModel
+        if let entry = self.currentLoadingEntry {
+            if entry.isLocalBundle {
+                // For local bundle models
+                if let folderURL = self.tasks.first(where: { $0.name == self.currentTask })?.folder,
+                   let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
+                    let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+                    fullModelPath = modelURL.path
+                    print("📦 External display local model path: \(fullModelPath)")
+                }
+            } else {
+                // For remote models, use the cached path
+                let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let localModelURL = documentsDirectory
+                  .appendingPathComponent(entry.identifier)
+                  .appendingPathExtension("mlmodelc")
+                fullModelPath = localModelURL.path
+                print("☁️ External display cached model path: \(fullModelPath)")
+                
+                // Verify the cached model exists
+                if !FileManager.default.fileExists(atPath: fullModelPath) {
+                    print("❌ Cached model not found at: \(fullModelPath)")
+                    return
+                }
+            }
+        }
+        
+        // Only notify if we have a valid path
+        if !fullModelPath.isEmpty {
+            ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+            print("✅ Model loaded successfully and notified to external display: \(modelName)")
+            
+            // Also check if external display is waiting for initial model
+            self.checkAndNotifyExternalDisplayIfReady()
+        } else {
+            print("❌ Could not determine model path for external display")
+        }
+      }
 
       if let ip = self.selectedIndexPath {
         self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
@@ -643,6 +781,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     currentTask = newTask
     selectedIndexPath = nil
+    
+    // Notify external display of task change immediately
+    NotificationCenter.default.post(
+      name: .taskDidChange,
+      object: nil,
+      userInfo: ["task": newTask]
+    )
 
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
@@ -699,6 +844,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
     recordButton.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
     view.addSubview(recordButton)
+    
+    // External display UI toggle button
+    externalUIToggleButton.setImage(UIImage(systemName: "eye", withConfiguration: config), for: .normal)
+    externalUIToggleButton.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(toggleExternalDisplayUI)))
+    view.addSubview(externalUIToggleButton)
+    
+    // Initially hide the toggle button (only show when external display is connected)
+    externalUIToggleButton.isHidden = true
 
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
@@ -711,12 +865,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if view.bounds.width > view.bounds.height {
       shareButton.tintColor = .darkGray
       recordButton.tintColor = .darkGray
+      externalUIToggleButton.tintColor = .darkGray
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
     } else {
       shareButton.tintColor = .systemGray
       recordButton.tintColor = .systemGray
+      externalUIToggleButton.tintColor = .systemGray
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,
@@ -733,6 +889,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
     recordButton.frame = CGRect(
       x: shareButton.frame.minX - 49.5,
+      y: view.bounds.maxY - 66,
+      width: 49.5,
+      height: 49.5
+    )
+    externalUIToggleButton.frame = CGRect(
+      x: recordButton.frame.minX - 49.5,
       y: view.bounds.maxY - 66,
       width: 49.5,
       height: 49.5
@@ -796,6 +958,71 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
   }
+  
+  @objc func toggleExternalDisplayUI() {
+    selection.selectionChanged()
+    
+    isExternalUIVisible.toggle()
+    
+    // Update button icon
+    let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
+    let iconName = isExternalUIVisible ? "eye" : "eye.slash"
+    externalUIToggleButton.setImage(UIImage(systemName: iconName, withConfiguration: config), for: .normal)
+    
+    // Send notification to external display
+    NotificationCenter.default.post(
+      name: .externalDisplayUIToggle,
+      object: nil,
+      userInfo: ["visible": isExternalUIVisible]
+    )
+    
+    print("🟢 External display UI visibility: \(isExternalUIVisible)")
+  }
+  
+  @objc func sliderValueChanged(_ sender: UISlider) {
+    // Send threshold values to external display
+    let conf = Double(round(100 * yoloView.sliderConf.value)) / 100
+    let iou = Double(round(100 * yoloView.sliderIoU.value)) / 100
+    let maxItems = Int(yoloView.sliderNumItems.value)
+    
+    NotificationCenter.default.post(
+      name: .thresholdDidChange,
+      object: nil,
+      userInfo: [
+        "conf": conf,
+        "iou": iou,
+        "maxItems": maxItems
+      ]
+    )
+    
+    print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
+  }
+  
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+  
+  private func debugCheckModelFolders() {
+    print("\n🔍 DEBUG: Checking model folders...")
+    let folders = ["DetectModels", "SegmentModels", "ClassifyModels", "PoseModels", "OBBModels"]
+    
+    for folder in folders {
+      if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {
+        print("✅ \(folder) found at: \(folderURL.path)")
+        
+        do {
+          let files = try FileManager.default.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
+          let models = files.filter { $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage" }
+          print("   📦 Models: \(models.map { $0.lastPathComponent })")
+        } catch {
+          print("   ❌ Error reading folder: \(error)")
+        }
+      } else {
+        print("❌ \(folder) NOT FOUND in bundle")
+      }
+    }
+    print("\n")
+  }
 }
 
 // MARK: - UITableViewDataSource, UITableViewDelegate
@@ -851,13 +1078,279 @@ extension ViewController: RPPreviewViewControllerDelegate {
 // MARK: - YOLOViewDelegate
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-    labelFPS.textColor = .white
+    DispatchQueue.main.async {
+      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+      self.labelFPS.textColor = .white
+    }
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
     DispatchQueue.main.async {
+      // Share results with external display
+      ExternalDisplayManager.shared.shareResults(result)
+      
+      // Also send via notification for direct communication
+      NotificationCenter.default.post(
+        name: .yoloResultsAvailable,
+        object: nil,
+        userInfo: ["result": result]
+      )
     }
   }
 
+}
+
+// MARK: - External Display Support
+extension ViewController {
+  
+  private func setupExternalDisplayNotifications() {
+    // Listen for external display connection
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleExternalDisplayConnected(_:)),
+      name: .externalDisplayConnected,
+      object: nil
+    )
+    
+    // Listen for external display disconnection
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleExternalDisplayDisconnected(_:)),
+      name: .externalDisplayDisconnected,
+      object: nil
+    )
+    
+    // Listen for when external display is ready
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleExternalDisplayReady(_:)),
+      name: .externalDisplayReady,
+      object: nil
+    )
+  }
+  
+  @objc private func handleExternalDisplayConnected(_ notification: Notification) {
+    print("External display connected")
+    
+    // Stop camera but keep UI visible on iPhone when external display is connected
+    DispatchQueue.main.async {
+      // Stop the video capture to release camera for external display
+      self.yoloView.stop()
+      
+      // Don't hide the YOLOView - just keep it visible with controls
+      // The stop() method should have already stopped the camera feed
+      
+      self.showExternalDisplayStatus()
+      
+      // Show external display UI toggle button
+      self.externalUIToggleButton.isHidden = false
+      
+      // Make sure sliders remain visible and functional
+      self.yoloView.sliderConf.isHidden = false
+      self.yoloView.labelSliderConf.isHidden = false
+      self.yoloView.sliderIoU.isHidden = false
+      self.yoloView.labelSliderIoU.isHidden = false
+      self.yoloView.sliderNumItems.isHidden = false
+      self.yoloView.labelSliderNumItems.isHidden = false
+      
+      // Also ensure buttons are visible
+      self.yoloView.playButton.isHidden = false
+      self.yoloView.pauseButton.isHidden = false
+      self.yoloView.switchCameraButton.isHidden = false
+      
+      // Hide model table view to reduce clutter
+      self.modelTableView.isHidden = true
+      self.tableViewBGView.isHidden = true
+      
+      print("🔴 Stopped main YOLOView camera but kept controls visible")
+      
+      // Force orientation update when external display connects
+      if let windowScene = self.view.window?.windowScene {
+        if #available(iOS 16.0, *) {
+          windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
+        } else {
+          UIViewController.attemptRotationToDeviceOrientation()
+        }
+      }
+      
+      // Wait a bit before sending model info to ensure external display is ready
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Send current model to external display
+        if let entry = self.currentLoadingEntry ?? self.currentModels.first {
+          self.notifyExternalDisplayOfCurrentModel()
+        }
+        
+        // Send current threshold values
+        self.sliderValueChanged(self.yoloView.sliderConf)
+        
+        // Send current task
+        NotificationCenter.default.post(
+          name: .taskDidChange,
+          object: nil,
+          userInfo: ["task": self.currentTask]
+        )
+      }
+    }
+  }
+  
+  private func notifyExternalDisplayOfCurrentModel() {
+    // Get current model info and send to external display
+    let yoloTask = convertTaskNameToYOLOTask(currentTask)
+    
+    var fullModelPath = currentModelName
+    if let entry = currentLoadingEntry ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
+       entry.isLocalBundle,
+       let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
+        let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+        fullModelPath = modelURL.path
+    }
+    
+    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+  }
+  
+  @objc private func handleExternalDisplayDisconnected(_ notification: Notification) {
+    print("External display disconnected")
+    
+    // Show and restart YOLOView on main display when external display is disconnected
+    DispatchQueue.main.async {
+      self.yoloView.isHidden = false
+      self.hideExternalDisplayStatus()
+      
+      // Hide external display UI toggle button
+      self.externalUIToggleButton.isHidden = true
+      
+      // Show model table view again
+      self.modelTableView.isHidden = false
+      self.tableViewBGView.isHidden = false
+      
+      // Restart the main YOLOView video capture
+      self.yoloView.resume()
+      print("🟢 Restarted main YOLOView video capture")
+      
+      // Force orientation update when external display disconnects
+      if let windowScene = self.view.window?.windowScene {
+        if #available(iOS 16.0, *) {
+          windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
+        } else {
+          UIViewController.attemptRotationToDeviceOrientation()
+        }
+      }
+    }
+  }
+  
+  @objc private func handleExternalDisplayReady(_ notification: Notification) {
+    print("External display ready to receive content")
+    print("  - currentTask: \(currentTask)")
+    print("  - currentModelName: \(currentModelName)")
+    print("  - currentModels count: \(currentModels.count)")
+    
+    // Only send model if we have one loaded
+    guard !currentTask.isEmpty && !currentModels.isEmpty else {
+        print("  - No task or models loaded yet, skipping notification")
+        return
+    }
+    
+    // Share current task/model info
+    let yoloTask = convertTaskNameToYOLOTask(currentTask)
+    
+    // Get the full model path for external display
+    var fullModelPath = ""
+    
+    // Use the first model if no specific model is selected yet
+    if let currentEntry = currentModels.first(where: { processString($0.displayName) == currentModelName }) ?? currentModels.first {
+        print("  - Found model entry: \(currentEntry.displayName)")
+        
+        if currentEntry.isLocalBundle,
+           let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
+            let modelURL = folderPathURL.appendingPathComponent(currentEntry.identifier)
+            fullModelPath = modelURL.path
+            print("  - Full model path: \(fullModelPath)")
+        }
+    } else {
+        print("  - No model entry found!")
+        return
+    }
+    
+    // Only notify if we have a valid path
+    guard !fullModelPath.isEmpty else {
+        print("  - Empty model path, skipping notification")
+        return
+    }
+    
+    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+  }
+  
+  private func checkAndNotifyExternalDisplayIfReady() {
+    // Check if external display is connected and ready
+    let hasExternalDisplay = UIApplication.shared.connectedScenes
+      .compactMap({ $0 as? UIWindowScene })
+      .contains(where: { $0.screen != UIScreen.main })
+    
+    if hasExternalDisplay {
+      print("External display detected, sending current model")
+      // Wait a bit to ensure external display is fully initialized
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        self.handleExternalDisplayReady(Notification(name: .externalDisplayReady))
+      }
+    }
+  }
+  
+  private func checkForExternalDisplays() {
+    print("Checking for external displays...")
+    print("Number of screens: \(UIScreen.screens.count)")
+    
+    if UIScreen.screens.count > 1 {
+      print("External display detected!")
+      for (index, screen) in UIScreen.screens.enumerated() {
+        print("Screen \(index): \(screen)")
+        print("  Bounds: \(screen.bounds)")
+        print("  Scale: \(screen.scale)")
+        print("  Available modes: \(screen.availableModes.count)")
+        for mode in screen.availableModes {
+          print("    Mode: \(mode.size)")
+        }
+      }
+      
+      // Check if external display scene is active
+      if let windowScene = UIApplication.shared.connectedScenes
+        .compactMap({ $0 as? UIWindowScene })
+        .first(where: { $0.screen != UIScreen.main }) {
+        print("External display window scene found: \(windowScene)")
+      } else {
+        print("No external display window scene found")
+      }
+    } else {
+      print("No external display connected")
+    }
+  }
+  
+  private func showExternalDisplayStatus() {
+    // Create a label to show external display status
+    let statusLabel = UILabel()
+    statusLabel.text = "📱 Camera is shown on external display"
+    statusLabel.textColor = .white
+    statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+    statusLabel.textAlignment = .center
+    statusLabel.font = .systemFont(ofSize: 20, weight: .medium)
+    statusLabel.layer.cornerRadius = 10
+    statusLabel.layer.masksToBounds = true
+    statusLabel.tag = 9999 // Tag for later removal
+    
+    view.addSubview(statusLabel)
+    
+    statusLabel.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      statusLabel.widthAnchor.constraint(equalToConstant: 300),
+      statusLabel.heightAnchor.constraint(equalToConstant: 100)
+    ])
+  }
+  
+  private func hideExternalDisplayStatus() {
+    // Remove the status label
+    view.subviews.first(where: { $0.tag == 9999 })?.removeFromSuperview()
+  }
 }

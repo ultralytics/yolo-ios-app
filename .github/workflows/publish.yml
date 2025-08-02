@@ -30,6 +30,7 @@ permissions:
 
 jobs:
   Publish:
+    if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,11 +89,5 @@ jobs:
           git commit --allow-empty -m "v$NEW_MARKETING ($NEW_BUILD)"
 
       - name: Push to TestFlight
-        if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
         run: |
           git push origin HEAD:testflight --force-with-lease
-
-      - name: Push to App Store
-        if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
-        run: |
-          git push origin HEAD:appstore --force-with-lease

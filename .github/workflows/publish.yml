@@ -88,8 +88,8 @@ jobs:
           # Commit all changes in single commit
           git add "$INFO_PLIST" "$PROJECT_PLIST"
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit --allow-empty -m "v$NEW_MARKETING ($NEW_BUILD)"
+          git commit --allow-empty -m "Merge v$NEW_MARKETING ($NEW_BUILD) for Xcode Cloud"
 
-      - name: Push to TestFlight
+      - name: Push to Xcode Cloud
         run: |
           git push origin HEAD:testflight --force-with-lease

@@ -62,9 +62,11 @@ jobs:
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
           PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
           
-          # Get current versions
+          # Get current build number
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
-          CURRENT_MARKETING=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$INFO_PLIST")
+          
+          # Get current marketing version from project.pbxproj (not Info.plist which uses variables)
+          CURRENT_MARKETING=$(grep "MARKETING_VERSION = " "$PROJECT_PLIST" | head -1 | sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/')
           
           # Determine new marketing version
           if [[ -n "${{ inputs.new_version }}" ]]; then
@@ -84,12 +86,11 @@ jobs:
           # Increment build number
           NEW_BUILD=$((CURRENT_BUILD + 1))
           
-          # Update Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_MARKETING" "$INFO_PLIST"
+          # Update build number in Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
           
-          # Update project.pbxproj MARKETING_VERSION
-          sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $NEW_MARKETING/g" "$PROJECT_PLIST"
+          # Update MARKETING_VERSION in project.pbxproj using PlistBuddy-style replacement
+          sed -i '' "s/MARKETING_VERSION = $CURRENT_MARKETING;/MARKETING_VERSION = $NEW_MARKETING;/g" "$PROJECT_PLIST"
           
           echo "Updated to v$NEW_MARKETING ($NEW_BUILD)"
           git add "$INFO_PLIST" "$PROJECT_PLIST"

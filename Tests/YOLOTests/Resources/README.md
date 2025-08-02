@@ -23,7 +23,6 @@ The test resources follow this structure:
 ```
 Tests/YOLOTests/Resources/
 ├── README.md                      # This file
-├── download-test-models.sh
 ├── yolo11n.mlpackage/             # Detection model package
 ├── yolo11n-cls.mlpackage/         # Classification model package
 ├── yolo11n-obb.mlpackage/         # Oriented bounding box model package
@@ -35,7 +34,23 @@ Each `.mlpackage` directory should contain a complete Core ML model package with
 
 ## 📥 How to Obtain Model Files
 
-For comprehensive instructions on acquiring and placing these model files, please consult the main `Tests/YOLOTests/README.md` file located in the parent test directory. This guide provides the necessary steps for exporting models in the required format.
+### Automated Download (Recommended)
+
+The easiest way to download all required test models is using the automated download script. From the repository root directory, run:
+
+```bash
+bash scripts/download-models.sh
+```
+
+This script will:
+
+- Download all nano-sized YOLO11 models to this test resources directory
+- Copy the models to the appropriate app model directories for use in the iOS app
+- Verify model integrity after download
+
+### Manual Setup
+
+For comprehensive instructions on manually acquiring and placing these model files, please consult the main `Tests/YOLOTests/README.md` file located in the parent test directory. This guide provides the necessary steps for exporting models in the required format.
 
 ---
 

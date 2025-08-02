@@ -46,19 +46,12 @@ jobs:
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
 
-      - name: Commit Package.resolved if changed
+      - name: Commit Package.resolved
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
-          
-          # Check if Package.resolved has changes
-          if ! git diff --quiet YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved; then
-            echo "Package.resolved has changes, committing..."
-            git add YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-            git commit -m "Update Package.resolved for ${{ inputs.source_branch }}"
-          else
-            echo "Package.resolved unchanged"
-          fi
+          git add YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          git commit -m "Update Package.resolved for ${{ inputs.source_branch }}" || echo "No changes to commit"
 
       - name: Merge to testflight branch
         run: |

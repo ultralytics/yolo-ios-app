@@ -17,7 +17,6 @@ import UIKit
 /// The main application delegate, handling global app behavior and configuration.
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  var window: UIWindow?
 
   /// Called when the app finishes launching, used here to set global app settings.
   func application(
@@ -46,6 +45,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     UserDefaults.standard.synchronize()
 
     return true
+  }
+
+  // MARK: UISceneSession Lifecycle
+
+  func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+    // Determine the appropriate scene configuration based on the session role
+    if connectingSceneSession.role == .windowApplication {
+      return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    } else if connectingSceneSession.role == .windowExternalDisplay {
+      return UISceneConfiguration(name: "External Display Configuration", sessionRole: connectingSceneSession.role)
+    }
+    return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+  }
+
+  func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
+    // Called when the user discards a scene session.
   }
 }
 

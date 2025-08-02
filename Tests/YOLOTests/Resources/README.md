@@ -43,6 +43,7 @@ bash scripts/download-models.sh
 ```
 
 This script will:
+
 - Download all nano-sized YOLO11 models to this test resources directory
 - Copy the models to the appropriate app model directories for use in the iOS app
 - Verify model integrity after download

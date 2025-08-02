@@ -17,6 +17,11 @@ on:
         required: true
         default: false
         type: boolean
+      force_push:
+        description: 'Force push to testflight (for testing)'
+        required: false
+        default: false
+        type: boolean
       deploy_appstore:
         description: 'Submit to App Store'
         required: true
@@ -29,7 +34,7 @@ permissions:
 jobs:
   testflight: # Deploy to TestFlight by merging to testflight branch
     if: inputs.deploy_testflight
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,22 +46,29 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
-      - name: Resolve Package Dependencies
-        run: |
-          cd YOLOiOSApp
-          xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
-
-      - name: Commit Package.resolved
+      - name: Merge to testflight branch
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
-          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit -m "Update Package.resolved for ${{ inputs.source_branch }}" || echo "No changes to commit"
-
-      - name: Merge to testflight branch
-        run: |
           git checkout testflight
           git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
+
+      - name: Resolve Package Dependencies and Commit
+        run: |
+          cd YOLOiOSApp
+          xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
+          cd ..
+          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          git commit -m "Update Package.resolved for TestFlight build" || echo "No Package.resolved changes"
+
+      - name: Force commit if requested
+        if: inputs.force_push
+        run: |
+          echo "Force push requested - creating empty commit to trigger TestFlight build"
+          git commit --allow-empty -m "Force TestFlight build (triggered manually)"
+
+      - name: Push to testflight
+        run: |
           git push origin testflight
 
   appstore: # Submit to App Store for review

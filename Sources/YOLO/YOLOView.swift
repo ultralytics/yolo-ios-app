@@ -456,29 +456,16 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           var alpha: CGFloat = 0.9
           var bestClass = ""
 
-          switch task {
-          case .detect:
-            let prediction = predictions.boxes[i]
-            rect = CGRect(
-              x: prediction.xywhn.minX, y: 1 - prediction.xywhn.maxY, width: prediction.xywhn.width,
-              height: prediction.xywhn.height)
-            bestClass = prediction.cls
-            confidence = CGFloat(prediction.conf)
-            let colorIndex = prediction.index % ultralyticsColors.count
-            boxColor = ultralyticsColors[colorIndex]
-            label = String(format: "%@ %.1f", bestClass, confidence * 100)
-            alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-          default:
-            let prediction = predictions.boxes[i]
-            rect = prediction.xywhn
-            bestClass = prediction.cls
-            confidence = CGFloat(prediction.conf)
-            label = String(format: "%@ %.1f", bestClass, confidence * 100)
-            let colorIndex = prediction.index % ultralyticsColors.count
-            boxColor = ultralyticsColors[colorIndex]
-            alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-
-          }
+          let prediction = predictions.boxes[i]
+          rect = CGRect(
+            x: prediction.xywhn.minX, y: 1 - prediction.xywhn.maxY, width: prediction.xywhn.width,
+            height: prediction.xywhn.height)
+          bestClass = prediction.cls
+          confidence = CGFloat(prediction.conf)
+          let colorIndex = prediction.index % ultralyticsColors.count
+          boxColor = ultralyticsColors[colorIndex]
+          label = String(format: "%@ %.1f", bestClass, confidence * 100)
+          alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
           var displayRect = rect
           switch UIDevice.current.orientation {
           case .portraitUpsideDown:
@@ -506,25 +493,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           }
           if ratio >= 1 {
             let offset = (1 - ratio) * (0.5 - displayRect.minX)
-            if task == .detect {
-              let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-              displayRect = displayRect.applying(transform)
-            } else {
-              let transform = CGAffineTransform(translationX: offset, y: 0)
-              displayRect = displayRect.applying(transform)
-            }
+            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
+            displayRect = displayRect.applying(transform)
             displayRect.size.width *= ratio
           } else {
-            if task == .detect {
-              let offset = (ratio - 1) * (0.5 - displayRect.maxY)
-
-              let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-              displayRect = displayRect.applying(transform)
-            } else {
-              let offset = (ratio - 1) * (0.5 - displayRect.minY)
-              let transform = CGAffineTransform(translationX: 0, y: offset)
-              displayRect = displayRect.applying(transform)
-            }
+            let offset = (ratio - 1) * (0.5 - displayRect.maxY)
+            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
+            displayRect = displayRect.applying(transform)
             ratio = (height / width) / (3.0 / 4.0)
             displayRect.size.height /= ratio
           }
@@ -568,30 +543,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           var alpha: CGFloat = 0.9
           var bestClass = ""
 
-          switch task {
-          case .detect:
-            let prediction = predictions.boxes[i]
-            // For the detect task, invert y using "1 - maxY" as before
-            rect = CGRect(
-              x: prediction.xywhn.minX,
-              y: 1 - prediction.xywhn.maxY,
-              width: prediction.xywhn.width,
-              height: prediction.xywhn.height
-            )
-            bestClass = prediction.cls
-            confidence = CGFloat(prediction.conf)
-
-          default:
-            let prediction = predictions.boxes[i]
-            rect = CGRect(
-              x: prediction.xywhn.minX,
-              y: 1 - prediction.xywhn.maxY,
-              width: prediction.xywhn.width,
-              height: prediction.xywhn.height
-            )
-            bestClass = prediction.cls
-            confidence = CGFloat(prediction.conf)
-          }
+          let prediction = predictions.boxes[i]
+          rect = CGRect(
+            x: prediction.xywhn.minX,
+            y: 1 - prediction.xywhn.maxY,
+            width: prediction.xywhn.width,
+            height: prediction.xywhn.height
+          )
+          bestClass = prediction.cls
+          confidence = CGFloat(prediction.conf)
 
           let colorIndex = predictions.boxes[i].index % ultralyticsColors.count
           boxColor = ultralyticsColors[colorIndex]

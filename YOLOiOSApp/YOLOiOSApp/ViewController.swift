@@ -129,7 +129,6 @@ class ModelTableViewCell: UITableViewCell {
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
 
     // Fine-tune frame to enforce center alignment
-    let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
       // Center completely when no icon is present
       modelNameLabel.center.x = bounds.width / 2
@@ -216,7 +215,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
-    table.layer.cornerRadius = 5  // 他の要素のcorner radiusに合わせる
+    table.layer.cornerRadius = 5  // Match corner radius of other elements
     table.clipsToBounds = true
     return table
   }()
@@ -244,12 +243,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
 
-    // ラベルのテキスト色を白色に強制設定
+    // Force label text color to white
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
 
-    // ダークモード/ライトモードの切り替えに影響されないようにスタイル設定
+    // Set app version
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+      labelVersion.text = "v\(version) (\(build))"
+    }
+
     labelName.overrideUserInterfaceStyle = .dark
     labelFPS.overrideUserInterfaceStyle = .dark
     labelVersion.overrideUserInterfaceStyle = .dark
@@ -419,9 +423,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
       )
     }
 
+    // Get local model names for filtering
+    let localModelNames = Set(localEntries.map { $0.displayName.lowercased() })
+
     let remoteList = remoteModelsInfo[taskName] ?? []
-    let remoteEntries = remoteList.map { (modelName, url) -> ModelEntry in
-      ModelEntry(
+    let remoteEntries = remoteList.compactMap { (modelName, url) -> ModelEntry? in
+      // Only include remote models if no local model with the same name exists
+      guard !localModelNames.contains(modelName.lowercased()) else { return nil }
+      
+      return ModelEntry(
         displayName: modelName,
         identifier: modelName,
         isLocalBundle: false,
@@ -524,11 +534,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String)
-  {
-    let localModelURL = ModelCacheManager.shared.getDocumentsDirectory()
-      .appendingPathComponent(key)
-      .appendingPathExtension("mlmodelc")
+  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
+    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
 
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
@@ -573,7 +581,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.currentModelName = modelName
         DispatchQueue.main.async {
           self.labelName.text = processString(modelName)
-          // テキスト色を白色に強制設定
+          // Force text color to white
           self.labelName.textColor = .white
         }
 

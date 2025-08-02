@@ -13,149 +13,48 @@
 
 import Foundation
 
+private let baseURL = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
+
+/// Create URL for model download.
+private func modelURL(_ name: String) -> URL {
+  URL(string: "\(baseURL)/\(name).mlpackage.zip")!
+}
+
 /// A dictionary mapping task names to available remote models with their download URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = [
   "Detect": [
-    //        ("yolo11n",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip")!),
-    //        ("yolo11s",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11s.mlpackage.zip")!),
-    //        ("yolo11m",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11m.mlpackage.zip")!),
-    (
-      "yolo11l",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11l.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11x",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11x.mlpackage.zip"
-      )!
-    ),
+    ("yolo11n", modelURL("yolo11n")),
+    ("yolo11s", modelURL("yolo11s")),
+    ("yolo11m", modelURL("yolo11m")),
+    ("yolo11l", modelURL("yolo11l")),
+    ("yolo11x", modelURL("yolo11x")),
   ],
   "Segment": [
-    //        ("yolo11n-seg",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!),
-    (
-      "yolo11s-seg",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11s-seg.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11m-seg",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11m-seg.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11l-seg",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11l-seg.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11x-seg",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11x-seg.mlpackage.zip"
-      )!
-    ),
+    ("yolo11n-seg", modelURL("yolo11n-seg")),
+    ("yolo11s-seg", modelURL("yolo11s-seg")),
+    ("yolo11m-seg", modelURL("yolo11m-seg")),
+    ("yolo11l-seg", modelURL("yolo11l-seg")),
+    ("yolo11x-seg", modelURL("yolo11x-seg")),
   ],
   "Classify": [
-    //        ("yolo11n-cls", URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-clswasq5.mlpackage.zip")!),
-    (
-      "yolo11s-cls",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11s-cls.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11m-cls",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11m-cls.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11l-cls",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11l-cls.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11x-cls",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11x-cls.mlpackage.zip"
-      )!
-    ),
+    ("yolo11n-cls", modelURL("yolo11n-cls")),
+    ("yolo11s-cls", modelURL("yolo11s-cls")),
+    ("yolo11m-cls", modelURL("yolo11m-cls")),
+    ("yolo11l-cls", modelURL("yolo11l-cls")),
+    ("yolo11x-cls", modelURL("yolo11x-cls")),
   ],
   "Pose": [
-    //        ("yolo11n-pose", URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-pose.mlpackage.zip")!),
-    (
-      "yolo11s-pose",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11s-pose.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11m-pose",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11m-pose.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11l-pose",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11l-pose.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11x-pose",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11x-pose.mlpackage.zip"
-      )!
-    ),
+    ("yolo11n-pose", modelURL("yolo11n-pose")),
+    ("yolo11s-pose", modelURL("yolo11s-pose")),
+    ("yolo11m-pose", modelURL("yolo11m-pose")),
+    ("yolo11l-pose", modelURL("yolo11l-pose")),
+    ("yolo11x-pose", modelURL("yolo11x-pose")),
   ],
   "OBB": [
-    //        ("yolo11n-obb",  URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-obb.mlpackage.zip")!),
-    (
-      "yolo11s-obb",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11s-obb.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11m-obb",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11m-obb.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11l-obb",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11l-obb.mlpackage.zip"
-      )!
-    ),
-    (
-      "yolo11x-obb",
-      URL(
-        string:
-          "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11x-obb.mlpackage.zip"
-      )!
-    ),
+    ("yolo11n-obb", modelURL("yolo11n-obb")),
+    ("yolo11s-obb", modelURL("yolo11s-obb")),
+    ("yolo11m-obb", modelURL("yolo11m-obb")),
+    ("yolo11l-obb", modelURL("yolo11l-obb")),
+    ("yolo11x-obb", modelURL("yolo11x-obb")),
   ],
 ]

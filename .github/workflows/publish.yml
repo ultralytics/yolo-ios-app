@@ -54,7 +54,7 @@ jobs:
           git fetch origin
           git checkout -B testflight origin/${{ inputs.source_branch }}
 
-      - name: Update version and build number
+      - name: Update version and commit all changes
         run: |
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
           PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
@@ -78,26 +78,24 @@ jobs:
 
           NEW_BUILD=$((CURRENT_BUILD + 1))
 
+          # Update version files
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
           sed -i '' "s/MARKETING_VERSION = $CURRENT_MARKETING;/MARKETING_VERSION = $NEW_MARKETING;/g" "$PROJECT_PLIST"
 
-          echo "Updated to v$NEW_MARKETING ($NEW_BUILD)"
-          git add "$INFO_PLIST" "$PROJECT_PLIST"
-          git commit -m "Push v$NEW_MARKETING ($NEW_BUILD) for TestFlight"
-
-      - name: Resolve Package Dependencies and Commit
-        run: |
+          # Resolve package dependencies
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
-          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit -m "Update Package.resolved for TestFlight build" || echo "No Package.resolved changes"
 
-      - name: Force commit if requested
-        if: inputs.force_push
-        run: |
-          echo "Force push requested – creating empty commit to trigger TestFlight build"
-          git commit --allow-empty -m "Force TestFlight build (triggered manually)"
+          # Commit all changes in single commit
+          git add "$INFO_PLIST" "$PROJECT_PLIST"
+          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          
+          if [[ "${{ inputs.force_push }}" == "true" ]]; then
+            git commit --allow-empty -m "v$NEW_MARKETING ($NEW_BUILD)"
+          else
+            git commit -m "v$NEW_MARKETING ($NEW_BUILD)" || echo "No changes to commit"
+          fi
 
       - name: Push to TestFlight
         if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')

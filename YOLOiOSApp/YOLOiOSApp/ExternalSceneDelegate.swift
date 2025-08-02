@@ -91,9 +91,3 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = nil
     }
 }
-
-// Notification names for external display events
-extension Notification.Name {
-    static let externalDisplayConnected = Notification.Name("ExternalDisplayConnected")
-    static let externalDisplayDisconnected = Notification.Name("ExternalDisplayDisconnected")
-}

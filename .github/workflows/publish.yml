@@ -24,11 +24,6 @@ on:
         required: true
         default: false
         type: boolean
-      force_push:
-        description: 'Force update (if no changes)'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write   # Push to testflight branch
@@ -90,12 +85,7 @@ jobs:
           # Commit all changes in single commit
           git add "$INFO_PLIST" "$PROJECT_PLIST"
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          
-          if [[ "${{ inputs.force_push }}" == "true" ]]; then
-            git commit --allow-empty -m "v$NEW_MARKETING ($NEW_BUILD)"
-          else
-            git commit -m "v$NEW_MARKETING ($NEW_BUILD)" || echo "No changes to commit"
-          fi
+          git commit --allow-empty -m "v$NEW_MARKETING ($NEW_BUILD)"
 
       - name: Push to TestFlight
         if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')

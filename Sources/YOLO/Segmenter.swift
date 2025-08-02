@@ -44,11 +44,15 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         iouThreshold: Float(iouThreshold))
       var boxes: [Box] = []
       var alphas = [CGFloat]()
+      
+      let modelWidth = CGFloat(self.modelInputSize.width)
+      let modelHeight = CGFloat(self.modelInputSize.height)
 
       for p in detectedObjects {
         let box = p.0
         let rect = CGRect(
-          x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+          x: box.minX / modelWidth, y: box.minY / modelHeight, 
+          width: box.width / modelWidth, height: box.height / modelHeight)
         let confidence = p.2
         let bestClass = p.1
         let label = self.labels[bestClass]
@@ -140,10 +144,14 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         // 3. Construct bounding box information
         var boxes: [Box] = []
+        let modelWidth = CGFloat(self.modelInputSize.width)
+        let modelHeight = CGFloat(self.modelInputSize.height)
+        
         for p in detectedObjects {
           let box = p.0
           let rect = CGRect(
-            x: box.minX / 640, y: box.minY / 640, width: box.width / 640, height: box.height / 640)
+            x: box.minX / modelWidth, y: box.minY / modelHeight, 
+            width: box.width / modelWidth, height: box.height / modelHeight)
           let confidence = p.2
           let bestClass = p.1
           let label = labels[bestClass]

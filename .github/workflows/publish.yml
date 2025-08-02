@@ -53,6 +53,16 @@ jobs:
           git checkout testflight
           git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
 
+      - name: Auto-increment build number
+        run: |
+          INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
+          CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
+          NEW_BUILD=$((CURRENT_BUILD + 1))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
+          echo "Build number incremented: $CURRENT_BUILD → $NEW_BUILD"
+          git add "$INFO_PLIST"
+          git commit -m "Increment build number to $NEW_BUILD for TestFlight"
+
       - name: Resolve Package Dependencies and Commit
         run: |
           cd YOLOiOSApp

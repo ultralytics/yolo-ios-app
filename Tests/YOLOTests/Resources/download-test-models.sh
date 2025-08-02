@@ -42,9 +42,30 @@ download_model() {
   [ -f "$model_path/Manifest.json" ] && echo "✅ Model $model_name ready" || echo "⚠️ Model $model_name may be incomplete"
 }
 
+copy_to_app() {
+  local model_name=$1
+  local app_dir=$2
+  local model_path="$OUTPUT_DIR/$model_name.mlpackage"
+  local app_model_path="../../../YOLOiOSApp/$app_dir/$model_name.mlpackage"
+  
+  if [[ ! -d "$app_model_path" ]]; then
+    echo "Copying $model_name to $app_dir..."
+    mkdir -p "../../../YOLOiOSApp/$app_dir"
+    cp -r "$model_path" "$app_model_path"
+    echo "✅ $model_name copied to app"
+  fi
+}
+
 # Download and extract each model
 for model in "${MODELS[@]}"; do
   download_model "$model"
 done
+
+# Copy models to app directories
+copy_to_app "yolo11n" "DetectModels"
+copy_to_app "yolo11n-seg" "SegmentModels"
+copy_to_app "yolo11n-cls" "ClassifyModels"
+copy_to_app "yolo11n-pose" "PoseModels"
+copy_to_app "yolo11n-obb" "OBBModels"
 
 echo "All models prepared successfully!"

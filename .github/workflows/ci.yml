@@ -23,7 +23,7 @@ jobs:
       - name: Download YOLO models
         run: |
           # Make download script executable and download YOLO models
-          chmod +x scripts/download-test-models.sh && scripts/download-test-models.sh
+          chmod +x scripts/download-models.sh && scripts/download-models.sh
 
       - name: Install dependencies
         run: xcodebuild -resolvePackageDependencies

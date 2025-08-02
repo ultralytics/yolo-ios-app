@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to publish (copied to testflight)'
+        description: 'Branch to publish'
         required: true
         default: 'main'
         type: string

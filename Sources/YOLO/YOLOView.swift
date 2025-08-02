@@ -699,7 +699,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderNumItems.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderNumItems)
 
-    sliderNumItems.minimumValue = 0
+    sliderNumItems.minimumValue = 1
     sliderNumItems.maximumValue = 100
     sliderNumItems.value = 30
     sliderNumItems.minimumTrackTintColor = .white

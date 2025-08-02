@@ -34,9 +34,8 @@ permissions:
   contents: write   # Push to testflight branch
 
 jobs:
-  testflight:
-    if: inputs.deploy_testflight
-    runs-on: macos-15
+  Publish:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,24 +99,12 @@ jobs:
           echo "Force push requested – creating empty commit to trigger TestFlight build"
           git commit --allow-empty -m "Force TestFlight build (triggered manually)"
 
-      - name: Push to testflight
+      - name: Push to TestFlight
+        if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
         run: |
-          # --force-with-lease aborts if remote advanced since fetch; safer than plain --force
-          git push origin testflight --force-with-lease
+          git push origin HEAD:testflight --force-with-lease
 
-  appstore:
-    if: inputs.deploy_appstore &&
-        github.repository == 'ultralytics/yolo-ios-app' &&
-        (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Submit to App Store
+      - name: Push to App Store
+        if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
         run: |
-          echo "TODO: Implement App Store submission"
-          echo "This would typically involve:"
-          echo "- Building the app"
-          echo "- Code signing"
-          echo "- Uploading to App Store Connect"
-          echo "- Submitting for review"
+          git push origin HEAD:appstore --force-with-lease

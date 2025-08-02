@@ -16,23 +16,13 @@ on:
         description: 'Version (e.g., 8.6.0) – leave empty to auto-increment'
         required: false
         type: string
-      deploy_testflight:
-        description: 'Deploy to TestFlight'
-        required: true
-        default: false
-        type: boolean
-      deploy_appstore:
-        description: 'Submit to App Store'
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: write # Push to testflight branch
 
 jobs:
   Publish:
-    if: inputs.deploy_testflight && github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    if: github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

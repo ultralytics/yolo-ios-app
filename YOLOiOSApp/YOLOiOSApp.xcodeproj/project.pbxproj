@@ -143,7 +143,7 @@
 			);
 			mainGroup = 7BCB410E21C3096100BFC4D0;
 			packageReferences = (
-				73220ED12D373C2E00A94B92 /* XCLocalSwiftPackageReference "../../yolo-ios-app" */,
+				73220ED12D373C2E00A94B92 /* XCLocalSwiftPackageReference "../" */,
 				73D95D172D45DAA50050E640 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			productRefGroup = 7BCB411821C3096100BFC4D0 /* Products */;
@@ -411,9 +411,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		73220ED12D373C2E00A94B92 /* XCLocalSwiftPackageReference "../../yolo-ios-app" */ = {
+		73220ED12D373C2E00A94B92 /* XCLocalSwiftPackageReference "../" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../yolo-ios-app";
+			relativePath = ../;
 		};
 /* End XCLocalSwiftPackageReference section */
 

@@ -129,7 +129,6 @@ class ModelTableViewCell: UITableViewCell {
     modelNameLabel.preferredMaxLayoutWidth = availableWidth
 
     // Fine-tune frame to enforce center alignment
-    let labelFrame = modelNameLabel.frame
     if downloadIconImageView.isHidden {
       // Center completely when no icon is present
       modelNameLabel.center.x = bounds.width / 2
@@ -419,9 +418,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
       )
     }
 
+    // Get local model names for filtering
+    let localModelNames = Set(localEntries.map { $0.displayName.lowercased() })
+
     let remoteList = remoteModelsInfo[taskName] ?? []
-    let remoteEntries = remoteList.map { (modelName, url) -> ModelEntry in
-      ModelEntry(
+    let remoteEntries = remoteList.compactMap { (modelName, url) -> ModelEntry? in
+      // Only include remote models if no local model with the same name exists
+      guard !localModelNames.contains(modelName.lowercased()) else { return nil }
+      
+      return ModelEntry(
         displayName: modelName,
         identifier: modelName,
         isLocalBundle: false,
@@ -524,11 +529,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String)
-  {
-    let localModelURL = ModelCacheManager.shared.getDocumentsDirectory()
-      .appendingPathComponent(key)
-      .appendingPathExtension("mlmodelc")
+  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
+    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
 
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false

@@ -34,7 +34,7 @@ permissions:
 jobs:
   testflight: # Deploy to TestFlight by merging to testflight branch
     if: inputs.deploy_testflight
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:

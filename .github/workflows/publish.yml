@@ -17,14 +17,14 @@ on:
         required: true
         default: false
         type: boolean
-      force_push:
-        description: 'Force push to testflight (for testing)'
-        required: false
-        default: false
-        type: boolean
       deploy_appstore:
         description: 'Submit to App Store'
         required: true
+        default: false
+        type: boolean
+      force_push:
+        description: 'Force push (for testing)'
+        required: false
         default: false
         type: boolean
 

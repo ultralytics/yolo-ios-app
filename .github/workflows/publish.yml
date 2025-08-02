@@ -50,7 +50,7 @@ jobs:
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
-          git add YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           git commit -m "Update Package.resolved for ${{ inputs.source_branch }}" || echo "No changes to commit"
 
       - name: Merge to testflight branch

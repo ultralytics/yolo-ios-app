@@ -577,11 +577,3 @@ extension ExternalViewController {
         }
     }
 }
-
-// Additional notification names
-extension Notification.Name {
-    static let externalDisplayReady = Notification.Name("ExternalDisplayReady")
-    static let modelDidChange = Notification.Name("ModelDidChange")
-    static let externalDisplayUIToggle = Notification.Name("ExternalDisplayUIToggle")
-}
-

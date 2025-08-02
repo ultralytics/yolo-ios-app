@@ -400,6 +400,6 @@ func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
         attributes: nil)
     }
 
-    try archive.extract(entry, to: entryDestinationURL)
+    _ = try archive.extract(entry, to: entryDestinationURL)
   }
 }

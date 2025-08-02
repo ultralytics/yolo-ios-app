@@ -1,0 +1,60 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# This workflow publishes the YOLO iOS app to TestFlight and/or submits to App Store
+
+name: Publish iOS App
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Branch to merge into testflight'
+        required: true
+        default: 'main'
+        type: string
+      deploy_testflight:
+        description: 'Deploy to TestFlight'
+        required: true
+        default: false
+        type: boolean
+      deploy_appstore:
+        description: 'Submit to App Store'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write # Push to testflight branch
+
+jobs:
+  testflight: # Deploy to TestFlight by merging to testflight branch
+    if: inputs.deploy_testflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Merge to testflight branch
+        run: |
+          git config user.name "UltralyticsAssistant"
+          git config user.email "web@ultralytics.com"
+          git checkout testflight
+          git merge origin/${{ inputs.source_branch }} --no-ff -m "Merge ${{ inputs.source_branch }} into testflight for TestFlight deployment"
+          git push origin testflight
+
+  appstore: # Submit to App Store for review
+    if: inputs.deploy_appstore && github.repository == 'ultralytics/yolo-flutter-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Submit to App Store
+        run: |
+          echo "TODO: Implement App Store submission"
+          echo "This would typically involve:"
+          echo "- Building the app"
+          echo "- Code signing"
+          echo "- Uploading to App Store Connect"
+          echo "- Submitting for review"

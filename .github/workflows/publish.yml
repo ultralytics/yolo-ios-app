@@ -1,5 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+# This workflow publishes the YOLO iOS app to TestFlight and/or submits to App Store
+
 name: Publish iOS App
 
 on:
@@ -26,7 +28,7 @@ on:
         type: boolean
 
 permissions:
-  contents: write   # Push to testflight branch
+  contents: write # Push to testflight branch
 
 jobs:
   Publish:

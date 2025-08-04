@@ -1,0 +1,127 @@
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+import XCTest
+import Vision
+import CoreML
+@testable import YOLO
+
+/// Minimal tests for PoseEstimator functionality
+class PoseEstimatorTests: XCTestCase {
+    
+    func testPoseEstimatorInitialization() {
+        // Test PoseEstimator initialization inherits from BasePredictor
+        let poseEstimator = PoseEstimator()
+        
+        XCTAssertFalse(poseEstimator.isModelLoaded)
+        XCTAssertEqual(poseEstimator.labels.count, 0)
+        XCTAssertEqual(poseEstimator.confidenceThreshold, 0.25, accuracy: 0.001)
+        XCTAssertEqual(poseEstimator.iouThreshold, 0.4, accuracy: 0.001)
+        XCTAssertEqual(poseEstimator.numItemsThreshold, 30)
+        XCTAssertFalse(poseEstimator.isUpdating)
+    }
+    
+    func testPoseEstimatorPredictOnImageWithoutModel() {
+        // Test predictOnImage without loaded model returns empty result
+        let poseEstimator = PoseEstimator()
+        poseEstimator.labels = ["person"]
+        
+        let image = CIImage(color: .yellow).cropped(to: CGRect(x: 0, y: 0, width: 640, height: 640))
+        let result = poseEstimator.predictOnImage(image: image)
+        
+        XCTAssertEqual(result.boxes.count, 0)
+        XCTAssertNil(result.probs)
+        XCTAssertNil(result.masks)
+        XCTAssertEqual(result.keypointsList.count, 0)
+        XCTAssertEqual(result.names, ["person"])
+        XCTAssertEqual(result.orig_shape.width, 640)
+        XCTAssertEqual(result.orig_shape.height, 640)
+    }
+    
+    func testPoseEstimatorProcessObservationsWithoutModel() {
+        // Test processObservations without crashing
+        let poseEstimator = PoseEstimator()
+        poseEstimator.labels = ["person"]
+        poseEstimator.inputSize = CGSize(width: 640, height: 480)
+        
+        let mockRequest = MockVNRequest()
+        
+        // Should not crash
+        poseEstimator.processObservations(for: mockRequest, error: nil)
+        poseEstimator.processObservations(for: mockRequest, error: NSError(domain: "test", code: 1))
+    }
+    
+    func testPoseEstimatorLabelsAssignment() {
+        // Test labels can be assigned and retrieved
+        let poseEstimator = PoseEstimator()
+        let testLabels = ["person"]
+        
+        poseEstimator.labels = testLabels
+        XCTAssertEqual(poseEstimator.labels, testLabels)
+        XCTAssertEqual(poseEstimator.labels.count, 1)
+    }
+    
+    func testPoseEstimatorInputSize() {
+        // Test input size can be set and retrieved
+        let poseEstimator = PoseEstimator()
+        let testSize = CGSize(width: 640, height: 480)
+        
+        poseEstimator.inputSize = testSize
+        XCTAssertEqual(poseEstimator.inputSize, testSize)
+    }
+    
+    func testPoseEstimatorTimingProperties() {
+        // Test timing properties are properly initialized
+        let poseEstimator = PoseEstimator()
+        
+        XCTAssertEqual(poseEstimator.t0, 0.0, accuracy: 0.001)
+        XCTAssertEqual(poseEstimator.t1, 0.0, accuracy: 0.001)
+        XCTAssertEqual(poseEstimator.t2, 0.0, accuracy: 0.001)
+        XCTAssertEqual(poseEstimator.t4, 0.0, accuracy: 0.001)
+        XCTAssertGreaterThan(poseEstimator.t3, 0)
+    }
+    
+    func testPoseEstimatorIsInstanceOfBasePredictor() {
+        // Test PoseEstimator is instance of BasePredictor
+        let poseEstimator = PoseEstimator()
+        
+        XCTAssertNotNil(poseEstimator, "PoseEstimator should not be nil")
+        XCTAssertTrue(type(of: poseEstimator) == PoseEstimator.self, "Should be PoseEstimator type")
+    }
+    
+    func testPoseEstimatorResultStructure() {
+        // Test PoseEstimator result has correct structure
+        let poseEstimator = PoseEstimator()
+        poseEstimator.labels = ["person"]
+        
+        let image = CIImage(color: CIColor(red: 0.5, green: 0.0, blue: 0.5, alpha: 1.0)).cropped(to: CGRect(x: 0, y: 0, width: 416, height: 416))
+        let result = poseEstimator.predictOnImage(image: image)
+        
+        XCTAssertNotNil(result.boxes)
+        XCTAssertNil(result.probs) // Pose doesn't use probs
+        XCTAssertNil(result.masks) // Pose doesn't use masks
+        XCTAssertNotNil(result.keypointsList) // Pose uses keypoints
+        XCTAssertEqual(result.obb.count, 0) // Pose doesn't use OBB
+        XCTAssertEqual(result.names, ["person"])
+    }
+    
+    func testPoseEstimatorColorsForMaskProperty() {
+        // Test colorsForMask property exists and can be modified
+        let poseEstimator = PoseEstimator()
+        
+        XCTAssertEqual(poseEstimator.colorsForMask.count, 0)
+        
+        poseEstimator.colorsForMask = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+        XCTAssertEqual(poseEstimator.colorsForMask.count, 3)
+        XCTAssertEqual(poseEstimator.colorsForMask[0].red, 255)
+        XCTAssertEqual(poseEstimator.colorsForMask[1].green, 255)
+        XCTAssertEqual(poseEstimator.colorsForMask[2].blue, 255)
+    }
+    
+    func testPoseEstimatorModelInputSize() {
+        // Test model input size properties
+        let poseEstimator = PoseEstimator()
+        
+        XCTAssertEqual(poseEstimator.modelInputSize.width, 0)
+        XCTAssertEqual(poseEstimator.modelInputSize.height, 0)
+    }
+}

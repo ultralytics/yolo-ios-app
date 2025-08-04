@@ -90,20 +90,20 @@ class VideoCapture: NSObject, @unchecked Sendable {
     if captureSession.canAddInput(videoInput!) {
       captureSession.addInput(videoInput!)
     }
-    var videoOrientaion = AVCaptureVideoOrientation.portrait
+    var videoOrientation = AVCaptureVideoOrientation.portrait
     switch orientation {
     case .portrait:
-      videoOrientaion = .portrait
+      videoOrientation = .portrait
     case .landscapeLeft:
-      videoOrientaion = .landscapeRight
+      videoOrientation = .landscapeRight
     case .landscapeRight:
-      videoOrientaion = .landscapeLeft
+      videoOrientation = .landscapeLeft
     default:
-      videoOrientaion = .portrait
+      videoOrientation = .portrait
     }
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
     previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-    previewLayer.connection?.videoOrientation = videoOrientaion
+    previewLayer.connection?.videoOrientation = videoOrientation
     self.previewLayer = previewLayer
 
     let settings: [String: Any] = [
@@ -126,7 +126,7 @@ class VideoCapture: NSObject, @unchecked Sendable {
     // rotated by 90 degrees. Need to set this _after_ addOutput()!
     // let curDeviceOrientation = UIDevice.current.orientation
     let connection = videoOutput.connection(with: AVMediaType.video)
-    connection?.videoOrientation = videoOrientaion
+    connection?.videoOrientation = videoOrientation
     if position == .front {
       connection?.isVideoMirrored = true
     }

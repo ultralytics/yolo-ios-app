@@ -104,7 +104,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 - **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [image classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Choose from a range of pre-loaded Ultralytics YOLO11 models, from the lightweight YOLO11n ('nano') optimized for edge devices to the powerful YOLO11x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://docs.ultralytics.com/hub/quickstart/) trained on your own data after exporting them to the CoreML format.
+- **Multiple AI Models:** Choose from a range of preloaded Ultralytics YOLO11 models, from the lightweight YOLO11n ('nano') optimized for edge devices to the powerful YOLO11x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://docs.ultralytics.com/hub/quickstart/) trained on your own data after exporting them to the CoreML format.
 
 ## 🧪 Testing
 

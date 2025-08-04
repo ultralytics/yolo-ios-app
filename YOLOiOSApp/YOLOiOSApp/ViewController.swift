@@ -1232,8 +1232,22 @@ extension ViewController {
       if let windowScene = self.view.window?.windowScene {
         if #available(iOS 16.0, *) {
           windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
+          // Force immediate orientation update
+          self.setNeedsUpdateOfSupportedInterfaceOrientations()
+          
+          // If currently in landscape, try to rotate to portrait
+          if UIDevice.current.orientation.isLandscape {
+            let value = UIInterfaceOrientation.portrait.rawValue
+            UIDevice.current.setValue(value, forKey: "orientation")
+          }
         } else {
           UIViewController.attemptRotationToDeviceOrientation()
+          
+          // For older iOS versions, force rotation
+          if UIDevice.current.orientation.isLandscape {
+            let value = UIInterfaceOrientation.portrait.rawValue
+            UIDevice.current.setValue(value, forKey: "orientation")
+          }
         }
       }
     }

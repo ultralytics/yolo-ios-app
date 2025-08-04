@@ -134,7 +134,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         
         // Logo ImageView - bottom right corner, smaller
         logoImageView = UIImageView()
-        logoImageView.image = UIImage(named: "ultralytics_yolo_logo")
+        logoImageView.image = UIImage(named: "ultralytics_yolo_logotype")
         logoImageView.contentMode = .scaleAspectFit
         logoImageView.alpha = 1.0 // Fully opaque
         logoImageView.isUserInteractionEnabled = false // Allow touches to pass through
@@ -220,6 +220,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         yoloView.pauseButton.isHidden = true
         yoloView.switchCameraButton.isHidden = true
         yoloView.toolbar.isHidden = true
+        yoloView.toolbar.removeFromSuperview()
         
         print("🟢 YOLOView controls hidden and sliders removed from view hierarchy")
         

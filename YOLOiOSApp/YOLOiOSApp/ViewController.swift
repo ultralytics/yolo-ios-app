@@ -172,7 +172,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var firstLoad = true
   
   // Store current loading entry for external display notification
-  private var currentLoadingEntry: ModelEntry?
+  var currentLoadingEntry: ModelEntry?
 
   private let downloadProgressView: UIProgressView = {
     let pv = UIProgressView(progressViewStyle: .default)
@@ -212,7 +212,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.isUserInteractionEnabled = true
   }
 
-  private let tasks: [(name: String, folder: String)] = [
+  let tasks: [(name: String, folder: String)] = [
     ("Classify", "ClassifyModels"),  // index 0
     ("Segment", "SegmentModels"),  // index 1
     ("Detect", "DetectModels"),  // index 2
@@ -222,14 +222,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private var modelsForTask: [String: [String]] = [:]
 
-  private var currentModels: [ModelEntry] = []
+  var currentModels: [ModelEntry] = []
 
-  private var currentTask: String = ""
-  private var currentModelName: String = ""
+  var currentTask: String = ""
+  var currentModelName: String = ""
 
   private var isLoadingModel = false
 
-  private let modelTableView: UITableView = {
+  let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
     table.layer.cornerRadius = 5  // Match corner radius of other elements
@@ -237,9 +237,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     return table
   }()
 
-  private let tableViewBGView = UIView()
+  let tableViewBGView = UIView()
 
-  private var selectedIndexPath: IndexPath?
+  var selectedIndexPath: IndexPath?
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -507,7 +507,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     return localEntries + remoteEntries
   }
 
-  private func loadModel(entry: ModelEntry, forTask task: String) {
+  func loadModel(entry: ModelEntry, forTask task: String) {
     guard !isLoadingModel else {
       print("Model is already loading. Please wait.")
       return
@@ -718,7 +718,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
+  func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
     switch task {
     case "Detect": return .detect
     case "Segment": return .segment

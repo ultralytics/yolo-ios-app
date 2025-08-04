@@ -1137,6 +1137,9 @@ extension ViewController {
       // Stop the video capture to release camera for external display
       self.yoloView.stop()
       
+      // Disable inference on main display
+      self.yoloView.setInferenceFlag(ok: false)
+      
       // Don't hide the YOLOView - just keep it visible with controls
       // The stop() method should have already stopped the camera feed
       
@@ -1227,6 +1230,9 @@ extension ViewController {
       // Restart the main YOLOView video capture
       self.yoloView.resume()
       print("🟢 Restarted main YOLOView video capture")
+      
+      // Re-enable inference flag to restart detection
+      self.yoloView.setInferenceFlag(ok: true)
       
       // Force orientation update when external display disconnects
       if let windowScene = self.view.window?.windowScene {

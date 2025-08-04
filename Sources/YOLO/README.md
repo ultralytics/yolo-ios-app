@@ -219,7 +219,7 @@ class CameraViewController: UIViewController {
                         cameraPosition: .back       // Use the back camera
                         // Optional confidenceThreshold parameter can be added here
                     )
-                    
+
                     // Alternative: Initialize with remote URL
                     // let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!
                     // self.yoloView = YOLOView(

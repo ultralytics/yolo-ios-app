@@ -54,9 +54,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         if let windowScene = window?.windowScene {
             if #available(iOS 16.0, *) {
                 windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: supportedInterfaceOrientations))
+                
+                // Also force the view controller to update its orientation
+                if let rootVC = window?.rootViewController {
+                    rootVC.setNeedsUpdateOfSupportedInterfaceOrientations()
+                }
             } else {
                 // For older iOS versions, we need to trigger orientation update
                 UIViewController.attemptRotationToDeviceOrientation()
+                
+                // Force the view to layout again
+                if let rootVC = window?.rootViewController {
+                    rootVC.view.setNeedsLayout()
+                    rootVC.view.layoutIfNeeded()
+                }
             }
         }
     }

@@ -152,6 +152,19 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     start(position: .back)
     setupOverlayLayer()
   }
+  
+  /// Initialize YOLOView without a model (camera only)
+  public override init(frame: CGRect) {
+    self.videoCapture = VideoCapture()
+    self.task = .detect  // Default task
+    super.init(frame: frame)
+    setUpOrientationChangeNotification()
+    self.setUpBoundingBoxViews()
+    self.setupUI()
+    self.videoCapture.delegate = self
+    start(position: .back)
+    setupOverlayLayer()
+  }
 
   required init?(coder: NSCoder) {
     self.videoCapture = VideoCapture()
@@ -175,6 +188,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     task: YOLOTask,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    // If modelPathOrName is empty, it means no model was provided yet
+    if modelPathOrName.isEmpty {
+      self.activityIndicator.stopAnimating()
+      completion?(.failure(PredictorError.modelFileNotFound))
+      return
+    }
+    
     activityIndicator.startAnimating()
     boundingBoxViews.forEach { box in
       box.hide()

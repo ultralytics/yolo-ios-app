@@ -263,12 +263,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             print("🟢 Creating YOLOView for external display")
             print("🟢 View bounds at creation: \(view.bounds)")
             
-            // Create YOLOView with initial model (will be updated later)
-            let detectFolderURL = Bundle.main.url(forResource: "DetectModels", withExtension: nil)
-            let yolo11nURL = detectFolderURL?.appendingPathComponent("yolo11n.mlmodel")
-            let initialModelPath = yolo11nURL?.path ?? ""
-            
-            yoloView = YOLOView(frame: view.bounds, modelPathOrName: initialModelPath, task: .detect)
+            // Create YOLOView without model initially - will be set when main app notifies
+            yoloView = YOLOView(frame: view.bounds)
             yoloView?.delegate = self
             yoloView?.backgroundColor = .clear // Make YOLOView background transparent
             

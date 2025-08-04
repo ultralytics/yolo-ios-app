@@ -1158,9 +1158,9 @@ extension ViewController {
       self.yoloView.pauseButton.isHidden = false
       self.yoloView.switchCameraButton.isHidden = false
       
-      // Hide model table view to reduce clutter
-      self.modelTableView.isHidden = true
-      self.tableViewBGView.isHidden = true
+      // Keep model table view visible for model selection
+      self.modelTableView.isHidden = false
+      self.tableViewBGView.isHidden = false
       
       print("🔴 Stopped main YOLOView camera but kept controls visible")
       
@@ -1329,11 +1329,12 @@ extension ViewController {
   private func showExternalDisplayStatus() {
     // Create a label to show external display status
     let statusLabel = UILabel()
-    statusLabel.text = "📱 Camera is shown on external display"
+    statusLabel.text = "📱 Camera is shown on external display\n🔄 Please use landscape orientation"
     statusLabel.textColor = .white
     statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
     statusLabel.textAlignment = .center
-    statusLabel.font = .systemFont(ofSize: 20, weight: .medium)
+    statusLabel.font = .systemFont(ofSize: 18, weight: .medium)
+    statusLabel.numberOfLines = 2
     statusLabel.layer.cornerRadius = 10
     statusLabel.layer.masksToBounds = true
     statusLabel.tag = 9999 // Tag for later removal
@@ -1344,7 +1345,7 @@ extension ViewController {
     NSLayoutConstraint.activate([
       statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-      statusLabel.widthAnchor.constraint(equalToConstant: 300),
+      statusLabel.widthAnchor.constraint(equalToConstant: 280),
       statusLabel.heightAnchor.constraint(equalToConstant: 100)
     ])
   }

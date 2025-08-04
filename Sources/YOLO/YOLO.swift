@@ -82,7 +82,7 @@ public class YOLO {
       }
 
     case .pose:
-      PoseEstimater.create(unwrappedModelURL: unwrappedModelURL) { result in
+      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL) { result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor: predictor)

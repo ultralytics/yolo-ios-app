@@ -23,6 +23,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 - ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
 - ✅ **Multiple Task Support**: Handles Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
+- ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
 - ✅ **Lightweight & Extensible**: Installs quickly via [Swift Package Manager](https://www.swift.org/package-manager/) with no external dependencies beyond Apple's frameworks.
 
 ## 📋 Requirements
@@ -108,6 +109,12 @@ guard let model = try? YOLO(modelFileName: "yolo11n", task: .detect) else {
 //     fatalError("Failed to load YOLO model.")
 // }
 
+// Or initialize with a remote URL (model will be downloaded and cached automatically)
+// let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
+// guard let model = try? YOLO(url: modelURL, task: .detect) else {
+//     fatalError("Failed to load YOLO model from URL.")
+// }
+
 // --- Inference ---
 // Load an image (replace with your image loading logic)
 guard let image = UIImage(named: "your_image_name") else { // Or load CGImage, CIImage
@@ -169,6 +176,18 @@ struct CameraView: View {
         }
     }
 }
+
+// Alternative: Initialize with remote URL
+struct CameraViewWithURL: View {
+    var body: some View {
+        YOLOCamera(
+            url: URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!,
+            task: .segment,
+            cameraPosition: .back
+        )
+        .edgesIgnoringSafeArea(.all)
+    }
+}
 ```
 
 #### UIKit Example
@@ -200,6 +219,15 @@ class CameraViewController: UIViewController {
                         cameraPosition: .back       // Use the back camera
                         // Optional confidenceThreshold parameter can be added here
                     )
+                    
+                    // Alternative: Initialize with remote URL
+                    // let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!
+                    // self.yoloView = YOLOView(
+                    //     frame: self.view.bounds,
+                    //     url: modelURL,
+                    //     task: .segment,
+                    //     cameraPosition: .back
+                    // )
                     // Handle potential initialization errors
                     if let yoloView = self.yoloView {
                         yoloView.autoresizingMask = [.flexibleWidth, .flexibleHeight]

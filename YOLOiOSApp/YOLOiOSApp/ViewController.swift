@@ -267,42 +267,28 @@ class ViewController: UIViewController, YOLOViewDelegate {
       segmentedControl.selectedSegmentIndex = 2
       currentTask = tasks[2].name
       
-      // Don't load model on main YOLOView if external display is connected
+      // Load models and auto-select first one if no external display
       if UIScreen.screens.count == 1 {
-        // Only load model on iPhone if no external display
-        if let detectFolderURL = Bundle.main.url(forResource: "DetectModels", withExtension: nil) {
-          let yolo11nURL = detectFolderURL.appendingPathComponent("yolo11n.mlmodel")
-          if FileManager.default.fileExists(atPath: yolo11nURL.path) {
-            print("Setting initial model: yolo11n.mlmodel")
-            yoloView.setModel(modelPathOrName: yolo11nURL.path, task: .detect) { result in
-              switch result {
-              case .success():
-                print("Initial model loaded successfully")
-              case .failure(let error):
-                print("Failed to load initial model: \(error)")
-              }
-            }
-          }
-        }
+        // No external display - load model and start inference
+        reloadModelEntriesAndLoadFirst(for: currentTask)
       } else {
         // External display connected - stop main YOLOView
         print("External display detected at startup - stopping main YOLOView")
         yoloView.stop()
         yoloView.isHidden = true
         
+        // Load model list for UI but don't auto-select
+        currentModels = makeModelEntries(for: currentTask)
+        modelTableView.reloadData()
+        
+        if !currentModels.isEmpty {
+          modelTableView.isHidden = false
+        }
+        
         // Ensure camera is fully released
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
           print("Main YOLOView fully stopped, external display can now use camera")
         }
-      }
-      
-      // Always load model list for UI
-      currentModels = makeModelEntries(for: currentTask)
-      modelTableView.reloadData()
-      
-      // Show model table view if models are available
-      if !currentModels.isEmpty {
-        modelTableView.isHidden = false
       }
     }
 
@@ -1186,6 +1172,16 @@ extension ViewController {
       
       // Re-enable inference flag to restart detection
       self.yoloView.setInferenceFlag(ok: true)
+      
+      // If no model is currently selected, auto-select the first one
+      if self.selectedIndexPath == nil && !self.currentModels.isEmpty {
+        print("🟢 Auto-selecting first model after external display disconnection")
+        let firstIndex = IndexPath(row: 0, section: 0)
+        self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
+        self.selectedIndexPath = firstIndex
+        let firstModel = self.currentModels[0]
+        self.loadModel(entry: firstModel, forTask: self.currentTask)
+      }
       
       // Force orientation update when external display disconnects
       if let windowScene = self.view.window?.windowScene {

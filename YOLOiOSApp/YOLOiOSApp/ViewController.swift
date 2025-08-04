@@ -845,11 +845,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
     view.addSubview(recordButton)
     
-    // External display UI toggle button
-    externalUIToggleButton.setImage(UIImage(systemName: "eye", withConfiguration: config), for: .normal)
-    externalUIToggleButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(toggleExternalDisplayUI)))
-    view.addSubview(externalUIToggleButton)
+    // External display UI toggle button - currently not used
+    // externalUIToggleButton.setImage(UIImage(systemName: "eye", withConfiguration: config), for: .normal)
+    // externalUIToggleButton.addGestureRecognizer(
+    //   UITapGestureRecognizer(target: self, action: #selector(toggleExternalDisplayUI)))
+    // view.addSubview(externalUIToggleButton)
     
     // Initially hide the toggle button (only show when external display is connected)
     externalUIToggleButton.isHidden = true
@@ -1146,7 +1146,7 @@ extension ViewController {
       self.showExternalDisplayStatus()
       
       // Show external display UI toggle button
-      self.externalUIToggleButton.isHidden = false
+      // self.externalUIToggleButton.isHidden = false  // Commented out - not needed
       
       // Make sure sliders remain visible and functional
       self.yoloView.sliderConf.isHidden = false
@@ -1221,7 +1221,7 @@ extension ViewController {
       self.hideExternalDisplayStatus()
       
       // Hide external display UI toggle button
-      self.externalUIToggleButton.isHidden = true
+      // self.externalUIToggleButton.isHidden = true  // Already hidden by default
       
       // Show model table view again
       self.modelTableView.isHidden = false

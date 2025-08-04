@@ -168,12 +168,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   var shareButton = UIButton()
   var recordButton = UIButton()
-  var externalUIToggleButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
-  
-  // External display UI state
-  private var isExternalUIVisible = true
   
   // Store current loading entry for external display notification
   private var currentLoadingEntry: ModelEntry?
@@ -844,15 +840,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     recordButton.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
     view.addSubview(recordButton)
-    
-    // External display UI toggle button - currently not used
-    // externalUIToggleButton.setImage(UIImage(systemName: "eye", withConfiguration: config), for: .normal)
-    // externalUIToggleButton.addGestureRecognizer(
-    //   UITapGestureRecognizer(target: self, action: #selector(toggleExternalDisplayUI)))
-    // view.addSubview(externalUIToggleButton)
-    
-    // Initially hide the toggle button (only show when external display is connected)
-    externalUIToggleButton.isHidden = true
 
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
@@ -865,14 +852,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if view.bounds.width > view.bounds.height {
       shareButton.tintColor = .darkGray
       recordButton.tintColor = .darkGray
-      externalUIToggleButton.tintColor = .darkGray
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
     } else {
       shareButton.tintColor = .systemGray
       recordButton.tintColor = .systemGray
-      externalUIToggleButton.tintColor = .systemGray
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,
@@ -889,12 +874,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
     recordButton.frame = CGRect(
       x: shareButton.frame.minX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
-    externalUIToggleButton.frame = CGRect(
-      x: recordButton.frame.minX - 49.5,
       y: view.bounds.maxY - 66,
       width: 49.5,
       height: 49.5
@@ -957,26 +936,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
     }
-  }
-  
-  @objc func toggleExternalDisplayUI() {
-    selection.selectionChanged()
-    
-    isExternalUIVisible.toggle()
-    
-    // Update button icon
-    let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-    let iconName = isExternalUIVisible ? "eye" : "eye.slash"
-    externalUIToggleButton.setImage(UIImage(systemName: iconName, withConfiguration: config), for: .normal)
-    
-    // Send notification to external display
-    NotificationCenter.default.post(
-      name: .externalDisplayUIToggle,
-      object: nil,
-      userInfo: ["visible": isExternalUIVisible]
-    )
-    
-    print("🟢 External display UI visibility: \(isExternalUIVisible)")
   }
   
   @objc func sliderValueChanged(_ sender: UISlider) {
@@ -1145,9 +1104,6 @@ extension ViewController {
       
       self.showExternalDisplayStatus()
       
-      // Show external display UI toggle button
-      // self.externalUIToggleButton.isHidden = false  // Commented out - not needed
-      
       // Make sure sliders remain visible and functional
       self.yoloView.sliderConf.isHidden = false
       self.yoloView.labelSliderConf.isHidden = false
@@ -1219,9 +1175,6 @@ extension ViewController {
     DispatchQueue.main.async {
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
-      
-      // Hide external display UI toggle button
-      // self.externalUIToggleButton.isHidden = true  // Already hidden by default
       
       // Show model table view again
       self.modelTableView.isHidden = false

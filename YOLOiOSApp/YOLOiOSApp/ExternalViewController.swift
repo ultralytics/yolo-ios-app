@@ -18,9 +18,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     private var segmentedControl: UISegmentedControl!
     private var logoImageView: UIImageView!
     
-    // UI visibility state (controlled by iPhone)
-    private var isUIVisible = true
-    
     // Task info
     private let tasks: [(name: String, value: YOLOTask)] = [
         ("Classify", .classify),
@@ -235,21 +232,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         }
     }
     
-    private func toggleUIVisibility(_ visible: Bool) {
-        isUIVisible = visible
-        
-        DispatchQueue.main.async {
-            self.labelName.isHidden = !visible
-            self.labelFPS.isHidden = !visible
-            // segmentedControl is always hidden
-            // Logo remains visible regardless of UI visibility toggle
-            
-            print("🟢 External display UI visibility: \(visible)")
-        }
-    }
-    
-    
-    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
@@ -362,14 +344,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
             object: nil
         )
         
-        // Listen for UI visibility toggle from iPhone
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleUIVisibilityToggle(_:)),
-            name: .externalDisplayUIToggle,
-            object: nil
-        )
-        
         // Listen for threshold changes from iPhone
         NotificationCenter.default.addObserver(
             self,
@@ -452,16 +426,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                 print("🔴 Failed to update external display model: \(error)")
             }
         }
-    }
-    
-    @objc private func handleUIVisibilityToggle(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let visible = userInfo["visible"] as? Bool else {
-            return
-        }
-        
-        print("🟢 External display UI visibility toggle: \(visible)")
-        toggleUIVisibility(visible)
     }
     
     @objc private func handleThresholdChange(_ notification: Notification) {

@@ -1346,7 +1346,7 @@ extension ViewController {
       statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       statusLabel.widthAnchor.constraint(equalToConstant: 280),
-      statusLabel.heightAnchor.constraint(equalToConstant: 100)
+      statusLabel.heightAnchor.constraint(equalToConstant: 120)
     ])
   }
   

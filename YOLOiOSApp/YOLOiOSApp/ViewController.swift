@@ -1348,7 +1348,9 @@ extension ViewController {
     statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
     statusLabel.textAlignment = .center
     statusLabel.font = .systemFont(ofSize: 18, weight: .medium)
-    statusLabel.numberOfLines = 2
+    statusLabel.numberOfLines = 0  // Allow unlimited lines
+    statusLabel.adjustsFontSizeToFitWidth = true
+    statusLabel.minimumScaleFactor = 0.8
     statusLabel.layer.cornerRadius = 10
     statusLabel.layer.masksToBounds = true
     statusLabel.tag = 9999 // Tag for later removal
@@ -1360,7 +1362,7 @@ extension ViewController {
       statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       statusLabel.widthAnchor.constraint(equalToConstant: 280),
-      statusLabel.heightAnchor.constraint(equalToConstant: 120)
+      statusLabel.heightAnchor.constraint(equalToConstant: 140)
     ])
   }
   

@@ -149,7 +149,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var labelFPS: UILabel!
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var forcus: UIImageView!
+  @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var logoImage: UIImageView!
 
   var shareButton = UIButton()

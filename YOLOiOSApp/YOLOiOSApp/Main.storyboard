@@ -21,7 +21,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </view>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="LabelTime">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="Label Time">
                                 <rect key="frame" x="175.66666666666666" y="191" width="42" height="20"/>
                                 <accessibility key="accessibilityConfiguration">
                                     <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
@@ -103,7 +103,7 @@
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
                         <outlet property="activityIndicator" destination="lOR-xu-27i" id="RHs-yl-MIU"/>
-                        <outlet property="forcus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
+                        <outlet property="focus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelVersion" destination="OCe-bb-RWv" id="MoL-rU-F2n"/>

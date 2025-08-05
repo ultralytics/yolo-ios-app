@@ -135,7 +135,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var logoImage: UIImageView!
 
-  var shareButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
 
@@ -219,7 +218,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupTableView()
-    setupButtons()
+    
+    // Setup logo tap gesture
+    logoImage.isUserInteractionEnabled = true
+    logoImage.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(logoButton)))
+    
+    // Setup share button
+    yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
@@ -669,25 +675,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
   }
 
-  private func setupButtons() {
-    let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-    shareButton.setImage(
-      UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
-    shareButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
-    view.addSubview(shareButton)
 
-    logoImage.isUserInteractionEnabled = true
-    logoImage.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-  }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
     if view.bounds.width > view.bounds.height {
       // Landscape mode
-      shareButton.tintColor = .darkGray
       focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
@@ -695,7 +689,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       
     } else {
       // Portrait mode
-      shareButton.tintColor = .systemGray
       focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
@@ -704,13 +697,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         width: tableViewWidth,
         height: 200)
     }
-
-    shareButton.frame = CGRect(
-      x: view.bounds.maxX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
 
     tableViewBGView.frame = CGRect(
       x: modelTableView.frame.minX - 1,

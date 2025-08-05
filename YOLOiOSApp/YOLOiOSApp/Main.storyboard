@@ -39,10 +39,10 @@
                                     <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
                                         <rect key="frame" x="19" y="155" width="355" height="32"/>
                                         <segments>
-                                            <segment title="detect" width="69"/>
-                                            <segment title="classify" width="69"/>
-                                            <segment title="segment" width="75"/>
-                                            <segment title="pose" width="69"/>
+                                            <segment title="Classify" width="69"/>
+                                            <segment title="Segment" width="75"/>
+                                            <segment title="Detect" width="69"/>
+                                            <segment title="Pose" width="69"/>
                                             <segment title="OBB" width="69"/>
                                         </segments>
                                         <connections>

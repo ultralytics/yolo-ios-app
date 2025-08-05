@@ -121,6 +121,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var playButton = UIButton()
   public var pauseButton = UIButton()
   public var switchCameraButton = UIButton()
+  public var shareButton = UIButton()
   public var toolbar = UIView()
   let selection = UISelectionFeedbackGenerator()
   private var overlayLayer = CALayer()
@@ -698,6 +699,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     switchCameraButton = UIButton()
     switchCameraButton.setImage(
       UIImage(systemName: "camera.rotate", withConfiguration: config), for: .normal)
+    shareButton.setImage(
+      UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
     
     playButton.isEnabled = false
     pauseButton.isEnabled = true
@@ -723,7 +726,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   /// Setup toolbar with consistent styling
   private func setupToolbar() {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    [playButton, pauseButton, switchCameraButton].forEach { button in
+    [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
       button.tintColor = .white
       toolbar.addSubview(button)
     }
@@ -751,7 +754,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   private func applyToolbarStyling(isLandscape: Bool) {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
     let buttonColor: UIColor = isLandscape ? .white : .white
-    [playButton, pauseButton, switchCameraButton].forEach { button in
+    [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
       button.tintColor = buttonColor
     }
   }
@@ -882,6 +885,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     )
     switchCameraButton.frame = CGRect(
       x: pauseButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
+    )
+    shareButton.frame = CGRect(
+      x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
   }
 

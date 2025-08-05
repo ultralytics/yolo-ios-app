@@ -142,16 +142,16 @@ public struct Keypoints {
 /// (rotated) bounding box, including its class, confidence score, and OBB parameters.
 public struct OBBResult {
   /// The oriented bounding box parameters.
-  var box: OBB
+  public var box: OBB
 
   /// The confidence score (0.0 to 1.0) for the detection.
-  var confidence: Float
+  public var confidence: Float
 
   /// The class label (category name) of the detected object.
-  var cls: String
+  public var cls: String
 
   /// The index of the class in the model's class list.
-  var index: Int
+  public var index: Int
 }
 
 /// Represents an oriented (rotated) bounding box.

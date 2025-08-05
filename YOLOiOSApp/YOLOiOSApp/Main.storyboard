@@ -67,7 +67,7 @@
                                         <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
                                     </imageView>
                                     <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
-                                        <rect key="frame" x="215" y="555" width="159" height="67"/>
+                                        <rect key="frame" x="215" y="720" width="159" height="67"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>

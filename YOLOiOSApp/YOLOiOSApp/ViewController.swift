@@ -716,11 +716,19 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+      
+      // Position logo at bottom right in landscape
+      logoImage.frame = CGRect(
+        x: view.bounds.maxX - logoImage.frame.width - 10,
+        y: view.bounds.maxY - logoImage.frame.height - 120,
+        width: logoImage.frame.width,
+        height: logoImage.frame.height
+      )
     } else {
       // Portrait mode
       shareButton.tintColor = .systemGray
       recordButton.tintColor = .systemGray
-      focus.isHidden = false
+      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,

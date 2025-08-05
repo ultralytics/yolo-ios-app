@@ -16,6 +16,7 @@ import Accelerate
 import Foundation
 import UIKit
 import Vision
+@preconcurrency import CoreML
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 class Segmenter: BasePredictor, @unchecked Sendable {
@@ -237,8 +238,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
     // Pre-allocate result arrays with estimated capacity
-    var results: [(CGRect, Int, Float, MLMultiArray)] = []
-    results.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
+    let resultsWrapper = ResultsWrapper()
+    resultsWrapper.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
@@ -292,12 +293,13 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
         
         resultsLock.lock()
-        results.append(result)
+        resultsWrapper.append(result)
         resultsLock.unlock()
       }
     }
 
     // Optimize NMS by grouping results by class first
+    let results = resultsWrapper.getResults()
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
     for result in results {
       let classIndex = result.1
@@ -340,5 +342,21 @@ final class FloatPointerWrapper: @unchecked Sendable {
   let pointer: UnsafeMutablePointer<Float>
   init(_ pointer: UnsafeMutablePointer<Float>) {
     self.pointer = pointer
+  }
+}
+
+final class ResultsWrapper: @unchecked Sendable {
+  private var results: [(CGRect, Int, Float, MLMultiArray)] = []
+  
+  func reserveCapacity(_ capacity: Int) {
+    results.reserveCapacity(capacity)
+  }
+  
+  func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
+    results.append(result)
+  }
+  
+  func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
+    return results
   }
 }

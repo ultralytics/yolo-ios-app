@@ -236,7 +236,7 @@ func generateCombinedMaskImage(
   }
 
   // 9) Compose according to sort order
-  for (originalIndex, box, classID, score) in sortedObjects {
+  for (originalIndex, box, classID, _) in sortedObjects {
     // Convert boundingBox to mask coordinate system
     let minX = Int(Float(box.minX) * scaleX)
     let minY = Int(Float(box.minY) * scaleY)
@@ -476,8 +476,8 @@ func drawSinglePersonKeypoints(
   //        return
   //      }
   let lineWidth = radius * 0.4
-  let scaleXToView = Float(imageViewSize.width / originalImageSize.width)
-  let scaleYToView = Float(imageViewSize.height / originalImageSize.height)
+  _ = Float(imageViewSize.width / originalImageSize.width)
+  _ = Float(imageViewSize.height / originalImageSize.height)
 
   var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
 
@@ -990,13 +990,8 @@ public func drawYOLOSegmentationWithBoxes(
     let baseRect = CGRect(origin: .zero, size: renderedSize)
 
     // Scale mask if necessary when it has different dimensions from the original image
-    let targetRect: CGRect
-    if maskImage.width != Int(width) || maskImage.height != Int(height) {
-      targetRect = baseRect
-    } else {
-      targetRect = CGRect(
+    _ = maskImage.width != Int(width) || maskImage.height != Int(height) ? baseRect : CGRect(
         x: 0, y: 0, width: CGFloat(maskImage.width), height: CGFloat(maskImage.height))
-    }
 
     // Draw mask image with the correct orientation
     drawContext.draw(maskImage, in: baseRect)

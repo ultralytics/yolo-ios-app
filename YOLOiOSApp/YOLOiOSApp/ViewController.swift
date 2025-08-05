@@ -709,14 +709,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
     super.viewDidLayoutSubviews()
 
     if view.bounds.width > view.bounds.height {
+      // Landscape mode
       shareButton.tintColor = .darkGray
       recordButton.tintColor = .darkGray
+      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
     } else {
+      // Portrait mode
       shareButton.tintColor = .systemGray
       recordButton.tintColor = .systemGray
+      focus.isHidden = false
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,

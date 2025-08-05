@@ -120,22 +120,6 @@ class ModelTableViewCell: UITableViewCell {
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
-
-    // Final label adjustments - ensure label displays correctly after layout
-    let iconSpace = downloadIconImageView.isHidden ? 0 : 20  // Consider icon space if visible
-    let availableWidth = bounds.width - 16 - CGFloat(iconSpace)  // Left/right margins(16) + icon space
-
-    // Set maximum label width to ensure center alignment works properly
-    modelNameLabel.preferredMaxLayoutWidth = availableWidth
-
-    // Fine-tune frame to enforce center alignment
-    if downloadIconImageView.isHidden {
-      // Center completely when no icon is present
-      modelNameLabel.center.x = bounds.width / 2
-    } else {
-      // Keep text centered in the cell even when download icon is visible
-      modelNameLabel.center.x = bounds.width / 2
-    }
   }
 }
 

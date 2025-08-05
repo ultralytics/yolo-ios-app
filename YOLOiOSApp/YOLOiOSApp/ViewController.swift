@@ -693,13 +693,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
       
-      // Position logo at bottom right in landscape
-      logoImage.frame = CGRect(
-        x: view.bounds.maxX - logoImage.frame.width - 10,
-        y: view.bounds.maxY - logoImage.frame.height - 120,
-        width: logoImage.frame.width,
-        height: logoImage.frame.height
-      )
     } else {
       // Portrait mode
       shareButton.tintColor = .systemGray

@@ -118,7 +118,16 @@ class VideoCapture: NSObject, @unchecked Sendable {
     }
     if captureSession.canAddOutput(photoOutput) {
       captureSession.addOutput(photoOutput)
-      photoOutput.isHighResolutionCaptureEnabled = true
+      if #available(iOS 16.0, *) {
+        // Use maxPhotoDimensions instead of deprecated isHighResolutionCaptureEnabled
+        if let device = captureDevice,
+           let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last {
+          photoOutput.maxPhotoDimensions = maxDimensions
+        }
+      } else {
+        // Fallback for iOS versions before 16.0
+        photoOutput.isHighResolutionCaptureEnabled = true
+      }
       //            photoOutput.isLivePhotoCaptureEnabled = photoOutput.isLivePhotoCaptureSupported
     }
 
@@ -195,7 +204,7 @@ class VideoCapture: NSObject, @unchecked Sendable {
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
       // so in most cases Vision needs to rotate it for the model to work as expected.
-      var imageOrientation: CGImagePropertyOrientation = .up
+      _ = CGImagePropertyOrientation.up
       //            switch UIDevice.current.orientation {
       //            case .portrait:
       //                imageOrientation = .up
@@ -227,7 +236,6 @@ class VideoCapture: NSObject, @unchecked Sendable {
     } else {
       connection.isVideoMirrored = false
     }
-    let o = connection.videoOrientation
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
   }
 }

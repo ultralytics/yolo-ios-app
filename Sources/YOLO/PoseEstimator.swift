@@ -66,7 +66,7 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    var result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
+    let result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
 
     do {
       try requestHandler.perform([request])
@@ -99,7 +99,7 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
             originalImageSize: inputSize
           )
 
-          var result = YOLOResult(
+          let result = YOLOResult(
             orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
             keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
             fps: 1 / self.t4, originalImage: nil, names: labels)

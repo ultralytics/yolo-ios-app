@@ -675,8 +675,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     tableViewBGView.layer.cornerRadius = 5  // 選択時の枠のcorner radiusに合わせる
     tableViewBGView.clipsToBounds = true
 
-    view.addSubview(tableViewBGView)
-    view.addSubview(modelTableView)
+    yoloView.addSubview(tableViewBGView)
+    yoloView.addSubview(modelTableView)
 
     modelTableView.translatesAutoresizingMaskIntoConstraints = false
     tableViewBGView.frame = CGRect(

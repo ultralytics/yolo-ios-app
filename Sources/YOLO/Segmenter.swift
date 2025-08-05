@@ -31,7 +31,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let out1 = results[1].featureValue.multiArrayValue
       else { return }
       let out0dim = checkShapeDimensions(of: out0)
-      let out1dim = checkShapeDimensions(of: out1)
+      _ = checkShapeDimensions(of: out1)
       if out0dim == 4 {
         masks = out0
         pred = out1
@@ -88,7 +88,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           DispatchQueue.main.async { self.isUpdating = false }
           return
         }
-        var maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
+        let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
         let result = YOLOResult(
           orig_shape: self.inputSize, boxes: boxes, masks: maskResults, speed: self.t2,
           fps: 1 / self.t4, names: self.labels)
@@ -138,7 +138,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         }
 
         let out0dim = checkShapeDimensions(of: out0)
-        let out1dim = checkShapeDimensions(of: out1)
+        _ = checkShapeDimensions(of: out1)
         if out0dim == 4 {
           masks = out0
           pred = out1

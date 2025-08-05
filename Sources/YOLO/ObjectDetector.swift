@@ -25,7 +25,7 @@ import Vision
 ///
 /// - Note: Object detection models output rectangular bounding boxes around detected objects.
 /// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
-class ObjectDetector: BasePredictor {
+class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Sets the confidence threshold and updates the model's feature provider.
   ///

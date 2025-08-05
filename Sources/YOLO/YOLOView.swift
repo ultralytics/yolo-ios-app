@@ -1026,6 +1026,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 }
 
 extension YOLOView: AVCapturePhotoCaptureDelegate {
+  @MainActor
   public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {

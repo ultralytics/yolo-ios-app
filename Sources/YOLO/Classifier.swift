@@ -17,7 +17,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
-class Classifier: BasePredictor {
+class Classifier: BasePredictor, @unchecked Sendable {
 
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
@@ -133,7 +133,7 @@ class Classifier: BasePredictor {
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        var recognitions: [[String: Any]] = []
+        _ = [[String: Any]]()
 
         // Get the MLMultiArray from the observation
         let multiArray = observation.first?.featureValue.multiArrayValue

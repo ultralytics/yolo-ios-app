@@ -227,6 +227,20 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    // Add external display notifications
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(screenDidConnect),
+      name: UIScreen.didConnectNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(screenDidDisconnect),
+      name: UIScreen.didDisconnectNotification,
+      object: nil
+    )
+
     setupTaskSegmentedControl()
     loadModelsForAllTasks()
 
@@ -708,6 +722,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
+    // Handle external display - fill entire screen
+    if UIScreen.screens.count > 1 {
+      view.frame = UIScreen.main.bounds
+      yoloView.frame = view.bounds
+      // Disable safe area for external display
+      if #available(iOS 11.0, *) {
+        additionalSafeAreaInsets = UIEdgeInsets(
+          top: -view.safeAreaInsets.top,
+          left: -view.safeAreaInsets.left,
+          bottom: -view.safeAreaInsets.bottom,
+          right: -view.safeAreaInsets.right
+        )
+      }
+    }
+
     if view.bounds.width > view.bounds.height {
       shareButton.tintColor = .darkGray
       recordButton.tintColor = .darkGray
@@ -794,6 +823,23 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.present(previewVC, animated: true, completion: nil)
         }
       }
+    }
+  }
+
+  @objc private func screenDidConnect(_ notification: Notification) {
+    DispatchQueue.main.async {
+      self.view.setNeedsLayout()
+      self.view.layoutIfNeeded()
+    }
+  }
+
+  @objc private func screenDidDisconnect(_ notification: Notification) {
+    if #available(iOS 11.0, *) {
+      additionalSafeAreaInsets = .zero
+    }
+    DispatchQueue.main.async {
+      self.view.setNeedsLayout()
+      self.view.layoutIfNeeded()
     }
   }
 }

@@ -12,10 +12,6 @@ on:
         required: true
         default: 'main'
         type: string
-      new_version:
-        description: 'Version (e.g., 8.6.0) – leave empty to auto-increment'
-        required: false
-        type: string
 
 permissions:
   contents: write # Push to testflight branch
@@ -42,7 +38,7 @@ jobs:
           git fetch origin
           git checkout -B testflight origin/${{ inputs.source_branch }}
 
-      - name: Update version and commit all changes
+      - name: Resolve dependencies and commit changes
         run: |
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
           PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
@@ -51,35 +47,15 @@ jobs:
           CURRENT_MARKETING=$(grep "MARKETING_VERSION = " "$PROJECT_PLIST" | head -1 |
                               sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/')
 
-          if [[ -n "${{ inputs.new_version }}" ]]; then
-            NEW_MARKETING="${{ inputs.new_version }}"
-            echo "Using specified version: $NEW_MARKETING"
-          else
-            IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_MARKETING"
-            MAJOR=${VERSION_PARTS[0]}
-            MINOR=${VERSION_PARTS[1]}
-            PATCH=${VERSION_PARTS[2]}
-            NEW_PATCH=$((PATCH + 1))
-            NEW_MARKETING="$MAJOR.$MINOR.$NEW_PATCH"
-            echo "Auto-incrementing version: $CURRENT_MARKETING → $NEW_MARKETING"
-          fi
-
-          NEW_BUILD=$((CURRENT_BUILD + 1))
-
-          # Update version files
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$INFO_PLIST"
-          sed -i '' "s/MARKETING_VERSION = $CURRENT_MARKETING;/MARKETING_VERSION = $NEW_MARKETING;/g" "$PROJECT_PLIST"
-
           # Resolve package dependencies
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
 
-          # Commit all changes in single commit
-          git add "$INFO_PLIST" "$PROJECT_PLIST"
+          # Commit resolved dependencies
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit --allow-empty -m "Merge v$NEW_MARKETING ($NEW_BUILD) for Xcode Cloud"
+          git commit --allow-empty -m "Prepare v$CURRENT_MARKETING ($CURRENT_BUILD) for Xcode Cloud"
 
       - name: Push to Xcode Cloud
         run: |
-          git push origin HEAD:testflight --force-with-lease
+          git push origin testflight

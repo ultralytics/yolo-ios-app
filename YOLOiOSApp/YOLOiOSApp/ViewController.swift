@@ -209,6 +209,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private var currentTask: String = ""
   private var currentModelName: String = ""
+  private var currentModelPath: String? = nil  // Track current model path
 
   private var isLoadingModel = false
 
@@ -229,17 +230,20 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Add external display notifications
     NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(screenDidConnect),
-      name: UIScreen.didConnectNotification,
-      object: nil
-    )
+      forName: UIScreen.didConnectNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.configureForExternalDisplay()
+    }
+    
     NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(screenDidDisconnect),
-      name: UIScreen.didDisconnectNotification,
-      object: nil
-    )
+      forName: UIScreen.didDisconnectNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.configureForExternalDisplay()
+    }
 
     setupTaskSegmentedControl()
     loadModelsForAllTasks()
@@ -309,6 +313,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Override system appearance mode setting to ensure consistent styling
     view.overrideUserInterfaceStyle = .dark
+    
+    // Handle external display setup
+    configureForExternalDisplay()
   }
 
   // Called when trait collection changes (dark mode/light mode)
@@ -324,6 +331,197 @@ class ViewController: UIViewController, YOLOViewDelegate {
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
+  }
+  
+  // MARK: - External Display Support
+  
+  override var prefersStatusBarHidden: Bool {
+    return UIScreen.screens.count > 1
+  }
+  
+  override var preferredStatusBarStyle: UIStatusBarStyle {
+    return .lightContent
+  }
+  
+  private var externalWindow: UIWindow?
+  private var externalViewController: UIViewController?
+  private var externalYOLOView: YOLOView?
+  
+  private func configureForExternalDisplay() {
+    let screenCount = UIScreen.screens.count
+    let mainBounds = UIScreen.main.bounds
+    let windowBounds = view.window?.bounds ?? .zero
+    
+    print("🖥️ Screen count: \(screenCount)")
+    print("📱 Main screen bounds: \(mainBounds)")
+    print("🪟 Window bounds: \(windowBounds)")
+    print("📐 View bounds: \(view.bounds)")
+    print("🔒 Safe area: \(view.safeAreaInsets)")
+    
+    if screenCount > 1 {
+      print("🔗 External display detected")
+      
+      // Get info about all screens
+      for (index, screen) in UIScreen.screens.enumerated() {
+        print("🖥️ Screen \(index): bounds=\(screen.bounds), scale=\(screen.scale)")
+      }
+      
+      // Create dedicated external display window
+      setupExternalDisplay()
+      
+    } else {
+      print("📱 Regular display")
+      
+      // Tear down external display
+      teardownExternalDisplay()
+    }
+  }
+  
+  private func setupExternalDisplay() {
+    guard UIScreen.screens.count > 1 else { return }
+    
+    let externalScreen = UIScreen.screens[1]
+    print("🎆 Setting up external display: \(externalScreen.bounds)")
+    
+    // Create window for external screen
+    externalWindow = UIWindow(frame: externalScreen.bounds)
+    externalWindow?.screen = externalScreen
+    externalWindow?.isHidden = false
+    
+    // Create view controller for external display
+    externalViewController = UIViewController()
+    externalViewController?.view.backgroundColor = .black
+    externalWindow?.rootViewController = externalViewController
+    
+    // Create YOLOView for external display with required parameters
+    let currentModel = getCurrentModel() ?? "yolo11n"  // Use default if no model loaded
+    let currentTask = convertTaskNameToYOLOTask(self.currentTask)
+    
+    externalYOLOView = YOLOView(
+      frame: externalScreen.bounds,
+      modelPathOrName: currentModel,
+      task: currentTask
+    )
+    externalYOLOView?.backgroundColor = .black
+    externalViewController?.view.addSubview(externalYOLOView!)
+    
+    // Copy other UI elements to external display
+    copyUIElementsToExternalDisplay(screenBounds: externalScreen.bounds)
+    
+    print("🎆 External display YOLOView setup complete")
+    print("🎆 External display window created: \(externalScreen.bounds)")
+  }
+  
+  private func copyUIElementsToExternalDisplay(screenBounds: CGRect) {
+    guard let externalView = externalViewController?.view else { return }
+    
+    // Calculate scale factor from main screen to external screen
+    let mainBounds = view.bounds
+    let scaleX = screenBounds.width / mainBounds.width
+    let scaleY = screenBounds.height / mainBounds.height
+    
+    // Copy focus square
+    if let originalFocus = focus {
+      let externalFocus = UIImageView(image: originalFocus.image)
+      externalFocus.frame = CGRect(
+        x: originalFocus.frame.origin.x * scaleX,
+        y: originalFocus.frame.origin.y * scaleY,
+        width: originalFocus.frame.width * scaleX,
+        height: originalFocus.frame.height * scaleY
+      )
+      externalFocus.contentMode = originalFocus.contentMode
+      externalView.addSubview(externalFocus)
+    }
+    
+    // Copy Ultralytics logo
+    if let originalLogo = logoImage {
+      let externalLogo = UIImageView(image: originalLogo.image)
+      externalLogo.frame = CGRect(
+        x: originalLogo.frame.origin.x * scaleX,
+        y: originalLogo.frame.origin.y * scaleY,
+        width: originalLogo.frame.width * scaleX,
+        height: originalLogo.frame.height * scaleY
+      )
+      externalLogo.contentMode = originalLogo.contentMode
+      externalView.addSubview(externalLogo)
+    }
+    
+    // Copy labels
+    copyLabel(labelName, to: externalView, scale: (scaleX, scaleY))
+    copyLabel(labelFPS, to: externalView, scale: (scaleX, scaleY))
+    copyLabel(labelVersion, to: externalView, scale: (scaleX, scaleY))
+    
+    // Copy segmented control
+    if let originalSegmented = segmentedControl {
+      let externalSegmented = UISegmentedControl(items: [])
+      for i in 0..<originalSegmented.numberOfSegments {
+        externalSegmented.insertSegment(withTitle: originalSegmented.titleForSegment(at: i), at: i, animated: false)
+      }
+      externalSegmented.selectedSegmentIndex = originalSegmented.selectedSegmentIndex
+      externalSegmented.frame = CGRect(
+        x: originalSegmented.frame.origin.x * scaleX,
+        y: originalSegmented.frame.origin.y * scaleY,
+        width: originalSegmented.frame.width * scaleX,
+        height: originalSegmented.frame.height * scaleY
+      )
+      externalView.addSubview(externalSegmented)
+    }
+    
+    print("💼 Copied UI elements to external display")
+  }
+  
+  private func copyLabel(_ originalLabel: UILabel?, to parentView: UIView, scale: (CGFloat, CGFloat)) {
+    guard let original = originalLabel else { return }
+    
+    let externalLabel = UILabel()
+    externalLabel.text = original.text
+    externalLabel.textColor = original.textColor
+    externalLabel.font = original.font.withSize(original.font.pointSize * scale.0)
+    externalLabel.textAlignment = original.textAlignment
+    externalLabel.frame = CGRect(
+      x: original.frame.origin.x * scale.0,
+      y: original.frame.origin.y * scale.1,
+      width: original.frame.width * scale.0,
+      height: original.frame.height * scale.1
+    )
+    parentView.addSubview(externalLabel)
+  }
+  
+  private func teardownExternalDisplay() {
+    externalWindow?.isHidden = true
+    externalWindow = nil
+    externalViewController = nil
+    externalYOLOView = nil
+    print("📱 External display torn down")
+  }
+  
+  private func getCurrentModel() -> String? {
+    return currentModelPath
+  }
+  
+  private func syncExternalDisplay() {
+    // When model or task changes, recreate the external YOLOView
+    guard externalWindow != nil, let externalScreen = UIScreen.screens.count > 1 ? UIScreen.screens[1] : nil else { return }
+    
+    // Clear all subviews from external display
+    externalViewController?.view.subviews.forEach { $0.removeFromSuperview() }
+    
+    // Create new YOLOView with updated model and task
+    let currentModel = getCurrentModel() ?? "yolo11n"
+    let currentTask = convertTaskNameToYOLOTask(self.currentTask)
+    
+    externalYOLOView = YOLOView(
+      frame: externalScreen.bounds,
+      modelPathOrName: currentModel,
+      task: currentTask
+    )
+    externalYOLOView?.backgroundColor = .black
+    externalViewController?.view.addSubview(externalYOLOView!)
+    
+    // Copy UI elements again with updated content
+    copyUIElementsToExternalDisplay(screenBounds: externalScreen.bounds)
+    
+    print("🔄 External display synced with new model/task")
   }
 
   private func setupTaskSegmentedControl() {
@@ -495,6 +693,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
 
         let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+        currentModelPath = modelURL.path  // Track the model path
         DispatchQueue.main.async {
           self.downloadProgressLabel.isHidden = false
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
@@ -551,6 +750,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
     let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+    currentModelPath = localModelURL.path  // Track the model path
 
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
@@ -605,6 +805,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.isHidden = true
           self.downloadProgressLabel.text = ""
         }
+        
+        // Sync external display with new model
+        self.syncExternalDisplay()
 
       } else {
         print("Failed to load model: \(modelName)")
@@ -659,6 +862,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     selectedIndexPath = nil
 
     reloadModelEntriesAndLoadFirst(for: currentTask)
+    
+    // Sync external display with new task
+    syncExternalDisplay()
 
     tableViewBGView.frame = CGRect(
       x: modelTableView.frame.minX - 1,
@@ -722,21 +928,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    // Handle external display - fill entire screen
-    if UIScreen.screens.count > 1 {
-      view.frame = UIScreen.main.bounds
-      yoloView.frame = view.bounds
-      // Disable safe area for external display
-      if #available(iOS 11.0, *) {
-        additionalSafeAreaInsets = UIEdgeInsets(
-          top: -view.safeAreaInsets.top,
-          left: -view.safeAreaInsets.left,
-          bottom: -view.safeAreaInsets.bottom,
-          right: -view.safeAreaInsets.right
-        )
-      }
-    }
-
     if view.bounds.width > view.bounds.height {
       shareButton.tintColor = .darkGray
       recordButton.tintColor = .darkGray
@@ -777,7 +968,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   @objc func shareButtonTapped() {
     selection.selectionChanged()
-    yoloView.capturePhoto { [weak self] captured in
+    
+    // Capture the entire view hierarchy instead of just YOLOView
+    captureCompleteView { [weak self] captured in
       guard let self = self else { return }
       if let image = captured {
         DispatchQueue.main.async {
@@ -791,6 +984,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
         print("error capturing photo")
       }
     }
+  }
+  
+  private func captureCompleteView(completion: @escaping (UIImage?) -> Void) {
+    // Create a renderer for the entire view
+    let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
+    
+    let image = renderer.image { context in
+      // Render the entire view hierarchy
+      view.drawHierarchy(in: view.bounds, afterScreenUpdates: false)
+    }
+    
+    completion(image)
   }
 
   @objc func recordScreen() {
@@ -823,23 +1028,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.present(previewVC, animated: true, completion: nil)
         }
       }
-    }
-  }
-
-  @objc private func screenDidConnect(_ notification: Notification) {
-    DispatchQueue.main.async {
-      self.view.setNeedsLayout()
-      self.view.layoutIfNeeded()
-    }
-  }
-
-  @objc private func screenDidDisconnect(_ notification: Notification) {
-    if #available(iOS 11.0, *) {
-      additionalSafeAreaInsets = .zero
-    }
-    DispatchQueue.main.async {
-      self.view.setNeedsLayout()
-      self.view.layoutIfNeeded()
     }
   }
 }

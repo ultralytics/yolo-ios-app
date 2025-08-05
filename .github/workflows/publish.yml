@@ -1,10 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# This workflow publishes the YOLO iOS app to TestFlight and/or submits to App Store
+# Publish YOLO iOS app to TestFlight and create release
 
 name: Publish iOS App
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       source_branch:
@@ -12,19 +14,118 @@ on:
         required: true
         default: 'main'
         type: string
-
-permissions:
-  contents: write # Push to testflight branch
+      release:
+        description: 'Create new tag and release'
+        required: true
+        type: boolean
+        default: false
+      testflight:
+        description: 'Publish to TestFlight'
+        required: true
+        type: boolean
+        default: true
 
 jobs:
-  Publish:
+  check:
     if: github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.check_version.outputs.new_version }}
+      current_tag: ${{ steps.check_version.outputs.current_tag }}
+      marketing_version: ${{ steps.check_version.outputs.marketing_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets._GITHUB_TOKEN }}
+          ref: ${{ inputs.source_branch || 'main' }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - run: uv pip install --system --no-cache ultralytics-actions
+      - id: check_version
+        shell: python
+        run: |
+          import os, re
+          
+          # Read MARKETING_VERSION from project.pbxproj
+          with open('YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj', 'r') as f:
+              content = f.read()
+          
+          version_match = re.search(r'MARKETING_VERSION = ([^;]+);', content)
+          if not version_match:
+              raise ValueError("MARKETING_VERSION not found in project.pbxproj")
+          
+          marketing_version = version_match.group(1).strip()
+          current_tag = f'v{marketing_version}'
+          
+          # Check if tag already exists
+          tag_exists = os.system(f'git rev-parse {current_tag} >/dev/null 2>&1') == 0
+          new_version = not tag_exists
+          
+          os.system(f'echo "new_version={str(new_version).lower()}" >> $GITHUB_OUTPUT')
+          os.system(f'echo "current_tag={current_tag}" >> $GITHUB_OUTPUT')
+          os.system(f'echo "marketing_version={marketing_version}" >> $GITHUB_OUTPUT')
+          
+          if new_version:
+              print(f'New marketing version {current_tag} detected ✅')
+          else:
+              print(f'Marketing version {current_tag} unchanged - TestFlight will use incremented build number')
+
+  release:
+    needs: check
+    if: needs.check.outputs.new_version == 'true' && (github.event_name == 'push' || inputs.release == true)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets._GITHUB_TOKEN }}
+          ref: ${{ inputs.source_branch || 'main' }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - run: uv pip install --system --no-cache ultralytics-actions
+      - name: Create tag and release
+        env:
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          CURRENT_TAG: ${{ needs.check.outputs.current_tag }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git config --global user.name "UltralyticsAssistant"
+          git config --global user.email "web@ultralytics.com"
+          git tag -a "$CURRENT_TAG" -m "$(git log -1 --pretty=%B)"
+          git push origin "$CURRENT_TAG"
+          ultralytics-actions-summarize-release
+          uv cache prune --ci
+
+  testflight:
+    needs: check
+    if: github.event_name == 'push' || inputs.testflight == true
     runs-on: macos-latest
+    permissions:
+      contents: write
+    environment:
+      name: Release - TestFlight
+      url: https://appstoreconnect.apple.com/apps
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          ref: ${{ inputs.source_branch || 'main' }}
 
       - name: Setup Xcode
         run: |
@@ -36,16 +137,13 @@ jobs:
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
           git fetch origin
-          git checkout -B testflight origin/${{ inputs.source_branch }}
+          git checkout -B testflight origin/${{ inputs.source_branch || 'main' }}
 
       - name: Resolve dependencies and commit changes
         run: |
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
-          PROJECT_PLIST="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj"
-
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
-          CURRENT_MARKETING=$(grep "MARKETING_VERSION = " "$PROJECT_PLIST" | head -1 |
-                              sed 's/.*MARKETING_VERSION = \([^;]*\);.*/\1/')
+          MARKETING_VERSION="${{ needs.check.outputs.marketing_version }}"
 
           # Resolve package dependencies
           cd YOLOiOSApp
@@ -54,8 +152,41 @@ jobs:
 
           # Commit resolved dependencies
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit --allow-empty -m "Prepare v$CURRENT_MARKETING ($CURRENT_BUILD) for Xcode Cloud"
+          git commit --allow-empty -m "Prepare v$MARKETING_VERSION ($CURRENT_BUILD) for Xcode Cloud"
 
       - name: Push to Xcode Cloud
+        run: git push --force origin testflight
+
+  notify:
+    needs: [check, release, testflight]
+    if: always() && needs.check.outputs.new_version == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract PR Details
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git push origin testflight
+          PR_JSON=$(gh pr list --search "${GITHUB_SHA}" --state merged --json number,title --jq '.[0]')
+          PR_NUMBER=$(echo "${PR_JSON}" | jq -r '.number')
+          PR_TITLE=$(echo "${PR_JSON}" | jq -r '.title')
+          echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_ENV}"
+          echo "PR_TITLE=${PR_TITLE}" >> "${GITHUB_ENV}"
+      - name: Notify Success
+        if: needs.release.result == 'success' && github.event_name == 'push'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
+          payload: |
+            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
+      - name: Notify Failure
+        if: needs.release.result != 'success'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
+          payload: |
+            text: "<!channel> GitHub Actions error for ${{ github.workflow }} ❌\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* ${{ github.event_name }}\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n"

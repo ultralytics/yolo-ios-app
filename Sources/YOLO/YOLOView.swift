@@ -1046,7 +1046,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 }
 
 extension YOLOView: AVCapturePhotoCaptureDelegate {
-  public func photoOutput(
+  nonisolated public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     if let error = error {
@@ -1057,12 +1057,14 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      var isCameraFront = false
-      if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
-        currentInput.device.position == .front
-      {
-        isCameraFront = true
-      }
+      
+      Task { @MainActor in
+        var isCameraFront = false
+        if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
+          currentInput.device.position == .front
+        {
+          isCameraFront = true
+        }
       var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
       switch UIDevice.current.orientation {
       case .landscapeLeft:
@@ -1102,8 +1104,9 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       for v in tempViews {
         v.removeFromSuperview()
       }
-      photoCaptureCompletion?(img)
-      photoCaptureCompletion = nil
+        photoCaptureCompletion?(img)
+        photoCaptureCompletion = nil
+      }
     } else {
       print("AVCapturePhotoCaptureDelegate Error")
     }

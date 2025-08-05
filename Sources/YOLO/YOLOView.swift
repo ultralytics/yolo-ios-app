@@ -1058,47 +1058,165 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       {
         image = UIImage(cgImage: cgImage)
       }
+      
+      // Create a temporary container view for off-screen compositing
+      let containerView = UIView(frame: self.bounds)
+      containerView.backgroundColor = .black
+      
+      // Add the captured image as the base layer
       let imageView = UIImageView(image: image)
       imageView.contentMode = .scaleAspectFill
-      imageView.frame = self.frame
-      let imageLayer = imageView.layer
-      self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
+      imageView.frame = containerView.bounds
+      containerView.addSubview(imageView)
 
-      var tempViews = [UIView]()
+      // Add mask layer if present (for segmentation task)
+      if let maskLayer = self.maskLayer, !maskLayer.isHidden {
+        // Create a temporary copy of the mask layer for capture
+        let tempLayer = CALayer()
+        // Calculate the correct frame relative to the main view
+        let overlayFrame = self.overlayLayer.frame
+        let maskFrame = maskLayer.frame
+
+        // Adjust mask frame to be relative to the main view, not overlayLayer
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x + maskFrame.origin.x,
+          y: overlayFrame.origin.y + maskFrame.origin.y,
+          width: maskFrame.width,
+          height: maskFrame.height
+        )
+        tempLayer.contents = maskLayer.contents
+        tempLayer.contentsGravity = maskLayer.contentsGravity
+        tempLayer.contentsRect = maskLayer.contentsRect
+        tempLayer.contentsCenter = maskLayer.contentsCenter
+        tempLayer.opacity = maskLayer.opacity
+        tempLayer.compositingFilter = maskLayer.compositingFilter
+        tempLayer.transform = maskLayer.transform
+        tempLayer.masksToBounds = maskLayer.masksToBounds
+        containerView.layer.addSublayer(tempLayer)
+      }
+
+      // Add pose layer if present (for pose task)
+      if let poseLayer = self.poseLayer {
+        // Create a temporary copy of the pose layer including all sublayers
+        let tempLayer = CALayer()
+        let overlayFrame = self.overlayLayer.frame
+
+        // Set frame relative to main view
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x,
+          y: overlayFrame.origin.y,
+          width: overlayFrame.width,
+          height: overlayFrame.height
+        )
+        tempLayer.opacity = poseLayer.opacity
+
+        // Copy all sublayers (keypoints and skeleton lines)
+        if let sublayers = poseLayer.sublayers {
+          for sublayer in sublayers {
+            let copyLayer = CALayer()
+            copyLayer.frame = sublayer.frame
+            copyLayer.backgroundColor = sublayer.backgroundColor
+            copyLayer.cornerRadius = sublayer.cornerRadius
+            copyLayer.opacity = sublayer.opacity
+
+            // If it's a shape layer (for lines), copy the path
+            if let shapeLayer = sublayer as? CAShapeLayer {
+              let copyShapeLayer = CAShapeLayer()
+              copyShapeLayer.frame = shapeLayer.frame
+              copyShapeLayer.path = shapeLayer.path
+              copyShapeLayer.strokeColor = shapeLayer.strokeColor
+              copyShapeLayer.lineWidth = shapeLayer.lineWidth
+              copyShapeLayer.fillColor = shapeLayer.fillColor
+              copyShapeLayer.opacity = shapeLayer.opacity
+              tempLayer.addSublayer(copyShapeLayer)
+            } else {
+              tempLayer.addSublayer(copyLayer)
+            }
+          }
+        }
+
+        containerView.layer.addSublayer(tempLayer)
+      }
+
+      // Add OBB layer if present (for OBB task)
+      if let obbLayer = self.obbLayer, !obbLayer.isHidden {
+        // Create a temporary copy of the OBB layer including all sublayers
+        let tempLayer = CALayer()
+        let overlayFrame = self.overlayLayer.frame
+
+        tempLayer.frame = CGRect(
+          x: overlayFrame.origin.x,
+          y: overlayFrame.origin.y,
+          width: overlayFrame.width,
+          height: overlayFrame.height
+        )
+        tempLayer.opacity = obbLayer.opacity
+
+        // Copy all sublayers
+        if let sublayers = obbLayer.sublayers {
+          for sublayer in sublayers {
+            if let shapeLayer = sublayer as? CAShapeLayer {
+              let copyShapeLayer = CAShapeLayer()
+              copyShapeLayer.frame = shapeLayer.frame
+              copyShapeLayer.path = shapeLayer.path
+              copyShapeLayer.strokeColor = shapeLayer.strokeColor
+              copyShapeLayer.lineWidth = shapeLayer.lineWidth
+              copyShapeLayer.fillColor = shapeLayer.fillColor
+              copyShapeLayer.opacity = shapeLayer.opacity
+              tempLayer.addSublayer(copyShapeLayer)
+            } else if let textLayer = sublayer as? CATextLayer {
+              let copyTextLayer = CATextLayer()
+              copyTextLayer.frame = textLayer.frame
+              copyTextLayer.string = textLayer.string
+              copyTextLayer.font = textLayer.font
+              copyTextLayer.fontSize = textLayer.fontSize
+              copyTextLayer.foregroundColor = textLayer.foregroundColor
+              copyTextLayer.backgroundColor = textLayer.backgroundColor
+              copyTextLayer.alignmentMode = textLayer.alignmentMode
+              copyTextLayer.opacity = textLayer.opacity
+              tempLayer.addSublayer(copyTextLayer)
+            }
+          }
+        }
+
+        containerView.layer.addSublayer(tempLayer)
+      }
+
+      // Add bounding boxes
       let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
       for info in boundingBoxInfos where !info.isHidden {
         let boxView = createBoxView(from: info)
         boxView.frame = info.rect
-
-        self.addSubview(boxView)
-        tempViews.append(boxView)
+        containerView.addSubview(boxView)
       }
-      let bounds = UIScreen.main.bounds
-      UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
-      self.drawHierarchy(in: bounds, afterScreenUpdates: true)
+      
+      // Render the container view to image
+      UIGraphicsBeginImageContextWithOptions(containerView.bounds.size, true, 0.0)
+      guard let context = UIGraphicsGetCurrentContext() else {
+        photoCaptureCompletion?(nil)
+        photoCaptureCompletion = nil
+        return
+      }
+      
+      // Draw the container view's layer hierarchy
+      containerView.layer.render(in: context)
       
       // Add Ultralytics logo overlay
       if let logoImage = UIImage(named: "ultralytics_yolo_logotype.png") {
-        let logoWidth: CGFloat = bounds.width * 0.2 // 20% of screen width
+        let logoWidth: CGFloat = containerView.bounds.width * 0.45 // 45% of view width (much larger)
         let logoHeight = logoWidth * (logoImage.size.height / logoImage.size.width)
-        let logoX = bounds.width - logoWidth - 10 // 10pt padding from right
-        let logoY = bounds.height - logoHeight - 10 // 10pt padding from bottom
+        let logoX = containerView.bounds.width - logoWidth - 30 // 30pt padding from right
+        let logoY = containerView.bounds.height - logoHeight - 30 // 30pt padding from bottom
         let logoRect = CGRect(x: logoX, y: logoY, width: logoWidth, height: logoHeight)
         
-        // Add semi-transparent white background for better visibility
-        let backgroundRect = logoRect.insetBy(dx: -5, dy: -5)
-        UIColor.white.withAlphaComponent(0.8).setFill()
-        UIBezierPath(roundedRect: backgroundRect, cornerRadius: 5).fill()
-        
+        // Draw logo without background
         logoImage.draw(in: logoRect)
       }
       
       let img = UIGraphicsGetImageFromCurrentImageContext()
       UIGraphicsEndImageContext()
-      imageLayer.removeFromSuperlayer()
-      for v in tempViews {
-        v.removeFromSuperview()
-      }
+      
+      // No cleanup needed since we used a temporary container view
       photoCaptureCompletion?(img)
       photoCaptureCompletion = nil
     } else {

@@ -119,22 +119,6 @@ class ModelTableViewCell: UITableViewCell {
     if let selectedBGView = selectedBackgroundView {
       selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
     }
-
-    // Final label adjustments - ensure label displays correctly after layout
-    let iconSpace = downloadIconImageView.isHidden ? 0 : 20  // Consider icon space if visible
-    let availableWidth = bounds.width - 16 - CGFloat(iconSpace)  // Left/right margins(16) + icon space
-
-    // Set maximum label width to ensure center alignment works properly
-    modelNameLabel.preferredMaxLayoutWidth = availableWidth
-
-    // Fine-tune frame to enforce center alignment
-    if downloadIconImageView.isHidden {
-      // Center completely when no icon is present
-      modelNameLabel.center.x = bounds.width / 2
-    } else {
-      // Keep text centered in the cell even when download icon is visible
-      modelNameLabel.center.x = bounds.width / 2
-    }
   }
 }
 
@@ -151,7 +135,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var logoImage: UIImageView!
 
-  var shareButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
 
@@ -235,7 +218,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupTableView()
-    setupButtons()
+    
+    // Setup logo tap gesture
+    logoImage.isUserInteractionEnabled = true
+    logoImage.addGestureRecognizer(
+      UITapGestureRecognizer(target: self, action: #selector(logoButton)))
+    
+    // Setup share button
+    yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
@@ -646,8 +636,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     tableViewBGView.layer.cornerRadius = 5  // 選択時の枠のcorner radiusに合わせる
     tableViewBGView.clipsToBounds = true
 
-    view.addSubview(tableViewBGView)
-    view.addSubview(modelTableView)
+    yoloView.addSubview(tableViewBGView)
+    yoloView.addSubview(modelTableView)
 
     modelTableView.translatesAutoresizingMaskIntoConstraints = false
     tableViewBGView.frame = CGRect(
@@ -658,29 +648,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
   }
 
-  private func setupButtons() {
-    let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
-    shareButton.setImage(
-      UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
-    shareButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
-    view.addSubview(shareButton)
 
-    logoImage.isUserInteractionEnabled = true
-    logoImage.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-  }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
     if view.bounds.width > view.bounds.height {
-      shareButton.tintColor = .darkGray
+      // Landscape mode
+      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+      
     } else {
-      shareButton.tintColor = .systemGray
+      // Portrait mode
+      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,
@@ -688,13 +670,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         width: tableViewWidth,
         height: 200)
     }
-
-    shareButton.frame = CGRect(
-      x: view.bounds.maxX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
 
     tableViewBGView.frame = CGRect(
       x: modelTableView.frame.minX - 1,

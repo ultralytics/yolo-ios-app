@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Publish YOLO11 iOS app to TestFlight and create release
+# Publish YOLO iOS app to TestFlight and create release
 
 name: Publish iOS App
 

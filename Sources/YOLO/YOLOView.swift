@@ -984,6 +984,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   @objc func switchCameraTapped() {
+    selection.selectionChanged()
 
     self.videoCapture.captureSession.beginConfiguration()
     let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput

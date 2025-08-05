@@ -155,7 +155,7 @@ jobs:
           git commit --allow-empty -m "Prepare v$MARKETING_VERSION ($CURRENT_BUILD) for Xcode Cloud"
 
       - name: Push to Xcode Cloud
-        run: git push origin testflight
+        run: git push --force origin testflight
 
   notify:
     needs: [check, release, testflight]

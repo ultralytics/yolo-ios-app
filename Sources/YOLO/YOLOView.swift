@@ -1076,6 +1076,23 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let bounds = UIScreen.main.bounds
       UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
       self.drawHierarchy(in: bounds, afterScreenUpdates: true)
+      
+      // Add Ultralytics logo overlay
+      if let logoImage = UIImage(named: "ultralytics_yolo_logotype.png") {
+        let logoWidth: CGFloat = bounds.width * 0.2 // 20% of screen width
+        let logoHeight = logoWidth * (logoImage.size.height / logoImage.size.width)
+        let logoX = bounds.width - logoWidth - 10 // 10pt padding from right
+        let logoY = bounds.height - logoHeight - 10 // 10pt padding from bottom
+        let logoRect = CGRect(x: logoX, y: logoY, width: logoWidth, height: logoHeight)
+        
+        // Add semi-transparent white background for better visibility
+        let backgroundRect = logoRect.insetBy(dx: -5, dy: -5)
+        UIColor.white.withAlphaComponent(0.8).setFill()
+        UIBezierPath(roundedRect: backgroundRect, cornerRadius: 5).fill()
+        
+        logoImage.draw(in: logoRect)
+      }
+      
       let img = UIGraphicsGetImageFromCurrentImageContext()
       UIGraphicsEndImageContext()
       imageLayer.removeFromSuperlayer()

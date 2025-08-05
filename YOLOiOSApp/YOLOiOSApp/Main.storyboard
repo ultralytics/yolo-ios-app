@@ -19,86 +19,86 @@
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ShC-gv-PaQ" customClass="YOLOView" customModule="YOLO">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="Label Time">
+                                        <rect key="frame" x="175.66666666666666" y="191" width="42" height="20"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
+                                        </accessibility>
+                                        <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                        <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
+                                        <rect key="frame" x="163" y="118" width="67" height="34"/>
+                                        <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
+                                        <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
+                                        <rect key="frame" x="19" y="161" width="355" height="32"/>
+                                        <segments>
+                                            <segment title="detect" width="69"/>
+                                            <segment title="classify" width="69"/>
+                                            <segment title="segment" width="75"/>
+                                            <segment title="pose" width="69"/>
+                                            <segment title="OBB" width="69"/>
+                                        </segments>
+                                        <connections>
+                                            <action selector="indexChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="3y2-Ij-sA7"/>
+                                        </connections>
+                                    </segmentedControl>
+                                    <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="lOR-xu-27i">
+                                        <rect key="frame" x="178" y="405" width="37" height="37"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                    </activityIndicatorView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
+                                        <rect key="frame" x="8" y="765" width="100" height="14"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
+                                        </accessibility>
+                                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="12"/>
+                                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Focus" translatesAutoresizingMaskIntoConstraints="NO" id="q1Z-jK-UQS">
+                                        <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
+                                    </imageView>
+                                    <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
+                                        <rect key="frame" x="215" y="555" width="159" height="67"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
+                                        </accessibility>
+                                    </imageView>
+                                </subviews>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <constraints>
+                                    <constraint firstItem="BZf-Ft-ERG" firstAttribute="top" secondItem="9cm-Nq-b3N" secondAttribute="bottom" constant="-1" id="10a-HD-y6c"/>
+                                    <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="ShC-gv-PaQ" secondAttribute="topMargin" constant="-10" id="4VU-KS-qnX"/>
+                                    <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="5" id="CsQ-eU-xjO"/>
+                                    <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="DEd-UO-Mod"/>
+                                    <constraint firstAttribute="trailing" secondItem="q1Z-jK-UQS" secondAttribute="trailing" id="EpS-OI-uaC"/>
+                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="centerY" secondItem="ShC-gv-PaQ" secondAttribute="centerY" id="RRe-Jj-na9"/>
+                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="leading" secondItem="ShC-gv-PaQ" secondAttribute="leading" id="d57-2L-ne7"/>
+                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="height" secondItem="ShC-gv-PaQ" secondAttribute="height" multiplier="0.475352" id="oNB-Ef-CH0"/>
+                                    <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="onI-er-Sda"/>
+                                    <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="zJN-OL-7hd"/>
+                                </constraints>
                             </view>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="Label Time">
-                                <rect key="frame" x="175.66666666666666" y="191" width="42" height="20"/>
-                                <accessibility key="accessibilityConfiguration">
-                                    <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
-                                </accessibility>
-                                <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
-                                <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
-                                <rect key="frame" x="163" y="118" width="67" height="34"/>
-                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
-                                <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
-                                <rect key="frame" x="19" y="161" width="355" height="32"/>
-                                <segments>
-                                    <segment title="detect" width="69"/>
-                                    <segment title="classify" width="69"/>
-                                    <segment title="segment" width="75"/>
-                                    <segment title="pose" width="69"/>
-                                    <segment title="OBB" width="69"/>
-                                </segments>
-                                <connections>
-                                    <action selector="indexChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="3y2-Ij-sA7"/>
-                                </connections>
-                            </segmentedControl>
-                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="lOR-xu-27i">
-                                <rect key="frame" x="178" y="405" width="37" height="37"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
-                            </activityIndicatorView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
-                                <rect key="frame" x="8" y="765" width="100" height="14"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                <accessibility key="accessibilityConfiguration">
-                                    <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
-                                </accessibility>
-                                <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="12"/>
-                                <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Focus" translatesAutoresizingMaskIntoConstraints="NO" id="q1Z-jK-UQS">
-                                <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
-                            </imageView>
-                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
-                                <rect key="frame" x="215" y="555" width="159" height="67"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                <accessibility key="accessibilityConfiguration">
-                                    <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
-                                </accessibility>
-                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="BZf-Ft-ERG" firstAttribute="top" secondItem="9cm-Nq-b3N" secondAttribute="bottom" constant="-1" id="10a-HD-y6c"/>
-                            <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="4VU-KS-qnX"/>
                             <constraint firstItem="ShC-gv-PaQ" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="7ji-b1-IGX"/>
                             <constraint firstItem="ShC-gv-PaQ" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" id="BBw-Vb-KDM"/>
-                            <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="9" id="CsQ-eU-xjO"/>
-                            <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="DEd-UO-Mod"/>
-                            <constraint firstAttribute="trailing" secondItem="q1Z-jK-UQS" secondAttribute="trailing" id="EpS-OI-uaC"/>
                             <constraint firstAttribute="bottom" secondItem="ShC-gv-PaQ" secondAttribute="bottom" id="Jr0-gN-ccq"/>
-                            <constraint firstItem="q1Z-jK-UQS" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="RRe-Jj-na9"/>
-                            <constraint firstItem="q1Z-jK-UQS" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="d57-2L-ne7"/>
                             <constraint firstItem="ShC-gv-PaQ" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="mEk-Gz-JJe"/>
-                            <constraint firstItem="q1Z-jK-UQS" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" multiplier="0.475352" id="oNB-Ef-CH0"/>
-                            <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="onI-er-Sda"/>
-                            <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="zJN-OL-7hd"/>
                         </constraints>
-                        <variation key="heightClass=compact-widthClass=regular">
-                            <mask key="constraints">
-                                <include reference="4VU-KS-qnX"/>
-                            </mask>
-                        </variation>
+
                     </view>
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>

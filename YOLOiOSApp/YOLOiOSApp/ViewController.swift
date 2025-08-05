@@ -8,14 +8,13 @@
 //  It provides the ability to select different models, tasks (detection, segmentation, classification, etc.),
 //  and visualize results in real-time. The controller manages the loading of local and remote models,
 //  handles UI updates during model loading and inference, and provides functionality for capturing
-//  and sharing detection results. Advanced features include screen recording, model download progress
+//  and sharing detection results. Advanced features include model download progress
 //  tracking, and adaptive UI layout for different device orientations.
 
 import AVFoundation
 import AudioToolbox
 import CoreML
 import CoreMedia
-import ReplayKit
 import UIKit
 import YOLO
 
@@ -153,7 +152,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var logoImage: UIImageView!
 
   var shareButton = UIButton()
-  var recordButton = UIButton()
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
 
@@ -695,11 +693,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UITapGestureRecognizer(target: self, action: #selector(shareButtonTapped)))
     view.addSubview(shareButton)
 
-    recordButton.setImage(UIImage(systemName: "video", withConfiguration: config), for: .normal)
-    recordButton.addGestureRecognizer(
-      UITapGestureRecognizer(target: self, action: #selector(recordScreen)))
-    view.addSubview(recordButton)
-
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
@@ -710,13 +703,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     if view.bounds.width > view.bounds.height {
       shareButton.tintColor = .darkGray
-      recordButton.tintColor = .darkGray
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
     } else {
       shareButton.tintColor = .systemGray
-      recordButton.tintColor = .systemGray
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,
@@ -727,12 +718,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     shareButton.frame = CGRect(
       x: view.bounds.maxX - 49.5,
-      y: view.bounds.maxY - 66,
-      width: 49.5,
-      height: 49.5
-    )
-    recordButton.frame = CGRect(
-      x: shareButton.frame.minX - 49.5,
       y: view.bounds.maxY - 66,
       width: 49.5,
       height: 49.5
@@ -764,38 +749,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  @objc func recordScreen() {
-    let recorder = RPScreenRecorder.shared()
-    recorder.isMicrophoneEnabled = true
-
-    if !recorder.isRecording {
-      AudioServicesPlaySystemSound(1117)
-      recordButton.tintColor = .red
-      recorder.startRecording { error in
-        if let error = error {
-          print("Screen recording start error: \(error)")
-        } else {
-          print("Started screen recording.")
-        }
-      }
-    } else {
-      AudioServicesPlaySystemSound(1118)
-      if view.bounds.width > view.bounds.height {
-        recordButton.tintColor = .darkGray
-      } else {
-        recordButton.tintColor = .systemGray
-      }
-      recorder.stopRecording { previewVC, error in
-        if let error = error {
-          print("Stop recording error: \(error)")
-        }
-        if let previewVC = previewVC {
-          previewVC.previewControllerDelegate = self
-          self.present(previewVC, animated: true, completion: nil)
-        }
-      }
-    }
-  }
 }
 
 // MARK: - UITableViewDataSource, UITableViewDelegate
@@ -840,12 +793,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
   // This method is no longer needed as we adjust cell background layout in layoutSubviews
 
-}
-
-extension ViewController: RPPreviewViewControllerDelegate {
-  func previewControllerDidFinish(_ previewController: RPPreviewViewController) {
-    previewController.dismiss(animated: true)
-  }
 }
 
 // MARK: - YOLOViewDelegate

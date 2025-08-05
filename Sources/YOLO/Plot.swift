@@ -394,7 +394,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     let textSize = labelText.size(withAttributes: attrs)
     let labelWidth = textSize.width + 10
     let labelHeight = CGFloat(textSize.height + 4)
-    var labelRect = CGRect(
+    let labelRect = CGRect(
       x: labelMargin,
       y: labelMargin + (labelHeight + labelMargin) * CGFloat(i),
       width: labelWidth,

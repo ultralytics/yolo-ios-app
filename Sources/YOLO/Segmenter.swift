@@ -243,7 +243,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-    let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+    _ = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
     let resultsLock = NSLock()
 
     // Pre-allocate reusable arrays outside the loop

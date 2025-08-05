@@ -16,6 +16,7 @@ import Accelerate
 import Foundation
 import UIKit
 import Vision
+@preconcurrency import CoreML
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 class Segmenter: BasePredictor, @unchecked Sendable {
@@ -31,7 +32,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let out1 = results[1].featureValue.multiArrayValue
       else { return }
       let out0dim = checkShapeDimensions(of: out0)
-      let out1dim = checkShapeDimensions(of: out1)
+      _ = checkShapeDimensions(of: out1)
       if out0dim == 4 {
         masks = out0
         pred = out1
@@ -88,7 +89,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           DispatchQueue.main.async { self.isUpdating = false }
           return
         }
-        var maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
+        let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
         let result = YOLOResult(
           orig_shape: self.inputSize, boxes: boxes, masks: maskResults, speed: self.t2,
           fps: 1 / self.t4, names: self.labels)
@@ -138,7 +139,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         }
 
         let out0dim = checkShapeDimensions(of: out0)
-        let out1dim = checkShapeDimensions(of: out1)
+        _ = checkShapeDimensions(of: out1)
         if out0dim == 4 {
           masks = out0
           pred = out1
@@ -237,8 +238,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
     // Pre-allocate result arrays with estimated capacity
-    var results: [(CGRect, Int, Float, MLMultiArray)] = []
-    results.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
+    let resultsWrapper = ResultsWrapper()
+    resultsWrapper.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
 
     // Wrapper for thread-safe results collection
     final class ResultsWrapper: @unchecked Sendable {
@@ -311,6 +312,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
         resultsWrapper.append(result)
+
       }
     }
 
@@ -318,6 +320,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     results = resultsWrapper.getResults()
 
     // Optimize NMS by grouping results by class first
+    let results = resultsWrapper.getResults()
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
     for result in results {
       let classIndex = result.1
@@ -360,5 +363,21 @@ final class FloatPointerWrapper: @unchecked Sendable {
   let pointer: UnsafeMutablePointer<Float>
   init(_ pointer: UnsafeMutablePointer<Float>) {
     self.pointer = pointer
+  }
+}
+
+final class ResultsWrapper: @unchecked Sendable {
+  private var results: [(CGRect, Int, Float, MLMultiArray)] = []
+  
+  func reserveCapacity(_ capacity: Int) {
+    results.reserveCapacity(capacity)
+  }
+  
+  func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
+    results.append(result)
+  }
+  
+  func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
+    return results
   }
 }

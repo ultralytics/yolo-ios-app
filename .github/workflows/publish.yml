@@ -181,7 +181,7 @@ jobs:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
           payload: |
-            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO11 iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
+            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
       - name: Notify Failure
         if: needs.release.result != 'success'
         uses: slackapi/slack-github-action@v2.0.0

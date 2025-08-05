@@ -21,7 +21,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="Label Time">
-                                        <rect key="frame" x="175.66666666666666" y="191" width="42" height="20"/>
+                                        <rect key="frame" x="175.66666666666666" y="185" width="42" height="20"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
                                         </accessibility>
@@ -30,14 +30,14 @@
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
-                                        <rect key="frame" x="163" y="118" width="67" height="34"/>
+                                        <rect key="frame" x="163" y="115" width="67" height="34"/>
                                         <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
                                         <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
-                                        <rect key="frame" x="19" y="161" width="355" height="32"/>
+                                        <rect key="frame" x="19" y="155" width="355" height="32"/>
                                         <segments>
                                             <segment title="detect" width="69"/>
                                             <segment title="classify" width="69"/>
@@ -67,7 +67,7 @@
                                         <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
                                     </imageView>
                                     <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
-                                        <rect key="frame" x="215" y="720" width="159" height="67"/>
+                                        <rect key="frame" x="215" y="625" width="159" height="67"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
@@ -98,7 +98,6 @@
                             <constraint firstAttribute="bottom" secondItem="ShC-gv-PaQ" secondAttribute="bottom" id="Jr0-gN-ccq"/>
                             <constraint firstItem="ShC-gv-PaQ" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="mEk-Gz-JJe"/>
                         </constraints>
-
                     </view>
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>

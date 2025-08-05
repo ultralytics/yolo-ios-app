@@ -126,37 +126,20 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
       let score: Float
       let cls: Int
     }
-    
-    // Wrapper to make pointer and array Sendable for Swift 6
-    struct PointerWrapper: @unchecked Sendable {
-      let pointer: UnsafeMutablePointer<Float>
-    }
-    
-    struct DetectionsWrapper: @unchecked Sendable {
-      let detections: UnsafeMutablePointer<Detection?>
-    }
-    
-    let pointerWrapper = PointerWrapper(pointer: pointer)
-    let detectionsPtr = UnsafeMutablePointer<Detection?>.allocate(capacity: numAnchors)
-    detectionsPtr.initialize(repeating: nil, count: numAnchors)
-    defer { 
-      detectionsPtr.deinitialize(count: numAnchors)
-      detectionsPtr.deallocate()
-    }
-    let detectionsWrapper = DetectionsWrapper(detections: detectionsPtr)
+    var rawDetections = [Detection?](repeating: nil, count: numAnchors)
 
     // 1) Parallel-extract predictions
     DispatchQueue.concurrentPerform(iterations: numAnchors) { i in
-      let cx = pointerWrapper.pointer[i] / inputW
-      let cy = pointerWrapper.pointer[numAnchors + i] / inputH
-      let w = pointerWrapper.pointer[2 * numAnchors + i] / inputW
-      let h = pointerWrapper.pointer[3 * numAnchors + i] / inputH
+      let cx = pointer[i] / inputW
+      let cy = pointer[numAnchors + i] / inputH
+      let w = pointer[2 * numAnchors + i] / inputW
+      let h = pointer[3 * numAnchors + i] / inputH
 
       // Find best class & score
       var bestScore: Float = 0
       var bestClass: Int = 0
       for c in 0..<numClasses {
-        let sc = pointerWrapper.pointer[(4 + c) * numAnchors + i]
+        let sc = pointer[(4 + c) * numAnchors + i]
         if sc > bestScore {
           bestScore = sc
           bestClass = c
@@ -165,17 +148,15 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
 
       // Angle is the last channel
       let angleIndex = (4 + numClasses) * numAnchors + i
-      let angle = pointerWrapper.pointer[angleIndex]
+      let angle = pointer[angleIndex]
 
       // Threshold
       if bestScore > confidenceThreshold {
         let obb = OBB(cx: cx, cy: cy, w: w, h: h, angle: angle)
-        detectionsWrapper.detections[i] = Detection(obb: obb, score: bestScore, cls: bestClass)
+        rawDetections[i] = Detection(obb: obb, score: bestScore, cls: bestClass)
       }
     }
 
-    // Convert pointer array to Swift array
-    let rawDetections = Array(UnsafeBufferPointer(start: detectionsPtr, count: numAnchors))
     let detections = rawDetections.compactMap { $0 }  // remove nil
 
     // 2) Run faster OBB NMS

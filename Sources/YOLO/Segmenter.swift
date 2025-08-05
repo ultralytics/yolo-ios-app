@@ -240,30 +240,10 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     var results: [(CGRect, Int, Float, MLMultiArray)] = []
     results.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
 
-    // Wrapper for thread-safe results collection
-    final class ResultsWrapper: @unchecked Sendable {
-      private let lock = NSLock()
-      private var results: [(CGRect, Int, Float, MLMultiArray)]
-      
-      init(capacity: Int) {
-        self.results = []
-        self.results.reserveCapacity(capacity)
-      }
-      
-      func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
-        lock.lock()
-        results.append(result)
-        lock.unlock()
-      }
-      
-      func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
-        return results
-      }
-    }
-
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-    let resultsWrapper = ResultsWrapper(capacity: min(numAnchors / 10, 100))
+    let resultsQueue = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
+    let resultsLock = NSLock()
 
     // Pre-allocate reusable arrays outside the loop
     let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
@@ -310,12 +290,12 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         }
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
-        resultsWrapper.append(result)
+        
+        resultsLock.lock()
+        results.append(result)
+        resultsLock.unlock()
       }
     }
-
-    // Get results from wrapper
-    results = resultsWrapper.getResults()
 
     // Optimize NMS by grouping results by class first
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]

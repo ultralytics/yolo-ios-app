@@ -174,7 +174,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setModel(
     modelPathOrName: String,
     task: YOLOTask,
-    completion: ((Result<Void, Error>) -> Void)? = nil
+    completion: (@Sendable (Result<Void, Error>) -> Void)? = nil
   ) {
     activityIndicator.startAnimating()
     boundingBoxViews.forEach { box in
@@ -216,18 +216,24 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
 
     // Common success handling for all tasks
-    func handleSuccess(predictor: Predictor) {
-      self.videoCapture.predictor = predictor
-      self.activityIndicator.stopAnimating()
-      self.labelName.text = processString(modelName)
-      completion?(.success(()))
+    let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
+      Task { @MainActor in
+        guard let self = self else { return }
+        self.videoCapture.predictor = predictor
+        self.activityIndicator.stopAnimating()
+        self.labelName.text = processString(self.modelName)
+        completion?(.success(()))
+      }
     }
 
     // Common failure handling for all tasks
-    func handleFailure(_ error: Error) {
-      print("Failed to load model with error: \(error)")
-      self.activityIndicator.stopAnimating()
-      completion?(.failure(error))
+    let handleFailure: @Sendable (Error) -> Void = { [weak self] error in
+      Task { @MainActor in
+        guard let self = self else { return }
+        print("Failed to load model with error: \(error)")
+        self.activityIndicator.stopAnimating()
+        completion?(.failure(error))
+      }
     }
 
     switch task {
@@ -235,7 +241,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -245,7 +251,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -255,7 +261,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -266,9 +272,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         [weak self] result in
         switch result {
         case .success(let predictor):
-          self?.obbLayer?.isHidden = false
-
-          handleSuccess(predictor: predictor)
+          Task { @MainActor in
+            self?.obbLayer?.isHidden = false
+          }
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -278,7 +285,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -291,22 +298,25 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       busy = true
       let orientation = UIDevice.current.orientation
       videoCapture.setUp(sessionPreset: .photo, position: position, orientation: orientation) {
-        success in
-        // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
-        if success {
-          // Add the video preview into the UI.
-          if let previewLayer = self.videoCapture.previewLayer {
-            self.layer.insertSublayer(previewLayer, at: 0)
-            self.videoCapture.previewLayer?.frame = self.bounds  // resize preview layer
-            for box in self.boundingBoxViews {
-              box.addToLayer(previewLayer)
+        [weak self] success in
+        Task { @MainActor in
+          guard let self = self else { return }
+          // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
+          if success {
+            // Add the video preview into the UI.
+            if let previewLayer = self.videoCapture.previewLayer {
+              self.layer.insertSublayer(previewLayer, at: 0)
+              self.videoCapture.previewLayer?.frame = self.bounds  // resize preview layer
+              for box in self.boundingBoxViews {
+                box.addToLayer(previewLayer)
+              }
             }
-          }
-          self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
-          // Once everything is set up, we can start capturing live video.
-          self.videoCapture.start()
+            self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
+            // Once everything is set up, we can start capturing live video.
+            self.videoCapture.start()
 
-          self.busy = false
+            self.busy = false
+          }
         }
       }
     }

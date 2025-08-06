@@ -75,26 +75,35 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         alphas.append(alpha)
       }
 
-      DispatchQueue.global(qos: .userInitiated).async {
+      // Capture needed values before async block
+      let capturedMasks = masks
+      let capturedBoxes = boxes
+      let capturedInputSize = self.inputSize!
+      let capturedModelInputSize = self.modelInputSize
+      let capturedT2 = self.t2
+      let capturedT4 = self.t4
+      let capturedLabels = self.labels
+      
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
           let procceessedMasks = generateCombinedMaskImage(
             detectedObjects: detectedObjects,
-            protos: masks,
-            inputWidth: self.modelInputSize.width,
-            inputHeight: self.modelInputSize.height,
+            protos: capturedMasks,
+            inputWidth: capturedModelInputSize.width,
+            inputHeight: capturedModelInputSize.height,
             threshold: 0.5
 
           ) as? (CGImage?, [[[Float]]])
         else {
-          DispatchQueue.main.async { self.isUpdating = false }
+          DispatchQueue.main.async { self?.isUpdating = false }
           return
         }
         let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
         let result = YOLOResult(
-          orig_shape: self.inputSize, boxes: boxes, masks: maskResults, speed: self.t2,
-          fps: 1 / self.t4, names: self.labels)
-        self.updateTime()
-        self.currentOnResultsListener?.on(result: result)
+          orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults, speed: capturedT2,
+          fps: 1 / capturedT4, names: capturedLabels)
+        self?.updateTime()
+        self?.currentOnResultsListener?.on(result: result)
       }
     }
   }
@@ -238,8 +247,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
     // Pre-allocate result arrays with estimated capacity
-    let resultsWrapper = ResultsWrapper()
-    resultsWrapper.reserveCapacity(min(numAnchors / 10, 100)) // Estimate ~10% detection rate
+    let estimatedCapacity = min(numAnchors / 10, 100) // Estimate ~10% detection rate
+    let resultsWrapper = ResultsWrapper(capacity: estimatedCapacity)
 
     // Wrapper for thread-safe results collection
     final class ResultsWrapper: @unchecked Sendable {
@@ -264,7 +273,6 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-    let resultsWrapper = ResultsWrapper(capacity: min(numAnchors / 10, 100))
 
     // Pre-allocate reusable arrays outside the loop
     let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
@@ -318,10 +326,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
     // Get results from wrapper
     let collectedResults = resultsWrapper.getResults()
-    results = collectedResults
 
     // Optimize NMS by grouping results by class first
-    let results = resultsWrapper.getResults()
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
     for result in collectedResults {
       let classIndex = result.1

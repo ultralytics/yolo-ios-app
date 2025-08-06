@@ -66,7 +66,7 @@ class VideoCapture: NSObject, @unchecked Sendable {
     sessionPreset: AVCaptureSession.Preset = .hd1280x720,
     position: AVCaptureDevice.Position,
     orientation: UIDeviceOrientation,
-    completion: @escaping (Bool) -> Void
+    completion: @escaping @Sendable (Bool) -> Void
   ) {
     cameraQueue.async {
       let success = self.setUpCamera(

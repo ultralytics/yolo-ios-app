@@ -283,7 +283,8 @@ YOLOCamera(
 }
 ```
 
-**Note:** 
+**Note:**
+
 - `numItemsThreshold`: Controls the maximum number of detections returned
 - `confidenceThreshold`: Filters out detections below this confidence level
 - `iouThreshold`: Controls Non-Maximum Suppression overlap threshold

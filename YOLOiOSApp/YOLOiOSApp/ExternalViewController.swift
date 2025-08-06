@@ -29,7 +29,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("🟢 ExternalViewController viewDidLoad")
         
         // Set background color to verify view is visible
         view.backgroundColor = .black
@@ -41,8 +40,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         setupUI()
         setupNotifications()
         
-        // Debug: Check if we're on the main thread
-        print("🟢 Is main thread: \(Thread.isMainThread)")
     }
     
     
@@ -50,8 +47,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         // Set black background
         view.backgroundColor = .black
         
-        print("🟢 Setting up UI for external display")
-        print("🟢 View bounds: \(view.bounds)")
         
         setupControlUI()
         
@@ -63,12 +58,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         let screenSize = view.bounds.size
         let scaleFactor = calculateScaleFactor(for: screenSize)
         
-        print("📐 External display setup:")
-        print("  - Screen size: \(screenSize)")
-        print("  - Scale factor: \(scaleFactor)")
-        print("  - Model name font size: \(screenSize.height * 0.1)pt (2.5% of height)")
-        print("  - FPS font size: \(screenSize.height * 0.04)pt (1.67% of height)")
-        print("  - Segment control font size: 60pt (fixed)")
         
         // Calculate proportional font sizes based on screen height
         let baseFontSizeModelName = screenSize.height * 0.1 // 2.5% of screen height
@@ -219,32 +208,18 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         yoloView.toolbar.isHidden = true
         yoloView.toolbar.removeFromSuperview()
         
-        print("🟢 YOLOView controls hidden and sliders removed from view hierarchy")
         
-        // Debug camera layer
-        if let previewLayer = yoloView.layer.sublayers?.first(where: { $0 is AVCaptureVideoPreviewLayer }) {
-            print("🟢 Found camera preview layer: \(previewLayer)")
-            print("  - Frame: \(previewLayer.frame)")
-            print("  - Hidden: \(previewLayer.isHidden)")
-            print("  - Opacity: \(previewLayer.opacity)")
-        } else {
-            print("🔴 Camera preview layer not found!")
-        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        print("🟢 ExternalViewController viewDidAppear")
-        print("🟢 View bounds: \(view.bounds)")
         
         // Create and start YOLOView on external display
         if !self.isInitialized {
             self.isInitialized = true
             
             // Create YOLOView now that the view is fully ready
-            print("🟢 Creating YOLOView for external display")
-            print("🟢 View bounds at creation: \(view.bounds)")
             
             // Create YOLOView without model initially - will be set when main app notifies
             yoloView = YOLOView(frame: view.bounds)
@@ -267,7 +242,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                 // Force layout update
                 view.layoutIfNeeded()
                 
-                print("🟢 YOLOView created with frame: \(yoloView.frame)")
                 
                 // Re-add UI elements on top of YOLOView to ensure they're visible
                 // Add logo on top of YOLOView (camera feed)
@@ -288,45 +262,17 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                 // Force another layout update
                 view.layoutIfNeeded()
                 
-                // Debug: Print view hierarchy
-                print("🔍 View hierarchy after setup:")
-                for (index, subview) in view.subviews.enumerated() {
-                    print("  \(index): \(type(of: subview))")
-                }
                 
                 // Re-setup constraints since we re-added the views
                 let scaleFactor = calculateScaleFactor(for: view.bounds.size)
                 setupConstraints(scaleFactor: scaleFactor)
                 
-                // Debug UI elements
-                print("📱 UI Elements Debug:")
-                print("  - labelName frame: \(self.labelName.frame)")
-                print("  - labelName font: \(self.labelName.font.pointSize)pt")
-                print("  - labelName hidden: \(self.labelName.isHidden)")
-                print("  - labelFPS frame: \(self.labelFPS.frame)")
-                print("  - labelFPS font: \(self.labelFPS.font.pointSize)pt")
-                print("  - segmentedControl frame: \(self.segmentedControl.frame)")
-                print("  - segmentedControl hidden: \(self.segmentedControl.isHidden)")
-                print("  - segmentedControl segments: \(self.segmentedControl.numberOfSegments)")
                 
                 // Wait a bit longer to ensure main YOLOView has released camera
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     self.hideYOLOViewControls()
                     
-                    // Debug layers
-                    print("🟢 YOLOView layers after creation:")
-                    if let layers = yoloView.layer.sublayers {
-                        for (index, layer) in layers.enumerated() {
-                            print("  Layer \(index): \(type(of: layer))")
-                            if layer is AVCaptureVideoPreviewLayer {
-                                print("    ✅ Found AVCaptureVideoPreviewLayer!")
-                                print("    Frame: \(layer.frame)")
-                            }
-                        }
-                    }
-                    
                     // Don't load initial model - wait for main app to notify us
-                    print("🟢 External display ready, waiting for model from main app")
                     
                     // Notify main app
                     NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
@@ -363,14 +309,10 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     
     
     @objc private func handleModelChange(_ notification: Notification) {
-        print("🟡 handleModelChange called")
-        print("  - Notification: \(notification)")
-        print("  - UserInfo: \(notification.userInfo ?? [:])")
         
         guard let userInfo = notification.userInfo,
               let taskString = userInfo["task"] as? String,
               let modelName = userInfo["modelName"] as? String else {
-            print("🔴 Missing model change information")
             return
         }
         
@@ -384,7 +326,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         default: task = .detect
         }
         
-        print("🟢 External display updating to model: \(modelName), task: \(taskString)")
         
         // Update the model on external display
         currentTask = task
@@ -401,7 +342,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         yoloView?.setModel(modelPathOrName: modelName, task: task) { result in
             switch result {
             case .success():
-                print("🟢 External display model updated successfully")
                 // Update model name label
                 DispatchQueue.main.async {
                     // Extract just the filename without extension
@@ -417,13 +357,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
                     let displayName = nameWithoutExtension.replacingOccurrences(of: "yolo", with: "YOLO", options: .caseInsensitive)
                     
                     self.labelName.text = displayName
-                    print("🏷️ External display model name updated: \(displayName)")
                 }
                 // Force layer refresh after model change
                 self.yoloView?.setNeedsDisplay()
                 self.yoloView?.layoutIfNeeded()
-            case .failure(let error):
-                print("🔴 Failed to update external display model: \(error)")
+            case .failure(_):
+                break
             }
         }
     }
@@ -449,7 +388,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         // The threshold values will be applied when the next frame is processed
         // since YOLOView reads these slider values during inference
         
-        print("📊 External display thresholds updated - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
     }
     
     @objc private func handleTaskChange(_ notification: Notification) {
@@ -462,7 +400,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         if let taskIndex = tasks.firstIndex(where: { $0.name == taskName }) {
             DispatchQueue.main.async {
                 self.segmentedControl.selectedSegmentIndex = taskIndex
-                print("📋 External display task changed to: \(taskName)")
             }
         }
     }
@@ -498,54 +435,8 @@ extension ExternalViewController {
     }
     
     func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-        // Debug: Check if results are being received
-        DispatchQueue.main.async {
-            print("🟢 External display received result:")
-            print("  - Task: \(self.currentTask)")
-            print("  - Boxes: \(result.boxes.count)")
-            
-            switch self.currentTask {
-            case .segment:
-                print("  - Has masks: \(result.masks != nil)")
-                if result.masks != nil {
-                    print("  - Masks available")
-                }
-            case .pose:
-                print("  - Keypoints: \(result.keypointsList.count)")
-            case .classify:
-                print("  - Classifications: \(result.boxes.count)")
-            default:
-                break
-            }
-            
-            // Check YOLOView layers
-            self.debugYOLOViewLayers()
-        }
     }
     
-    private func debugYOLOViewLayers() {
-        guard let yoloView = yoloView else {
-            print("🔴 YOLOView is nil")
-            return
-        }
-        
-        print("🔍 Checking YOLOView layers:")
-        print("  - YOLOView bounds: \(yoloView.bounds)")
-        print("  - YOLOView frame: \(yoloView.frame)")
-        print("  - YOLOView layer sublayers: \(yoloView.layer.sublayers?.count ?? 0)")
-        
-        if let sublayers = yoloView.layer.sublayers {
-            for (index, layer) in sublayers.enumerated() {
-                print("    Layer \(index): \(type(of: layer)) - hidden: \(layer.isHidden), opacity: \(layer.opacity)")
-                
-                // Ensure result layers are visible (except UI label layers)
-                if !(layer is CATextLayer) && layer.isHidden && index > 0 {
-                    layer.isHidden = false
-                    print("    🔧 Unhiding layer \(index)")
-                }
-            }
-        }
-    }
 }
 
 

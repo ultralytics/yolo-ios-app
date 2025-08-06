@@ -317,22 +317,23 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     }
 
     // Get results from wrapper
-    results = resultsWrapper.getResults()
+    let collectedResults = resultsWrapper.getResults()
+    results = collectedResults
 
     // Optimize NMS by grouping results by class first
     let results = resultsWrapper.getResults()
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
-    for result in results {
+    for result in collectedResults {
       let classIndex = result.1
       if classBuckets[classIndex] == nil {
         classBuckets[classIndex] = []
-        classBuckets[classIndex]!.reserveCapacity(results.count / numClasses + 1)
+        classBuckets[classIndex]!.reserveCapacity(collectedResults.count / numClasses + 1)
       }
       classBuckets[classIndex]!.append(result)
     }
 
     var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []
-    selectedBoxesAndFeatures.reserveCapacity(results.count)
+    selectedBoxesAndFeatures.reserveCapacity(collectedResults.count)
 
     for (_, classResults) in classBuckets {
       let boxesOnly = classResults.map { $0.0 }

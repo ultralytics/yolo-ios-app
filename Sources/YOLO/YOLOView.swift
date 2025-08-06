@@ -319,6 +319,80 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func resume() {
     videoCapture.start()
   }
+  
+  // MARK: - Threshold Configuration Methods
+  
+  /// Sets the maximum number of detection items to include in results.
+  /// - Parameter numItems: The maximum number of items to include (default is 30).
+  public func setNumItemsThreshold(_ numItems: Int) {
+    sliderNumItems.value = Float(numItems)
+    if let predictor = videoCapture.predictor as? BasePredictor {
+      predictor.setNumItemsThreshold(numItems: numItems)
+    }
+  }
+  
+  /// Gets the current maximum number of detection items.
+  /// - Returns: The current threshold value.
+  public func getNumItemsThreshold() -> Int {
+    return Int(sliderNumItems.value)
+  }
+  
+  /// Sets the confidence threshold for filtering results.
+  /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
+  public func setConfidenceThreshold(_ confidence: Double) {
+    guard confidence >= 0.0 && confidence <= 1.0 else {
+      print("Warning: Confidence threshold should be between 0.0 and 1.0")
+      return
+    }
+    sliderConf.value = Float(confidence)
+    labelSliderConf.text = String(format: "%.2f Confidence Threshold", confidence)
+    if let predictor = videoCapture.predictor as? BasePredictor {
+      predictor.setConfidenceThreshold(confidence: confidence)
+    }
+  }
+  
+  /// Gets the current confidence threshold.
+  /// - Returns: The current confidence threshold value.
+  public func getConfidenceThreshold() -> Double {
+    return Double(sliderConf.value)
+  }
+  
+  /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
+  public func setIouThreshold(_ iou: Double) {
+    guard iou >= 0.0 && iou <= 1.0 else {
+      print("Warning: IoU threshold should be between 0.0 and 1.0")
+      return
+    }
+    sliderIoU.value = Float(iou)
+    labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    if let predictor = videoCapture.predictor as? BasePredictor {
+      predictor.setIouThreshold(iou: iou)
+    }
+  }
+  
+  /// Gets the current IoU threshold.
+  /// - Returns: The current IoU threshold value.
+  public func getIouThreshold() -> Double {
+    return Double(sliderIoU.value)
+  }
+  
+  /// Sets all thresholds at once.
+  /// - Parameters:
+  ///   - numItems: The maximum number of items to include.
+  ///   - confidence: The confidence threshold value (0.0 to 1.0).
+  ///   - iou: The IoU threshold value (0.0 to 1.0).
+  public func setThresholds(numItems: Int? = nil, confidence: Double? = nil, iou: Double? = nil) {
+    if let numItems = numItems {
+      setNumItemsThreshold(numItems)
+    }
+    if let confidence = confidence {
+      setConfidenceThreshold(confidence)
+    }
+    if let iou = iou {
+      setIouThreshold(iou)
+    }
+  }
 
   func setUpBoundingBoxViews() {
     // Ensure all bounding box views are initialized up to the maximum allowed.

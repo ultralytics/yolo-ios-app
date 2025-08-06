@@ -112,6 +112,75 @@ public class YOLO {
       }
     }
   }
+  
+  // MARK: - Threshold Configuration Methods
+  
+  /// Sets the maximum number of detection items to include in results.
+  /// - Parameter numItems: The maximum number of items to include (default is 30).
+  public func setNumItemsThreshold(_ numItems: Int) {
+    if let basePredictor = predictor as? BasePredictor {
+      basePredictor.setNumItemsThreshold(numItems: numItems)
+    }
+  }
+  
+  /// Gets the current maximum number of detection items.
+  /// - Returns: The current threshold value, or nil if not applicable.
+  public func getNumItemsThreshold() -> Int? {
+    return (predictor as? BasePredictor)?.numItemsThreshold
+  }
+  
+  /// Sets the confidence threshold for filtering results.
+  /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
+  public func setConfidenceThreshold(_ confidence: Double) {
+    guard confidence >= 0.0 && confidence <= 1.0 else {
+      print("Warning: Confidence threshold should be between 0.0 and 1.0")
+      return
+    }
+    if let basePredictor = predictor as? BasePredictor {
+      basePredictor.setConfidenceThreshold(confidence: confidence)
+    }
+  }
+  
+  /// Gets the current confidence threshold.
+  /// - Returns: The current confidence threshold value, or nil if not applicable.
+  public func getConfidenceThreshold() -> Double? {
+    return (predictor as? BasePredictor)?.confidenceThreshold
+  }
+  
+  /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
+  public func setIouThreshold(_ iou: Double) {
+    guard iou >= 0.0 && iou <= 1.0 else {
+      print("Warning: IoU threshold should be between 0.0 and 1.0")
+      return
+    }
+    if let basePredictor = predictor as? BasePredictor {
+      basePredictor.setIouThreshold(iou: iou)
+    }
+  }
+  
+  /// Gets the current IoU threshold.
+  /// - Returns: The current IoU threshold value, or nil if not applicable.
+  public func getIouThreshold() -> Double? {
+    return (predictor as? BasePredictor)?.iouThreshold
+  }
+  
+  /// Sets all thresholds at once.
+  /// - Parameters:
+  ///   - numItems: The maximum number of items to include.
+  ///   - confidence: The confidence threshold value (0.0 to 1.0).
+  ///   - iou: The IoU threshold value (0.0 to 1.0).
+  public func setThresholds(numItems: Int? = nil, confidence: Double? = nil, iou: Double? = nil) {
+    if let numItems = numItems {
+      setNumItemsThreshold(numItems)
+    }
+    if let confidence = confidence {
+      setConfidenceThreshold(confidence)
+    }
+    if let iou = iou {
+      setIouThreshold(iou)
+    }
+  }
 
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
     let ciImage = CIImage(image: uiImage)!

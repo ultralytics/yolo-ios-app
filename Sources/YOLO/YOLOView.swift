@@ -319,9 +319,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func resume() {
     videoCapture.start()
   }
-  
+
   // MARK: - Threshold Configuration Methods
-  
+
   /// Sets the maximum number of detection items to include in results.
   /// - Parameter numItems: The maximum number of items to include (default is 30).
   public func setNumItemsThreshold(_ numItems: Int) {
@@ -330,13 +330,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       predictor.setNumItemsThreshold(numItems: numItems)
     }
   }
-  
+
   /// Gets the current maximum number of detection items.
   /// - Returns: The current threshold value.
   public func getNumItemsThreshold() -> Int {
     return Int(sliderNumItems.value)
   }
-  
+
   /// Sets the confidence threshold for filtering results.
   /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
   public func setConfidenceThreshold(_ confidence: Double) {
@@ -350,13 +350,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       predictor.setConfidenceThreshold(confidence: confidence)
     }
   }
-  
+
   /// Gets the current confidence threshold.
   /// - Returns: The current confidence threshold value.
   public func getConfidenceThreshold() -> Double {
     return Double(sliderConf.value)
   }
-  
+
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
   /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
   public func setIouThreshold(_ iou: Double) {
@@ -370,13 +370,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       predictor.setIouThreshold(iou: iou)
     }
   }
-  
+
   /// Gets the current IoU threshold.
   /// - Returns: The current IoU threshold value.
   public func getIouThreshold() -> Double {
     return Double(sliderIoU.value)
   }
-  
+
   /// Sets all thresholds at once.
   /// - Parameters:
   ///   - numItems: The maximum number of items to include.

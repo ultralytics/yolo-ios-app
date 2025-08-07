@@ -112,9 +112,9 @@ public class YOLO {
       }
     }
   }
-  
+
   // MARK: - Threshold Configuration Methods
-  
+
   /// Sets the maximum number of detection items to include in results.
   /// - Parameter numItems: The maximum number of items to include (default is 30).
   public func setNumItemsThreshold(_ numItems: Int) {
@@ -122,13 +122,13 @@ public class YOLO {
       basePredictor.setNumItemsThreshold(numItems: numItems)
     }
   }
-  
+
   /// Gets the current maximum number of detection items.
   /// - Returns: The current threshold value, or nil if not applicable.
   public func getNumItemsThreshold() -> Int? {
     return (predictor as? BasePredictor)?.numItemsThreshold
   }
-  
+
   /// Sets the confidence threshold for filtering results.
   /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
   public func setConfidenceThreshold(_ confidence: Double) {
@@ -140,13 +140,13 @@ public class YOLO {
       basePredictor.setConfidenceThreshold(confidence: confidence)
     }
   }
-  
+
   /// Gets the current confidence threshold.
   /// - Returns: The current confidence threshold value, or nil if not applicable.
   public func getConfidenceThreshold() -> Double? {
     return (predictor as? BasePredictor)?.confidenceThreshold
   }
-  
+
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
   /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
   public func setIouThreshold(_ iou: Double) {
@@ -158,13 +158,13 @@ public class YOLO {
       basePredictor.setIouThreshold(iou: iou)
     }
   }
-  
+
   /// Gets the current IoU threshold.
   /// - Returns: The current IoU threshold value, or nil if not applicable.
   public func getIouThreshold() -> Double? {
     return (predictor as? BasePredictor)?.iouThreshold
   }
-  
+
   /// Sets all thresholds at once.
   /// - Parameters:
   ///   - numItems: The maximum number of items to include.

@@ -38,7 +38,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     //      view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentPhPicker)))
     // Initialize YOLO model with a segmentation task
     // You can change the model or task type to use detection, classification, etc.
-    model = YOLO("yolo11l-seg", task: .segment) { [self] result in
+    model = YOLO("yolo11n", task: .detect) { [self] result in
       switch result {
       case .success(_):
         print("predictor initialized")

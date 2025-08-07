@@ -990,7 +990,10 @@ public func drawYOLOSegmentationWithBoxes(
     let baseRect = CGRect(origin: .zero, size: renderedSize)
 
     // Scale mask if necessary when it has different dimensions from the original image
-    _ = maskImage.width != Int(width) || maskImage.height != Int(height) ? baseRect : CGRect(
+    _ =
+      maskImage.width != Int(width) || maskImage.height != Int(height)
+      ? baseRect
+      : CGRect(
         x: 0, y: 0, width: CGFloat(maskImage.width), height: CGFloat(maskImage.height))
 
     // Draw mask image with the correct orientation

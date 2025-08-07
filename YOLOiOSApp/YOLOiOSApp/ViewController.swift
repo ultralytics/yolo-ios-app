@@ -218,12 +218,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupTableView()
-    
+
     // Setup logo tap gesture
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-    
+
     // Setup share button
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
@@ -238,7 +238,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Set app version
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+      let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
+    {
       labelVersion.text = "v\(version) (\(build))"
     }
 
@@ -418,7 +419,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let remoteEntries = remoteList.compactMap { (modelName, url) -> ModelEntry? in
       // Only include remote models if no local model with the same name exists
       guard !localModelNames.contains(modelName.lowercased()) else { return nil }
-      
+
       return ModelEntry(
         displayName: modelName,
         identifier: modelName,
@@ -522,9 +523,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
-    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String)
+  {
+    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[
+      0]
+    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
+      "mlmodelc")
 
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
@@ -675,8 +679,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
   }
 
-
-
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
@@ -686,7 +688,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-      
+
     } else {
       // Portrait mode
       focus.isHidden = true

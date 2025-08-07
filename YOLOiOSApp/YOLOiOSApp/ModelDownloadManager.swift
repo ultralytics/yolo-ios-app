@@ -17,7 +17,8 @@ import Foundation
 import ZIPFoundation
 
 /// Shared documents directory accessor.
-private let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+private let documentsDirectory = FileManager.default.urls(
+  for: .documentDirectory, in: .userDomainMask)[0]
 
 /// A structure representing a YOLO model with metadata for display and loading.
 struct ModelEntry {
@@ -27,7 +28,10 @@ struct ModelEntry {
   let isRemote: Bool
   let remoteURL: URL?
 
-  init(displayName: String, identifier: String, isLocalBundle: Bool = false, isRemote: Bool = false, remoteURL: URL? = nil) {
+  init(
+    displayName: String, identifier: String, isLocalBundle: Bool = false, isRemote: Bool = false,
+    remoteURL: URL? = nil
+  ) {
     self.displayName = displayName
     self.identifier = identifier
     self.isLocalBundle = isLocalBundle
@@ -60,14 +64,15 @@ class ModelCacheManager {
 
   func loadBundledModel() {
     guard let url = getModelFileURL(fileName: "yolov8m"),
-          let bundledModel = try? MLModel(contentsOf: url) else {
+      let bundledModel = try? MLModel(contentsOf: url)
+    else {
       print("Failed to load bundled model")
       return
     }
-    
+
     addModelToCache(bundledModel, for: "yolov8m")
     let destinationURL = modelURL(for: "yolov8m")
-    
+
     do {
       if !FileManager.default.fileExists(atPath: destinationURL.path) {
         try FileManager.default.copyItem(at: url, to: destinationURL)
@@ -87,7 +92,7 @@ class ModelCacheManager {
 
     let localModelURL = modelURL(for: key)
     guard FileManager.default.fileExists(atPath: localModelURL.path) else { return }
-    
+
     do {
       let model = try MLModel(contentsOf: localModelURL)
       addModelToCache(model, for: key)
@@ -97,7 +102,10 @@ class ModelCacheManager {
     }
   }
 
-  func loadModel(from fileName: String, remoteURL: URL, key: String, completion: @escaping (MLModel?, String) -> Void) {
+  func loadModel(
+    from fileName: String, remoteURL: URL, key: String,
+    completion: @escaping (MLModel?, String) -> Void
+  ) {
     if let cachedModel = modelCache[key] {
       updateAccessOrder(for: key)
       completion(cachedModel, key)
@@ -107,7 +115,8 @@ class ModelCacheManager {
     if FileManager.default.fileExists(atPath: modelURL(for: key).path) {
       loadLocalModel(key: key, completion: completion)
     } else {
-      ModelDownloadManager.shared.startDownload(url: remoteURL, fileName: fileName, key: key, completion: completion)
+      ModelDownloadManager.shared.startDownload(
+        url: remoteURL, fileName: fileName, key: key, completion: completion)
     }
   }
 
@@ -148,7 +157,10 @@ class ModelDownloadManager: NSObject {
   }
 
   /// Create priority download task.
-  private func createPriorityTask(from task: URLSessionDownloadTask, urlKeyPair: (url: URL, key: String), completion: @escaping (MLModel?, String) -> Void) {
+  private func createPriorityTask(
+    from task: URLSessionDownloadTask, urlKeyPair: (url: URL, key: String),
+    completion: @escaping (MLModel?, String) -> Void
+  ) {
     let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
     let priorityDownloadTask = session.downloadTask(with: task.originalRequest!)
     priorityDownloadTask.priority = URLSessionTask.highPriority
@@ -158,7 +170,9 @@ class ModelDownloadManager: NSObject {
     priorityDownloadTask.resume()
   }
 
-  func startDownload(url: URL, fileName: String, key: String, completion: @escaping (MLModel?, String) -> Void) {
+  func startDownload(
+    url: URL, fileName: String, key: String, completion: @escaping (MLModel?, String) -> Void
+  ) {
     let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
     let downloadTask = session.downloadTask(with: url)
     let destinationURL = documentsDirectory.appendingPathComponent(fileName)
@@ -170,17 +184,17 @@ class ModelDownloadManager: NSObject {
   func prioritizeDownload(for fileName: String, completion: @escaping (MLModel?, String) -> Void) {
     for (task, urlKeyPair) in downloadTasks {
       guard urlKeyPair.url.lastPathComponent.contains(fileName) else { continue }
-      
+
       task.cancel(byProducingResumeData: { resumeData in
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
         let priorityDownloadTask: URLSessionDownloadTask
-        
+
         if let resumeData = resumeData {
           priorityDownloadTask = session.downloadTask(withResumeData: resumeData)
         } else {
           priorityDownloadTask = session.downloadTask(with: task.originalRequest!)
         }
-        
+
         priorityDownloadTask.priority = URLSessionTask.highPriority
         self.downloadTasks[priorityDownloadTask] = urlKeyPair
         self.downloadCompletionHandlers[priorityDownloadTask] = completion
@@ -198,10 +212,14 @@ class ModelDownloadManager: NSObject {
 }
 
 extension ModelDownloadManager: URLSessionDownloadDelegate {
-  func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+  func urlSession(
+    _ session: URLSession, downloadTask: URLSessionDownloadTask,
+    didFinishDownloadingTo location: URL
+  ) {
     guard let destinationURL = downloadTasks[downloadTask]?.url,
-          let key = downloadTasks[downloadTask]?.key else { return }
-    
+      let key = downloadTasks[downloadTask]?.key
+    else { return }
+
     do {
       let zipURL = destinationURL
       if fileExists(at: zipURL) {
@@ -209,26 +227,27 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
       downloadTasks.removeValue(forKey: downloadTask)
-      
+
       // Extract to model-specific temporary directory to avoid conflicts
       let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
       if FileManager.default.fileExists(atPath: tempExtractionURL.path) {
         try FileManager.default.removeItem(at: tempExtractionURL)
       }
-      
+
       try unzipSkippingMacOSX(at: zipURL, to: tempExtractionURL)
-      
+
       // Find the model file in the extracted contents (search recursively)
       func findModelFile(in directory: URL) throws -> URL? {
-        let contents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.isDirectoryKey])
-        
+        let contents = try FileManager.default.contentsOfDirectory(
+          at: directory, includingPropertiesForKeys: [.isDirectoryKey])
+
         // First, look for model files in current directory
         for url in contents {
           if ["mlmodel", "mlpackage"].contains(url.pathExtension) {
             return url
           }
         }
-        
+
         // Then search subdirectories
         for url in contents {
           let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
@@ -238,14 +257,16 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
             }
           }
         }
-        
+
         return nil
       }
-      
+
       guard let foundModelURL = try findModelFile(in: tempExtractionURL) else {
-        throw NSError(domain: "ModelDownload", code: 1, userInfo: [NSLocalizedDescriptionKey: "No model file found in extracted archive"])
+        throw NSError(
+          domain: "ModelDownload", code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "No model file found in extracted archive"])
       }
-      
+
       loadModel(from: foundModelURL, key: key) { model in
         // Clean up temp directory and zip file
         try? FileManager.default.removeItem(at: tempExtractionURL)
@@ -263,7 +284,8 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       do {
         let compiledModelURL = try MLModel.compileModel(at: url)
         let model = try MLModel(contentsOf: compiledModelURL)
-        let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+        let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
+          "mlmodelc")
         ModelCacheManager.shared.addModelToCache(model, for: key)
         try FileManager.default.moveItem(at: compiledModelURL, to: localModelURL)
         DispatchQueue.main.async { completion(model) }
@@ -274,7 +296,10 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     }
   }
 
-  func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+  func urlSession(
+    _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
+    totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
+  ) {
     let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
     DispatchQueue.main.async { self.progressHandler?(progress) }
   }
@@ -286,8 +311,10 @@ class ModelFileManager {
 
   func deleteAllDownloadedModels() {
     do {
-      let fileURLs = try FileManager.default.contentsOfDirectory(at: documentsDirectory, includingPropertiesForKeys: nil)
-      for fileURL in fileURLs where ["mlmodel", "mlmodelc", "mlpackage"].contains(fileURL.pathExtension) {
+      let fileURLs = try FileManager.default.contentsOfDirectory(
+        at: documentsDirectory, includingPropertiesForKeys: nil)
+      for fileURL in fileURLs
+      where ["mlmodel", "mlmodelc", "mlpackage"].contains(fileURL.pathExtension) {
         try FileManager.default.removeItem(at: fileURL)
         print("Deleted file: \(fileURL.lastPathComponent)")
       }
@@ -321,7 +348,8 @@ func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
   let archive = try Archive(url: sourceURL, accessMode: .read)
 
   if !FileManager.default.fileExists(atPath: destinationURL.path) {
-    try FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+    try FileManager.default.createDirectory(
+      at: destinationURL, withIntermediateDirectories: true, attributes: nil)
   }
 
   for entry in archive {
@@ -329,9 +357,10 @@ func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
 
     let entryDestinationURL = destinationURL.appendingPathComponent(entry.path)
     let parentDir = entryDestinationURL.deletingLastPathComponent()
-    
+
     if !FileManager.default.fileExists(atPath: parentDir.path) {
-      try FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true, attributes: nil)
+      try FileManager.default.createDirectory(
+        at: parentDir, withIntermediateDirectories: true, attributes: nil)
     }
 
     _ = try archive.extract(entry, to: entryDestinationURL)

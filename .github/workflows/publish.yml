@@ -132,27 +132,31 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
-      - name: Prepare testflight branch (reset to source branch)
+      - name: Prepare testflight branch (single commit)
         run: |
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
           git fetch origin
-          git checkout -B testflight origin/${{ inputs.source_branch || 'main' }}
-
-      - name: Resolve dependencies and commit changes
-        run: |
+          
+          # Delete existing testflight branch
+          git branch -D testflight 2>/dev/null || true
+          
+          # Create clean testflight branch from source
+          git checkout -b testflight origin/${{ inputs.source_branch || 'main' }}
+          
+          # Resolve dependencies  
           INFO_PLIST="YOLOiOSApp/YOLOiOSApp/Info.plist"
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$INFO_PLIST")
           MARKETING_VERSION="${{ needs.check.outputs.marketing_version }}"
-
-          # Resolve package dependencies
+          
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
-
-          # Commit resolved dependencies
+          
+          # Squash all commits into single commit
+          git reset --soft $(git rev-list --max-parents=0 HEAD)
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          git commit --allow-empty -m "Prepare v$MARKETING_VERSION ($CURRENT_BUILD) for Xcode Cloud"
+          git commit -m "Prepare v$MARKETING_VERSION ($CURRENT_BUILD) for Xcode Cloud"
 
       - name: Push to Xcode Cloud
         run: git push --force origin testflight

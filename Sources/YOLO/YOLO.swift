@@ -63,7 +63,7 @@ public class YOLO: @unchecked Sendable {
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL) { result in
+      Classifier.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -73,7 +73,7 @@ public class YOLO: @unchecked Sendable {
       }
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL) { result in
+      Segmenter.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -83,7 +83,7 @@ public class YOLO: @unchecked Sendable {
       }
 
     case .pose:
-      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL) { result in
+      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -93,7 +93,7 @@ public class YOLO: @unchecked Sendable {
       }
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+      ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -103,7 +103,7 @@ public class YOLO: @unchecked Sendable {
       }
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)

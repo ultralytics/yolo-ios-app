@@ -33,7 +33,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public weak var delegate: YOLOViewDelegate?
 
   func onInferenceTime(speed: Double, fps: Double) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
       // Notify delegate of performance metrics
 
@@ -49,7 +50,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     onDetection?(result)
 
     if task == .segment {
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
         if let maskImage = result.masks?.combinedMask {
 
           guard let maskLayer = self.maskLayer else { return }

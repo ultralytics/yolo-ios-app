@@ -1173,7 +1173,8 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
       
-      Task { @MainActor in
+      Task { @MainActor [weak self] in
+        guard let self = self else { return }
         var isCameraFront = false
         if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
           currentInput.device.position == .front

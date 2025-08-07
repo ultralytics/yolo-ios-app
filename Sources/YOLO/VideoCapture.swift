@@ -68,7 +68,13 @@ class VideoCapture: NSObject, @unchecked Sendable {
     orientation: UIDeviceOrientation,
     completion: @escaping @Sendable (Bool) -> Void
   ) {
-    cameraQueue.async {
+    cameraQueue.async { [weak self] in
+      guard let self = self else {
+        DispatchQueue.main.async {
+          completion(false)
+        }
+        return
+      }
       let success = self.setUpCamera(
         sessionPreset: sessionPreset, position: position, orientation: orientation)
       DispatchQueue.main.async {

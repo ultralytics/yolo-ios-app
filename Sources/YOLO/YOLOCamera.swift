@@ -65,17 +65,17 @@ struct YOLOViewRepresentable: UIViewRepresentable {
   let onDetection: ((YOLOResult) -> Void)?
 
   func makeUIView(context: Context) -> YOLOView {
-    let yoloView: YOLOView
+    let finalModelPathOrName: String
     
     if let modelURL = modelURL {
-      yoloView = YOLOView(frame: .zero, url: modelURL, task: task)
+      finalModelPathOrName = modelURL.path
     } else if let modelPathOrName = modelPathOrName {
-      yoloView = YOLOView(frame: .zero, modelPathOrName: modelPathOrName, task: task)
+      finalModelPathOrName = modelPathOrName
     } else {
       fatalError("Either modelPathOrName or modelURL must be provided")
     }
     
-    return yoloView
+    return YOLOView(frame: .zero, modelPathOrName: finalModelPathOrName, task: task)
   }
 
   func updateUIView(_ uiView: YOLOView, context: Context) {

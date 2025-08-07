@@ -22,7 +22,7 @@ public class YOLO {
   /// Initialize YOLO with remote URL for automatic download and caching
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
     let downloader = YOLOModelDownloader()
-    
+
     downloader.download(from: url, task: task) { result in
       switch result {
       case .success(let modelPath):
@@ -32,7 +32,7 @@ public class YOLO {
       }
     }
   }
-  
+
   public init(
     _ modelPathOrName: String, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)? = nil
   ) {
@@ -64,9 +64,11 @@ public class YOLO {
 
     loadModel(from: unwrappedModelURL, task: task, completion: completion)
   }
-  
+
   /// Load model from URL with task-specific predictor creation
-  private func loadModel(from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?) {
+  private func loadModel(
+    from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
+  ) {
     func handleSuccess(predictor: Predictor) {
       self.predictor = predictor
       completion?(.success(self))
@@ -79,44 +81,54 @@ public class YOLO {
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: modelURL, completion: { result in
-        switch result {
-        case .success(let predictor): handleSuccess(predictor: predictor)
-        case .failure(let error): handleFailure(error)
-        }
-      })
+      Classifier.create(
+        unwrappedModelURL: modelURL,
+        completion: { result in
+          switch result {
+          case .success(let predictor): handleSuccess(predictor: predictor)
+          case .failure(let error): handleFailure(error)
+          }
+        })
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: modelURL, completion: { result in
-        switch result {
-        case .success(let predictor): handleSuccess(predictor: predictor)
-        case .failure(let error): handleFailure(error)
-        }
-      })
+      Segmenter.create(
+        unwrappedModelURL: modelURL,
+        completion: { result in
+          switch result {
+          case .success(let predictor): handleSuccess(predictor: predictor)
+          case .failure(let error): handleFailure(error)
+          }
+        })
 
     case .pose:
-      PoseEstimator.create(unwrappedModelURL: modelURL, completion: { result in
-        switch result {
-        case .success(let predictor): handleSuccess(predictor: predictor)
-        case .failure(let error): handleFailure(error)
-        }
-      })
+      PoseEstimator.create(
+        unwrappedModelURL: modelURL,
+        completion: { result in
+          switch result {
+          case .success(let predictor): handleSuccess(predictor: predictor)
+          case .failure(let error): handleFailure(error)
+          }
+        })
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: modelURL, completion: { result in
-        switch result {
-        case .success(let predictor): handleSuccess(predictor: predictor)
-        case .failure(let error): handleFailure(error)
-        }
-      })
+      ObbDetector.create(
+        unwrappedModelURL: modelURL,
+        completion: { result in
+          switch result {
+          case .success(let predictor): handleSuccess(predictor: predictor)
+          case .failure(let error): handleFailure(error)
+          }
+        })
 
     default:
-      ObjectDetector.create(unwrappedModelURL: modelURL, completion: { result in
-        switch result {
-        case .success(let predictor): handleSuccess(predictor: predictor)
-        case .failure(let error): handleFailure(error)
-        }
-      })
+      ObjectDetector.create(
+        unwrappedModelURL: modelURL,
+        completion: { result in
+          switch result {
+          case .success(let predictor): handleSuccess(predictor: predictor)
+          case .failure(let error): handleFailure(error)
+          }
+        })
     }
   }
 

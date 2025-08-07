@@ -701,18 +701,18 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       UIImage(systemName: "camera.rotate", withConfiguration: config), for: .normal)
     shareButton.setImage(
       UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
-    
+
     playButton.isEnabled = false
     pauseButton.isEnabled = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
     pauseButton.addTarget(self, action: #selector(pauseTapped), for: .touchUpInside)
     switchCameraButton.addTarget(self, action: #selector(switchCameraTapped), for: .touchUpInside)
-    
+
     setupToolbar()
-    
+
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
-  
+
   /// Configure a slider with common settings
   private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
     slider.minimumValue = min
@@ -722,7 +722,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     slider.maximumTrackTintColor = .systemGray.withAlphaComponent(0.7)
     slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
   }
-  
+
   /// Setup toolbar with consistent styling
   private func setupToolbar() {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
@@ -737,10 +737,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
-    
+
     // Apply consistent toolbar styling
     applyToolbarStyling(isLandscape: isLandscape)
-    
+
     if isLandscape {
       layoutLandscape()
     } else {
@@ -749,7 +749,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     self.videoCapture.previewLayer?.frame = self.bounds
   }
-  
+
   /// Apply consistent toolbar and button styling
   private func applyToolbarStyling(isLandscape: Bool) {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
@@ -758,126 +758,126 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       button.tintColor = buttonColor
     }
   }
-  
+
   /// Layout views for landscape orientation
   private func layoutLandscape() {
     let width = bounds.width
     let height = bounds.height
     let topMargin: CGFloat = 0
     let titleLabelHeight: CGFloat = height * 0.1
-    
+
     labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-    
+
     let subLabelHeight: CGFloat = height * 0.04
     labelFPS.frame = CGRect(
       x: 0, y: center.y - height * 0.24 - subLabelHeight,
       width: width, height: subLabelHeight
     )
-    
+
     let sliderWidth: CGFloat = width * 0.2
     let sliderHeight: CGFloat = height * 0.1
-    
+
     labelSliderNumItems.frame = CGRect(
       x: width * 0.1, y: labelFPS.frame.minY - sliderHeight,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     sliderNumItems.frame = CGRect(
       x: width * 0.1, y: labelSliderNumItems.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     labelSliderConf.frame = CGRect(
       x: width * 0.1, y: sliderNumItems.frame.maxY + 10,
       width: sliderWidth * 1.5, height: sliderHeight
     )
-    
+
     sliderConf.frame = CGRect(
       x: width * 0.1, y: labelSliderConf.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     labelSliderIoU.frame = CGRect(
       x: width * 0.1, y: sliderConf.frame.maxY + 10,
       width: sliderWidth * 1.5, height: sliderHeight
     )
-    
+
     sliderIoU.frame = CGRect(
       x: width * 0.1, y: labelSliderIoU.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     let zoomLabelWidth: CGFloat = width * 0.2
     labelZoom.frame = CGRect(
       x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
       width: zoomLabelWidth, height: height * 0.03
     )
-    
+
     layoutToolbarButtons(width: width, height: height)
   }
-  
+
   /// Layout views for portrait orientation
   private func layoutPortrait() {
     let width = bounds.width
     let height = bounds.height
     let topMargin: CGFloat = 0
     let titleLabelHeight: CGFloat = height * 0.1
-    
+
     labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-    
+
     let subLabelHeight: CGFloat = height * 0.04
     labelFPS.frame = CGRect(
       x: 0, y: labelName.frame.maxY + 15,
       width: width, height: subLabelHeight
     )
-    
+
     let sliderWidth: CGFloat = width * 0.46
     let sliderHeight: CGFloat = height * 0.02
-    
+
     sliderNumItems.frame = CGRect(
       x: width * 0.01, y: center.y - sliderHeight - height * 0.24,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     labelSliderNumItems.frame = CGRect(
       x: width * 0.01, y: sliderNumItems.frame.minY - sliderHeight - 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     labelSliderConf.frame = CGRect(
       x: width * 0.01, y: center.y + height * 0.24,
       width: sliderWidth * 1.5, height: sliderHeight
     )
-    
+
     sliderConf.frame = CGRect(
       x: width * 0.01, y: labelSliderConf.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     labelSliderIoU.frame = CGRect(
       x: width * 0.01, y: sliderConf.frame.maxY + 10,
       width: sliderWidth * 1.5, height: sliderHeight
     )
-    
+
     sliderIoU.frame = CGRect(
       x: width * 0.01, y: labelSliderIoU.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
-    
+
     let zoomLabelWidth: CGFloat = width * 0.2
     labelZoom.frame = CGRect(
       x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
       width: zoomLabelWidth, height: height * 0.03
     )
-    
+
     layoutToolbarButtons(width: width, height: height)
   }
-  
+
   /// Layout toolbar buttons (shared between orientations)
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75
-    
+
     toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
     playButton.frame = CGRect(x: 0, y: 0, width: buttonHeight, height: buttonHeight)
     pauseButton.frame = CGRect(
@@ -1047,7 +1047,7 @@ extension YOLOView {
     destination.backgroundColor = source.backgroundColor
     destination.cornerRadius = source.cornerRadius
   }
-  
+
   /// Copies CAShapeLayer properties
   private func copyShapeLayer(_ shapeLayer: CAShapeLayer) -> CAShapeLayer {
     let copy = CAShapeLayer()
@@ -1059,7 +1059,7 @@ extension YOLOView {
     copy.opacity = shapeLayer.opacity
     return copy
   }
-  
+
   /// Copies CATextLayer properties
   private func copyTextLayer(_ textLayer: CATextLayer) -> CATextLayer {
     let copy = CATextLayer()
@@ -1073,13 +1073,13 @@ extension YOLOView {
     copy.opacity = textLayer.opacity
     return copy
   }
-  
+
   /// Creates a copy of the mask layer for capture
   private func copyMaskLayer(_ maskLayer: CALayer) -> CALayer? {
     let tempLayer = CALayer()
     let overlayFrame = self.overlayLayer.frame
     let maskFrame = maskLayer.frame
-    
+
     // Adjust mask frame to be relative to the main view, not overlayLayer
     tempLayer.frame = CGRect(
       x: overlayFrame.origin.x + maskFrame.origin.x,
@@ -1091,12 +1091,12 @@ extension YOLOView {
     copyLayerProperties(from: maskLayer, to: tempLayer)
     return tempLayer
   }
-  
+
   /// Creates a copy of the pose layer including all sublayers
   private func copyPoseLayer(_ poseLayer: CALayer) -> CALayer? {
     let tempLayer = CALayer()
     let overlayFrame = self.overlayLayer.frame
-    
+
     tempLayer.frame = CGRect(
       x: overlayFrame.origin.x,
       y: overlayFrame.origin.y,
@@ -1104,7 +1104,7 @@ extension YOLOView {
       height: overlayFrame.height
     )
     tempLayer.opacity = poseLayer.opacity
-    
+
     // Copy all sublayers (keypoints and skeleton lines)
     if let sublayers = poseLayer.sublayers {
       for sublayer in sublayers {
@@ -1120,12 +1120,12 @@ extension YOLOView {
     }
     return tempLayer
   }
-  
+
   /// Creates a copy of the OBB layer including all sublayers
   private func copyOBBLayer(_ obbLayer: CALayer) -> CALayer? {
     let tempLayer = CALayer()
     let overlayFrame = self.overlayLayer.frame
-    
+
     tempLayer.frame = CGRect(
       x: overlayFrame.origin.x,
       y: overlayFrame.origin.y,
@@ -1133,7 +1133,7 @@ extension YOLOView {
       height: overlayFrame.height
     )
     tempLayer.opacity = obbLayer.opacity
-    
+
     // Copy all sublayers
     if let sublayers = obbLayer.sublayers {
       for sublayer in sublayers {
@@ -1160,83 +1160,84 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      
+
       Task { @MainActor in
         var isCameraFront = false
-        if let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput,
+        if let currentInput = self.videoCapture.captureSession.inputs.first
+          as? AVCaptureDeviceInput,
           currentInput.device.position == .front
         {
           isCameraFront = true
         }
-      var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
-      switch UIDevice.current.orientation {
-      case .landscapeLeft:
-        orientation = isCameraFront ? .downMirrored : .up
-      case .landscapeRight:
-        orientation = isCameraFront ? .upMirrored : .down
-      default:
-        break
-      }
-      var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
-      if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
-        let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
-      {
-        image = UIImage(cgImage: cgImage)
-      }
-      let imageView = UIImageView(image: image)
-      imageView.contentMode = .scaleAspectFill
-      imageView.frame = self.frame
-      let imageLayer = imageView.layer
-      self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
-
-      // Add visualization layers
-      var tempLayers = [CALayer]()
-      
-      // Add mask layer if present (for segmentation task)
-      if let maskLayer = self.maskLayer, !maskLayer.isHidden {
-        if let tempLayer = copyMaskLayer(maskLayer) {
-          self.layer.addSublayer(tempLayer)
-          tempLayers.append(tempLayer)
+        var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
+        switch UIDevice.current.orientation {
+        case .landscapeLeft:
+          orientation = isCameraFront ? .downMirrored : .up
+        case .landscapeRight:
+          orientation = isCameraFront ? .upMirrored : .down
+        default:
+          break
         }
-      }
-
-      // Add pose layer if present (for pose task)
-      if let poseLayer = self.poseLayer {
-        if let tempLayer = copyPoseLayer(poseLayer) {
-          self.layer.addSublayer(tempLayer)
-          tempLayers.append(tempLayer)
+        var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
+        if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
+          let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
+        {
+          image = UIImage(cgImage: cgImage)
         }
-      }
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFill
+        imageView.frame = self.frame
+        let imageLayer = imageView.layer
+        self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
 
-      // Add OBB layer if present (for OBB task)
-      if let obbLayer = self.obbLayer, !obbLayer.isHidden {
-        if let tempLayer = copyOBBLayer(obbLayer) {
-          self.layer.addSublayer(tempLayer)
-          tempLayers.append(tempLayer)
+        // Add visualization layers
+        var tempLayers = [CALayer]()
+
+        // Add mask layer if present (for segmentation task)
+        if let maskLayer = self.maskLayer, !maskLayer.isHidden {
+          if let tempLayer = copyMaskLayer(maskLayer) {
+            self.layer.addSublayer(tempLayer)
+            tempLayers.append(tempLayer)
+          }
         }
-      }
 
-      var tempViews = [UIView]()
-      let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
-      for info in boundingBoxInfos where !info.isHidden {
-        let boxView = createBoxView(from: info)
-        boxView.frame = info.rect
+        // Add pose layer if present (for pose task)
+        if let poseLayer = self.poseLayer {
+          if let tempLayer = copyPoseLayer(poseLayer) {
+            self.layer.addSublayer(tempLayer)
+            tempLayers.append(tempLayer)
+          }
+        }
 
-        self.addSubview(boxView)
-        tempViews.append(boxView)
-      }
-      let bounds = UIScreen.main.bounds
-      UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
-      self.drawHierarchy(in: bounds, afterScreenUpdates: true)
-      let img = UIGraphicsGetImageFromCurrentImageContext()
-      UIGraphicsEndImageContext()
-      imageLayer.removeFromSuperlayer()
-      for layer in tempLayers {
-        layer.removeFromSuperlayer()
-      }
-      for v in tempViews {
-        v.removeFromSuperview()
-      }
+        // Add OBB layer if present (for OBB task)
+        if let obbLayer = self.obbLayer, !obbLayer.isHidden {
+          if let tempLayer = copyOBBLayer(obbLayer) {
+            self.layer.addSublayer(tempLayer)
+            tempLayers.append(tempLayer)
+          }
+        }
+
+        var tempViews = [UIView]()
+        let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
+        for info in boundingBoxInfos where !info.isHidden {
+          let boxView = createBoxView(from: info)
+          boxView.frame = info.rect
+
+          self.addSubview(boxView)
+          tempViews.append(boxView)
+        }
+        let bounds = UIScreen.main.bounds
+        UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
+        self.drawHierarchy(in: bounds, afterScreenUpdates: true)
+        let img = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        imageLayer.removeFromSuperlayer()
+        for layer in tempLayers {
+          layer.removeFromSuperlayer()
+        }
+        for v in tempViews {
+          v.removeFromSuperview()
+        }
         photoCaptureCompletion?(img)
         photoCaptureCompletion = nil
       }

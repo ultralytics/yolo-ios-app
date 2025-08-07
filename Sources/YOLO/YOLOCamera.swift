@@ -33,7 +33,7 @@ public struct YOLOCamera: View {
     self.task = task
     self.cameraPosition = cameraPosition
   }
-  
+
   public init(
     url: URL,
     task: YOLOTask = .detect,
@@ -66,7 +66,7 @@ struct YOLOViewRepresentable: UIViewRepresentable {
 
   func makeUIView(context: Context) -> YOLOView {
     let finalModelPathOrName: String
-    
+
     if let modelURL = modelURL {
       finalModelPathOrName = modelURL.path
     } else if let modelPathOrName = modelPathOrName {
@@ -74,7 +74,7 @@ struct YOLOViewRepresentable: UIViewRepresentable {
     } else {
       fatalError("Either modelPathOrName or modelURL must be provided")
     }
-    
+
     return YOLOView(frame: .zero, modelPathOrName: finalModelPathOrName, task: task)
   }
 

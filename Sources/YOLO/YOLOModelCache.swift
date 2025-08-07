@@ -8,23 +8,23 @@
 //  and reduce network usage. It provides functionality to store, retrieve, and manage cached models
 //  in the device's documents directory, with URL-based cache key generation for unique identification.
 
-import Foundation
 import CryptoKit
+import Foundation
 
 /// Manages caching of downloaded YOLO models in the documents directory.
 public class YOLOModelCache {
   /// Shared singleton instance
   public static let shared = YOLOModelCache()
-  
+
   /// Cache directory URL
   let cacheDirectory: URL
-  
+
   /// Error types for cache operations
   public enum CacheError: LocalizedError {
     case failedToCreateDirectory
     case failedToSaveModel
     case modelNotFound
-    
+
     public var errorDescription: String? {
       switch self {
       case .failedToCreateDirectory: return "Failed to create cache directory"
@@ -33,37 +33,40 @@ public class YOLOModelCache {
       }
     }
   }
-  
+
   private init() {
     // Create cache directory in Documents/YOLOModels/
-    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[
+      0]
     self.cacheDirectory = documentsDirectory.appendingPathComponent("YOLOModels", isDirectory: true)
-    
+
     // Create directory if it doesn't exist
     if !FileManager.default.fileExists(atPath: cacheDirectory.path) {
-      try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+      try? FileManager.default.createDirectory(
+        at: cacheDirectory, withIntermediateDirectories: true)
     }
   }
-  
+
   /// Generate cache key from URL with optional task type
   public func cacheKey(for url: URL, task: YOLOTask? = nil) -> String {
-    let urlString = task != nil ? url.absoluteString + "_" + String(describing: task!) : url.absoluteString
+    let urlString =
+      task != nil ? url.absoluteString + "_" + String(describing: task!) : url.absoluteString
     let key = urlString.data(using: .utf8)?.sha256() ?? url.lastPathComponent
     return key.replacingOccurrences(of: "/", with: "_")
   }
-  
+
   /// Check if model is cached
   public func isCached(url: URL, task: YOLOTask? = nil) -> Bool {
     getCachedModelPath(url: url, task: task) != nil
   }
-  
+
   /// Get cached model path if available
   public func getCachedModelPath(url: URL, task: YOLOTask? = nil) -> URL? {
     let key = cacheKey(for: url, task: task)
-    
+
     for ext in ["mlmodelc", "mlpackage", "mlmodel"] {
       let path = cacheDirectory.appendingPathComponent(key).appendingPathExtension(ext)
-      
+
       if FileManager.default.fileExists(atPath: path.path) {
         // For mlpackage, verify it's valid by checking for Manifest.json
         if ext == "mlpackage" {
@@ -73,25 +76,26 @@ public class YOLOModelCache {
         return path
       }
     }
-    
+
     return nil
   }
-  
+
   /// Clear all cached models
   public func clearCache() throws {
-    let contents = try FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
+    let contents = try FileManager.default.contentsOfDirectory(
+      at: cacheDirectory, includingPropertiesForKeys: nil)
     for file in contents {
       try FileManager.default.removeItem(at: file)
     }
   }
-  
+
   /// Get cache size in bytes
   public func getCacheSize() throws -> Int64 {
     let contents = try FileManager.default.contentsOfDirectory(
-      at: cacheDirectory, 
+      at: cacheDirectory,
       includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey]
     )
-    
+
     var size: Int64 = 0
     for url in contents {
       let values = try url.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
@@ -103,13 +107,14 @@ public class YOLOModelCache {
     }
     return size
   }
-  
+
   /// List all cached models
   public func listCachedModels() throws -> [String] {
-    let contents = try FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)
+    let contents = try FileManager.default.contentsOfDirectory(
+      at: cacheDirectory, includingPropertiesForKeys: nil)
     return contents.map { $0.deletingPathExtension().lastPathComponent }
   }
-  
+
   /// Calculate directory size recursively
   private func directorySize(at url: URL) throws -> Int64 {
     let enumerator = FileManager.default.enumerator(
@@ -117,7 +122,7 @@ public class YOLOModelCache {
       includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
       options: [.skipsHiddenFiles]
     )
-    
+
     var size: Int64 = 0
     while let fileURL = enumerator?.nextObject() as? URL {
       let values = try fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])

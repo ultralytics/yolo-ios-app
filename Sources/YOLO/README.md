@@ -104,16 +104,16 @@ guard let model = try? YOLO(modelFileName: "yolo11n", task: .detect) else {
 }
 
 // Or initialize with a specific path to a .mlmodel file
-// let modelPath = Bundle.main.path(forResource: "yolo11n", ofType: "mlmodel")!
-// guard let model = try? YOLO(modelPath: modelPath, task: .detect) else {
-//     fatalError("Failed to load YOLO model.")
-// }
+let modelPath = Bundle.main.path(forResource: "yolo11n", ofType: "mlmodel")!
+guard let model = try? YOLO(modelPath: modelPath, task: .detect) else {
+    fatalError("Failed to load YOLO model.")
+}
 
 // Or initialize with a remote URL (model will be downloaded and cached automatically)
-// let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
-// guard let model = try? YOLO(url: modelURL, task: .detect) else {
-//     fatalError("Failed to load YOLO model from URL.")
-// }
+let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
+guard let model = try? YOLO(url: modelURL, task: .detect) else {
+    fatalError("Failed to load YOLO model from URL.")
+}
 
 // --- Inference ---
 // Load an image (replace with your image loading logic)
@@ -219,15 +219,6 @@ class CameraViewController: UIViewController {
                         cameraPosition: .back       // Use the back camera
                         // Optional confidenceThreshold parameter can be added here
                     )
-
-                    // Alternative: Initialize with remote URL
-                    // let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!
-                    // self.yoloView = YOLOView(
-                    //     frame: self.view.bounds,
-                    //     url: modelURL,
-                    //     task: .segment,
-                    //     cameraPosition: .back
-                    // )
                     // Handle potential initialization errors
                     if let yoloView = self.yoloView {
                         yoloView.autoresizingMask = [.flexibleWidth, .flexibleHeight]

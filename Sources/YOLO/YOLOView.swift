@@ -1032,6 +1032,122 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 }
 
+// MARK: - Helper Methods for Layer Copying
+
+extension YOLOView {
+  /// Copies layer properties from source to destination
+  private func copyLayerProperties(from source: CALayer, to destination: CALayer) {
+    destination.opacity = source.opacity
+    destination.transform = source.transform
+    destination.masksToBounds = source.masksToBounds
+    destination.contentsGravity = source.contentsGravity
+    destination.contentsRect = source.contentsRect
+    destination.contentsCenter = source.contentsCenter
+    destination.compositingFilter = source.compositingFilter
+    destination.backgroundColor = source.backgroundColor
+    destination.cornerRadius = source.cornerRadius
+  }
+  
+  /// Copies CAShapeLayer properties
+  private func copyShapeLayer(_ shapeLayer: CAShapeLayer) -> CAShapeLayer {
+    let copy = CAShapeLayer()
+    copy.frame = shapeLayer.frame
+    copy.path = shapeLayer.path
+    copy.strokeColor = shapeLayer.strokeColor
+    copy.lineWidth = shapeLayer.lineWidth
+    copy.fillColor = shapeLayer.fillColor
+    copy.opacity = shapeLayer.opacity
+    return copy
+  }
+  
+  /// Copies CATextLayer properties
+  private func copyTextLayer(_ textLayer: CATextLayer) -> CATextLayer {
+    let copy = CATextLayer()
+    copy.frame = textLayer.frame
+    copy.string = textLayer.string
+    copy.font = textLayer.font
+    copy.fontSize = textLayer.fontSize
+    copy.foregroundColor = textLayer.foregroundColor
+    copy.backgroundColor = textLayer.backgroundColor
+    copy.alignmentMode = textLayer.alignmentMode
+    copy.opacity = textLayer.opacity
+    return copy
+  }
+  
+  /// Creates a copy of the mask layer for capture
+  private func copyMaskLayer(_ maskLayer: CALayer) -> CALayer? {
+    let tempLayer = CALayer()
+    let overlayFrame = self.overlayLayer.frame
+    let maskFrame = maskLayer.frame
+    
+    // Adjust mask frame to be relative to the main view, not overlayLayer
+    tempLayer.frame = CGRect(
+      x: overlayFrame.origin.x + maskFrame.origin.x,
+      y: overlayFrame.origin.y + maskFrame.origin.y,
+      width: maskFrame.width,
+      height: maskFrame.height
+    )
+    tempLayer.contents = maskLayer.contents
+    copyLayerProperties(from: maskLayer, to: tempLayer)
+    return tempLayer
+  }
+  
+  /// Creates a copy of the pose layer including all sublayers
+  private func copyPoseLayer(_ poseLayer: CALayer) -> CALayer? {
+    let tempLayer = CALayer()
+    let overlayFrame = self.overlayLayer.frame
+    
+    tempLayer.frame = CGRect(
+      x: overlayFrame.origin.x,
+      y: overlayFrame.origin.y,
+      width: overlayFrame.width,
+      height: overlayFrame.height
+    )
+    tempLayer.opacity = poseLayer.opacity
+    
+    // Copy all sublayers (keypoints and skeleton lines)
+    if let sublayers = poseLayer.sublayers {
+      for sublayer in sublayers {
+        if let shapeLayer = sublayer as? CAShapeLayer {
+          tempLayer.addSublayer(copyShapeLayer(shapeLayer))
+        } else {
+          let copyLayer = CALayer()
+          copyLayer.frame = sublayer.frame
+          copyLayerProperties(from: sublayer, to: copyLayer)
+          tempLayer.addSublayer(copyLayer)
+        }
+      }
+    }
+    return tempLayer
+  }
+  
+  /// Creates a copy of the OBB layer including all sublayers
+  private func copyOBBLayer(_ obbLayer: CALayer) -> CALayer? {
+    let tempLayer = CALayer()
+    let overlayFrame = self.overlayLayer.frame
+    
+    tempLayer.frame = CGRect(
+      x: overlayFrame.origin.x,
+      y: overlayFrame.origin.y,
+      width: overlayFrame.width,
+      height: overlayFrame.height
+    )
+    tempLayer.opacity = obbLayer.opacity
+    
+    // Copy all sublayers
+    if let sublayers = obbLayer.sublayers {
+      for sublayer in sublayers {
+        if let shapeLayer = sublayer as? CAShapeLayer {
+          tempLayer.addSublayer(copyShapeLayer(shapeLayer))
+        } else if let textLayer = sublayer as? CATextLayer {
+          tempLayer.addSublayer(copyTextLayer(textLayer))
+        }
+      }
+    }
+    return tempLayer
+  }
+}
+
 extension YOLOView: AVCapturePhotoCaptureDelegate {
   nonisolated public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
@@ -1073,121 +1189,31 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let imageLayer = imageView.layer
       self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
 
-      // Add mask layer if present (for segmentation task)
+      // Add visualization layers
       var tempLayers = [CALayer]()
+      
+      // Add mask layer if present (for segmentation task)
       if let maskLayer = self.maskLayer, !maskLayer.isHidden {
-        // Create a temporary copy of the mask layer for capture
-        let tempLayer = CALayer()
-        // Calculate the correct frame relative to the main view
-        let overlayFrame = self.overlayLayer.frame
-        let maskFrame = maskLayer.frame
-
-        // Adjust mask frame to be relative to the main view, not overlayLayer
-        tempLayer.frame = CGRect(
-          x: overlayFrame.origin.x + maskFrame.origin.x,
-          y: overlayFrame.origin.y + maskFrame.origin.y,
-          width: maskFrame.width,
-          height: maskFrame.height
-        )
-        tempLayer.contents = maskLayer.contents
-        tempLayer.contentsGravity = maskLayer.contentsGravity
-        tempLayer.contentsRect = maskLayer.contentsRect
-        tempLayer.contentsCenter = maskLayer.contentsCenter
-        tempLayer.opacity = maskLayer.opacity
-        tempLayer.compositingFilter = maskLayer.compositingFilter
-        tempLayer.transform = maskLayer.transform
-        tempLayer.masksToBounds = maskLayer.masksToBounds
-        self.layer.addSublayer(tempLayer)
-        tempLayers.append(tempLayer)
+        if let tempLayer = copyMaskLayer(maskLayer) {
+          self.layer.addSublayer(tempLayer)
+          tempLayers.append(tempLayer)
+        }
       }
 
       // Add pose layer if present (for pose task)
       if let poseLayer = self.poseLayer {
-        // Create a temporary copy of the pose layer including all sublayers
-        let tempLayer = CALayer()
-        let overlayFrame = self.overlayLayer.frame
-
-        // Set frame relative to main view
-        tempLayer.frame = CGRect(
-          x: overlayFrame.origin.x,
-          y: overlayFrame.origin.y,
-          width: overlayFrame.width,
-          height: overlayFrame.height
-        )
-        tempLayer.opacity = poseLayer.opacity
-
-        // Copy all sublayers (keypoints and skeleton lines)
-        if let sublayers = poseLayer.sublayers {
-          for sublayer in sublayers {
-            let copyLayer = CALayer()
-            copyLayer.frame = sublayer.frame
-            copyLayer.backgroundColor = sublayer.backgroundColor
-            copyLayer.cornerRadius = sublayer.cornerRadius
-            copyLayer.opacity = sublayer.opacity
-
-            // If it's a shape layer (for lines), copy the path
-            if let shapeLayer = sublayer as? CAShapeLayer {
-              let copyShapeLayer = CAShapeLayer()
-              copyShapeLayer.frame = shapeLayer.frame
-              copyShapeLayer.path = shapeLayer.path
-              copyShapeLayer.strokeColor = shapeLayer.strokeColor
-              copyShapeLayer.lineWidth = shapeLayer.lineWidth
-              copyShapeLayer.fillColor = shapeLayer.fillColor
-              copyShapeLayer.opacity = shapeLayer.opacity
-              tempLayer.addSublayer(copyShapeLayer)
-            } else {
-              tempLayer.addSublayer(copyLayer)
-            }
-          }
+        if let tempLayer = copyPoseLayer(poseLayer) {
+          self.layer.addSublayer(tempLayer)
+          tempLayers.append(tempLayer)
         }
-
-        self.layer.addSublayer(tempLayer)
-        tempLayers.append(tempLayer)
       }
 
       // Add OBB layer if present (for OBB task)
       if let obbLayer = self.obbLayer, !obbLayer.isHidden {
-        // Create a temporary copy of the OBB layer including all sublayers
-        let tempLayer = CALayer()
-        let overlayFrame = self.overlayLayer.frame
-
-        tempLayer.frame = CGRect(
-          x: overlayFrame.origin.x,
-          y: overlayFrame.origin.y,
-          width: overlayFrame.width,
-          height: overlayFrame.height
-        )
-        tempLayer.opacity = obbLayer.opacity
-
-        // Copy all sublayers
-        if let sublayers = obbLayer.sublayers {
-          for sublayer in sublayers {
-            if let shapeLayer = sublayer as? CAShapeLayer {
-              let copyShapeLayer = CAShapeLayer()
-              copyShapeLayer.frame = shapeLayer.frame
-              copyShapeLayer.path = shapeLayer.path
-              copyShapeLayer.strokeColor = shapeLayer.strokeColor
-              copyShapeLayer.lineWidth = shapeLayer.lineWidth
-              copyShapeLayer.fillColor = shapeLayer.fillColor
-              copyShapeLayer.opacity = shapeLayer.opacity
-              tempLayer.addSublayer(copyShapeLayer)
-            } else if let textLayer = sublayer as? CATextLayer {
-              let copyTextLayer = CATextLayer()
-              copyTextLayer.frame = textLayer.frame
-              copyTextLayer.string = textLayer.string
-              copyTextLayer.font = textLayer.font
-              copyTextLayer.fontSize = textLayer.fontSize
-              copyTextLayer.foregroundColor = textLayer.foregroundColor
-              copyTextLayer.backgroundColor = textLayer.backgroundColor
-              copyTextLayer.alignmentMode = textLayer.alignmentMode
-              copyTextLayer.opacity = textLayer.opacity
-              tempLayer.addSublayer(copyTextLayer)
-            }
-          }
+        if let tempLayer = copyOBBLayer(obbLayer) {
+          self.layer.addSublayer(tempLayer)
+          tempLayers.append(tempLayer)
         }
-
-        self.layer.addSublayer(tempLayer)
-        tempLayers.append(tempLayer)
       }
 
       var tempViews = [UIView]()

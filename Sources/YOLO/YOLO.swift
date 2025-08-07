@@ -16,11 +16,11 @@ import SwiftUI
 import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
-public class YOLO {
+public class YOLO: @unchecked Sendable {
   var predictor: Predictor!
 
   public init(
-    _ modelPathOrName: String, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)? = nil
+    _ modelPathOrName: String, task: YOLOTask, completion: (@Sendable (Result<YOLO, Error>) -> Void)? = nil
   ) {
     var modelURL: URL?
 
@@ -49,63 +49,64 @@ public class YOLO {
       //            fatalError(PredictorError.modelFileNotFound.localizedDescription)
     }
 
-    func handleSuccess(predictor: Predictor) {
+    let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
+      guard let self = self else { return }
       self.predictor = predictor
       completion?(.success(self))
     }
 
     // Common failure handling for all tasks
-    func handleFailure(_ error: Error) {
+    let handleFailure: @Sendable (Error) -> Void = { error in
       print("Failed to load model with error: \(error)")
       completion?(.failure(error))
     }
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL) { result in
+      Classifier.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL) { result in
+      Segmenter.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     case .pose:
-      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL) { result in
+      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+      ObbDetector.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { result in
+      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }

@@ -218,12 +218,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupTableView()
-    
+
     // Setup logo tap gesture
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-    
+
     // Setup share button
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
@@ -238,7 +238,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Set app version
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+      let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
+    {
       labelVersion.text = "v\(version) (\(build))"
     }
 
@@ -390,7 +391,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func makeModelEntries(for taskName: String) -> [(name: String, url: URL?, isLocal: Bool)] {
+  private func makeModelEntries(for taskName: String) -> [(name: String, url: URL?, isLocal: Bool)]
+  {
     let localFileNames = modelsForTask[taskName] ?? []
     let localModels = localFileNames.map { fileName in
       let displayName = (fileName as NSString).deletingPathExtension
@@ -401,7 +403,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let localModelNames = Set(localModels.map { $0.name.lowercased() })
 
     let remoteList = remoteModelsInfo[taskName] ?? []
-    let remoteModels = remoteList.compactMap { (modelName, url) -> (name: String, url: URL?, isLocal: Bool)? in
+    let remoteModels = remoteList.compactMap {
+      (modelName, url) -> (name: String, url: URL?, isLocal: Bool)? in
       // Only include remote models if no local model with the same name exists
       guard !localModelNames.contains(modelName.lowercased()) else { return nil }
       return (name: modelName, url: url, isLocal: false)
@@ -465,14 +468,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     } else if let remoteURL = entry.url {
       let yoloTask = self.convertTaskNameToYOLOTask(task)
-      
+
       // Use YOLOModelDownloader from the package
       let downloader = YOLOModelDownloader()
-      
+
       self.downloadProgressView.progress = 0.0
       self.downloadProgressView.isHidden = false
       self.downloadProgressLabel.isHidden = false
-      
+
       downloader.download(
         from: remoteURL,
         task: yoloTask,
@@ -648,8 +651,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
   }
 
-
-
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
@@ -659,7 +660,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-      
+
     } else {
       // Portrait mode
       focus.isHidden = true
@@ -719,7 +720,9 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
     // Check if the model is remote and not yet downloaded
     let yoloTask = self.convertTaskNameToYOLOTask(currentTask)
-    let isDownloaded = entry.isLocal || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))
+    let isDownloaded =
+      entry.isLocal
+      || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))
 
     // Format model name using the processString function
     let formattedName = processString(entry.name)

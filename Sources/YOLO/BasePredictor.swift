@@ -115,7 +115,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
 
-
         let mlModel: MLModel
         if isCompiled {
           mlModel = try MLModel(contentsOf: unwrappedModelURL, configuration: config)

@@ -95,7 +95,9 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
           ) as? (CGImage?, [[[Float]]])
         else {
-          DispatchQueue.main.async { self?.isUpdating = false }
+          DispatchQueue.main.async { [weak self] in
+            self?.isUpdating = false
+          }
           return
         }
         let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)

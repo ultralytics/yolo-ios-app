@@ -86,7 +86,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       
       DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
-          let procceessedMasks = generateCombinedMaskImage(
+          let processedMasks = generateCombinedMaskImage(
             detectedObjects: detectedObjects,
             protos: capturedMasks,
             inputWidth: capturedModelInputSize.width,
@@ -100,7 +100,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
           }
           return
         }
-        let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
+        let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
         let result = YOLOResult(
           orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults, speed: capturedT2,
           fps: 1 / capturedT4, names: capturedLabels)

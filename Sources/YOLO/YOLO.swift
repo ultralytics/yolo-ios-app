@@ -111,7 +111,7 @@ public class YOLO {
   /// Sets the confidence threshold for filtering results.
   /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
   public func setConfidenceThreshold(_ confidence: Double) {
-    guard confidence >= 0.0 && confidence <= 1.0 else {
+    guard (0.0...1.0).contains(confidence) else {
       print("Warning: Confidence threshold should be between 0.0 and 1.0")
       return
     }
@@ -127,7 +127,7 @@ public class YOLO {
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
   /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
   public func setIouThreshold(_ iou: Double) {
-    guard iou >= 0.0 && iou <= 1.0 else {
+    guard (0.0...1.0).contains(iou) else {
       print("Warning: IoU threshold should be between 0.0 and 1.0")
       return
     }

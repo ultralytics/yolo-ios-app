@@ -64,8 +64,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
     if let results = request.results as? [VNRecognizedObjectObservation] {
       var boxes = [Box]()
 
-      for i in 0..<100 {
-        if i < results.count && i < self.numItemsThreshold {
+      for i in 0..<min(results.count, self.numItemsThreshold) {
           let prediction = results[i]
           let invertedBox = CGRect(
             x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
@@ -81,7 +80,6 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
           let box = Box(
             index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
           boxes.append(box)
-        }
       }
 
       // Measure FPS
@@ -125,8 +123,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let results = request.results as? [VNRecognizedObjectObservation] {
-        for i in 0..<100 {
-          if i < results.count && i < self.numItemsThreshold {
+        for i in 0..<min(results.count, self.numItemsThreshold) {
             let prediction = results[i]
             let invertedBox = CGRect(
               x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
@@ -142,7 +139,6 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
             let box = Box(
               index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
             boxes.append(box)
-          }
         }
       }
     } catch {

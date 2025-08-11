@@ -19,6 +19,20 @@ import UIKit
 public class YOLO: @unchecked Sendable {
   var predictor: Predictor!
 
+  /// Initialize YOLO with remote URL for automatic download and caching
+  public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
+    let downloader = YOLOModelDownloader()
+
+    downloader.download(from: url, task: task) { result in
+      switch result {
+      case .success(let modelPath):
+        self.loadModel(from: modelPath, task: task, completion: completion)
+      case .failure(let error):
+        completion(.failure(error))
+      }
+    }
+  }
+
   public init(
     _ modelPathOrName: String, task: YOLOTask, completion: (@Sendable (Result<YOLO, Error>) -> Void)? = nil
   ) {
@@ -46,17 +60,18 @@ public class YOLO: @unchecked Sendable {
     guard let unwrappedModelURL = modelURL else {
       completion?(.failure(PredictorError.modelFileNotFound))
       return
-      //            fatalError(PredictorError.modelFileNotFound.localizedDescription)
     }
 
     let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
       guard let self = self else { return }
+
       self.predictor = predictor
       completion?(.success(self))
     }
 
     // Common failure handling for all tasks
     let handleFailure: @Sendable (Error) -> Void = { error in
+
       print("Failed to load model with error: \(error)")
       completion?(.failure(error))
     }
@@ -111,6 +126,7 @@ public class YOLO: @unchecked Sendable {
           handleFailure(error)
         }
       }
+
     }
   }
 

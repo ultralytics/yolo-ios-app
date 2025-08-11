@@ -13,10 +13,10 @@
 //  The results include both bounding boxes and pixel-level masks that can be overlaid on images.
 
 import Accelerate
+@preconcurrency import CoreML
 import Foundation
 import UIKit
 import Vision
-@preconcurrency import CoreML
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 class Segmenter: BasePredictor, @unchecked Sendable {
@@ -43,18 +43,18 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let detectedObjects = postProcessSegment(
         feature: pred, confidenceThreshold: Float(confidenceThreshold),
         iouThreshold: Float(iouThreshold))
-      
+
       let detectionsCount = detectedObjects.count
       var boxes: [Box] = []
       boxes.reserveCapacity(detectionsCount)
       var alphas = [CGFloat]()
       alphas.reserveCapacity(detectionsCount)
-      
+
       let modelWidth = CGFloat(self.modelInputSize.width)
       let modelHeight = CGFloat(self.modelInputSize.height)
       let inputWidth = Int(self.inputSize.width)
       let inputHeight = Int(self.inputSize.height)
-      
+
       // Pre-calculate alpha constants
       let alphaScale: CGFloat = 0.9 / 0.8  // (1.0 - 0.2)
       let alphaOffset: CGFloat = -0.2 * alphaScale
@@ -62,7 +62,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       for p in detectedObjects {
         let box = p.0
         let rect = CGRect(
-          x: box.minX / modelWidth, y: box.minY / modelHeight, 
+          x: box.minX / modelWidth, y: box.minY / modelHeight,
           width: box.width / modelWidth, height: box.height / modelHeight)
         let confidence = p.2
         let bestClass = p.1
@@ -167,16 +167,16 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let detectionsCount = detectedObjects.count
         var boxes: [Box] = []
         boxes.reserveCapacity(detectionsCount)
-        
+
         let modelWidth = CGFloat(self.modelInputSize.width)
         let modelHeight = CGFloat(self.modelInputSize.height)
         let inputWidth = Int(inputSize.width)
         let inputHeight = Int(inputSize.height)
-        
+
         for p in detectedObjects {
           let box = p.0
           let rect = CGRect(
-            x: box.minX / modelWidth, y: box.minY / modelHeight, 
+            x: box.minX / modelWidth, y: box.minY / modelHeight,
             width: box.width / modelWidth, height: box.height / modelHeight)
           let confidence = p.2
           let bestClass = p.1
@@ -273,6 +273,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       }
     }
 
+
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
 
@@ -293,7 +294,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       // Use thread-local storage for class probabilities
       let localClassProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
       defer { localClassProbs.deallocate() }
-      
+
       vDSP_mtrans(
         pointerWrapper.pointer + 4 * numAnchors + j,
         numAnchors,
@@ -302,25 +303,30 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         1,
         vDSP_Length(numClasses)
       )
-      
+
       var maxClassValue: Float = 0
       var maxClassIndex: vDSP_Length = 0
-      vDSP_maxvi(localClassProbs.baseAddress!, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
+      vDSP_maxvi(
+        localClassProbs.baseAddress!, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
 
       if maxClassValue > confidenceThreshold {
         // Create MLMultiArray more efficiently
-        guard let maskProbs = try? MLMultiArray(shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32) else {
+        guard
+          let maskProbs = try? MLMultiArray(
+            shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
+        else {
           return
         }
-        
+
         let maskProbsPointer = pointerWrapper.pointer + (4 + numClasses) * numAnchors + j
         let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
-        
+
         for i in 0..<maskConfidenceLength {
           maskProbsData[i] = maskProbsPointer[i * numAnchors]
         }
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
+
         resultsWrapper.append(result)
 
       }
@@ -377,15 +383,15 @@ final class FloatPointerWrapper: @unchecked Sendable {
 
 final class ResultsWrapper: @unchecked Sendable {
   private var results: [(CGRect, Int, Float, MLMultiArray)] = []
-  
+
   func reserveCapacity(_ capacity: Int) {
     results.reserveCapacity(capacity)
   }
-  
+
   func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
     results.append(result)
   }
-  
+
   func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
     return results
   }

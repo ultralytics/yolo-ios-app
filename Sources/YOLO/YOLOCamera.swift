@@ -18,7 +18,8 @@ import SwiftUI
 public struct YOLOCamera: View {
   @State private var yoloResult: YOLOResult?
 
-  public let modelPathOrName: String
+  public let modelPathOrName: String?
+  public let modelURL: URL?
   public let task: YOLOTask
   public let cameraPosition: AVCaptureDevice.Position
 
@@ -28,6 +29,18 @@ public struct YOLOCamera: View {
     cameraPosition: AVCaptureDevice.Position = .back
   ) {
     self.modelPathOrName = modelPathOrName
+    self.modelURL = nil
+    self.task = task
+    self.cameraPosition = cameraPosition
+  }
+
+  public init(
+    url: URL,
+    task: YOLOTask = .detect,
+    cameraPosition: AVCaptureDevice.Position = .back
+  ) {
+    self.modelPathOrName = nil
+    self.modelURL = url
     self.task = task
     self.cameraPosition = cameraPosition
   }
@@ -35,6 +48,7 @@ public struct YOLOCamera: View {
   public var body: some View {
     YOLOViewRepresentable(
       modelPathOrName: modelPathOrName,
+      modelURL: modelURL,
       task: task,
       cameraPosition: cameraPosition
     ) { result in
@@ -44,18 +58,24 @@ public struct YOLOCamera: View {
 }
 
 struct YOLOViewRepresentable: UIViewRepresentable {
-  let modelPathOrName: String
+  let modelPathOrName: String?
+  let modelURL: URL?
   let task: YOLOTask
   let cameraPosition: AVCaptureDevice.Position
   let onDetection: ((YOLOResult) -> Void)?
 
   func makeUIView(context: Context) -> YOLOView {
-    let yoloView = YOLOView(
-      frame: .zero,
-      modelPathOrName: modelPathOrName,
-      task: task
-    )
-    return yoloView
+    let finalModelPathOrName: String
+
+    if let modelURL = modelURL {
+      finalModelPathOrName = modelURL.path
+    } else if let modelPathOrName = modelPathOrName {
+      finalModelPathOrName = modelPathOrName
+    } else {
+      fatalError("Either modelPathOrName or modelURL must be provided")
+    }
+
+    return YOLOView(frame: .zero, modelPathOrName: finalModelPathOrName, task: task)
   }
 
   func updateUIView(_ uiView: YOLOView, context: Context) {

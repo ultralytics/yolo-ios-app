@@ -127,7 +127,8 @@ class VideoCapture: NSObject, @unchecked Sendable {
       if #available(iOS 16.0, *) {
         // Use maxPhotoDimensions instead of deprecated isHighResolutionCaptureEnabled
         if let device = captureDevice,
-           let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last {
+          let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last
+        {
           photoOutput.maxPhotoDimensions = maxDimensions
         }
       } else {

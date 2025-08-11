@@ -30,254 +30,190 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Set background color to verify view is visible
         view.backgroundColor = .black
-        
-        // Configure for full screen display
         edgesForExtendedLayout = .all
         extendedLayoutIncludesOpaqueBars = true
         
-        setupUI()
-        setupNotifications()
-        
-    }
-    
-    
-    private func setupUI() {
-        // Set black background
-        view.backgroundColor = .black
-        
-        
         setupControlUI()
-        
-        // Delay YOLOView creation to ensure proper initialization
-        // This will be done in viewDidAppear when the view is fully ready
+        setupNotifications()
     }
     
     private func setupControlUI() {
         let screenSize = view.bounds.size
         let scaleFactor = calculateScaleFactor(for: screenSize)
         
+        // Proportional font sizes
+        let baseFontSizeModelName = screenSize.height * 0.1
+        let baseFontSizeFPS = screenSize.height * 0.04
         
-        // Calculate proportional font sizes based on screen height
-        let baseFontSizeModelName = screenSize.height * 0.1 // 2.5% of screen height
-        let baseFontSizeFPS = screenSize.height * 0.04 // 1.67% of screen height
-        
-        // Model name label - reasonable size for external displays
-        labelName = UILabel()
-        labelName.text = currentModelName
-        labelName.textAlignment = .center
-        labelName.font = UIFont.systemFont(ofSize: baseFontSizeModelName, weight: .bold) // Proportional to screen
-        labelName.textColor = .white
-        labelName.adjustsFontSizeToFitWidth = true
-        labelName.minimumScaleFactor = 0.5
-        labelName.numberOfLines = 1
-        labelName.translatesAutoresizingMaskIntoConstraints = false
+        // Model name label
+        labelName = createLabel(
+            text: currentModelName,
+            fontSize: baseFontSizeModelName,
+            weight: .bold
+        )
         view.addSubview(labelName)
         
-        // FPS label - reasonable size
-        labelFPS = UILabel()
-        labelFPS.text = "0.0 FPS - 0.0 ms"
-        labelFPS.textAlignment = .center
-        labelFPS.textColor = .white
-        labelFPS.font = UIFont.systemFont(ofSize: baseFontSizeFPS, weight: .medium) // Proportional to screen
-        labelFPS.adjustsFontSizeToFitWidth = true
-        labelFPS.minimumScaleFactor = 0.5
-        labelFPS.numberOfLines = 1
-        labelFPS.translatesAutoresizingMaskIntoConstraints = false
+        // FPS label
+        labelFPS = createLabel(
+            text: "0.0 FPS - 0.0 ms",
+            fontSize: baseFontSizeFPS,
+            weight: .medium
+        )
         view.addSubview(labelFPS)
         
-        // Task segmented control - styled like iPhone version
-        segmentedControl = UISegmentedControl()
-        for (index, taskInfo) in tasks.enumerated() {
-            segmentedControl.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
-        }
-        segmentedControl.selectedSegmentIndex = 2 // Default to Detect
-        
-        // Style to match iPhone appearance with lighter background
-        segmentedControl.backgroundColor = UIColor(white: 0.2, alpha: 0.3)
-        segmentedControl.selectedSegmentTintColor = UIColor(white: 0.4, alpha: 0.8)
-        segmentedControl.layer.cornerRadius = 12
-        segmentedControl.layer.masksToBounds = true
-        
-        // Text attributes with reasonable font for external display
-        let fontSize: CGFloat = 36 // Reasonable size
-        segmentedControl.setTitleTextAttributes([
-            .foregroundColor: UIColor.white,
-            .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-        ], for: .selected)
-        segmentedControl.setTitleTextAttributes([
-            .foregroundColor: UIColor.lightGray,
-            .font: UIFont.systemFont(ofSize: fontSize, weight: .medium)
-        ], for: .normal)
-        
-        segmentedControl.isUserInteractionEnabled = false // Controlled by iPhone
-        segmentedControl.translatesAutoresizingMaskIntoConstraints = false
-        segmentedControl.setContentHuggingPriority(.required, for: .vertical)
-        segmentedControl.setContentCompressionResistancePriority(.required, for: .vertical)
-        segmentedControl.isHidden = true // Hide task segment control
+        // Task segmented control
+        segmentedControl = createSegmentedControl()
         view.addSubview(segmentedControl)
         
-        // Logo ImageView - bottom right corner, smaller
-        logoImageView = UIImageView()
-        logoImageView.image = UIImage(named: "ultralytics_yolo_logotype")
+        // Logo ImageView
+        logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
         logoImageView.contentMode = .scaleAspectFit
-        logoImageView.alpha = 1.0 // Fully opaque
-        logoImageView.isUserInteractionEnabled = false // Allow touches to pass through
+        logoImageView.alpha = 1.0
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(logoImageView)
-        
-        // Ensure labels have proper content priority
-        labelName.setContentHuggingPriority(.required, for: .vertical)
-        labelName.setContentCompressionResistancePriority(.required, for: .vertical)
-        labelFPS.setContentHuggingPriority(.required, for: .vertical)
-        labelFPS.setContentCompressionResistancePriority(.required, for: .vertical)
         
         setupConstraints(scaleFactor: scaleFactor)
     }
     
+    private func createLabel(text: String, fontSize: CGFloat, weight: UIFont.Weight) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: fontSize, weight: weight)
+        label.textColor = .white
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.5
+        label.numberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.setContentHuggingPriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        return label
+    }
+    
+    private func createSegmentedControl() -> UISegmentedControl {
+        let control = UISegmentedControl()
+        for (index, taskInfo) in tasks.enumerated() {
+            control.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
+        }
+        control.selectedSegmentIndex = 2 // Default to Detect
+        
+        // Styling
+        control.backgroundColor = UIColor(white: 0.2, alpha: 0.3)
+        control.selectedSegmentTintColor = UIColor(white: 0.4, alpha: 0.8)
+        control.layer.cornerRadius = 12
+        control.layer.masksToBounds = true
+        
+        let fontSize: CGFloat = 36
+        control.setTitleTextAttributes([
+            .foregroundColor: UIColor.white,
+            .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+        ], for: .selected)
+        control.setTitleTextAttributes([
+            .foregroundColor: UIColor.lightGray,
+            .font: UIFont.systemFont(ofSize: fontSize, weight: .medium)
+        ], for: .normal)
+        
+        control.isUserInteractionEnabled = false
+        control.translatesAutoresizingMaskIntoConstraints = false
+        control.setContentHuggingPriority(.required, for: .vertical)
+        control.setContentCompressionResistancePriority(.required, for: .vertical)
+        control.isHidden = true
+        return control
+    }
+    
     private func calculateScaleFactor(for screenSize: CGSize) -> CGFloat {
-        let baseSize: CGFloat = 375.0 // iPhone reference size
+        let baseSize: CGFloat = 375.0
         let rawScale = max(screenSize.width, screenSize.height) / baseSize
-        
-        // For text elements, use more aggressive scaling for large displays
         let scaleFactor = 1.0 + (rawScale - 1.0) * 1.2
-        
-        return max(2.5, min(scaleFactor, 10.0)) // Much higher minimum and maximum for large displays
+        return max(2.5, min(scaleFactor, 10.0))
     }
     
     private func setupConstraints(scaleFactor: CGFloat) {
         let margin: CGFloat = 20
         
         NSLayoutConstraint.activate([
-            // Model name label - top center
             labelName.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             labelName.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: margin),
             labelName.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-            labelName.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.1), // 10% of screen height like iPhone
+            labelName.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.1),
             
-            // FPS label - below model name
             labelFPS.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             labelFPS.topAnchor.constraint(equalTo: labelName.bottomAnchor, constant: 20),
             labelFPS.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-            labelFPS.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.04), // 4% of screen height like iPhone
+            labelFPS.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.04),
             
-            // Segmented control - below FPS
             segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             segmentedControl.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 30),
-            segmentedControl.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7), // 70% width
-            segmentedControl.heightAnchor.constraint(equalToConstant: 60), // Reasonable height for 36pt font
+            segmentedControl.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
+            segmentedControl.heightAnchor.constraint(equalToConstant: 60),
             
-            // Logo - bottom right corner, 20% of screen width
             logoImageView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -margin),
             logoImageView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -margin),
-            logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2), // 20% of screen width
-            logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3) // Maintain aspect ratio
+            logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2),
+            logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3)
         ])
     }
     
     private func hideYOLOViewControls() {
         guard let yoloView = yoloView else { return }
         
-        // Hide and remove all sliders from view hierarchy
-        yoloView.sliderNumItems.isHidden = true
-        yoloView.sliderNumItems.removeFromSuperview()
-        yoloView.labelSliderNumItems.isHidden = true
-        yoloView.labelSliderNumItems.removeFromSuperview()
+        let controlsToRemove = [
+            yoloView.sliderNumItems, yoloView.labelSliderNumItems,
+            yoloView.sliderConf, yoloView.labelSliderConf,
+            yoloView.sliderIoU, yoloView.labelSliderIoU,
+            yoloView.labelName, yoloView.labelFPS,
+            yoloView.toolbar
+        ]
         
-        yoloView.sliderConf.isHidden = true
-        yoloView.sliderConf.removeFromSuperview()
-        yoloView.labelSliderConf.isHidden = true
-        yoloView.labelSliderConf.removeFromSuperview()
+        controlsToRemove.forEach {
+            $0.isHidden = true
+            $0.removeFromSuperview()
+        }
         
-        yoloView.sliderIoU.isHidden = true
-        yoloView.sliderIoU.removeFromSuperview()
-        yoloView.labelSliderIoU.isHidden = true
-        yoloView.labelSliderIoU.removeFromSuperview()
-        
-        // Hide other controls
-        yoloView.labelName.isHidden = true
-        yoloView.labelName.removeFromSuperview()
-        yoloView.labelFPS.isHidden = true
-        yoloView.labelFPS.removeFromSuperview()
-        yoloView.labelZoom.isHidden = true
-        yoloView.activityIndicator.isHidden = true
-        yoloView.playButton.isHidden = true
-        yoloView.pauseButton.isHidden = true
-        yoloView.switchCameraButton.isHidden = true
-        yoloView.toolbar.isHidden = true
-        yoloView.toolbar.removeFromSuperview()
-        
-        
+        [yoloView.labelZoom, yoloView.activityIndicator,
+         yoloView.playButton, yoloView.pauseButton,
+         yoloView.switchCameraButton].forEach { $0.isHidden = true }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        guard !isInitialized else { return }
+        isInitialized = true
         
-        // Create and start YOLOView on external display
-        if !self.isInitialized {
-            self.isInitialized = true
-            
-            // Create YOLOView now that the view is fully ready
-            
-            // Create YOLOView without model initially - will be set when main app notifies
-            yoloView = YOLOView(frame: view.bounds)
-            yoloView?.delegate = self
-            yoloView?.backgroundColor = .clear // Make YOLOView background transparent
-            
-            if let yoloView = yoloView {
-                // Add YOLOView first at the bottom
-                view.insertSubview(yoloView, at: 0)
-                
-                // Add constraints for full screen display
-                yoloView.translatesAutoresizingMaskIntoConstraints = false
-                NSLayoutConstraint.activate([
-                    yoloView.topAnchor.constraint(equalTo: view.topAnchor),
-                    yoloView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                    yoloView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                    yoloView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-                ])
-                
-                // Force layout update
-                view.layoutIfNeeded()
-                
-                
-                // Re-add UI elements on top of YOLOView to ensure they're visible
-                // Add logo on top of YOLOView (camera feed)
-                if let logoImageView = self.logoImageView {
-                    logoImageView.removeFromSuperview()
-                    view.addSubview(logoImageView)
-                }
-                if let labelName = self.labelName {
-                    labelName.removeFromSuperview()
-                    view.addSubview(labelName)
-                }
-                if let labelFPS = self.labelFPS {
-                    labelFPS.removeFromSuperview()
-                    view.addSubview(labelFPS)
-                }
-                // Don't re-add segmentedControl since it's hidden
-                
-                // Force another layout update
-                view.layoutIfNeeded()
-                
-                
-                // Re-setup constraints since we re-added the views
-                let scaleFactor = calculateScaleFactor(for: view.bounds.size)
-                setupConstraints(scaleFactor: scaleFactor)
-                
-                
-                // Wait a bit longer to ensure main YOLOView has released camera
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    self.hideYOLOViewControls()
-                    
-                    // Don't load initial model - wait for main app to notify us
-                    
-                    // Notify main app
-                    NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
-                }
-            }
+        setupYOLOView()
+    }
+    
+    private func setupYOLOView() {
+        yoloView = YOLOView(frame: view.bounds)
+        yoloView?.delegate = self
+        yoloView?.backgroundColor = .clear
+        
+        guard let yoloView = yoloView else { return }
+        
+        view.insertSubview(yoloView, at: 0)
+        
+        yoloView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            yoloView.topAnchor.constraint(equalTo: view.topAnchor),
+            yoloView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            yoloView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            yoloView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        // Re-add UI elements on top
+        [logoImageView, labelName, labelFPS].forEach {
+            $0?.removeFromSuperview()
+            if let view = $0 { self.view.addSubview(view) }
+        }
+        
+        let scaleFactor = calculateScaleFactor(for: view.bounds.size)
+        setupConstraints(scaleFactor: scaleFactor)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.hideYOLOViewControls()
+            NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
         }
     }
     
@@ -309,62 +245,47 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     
     
     @objc private func handleModelChange(_ notification: Notification) {
-        
         guard let userInfo = notification.userInfo,
               let taskString = userInfo["task"] as? String,
-              let modelName = userInfo["modelName"] as? String else {
-            return
-        }
+              let modelName = userInfo["modelName"] as? String else { return }
         
-        let task: YOLOTask
-        switch taskString {
-        case "detect": task = .detect
-        case "segment": task = .segment
-        case "classify": task = .classify
-        case "pose": task = .pose
-        case "obb": task = .obb
-        default: task = .detect
-        }
+        let taskMap: [String: YOLOTask] = [
+            "detect": .detect, "segment": .segment,
+            "classify": .classify, "pose": .pose, "obb": .obb
+        ]
+        let task = taskMap[taskString] ?? .detect
         
-        
-        // Update the model on external display
         currentTask = task
         currentModelName = modelName
         
-        // Update segmented control to match
         if let taskIndex = tasks.firstIndex(where: { $0.value == task }) {
             DispatchQueue.main.async {
                 self.segmentedControl.selectedSegmentIndex = taskIndex
             }
         }
         
-        // Update the YOLOView with new model
-        yoloView?.setModel(modelPathOrName: modelName, task: task) { result in
-            switch result {
-            case .success():
-                // Update model name label
-                DispatchQueue.main.async {
-                    // Extract just the filename without extension
-                    let modelDisplayName = (self.currentModelName as NSString).lastPathComponent
-                    var nameWithoutExtension = (modelDisplayName as NSString).deletingPathExtension
-                    
-                    // Remove .mlmodelc extension if present
-                    if nameWithoutExtension.hasSuffix(".mlmodelc") {
-                        nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
-                    }
-                    
-                    // Replace "yolo" with "YOLO" (case insensitive)
-                    let displayName = nameWithoutExtension.replacingOccurrences(of: "yolo", with: "YOLO", options: .caseInsensitive)
-                    
-                    self.labelName.text = displayName
-                }
-                // Force layer refresh after model change
-                self.yoloView?.setNeedsDisplay()
-                self.yoloView?.layoutIfNeeded()
-            case .failure(_):
-                break
+        yoloView?.setModel(modelPathOrName: modelName, task: task) { [weak self] result in
+            guard case .success = result else { return }
+            
+            DispatchQueue.main.async {
+                self?.updateModelNameLabel()
             }
+            self?.yoloView?.setNeedsDisplay()
+            self?.yoloView?.layoutIfNeeded()
         }
+    }
+    
+    private func updateModelNameLabel() {
+        let modelDisplayName = (currentModelName as NSString).lastPathComponent
+        var nameWithoutExtension = (modelDisplayName as NSString).deletingPathExtension
+        
+        if nameWithoutExtension.hasSuffix(".mlmodelc") {
+            nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
+        }
+        
+        labelName.text = nameWithoutExtension.replacingOccurrences(
+            of: "yolo", with: "YOLO", options: .caseInsensitive
+        )
     }
     
     @objc private func handleThresholdChange(_ notification: Notification) {

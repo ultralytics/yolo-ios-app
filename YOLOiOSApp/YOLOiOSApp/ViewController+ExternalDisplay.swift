@@ -33,66 +33,42 @@ extension ViewController {
   }
   
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
-    print("External display connected")
-    
-    // Stop camera but keep UI visible on iPhone when external display is connected
     DispatchQueue.main.async {
-      // Stop the video capture to release camera for external display
       self.yoloView.stop()
-      
-      // Disable inference on main display
       self.yoloView.setInferenceFlag(ok: false)
-      
-      // Don't hide the YOLOView - just keep it visible with controls
-      // The stop() method should have already stopped the camera feed
-      
       self.showExternalDisplayStatus()
       
-      // Make sure sliders remain visible and functional
-      self.yoloView.sliderConf.isHidden = false
-      self.yoloView.labelSliderConf.isHidden = false
-      self.yoloView.sliderIoU.isHidden = false
-      self.yoloView.labelSliderIoU.isHidden = false
-      self.yoloView.sliderNumItems.isHidden = false
-      self.yoloView.labelSliderNumItems.isHidden = false
+      // Keep controls visible
+      [self.yoloView.sliderConf, self.yoloView.labelSliderConf,
+       self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
+       self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
+       self.yoloView.playButton, self.yoloView.pauseButton,
+       self.yoloView.switchCameraButton,
+       self.modelTableView, self.tableViewBGView].forEach { $0.isHidden = false }
       
-      // Also ensure buttons are visible
-      self.yoloView.playButton.isHidden = false
-      self.yoloView.pauseButton.isHidden = false
-      self.yoloView.switchCameraButton.isHidden = false
+      self.requestLandscapeOrientation()
       
-      // Keep model table view visible for model selection
-      self.modelTableView.isHidden = false
-      self.tableViewBGView.isHidden = false
-      
-      print("🔴 Stopped main YOLOView camera but kept controls visible")
-      
-      // Force orientation update when external display connects
-      if let windowScene = self.view.window?.windowScene {
-        if #available(iOS 16.0, *) {
-          windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
-        } else {
-          UIViewController.attemptRotationToDeviceOrientation()
-        }
-      }
-      
-      // Wait a bit before sending model info to ensure external display is ready
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        // Send current model to external display
-        if let entry = self.currentLoadingEntry ?? self.currentModels.first {
+        if self.currentLoadingEntry != nil || !self.currentModels.isEmpty {
           self.notifyExternalDisplayOfCurrentModel()
         }
-        
-        // Send current threshold values
         self.sliderValueChanged(self.yoloView.sliderConf)
-        
-        // Send current task
         NotificationCenter.default.post(
           name: .taskDidChange,
           object: nil,
           userInfo: ["task": self.currentTask]
         )
       }
+    }
+  }
+  
+  private func requestLandscapeOrientation() {
+    guard let windowScene = view.window?.windowScene else { return }
+    
+    if #available(iOS 16.0, *) {
+      windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
+    } else {
+      UIViewController.attemptRotationToDeviceOrientation()
     }
   }
   
@@ -113,111 +89,72 @@ extension ViewController {
   }
   
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
-    print("External display disconnected")
-    
-    // Show and restart YOLOView on main display when external display is disconnected
     DispatchQueue.main.async {
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
       
-      // Show model table view again
       self.modelTableView.isHidden = false
       self.tableViewBGView.isHidden = false
       
-      // Restart the main YOLOView video capture
       self.yoloView.resume()
-      print("🟢 Restarted main YOLOView video capture")
-      
-      // Re-enable inference flag to restart detection
       self.yoloView.setInferenceFlag(ok: true)
       
-      // If no model is currently selected, auto-select the first one
       if self.selectedIndexPath == nil && !self.currentModels.isEmpty {
-        print("🟢 Auto-selecting first model after external display disconnection")
         let firstIndex = IndexPath(row: 0, section: 0)
         self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
         self.selectedIndexPath = firstIndex
-        let firstModel = self.currentModels[0]
-        self.loadModel(entry: firstModel, forTask: self.currentTask)
+        self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
       }
       
-      // Force orientation update when external display disconnects
-      if let windowScene = self.view.window?.windowScene {
-        if #available(iOS 16.0, *) {
-          windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
-          // Force immediate orientation update
-          self.setNeedsUpdateOfSupportedInterfaceOrientations()
-          
-          // If currently in landscape, try to rotate to portrait
-          if UIDevice.current.orientation.isLandscape {
-            let value = UIInterfaceOrientation.portrait.rawValue
-            UIDevice.current.setValue(value, forKey: "orientation")
-          }
-        } else {
-          UIViewController.attemptRotationToDeviceOrientation()
-          
-          // For older iOS versions, force rotation
-          if UIDevice.current.orientation.isLandscape {
-            let value = UIInterfaceOrientation.portrait.rawValue
-            UIDevice.current.setValue(value, forKey: "orientation")
-          }
-        }
+      self.requestPortraitOrientation()
+    }
+  }
+  
+  private func requestPortraitOrientation() {
+    guard let windowScene = view.window?.windowScene else { return }
+    
+    if #available(iOS 16.0, *) {
+      windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
+      setNeedsUpdateOfSupportedInterfaceOrientations()
+      
+      if UIDevice.current.orientation.isLandscape {
+        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+      }
+    } else {
+      UIViewController.attemptRotationToDeviceOrientation()
+      
+      if UIDevice.current.orientation.isLandscape {
+        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
       }
     }
   }
   
   @objc func handleExternalDisplayReady(_ notification: Notification) {
-    print("External display ready to receive content")
-    print("  - currentTask: \(currentTask)")
-    print("  - currentModelName: \(currentModelName)")
-    print("  - currentModels count: \(currentModels.count)")
+    guard !currentTask.isEmpty && !currentModels.isEmpty else { return }
     
-    // Only send model if we have one loaded
-    guard !currentTask.isEmpty && !currentModels.isEmpty else {
-        print("  - No task or models loaded yet, skipping notification")
-        return
-    }
-    
-    // Share current task/model info
     let yoloTask = convertTaskNameToYOLOTask(currentTask)
     
-    // Get the full model path for external display
+    let currentEntry = currentModels.first(where: { processString($0.displayName) == currentModelName }) ?? currentModels.first
+    guard let entry = currentEntry else { return }
+    
     var fullModelPath = ""
-    
-    // Use the first model if no specific model is selected yet
-    if let currentEntry = currentModels.first(where: { processString($0.displayName) == currentModelName }) ?? currentModels.first {
-        print("  - Found model entry: \(currentEntry.displayName)")
-        
-        if currentEntry.isLocalBundle,
-           let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
-           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
-            let modelURL = folderPathURL.appendingPathComponent(currentEntry.identifier)
-            fullModelPath = modelURL.path
-            print("  - Full model path: \(fullModelPath)")
-        }
-    } else {
-        print("  - No model entry found!")
-        return
+    if entry.isLocalBundle,
+       let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
+        fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
     }
     
-    // Only notify if we have a valid path
-    guard !fullModelPath.isEmpty else {
-        print("  - Empty model path, skipping notification")
-        return
-    }
+    guard !fullModelPath.isEmpty else { return }
     
     ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
   }
   
   func checkAndNotifyExternalDisplayIfReady() {
-    // Check if external display is connected and ready
     let hasExternalDisplay = UIApplication.shared.connectedScenes
       .compactMap({ $0 as? UIWindowScene })
       .contains(where: { $0.screen != UIScreen.main })
     
     if hasExternalDisplay {
-      print("External display detected, sending current model")
-      // Wait a bit to ensure external display is fully initialized
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         self.handleExternalDisplayReady(Notification(name: .externalDisplayReady))
       }
@@ -225,48 +162,28 @@ extension ViewController {
   }
   
   func checkForExternalDisplays() {
-    print("Checking for external displays...")
-    print("Number of screens: \(UIScreen.screens.count)")
+    let hasExternalDisplay = UIScreen.screens.count > 1
     
-    if UIScreen.screens.count > 1 {
-      print("External display detected!")
-      for (index, screen) in UIScreen.screens.enumerated() {
-        print("Screen \(index): \(screen)")
-        print("  Bounds: \(screen.bounds)")
-        print("  Scale: \(screen.scale)")
-        print("  Available modes: \(screen.availableModes.count)")
-        for mode in screen.availableModes {
-          print("    Mode: \(mode.size)")
-        }
-      }
-      
-      // Check if external display scene is active
-      if let windowScene = UIApplication.shared.connectedScenes
+    if hasExternalDisplay {
+      _ = UIApplication.shared.connectedScenes
         .compactMap({ $0 as? UIWindowScene })
-        .first(where: { $0.screen != UIScreen.main }) {
-        print("External display window scene found: \(windowScene)")
-      } else {
-        print("No external display window scene found")
-      }
-    } else {
-      print("No external display connected")
+        .first(where: { $0.screen != UIScreen.main })
     }
   }
   
   func showExternalDisplayStatus() {
-    // Create a label to show external display status
     let statusLabel = UILabel()
     statusLabel.text = "📱 Camera is shown on external display\n🔄 Please use landscape orientation"
     statusLabel.textColor = .white
     statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
     statusLabel.textAlignment = .center
     statusLabel.font = .systemFont(ofSize: 18, weight: .medium)
-    statusLabel.numberOfLines = 0  // Allow unlimited lines
+    statusLabel.numberOfLines = 0
     statusLabel.adjustsFontSizeToFitWidth = true
     statusLabel.minimumScaleFactor = 0.8
     statusLabel.layer.cornerRadius = 10
     statusLabel.layer.masksToBounds = true
-    statusLabel.tag = 9999 // Tag for later removal
+    statusLabel.tag = 9999
     
     view.addSubview(statusLabel)
     
@@ -280,7 +197,6 @@ extension ViewController {
   }
   
   func hideExternalDisplayStatus() {
-    // Remove the status label
     view.subviews.first(where: { $0.tag == 9999 })?.removeFromSuperview()
   }
 }

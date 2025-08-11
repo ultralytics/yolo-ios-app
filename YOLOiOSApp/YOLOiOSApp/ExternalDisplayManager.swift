@@ -21,15 +21,7 @@ class ExternalDisplayManager {
     
     /// Posts model change notification with task type and model name
     func notifyModelChange(task: YOLOTask, modelName: String) {
-        // Convert YOLOTask to string
-        let taskString: String
-        switch task {
-        case .detect: taskString = "detect"
-        case .segment: taskString = "segment"
-        case .classify: taskString = "classify"
-        case .pose: taskString = "pose"
-        case .obb: taskString = "obb"
-        }
+        let taskString = String(describing: task).lowercased()
         
         NotificationCenter.default.post(
             name: .modelDidChange,

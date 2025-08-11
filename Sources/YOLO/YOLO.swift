@@ -69,66 +69,28 @@ public class YOLO {
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    func handleSuccess(predictor: Predictor) {
-      self.predictor = predictor
-      completion?(.success(self))
-    }
-
-    func handleFailure(_ error: Error) {
-      print("Failed to load model with error: \(error)")
-      completion?(.failure(error))
+    let handleResult: (Result<BasePredictor, Error>) -> Void = { result in
+      switch result {
+      case .success(let predictor):
+        self.predictor = predictor
+        completion?(.success(self))
+      case .failure(let error):
+        print("Failed to load model with error: \(error)")
+        completion?(.failure(error))
+      }
     }
 
     switch task {
     case .classify:
-      Classifier.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
-
+      Classifier.create(unwrappedModelURL: modelURL, completion: handleResult)
     case .segment:
-      Segmenter.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
-
+      Segmenter.create(unwrappedModelURL: modelURL, completion: handleResult)
     case .pose:
-      PoseEstimator.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
-
+      PoseEstimator.create(unwrappedModelURL: modelURL, completion: handleResult)
     case .obb:
-      ObbDetector.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
-
+      ObbDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
     default:
-      ObjectDetector.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
+      ObjectDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
     }
   }
 
@@ -137,15 +99,13 @@ public class YOLO {
   /// Sets the maximum number of detection items to include in results.
   /// - Parameter numItems: The maximum number of items to include (default is 30).
   public func setNumItemsThreshold(_ numItems: Int) {
-    if let basePredictor = predictor as? BasePredictor {
-      basePredictor.setNumItemsThreshold(numItems: numItems)
-    }
+    (predictor as? BasePredictor)?.setNumItemsThreshold(numItems: numItems)
   }
 
   /// Gets the current maximum number of detection items.
   /// - Returns: The current threshold value, or nil if not applicable.
   public func getNumItemsThreshold() -> Int? {
-    return (predictor as? BasePredictor)?.numItemsThreshold
+    (predictor as? BasePredictor)?.numItemsThreshold
   }
 
   /// Sets the confidence threshold for filtering results.
@@ -155,15 +115,13 @@ public class YOLO {
       print("Warning: Confidence threshold should be between 0.0 and 1.0")
       return
     }
-    if let basePredictor = predictor as? BasePredictor {
-      basePredictor.setConfidenceThreshold(confidence: confidence)
-    }
+    (predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
   }
 
   /// Gets the current confidence threshold.
   /// - Returns: The current confidence threshold value, or nil if not applicable.
   public func getConfidenceThreshold() -> Double? {
-    return (predictor as? BasePredictor)?.confidenceThreshold
+    (predictor as? BasePredictor)?.confidenceThreshold
   }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
@@ -173,15 +131,13 @@ public class YOLO {
       print("Warning: IoU threshold should be between 0.0 and 1.0")
       return
     }
-    if let basePredictor = predictor as? BasePredictor {
-      basePredictor.setIouThreshold(iou: iou)
-    }
+    (predictor as? BasePredictor)?.setIouThreshold(iou: iou)
   }
 
   /// Gets the current IoU threshold.
   /// - Returns: The current IoU threshold value, or nil if not applicable.
   public func getIouThreshold() -> Double? {
-    return (predictor as? BasePredictor)?.iouThreshold
+    (predictor as? BasePredictor)?.iouThreshold
   }
 
   /// Sets all thresholds at once.
@@ -190,15 +146,9 @@ public class YOLO {
   ///   - confidence: The confidence threshold value (0.0 to 1.0).
   ///   - iou: The IoU threshold value (0.0 to 1.0).
   public func setThresholds(numItems: Int? = nil, confidence: Double? = nil, iou: Double? = nil) {
-    if let numItems = numItems {
-      setNumItemsThreshold(numItems)
-    }
-    if let confidence = confidence {
-      setConfidenceThreshold(confidence)
-    }
-    if let iou = iou {
-      setIouThreshold(iou)
-    }
+    numItems.map { setNumItemsThreshold($0) }
+    confidence.map { setConfidenceThreshold($0) }
+    iou.map { setIouThreshold($0) }
   }
 
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {

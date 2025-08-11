@@ -240,7 +240,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { @Sendable result in
+      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -260,7 +261,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     case .pose:
-      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { @Sendable result in
+      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -284,7 +286,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { @Sendable result in
+      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
           handleSuccess(predictor)
@@ -1172,7 +1175,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       let cgImageRef: CGImage! = CGImage(
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-      
+
       Task { @MainActor [weak self] in
         guard let self = self else { return }
 

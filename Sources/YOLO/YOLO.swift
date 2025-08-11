@@ -34,7 +34,8 @@ public class YOLO: @unchecked Sendable {
   }
 
   public init(
-    _ modelPathOrName: String, task: YOLOTask, completion: (@Sendable (Result<YOLO, Error>) -> Void)? = nil
+    _ modelPathOrName: String, task: YOLOTask,
+    completion: (@Sendable (Result<YOLO, Error>) -> Void)? = nil
   ) {
     var modelURL: URL?
 

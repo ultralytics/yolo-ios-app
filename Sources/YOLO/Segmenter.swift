@@ -83,7 +83,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let capturedT2 = self.t2
       let capturedT4 = self.t4
       let capturedLabels = self.labels
-      
+
       DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
           let processedMasks = generateCombinedMaskImage(
@@ -102,7 +102,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         }
         let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
         let result = YOLOResult(
-          orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults, speed: capturedT2,
+          orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
+          speed: capturedT2,
           fps: 1 / capturedT4, names: capturedLabels)
         self?.updateTime()
         self?.currentOnResultsListener?.on(result: result)
@@ -249,30 +250,29 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
     // Pre-allocate result arrays with estimated capacity
-    let estimatedCapacity = min(numAnchors / 10, 100) // Estimate ~10% detection rate
+    let estimatedCapacity = min(numAnchors / 10, 100)  // Estimate ~10% detection rate
     let resultsWrapper = ResultsWrapper(capacity: estimatedCapacity)
 
     // Wrapper for thread-safe results collection
     final class ResultsWrapper: @unchecked Sendable {
       private let lock = NSLock()
       private var results: [(CGRect, Int, Float, MLMultiArray)]
-      
+
       init(capacity: Int) {
         self.results = []
         self.results.reserveCapacity(capacity)
       }
-      
+
       func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
         lock.lock()
         results.append(result)
         lock.unlock()
       }
-      
+
       func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
         return results
       }
     }
-
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)

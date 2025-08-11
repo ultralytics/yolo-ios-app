@@ -133,7 +133,7 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
       private var boxes: [CGRect] = []
       private var scores: [Float] = []
       private var features: [[Float]] = []
-      
+
       func append(box: CGRect, score: Float, feature: [Float]) {
         lock.lock()
         boxes.append(box)
@@ -141,12 +141,12 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
         features.append(feature)
         lock.unlock()
       }
-      
+
       func getCollections() -> (boxes: [CGRect], scores: [Float], features: [[Float]]) {
         return (boxes, scores, features)
       }
     }
-    
+
     // Wrapper to make pointer Sendable
     struct PointerWrapper: @unchecked Sendable {
       let pointer: UnsafeMutablePointer<Float>

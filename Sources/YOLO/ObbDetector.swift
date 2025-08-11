@@ -126,20 +126,20 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
       let score: Float
       let cls: Int
     }
-    
+
     // Wrapper to make pointer and array Sendable for Swift 6
     struct PointerWrapper: @unchecked Sendable {
       let pointer: UnsafeMutablePointer<Float>
     }
-    
+
     struct DetectionsWrapper: @unchecked Sendable {
       let detections: UnsafeMutablePointer<Detection?>
     }
-    
+
     let pointerWrapper = PointerWrapper(pointer: pointer)
     let detectionsPtr = UnsafeMutablePointer<Detection?>.allocate(capacity: numAnchors)
     detectionsPtr.initialize(repeating: nil, count: numAnchors)
-    defer { 
+    defer {
       detectionsPtr.deinitialize(count: numAnchors)
       detectionsPtr.deallocate()
     }

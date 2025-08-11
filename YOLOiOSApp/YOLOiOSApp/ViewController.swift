@@ -124,6 +124,20 @@ class ModelTableViewCell: UITableViewCell {
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
+  
+  // Override supported orientations based on external display connection
+  override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+    // Use SceneDelegate's state to determine orientation support
+    if SceneDelegate.hasExternalDisplay {
+      return [.landscapeLeft, .landscapeRight]
+    } else {
+      return [.portrait, .landscapeLeft, .landscapeRight]
+    }
+  }
+  
+  override var shouldAutorotate: Bool {
+    return true
+  }
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet var View0: UIView!
@@ -137,6 +151,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   let selection = UISelectionFeedbackGenerator()
   var firstLoad = true
+  
+  // Store current loading entry for external display notification
+  var currentLoadingEntry: ModelEntry?
 
   private let downloadProgressView: UIProgressView = {
     let pv = UIProgressView(progressViewStyle: .default)
@@ -176,7 +193,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.isUserInteractionEnabled = true
   }
 
-  private let tasks: [(name: String, folder: String)] = [
+  let tasks: [(name: String, folder: String)] = [
     ("Classify", "ClassifyModels"),  // index 0
     ("Segment", "SegmentModels"),  // index 1
     ("Detect", "DetectModels"),  // index 2
@@ -186,14 +203,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private var modelsForTask: [String: [String]] = [:]
 
-  private var currentModels: [(name: String, url: URL?, isLocal: Bool)] = []
+  var currentModels: [ModelEntry] = []
 
-  private var currentTask: String = ""
-  private var currentModelName: String = ""
+  var currentTask: String = ""
+  var currentModelName: String = ""
 
   private var isLoadingModel = false
 
-  private let modelTableView: UITableView = {
+  let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
     table.layer.cornerRadius = 5  // Match corner radius of other elements
@@ -201,46 +218,92 @@ class ViewController: UIViewController, YOLOViewDelegate {
     return table
   }()
 
-  private let tableViewBGView = UIView()
+  let tableViewBGView = UIView()
 
-  private var selectedIndexPath: IndexPath?
+  var selectedIndexPath: IndexPath?
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    
+    // Debug: Check model folders
+    debugCheckModelFolders()
+    
+    // Setup external display notifications
+    setupExternalDisplayNotifications()
+    
+    // Check for already connected external displays
+    checkForExternalDisplays()
+    
+    // If external display is already connected, ensure YOLOView doesn't interfere
+    if UIScreen.screens.count > 1 {
+      print("External display already connected at startup - deferring camera init")
+      yoloView.isHidden = true
+    }
 
     setupTaskSegmentedControl()
     loadModelsForAllTasks()
 
+    // Initialize task selection without loading model on main display
     if tasks.indices.contains(2) {
       segmentedControl.selectedSegmentIndex = 2
       currentTask = tasks[2].name
-      reloadModelEntriesAndLoadFirst(for: currentTask)
+      
+      // Load models and auto-select first one if no external display
+      if UIScreen.screens.count == 1 {
+        // No external display - load model and start inference
+        reloadModelEntriesAndLoadFirst(for: currentTask)
+      } else {
+        // External display connected - stop main YOLOView
+        print("External display detected at startup - stopping main YOLOView")
+        yoloView.stop()
+        yoloView.isHidden = true
+        
+        // Load model list for UI but don't auto-select
+        currentModels = makeModelEntries(for: currentTask)
+        modelTableView.reloadData()
+        
+        if !currentModels.isEmpty {
+          modelTableView.isHidden = false
+        }
+        
+        // Ensure camera is fully released
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          print("Main YOLOView fully stopped, external display can now use camera")
+        }
+      }
     }
 
     setupTableView()
-
+    
     // Setup logo tap gesture
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-
+    
     // Setup share button
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
     yoloView.delegate = self
     yoloView.labelName.isHidden = true
     yoloView.labelFPS.isHidden = true
+    
+    // Add target to sliders to monitor changes
+    yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
+    yoloView.sliderIoU.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
+    yoloView.sliderNumItems.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
 
     // Force label text color to white
     labelName.textColor = .white
     labelFPS.textColor = .white
     labelVersion.textColor = .white
 
-    // Set app version
-    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-      let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
-    {
-      labelVersion.text = "v\(version) (\(build))"
+    // Set app version  
+    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+      labelVersion.text = "v\(version)"
+      print("DEBUG: App version set to: v\(version)")
+    } else {
+      labelVersion.text = ""
+      print("DEBUG: Could not retrieve app version")
     }
 
     labelName.overrideUserInterfaceStyle = .dark
@@ -265,7 +328,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
         equalTo: downloadProgressView.bottomAnchor, constant: 8),
     ])
 
-    // Progress handler will be set when downloading
+    ModelDownloadManager.shared.progressHandler = { [weak self] progress in
+      guard let self = self else { return }
+      DispatchQueue.main.async {
+        self.downloadProgressView.progress = Float(progress)
+        self.downloadProgressLabel.isHidden = false
+        let percentage = Int(progress * 100)
+        self.downloadProgressLabel.text = "Downloading \(percentage)%"
+      }
+    }
   }
 
   override func viewWillAppear(_ animated: Bool) {
@@ -391,29 +462,40 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func makeModelEntries(for taskName: String) -> [(name: String, url: URL?, isLocal: Bool)]
-  {
+  private func makeModelEntries(for taskName: String) -> [ModelEntry] {
     let localFileNames = modelsForTask[taskName] ?? []
-    let localModels = localFileNames.map { fileName in
-      let displayName = (fileName as NSString).deletingPathExtension
-      return (name: displayName, url: nil as URL?, isLocal: true)
+    let localEntries = localFileNames.map { fileName -> ModelEntry in
+      let display = (fileName as NSString).deletingPathExtension
+      return ModelEntry(
+        displayName: display,
+        identifier: fileName,
+        isLocalBundle: true,
+        isRemote: false,
+        remoteURL: nil
+      )
     }
 
     // Get local model names for filtering
-    let localModelNames = Set(localModels.map { $0.name.lowercased() })
+    let localModelNames = Set(localEntries.map { $0.displayName.lowercased() })
 
     let remoteList = remoteModelsInfo[taskName] ?? []
-    let remoteModels = remoteList.compactMap {
-      (modelName, url) -> (name: String, url: URL?, isLocal: Bool)? in
+    let remoteEntries = remoteList.compactMap { (modelName, url) -> ModelEntry? in
       // Only include remote models if no local model with the same name exists
       guard !localModelNames.contains(modelName.lowercased()) else { return nil }
-      return (name: modelName, url: url, isLocal: false)
+      
+      return ModelEntry(
+        displayName: modelName,
+        identifier: modelName,
+        isLocalBundle: false,
+        isRemote: true,
+        remoteURL: url
+      )
     }
 
-    return localModels + remoteModels
+    return localEntries + remoteEntries
   }
 
-  private func loadModel(entry: (name: String, url: URL?, isLocal: Bool), forTask task: String) {
+  func loadModel(entry: ModelEntry, forTask task: String) {
     guard !isLoadingModel else {
       print("Model is already loading. Please wait.")
       return
@@ -434,9 +516,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
     self.view.isUserInteractionEnabled = false
     self.modelTableView.isUserInteractionEnabled = false
 
-    print("Start loading model: \(entry.name)")
+    print("Start loading model: \(entry.displayName)")
+    print("  - displayName: \(entry.displayName)")
+    print("  - identifier: \(entry.identifier)")
+    print("  - isLocalBundle: \(entry.isLocalBundle)")
+    print("  - task: \(task)")
+    
+    // Store current entry for external display notification
+    currentLoadingEntry = entry
 
-    if entry.isLocal {
+    if entry.isLocalBundle {
       DispatchQueue.global().async { [weak self] in
         guard let self = self else { return }
         let yoloTask = self.convertTaskNameToYOLOTask(task)
@@ -445,77 +534,83 @@ class ViewController: UIViewController, YOLOViewDelegate {
           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
         else {
           DispatchQueue.main.async {
-            self.finishLoadingModel(success: false, modelName: entry.name)
+            self.finishLoadingModel(success: false, modelName: entry.displayName)
           }
           return
         }
 
-        let fileName = entry.name + ".mlpackage"
-        let modelURL = folderPathURL.appendingPathComponent(fileName)
+        let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
         DispatchQueue.main.async {
           self.downloadProgressLabel.isHidden = false
-          self.downloadProgressLabel.text = "Loading \(entry.name)"
+          self.downloadProgressLabel.text = "Loading \(entry.displayName)"
           self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
             switch result {
             case .success():
-              self.finishLoadingModel(success: true, modelName: entry.name)
+              self.finishLoadingModel(success: true, modelName: entry.displayName)
             case .failure(let error):
               print(error)
-              self.finishLoadingModel(success: false, modelName: entry.name)
+              self.finishLoadingModel(success: false, modelName: entry.displayName)
             }
           }
         }
       }
-    } else if let remoteURL = entry.url {
+    } else {
       let yoloTask = self.convertTaskNameToYOLOTask(task)
 
-      // Use YOLOModelDownloader from the package
-      let downloader = YOLOModelDownloader()
+      let key = entry.identifier  // "yolov8n", "yolov8m-seg", etc.
 
-      self.downloadProgressView.progress = 0.0
-      self.downloadProgressView.isHidden = false
-      self.downloadProgressLabel.isHidden = false
-
-      downloader.download(
-        from: remoteURL,
-        task: yoloTask,
-        progress: { [weak self] progress in
-          guard let self = self else { return }
-          DispatchQueue.main.async {
-            self.downloadProgressView.progress = Float(progress)
-            self.downloadProgressLabel.isHidden = false
-            let percentage = Int(progress * 100)
-            self.downloadProgressLabel.text = "Downloading \(percentage)%"
-          }
-        },
-        completion: { [weak self] result in
-          guard let self = self else { return }
-          switch result {
-          case .success(let modelPath):
-            DispatchQueue.main.async {
-              self.downloadProgressLabel.text = "Loading \(entry.name)"
-              self.yoloView.setModel(modelPathOrName: modelPath.path, task: yoloTask) { result in
-                switch result {
-                case .success():
-                  self.finishLoadingModel(success: true, modelName: entry.name)
-                case .failure(let error):
-                  print(error)
-                  self.finishLoadingModel(success: false, modelName: entry.name)
-                }
-              }
-            }
-          case .failure(let error):
-            print("Download failed: \(error)")
-            self.finishLoadingModel(success: false, modelName: entry.name)
-          }
+      if ModelCacheManager.shared.isModelDownloaded(key: key) {
+        loadCachedModelAndSetToYOLOView(
+          key: key, yoloTask: yoloTask, displayName: entry.displayName)
+      } else {
+        guard let remoteURL = entry.remoteURL else {
+          self.finishLoadingModel(success: false, modelName: entry.displayName)
+          return
         }
-      )
-    } else {
-      self.finishLoadingModel(success: false, modelName: entry.name)
+
+        self.downloadProgressView.progress = 0.0
+        self.downloadProgressView.isHidden = false
+        self.downloadProgressLabel.isHidden = false
+
+        let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
+
+        ModelCacheManager.shared.loadModel(
+          from: localZipFileName,
+          remoteURL: remoteURL,
+          key: key
+        ) { [weak self] mlModel, loadedKey in
+          guard let self = self else { return }
+          if mlModel == nil {
+            self.finishLoadingModel(success: false, modelName: entry.displayName)
+            return
+          }
+          self.loadCachedModelAndSetToYOLOView(
+            key: loadedKey,
+            yoloTask: yoloTask,
+            displayName: entry.displayName)
+        }
+      }
     }
   }
 
-  // This function is no longer needed as YOLOModelDownloader handles caching
+  private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String) {
+    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+
+    DispatchQueue.main.async {
+      self.downloadProgressLabel.isHidden = false
+      self.downloadProgressLabel.text = "Loading \(displayName)"
+      self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
+        switch result {
+        case .success():
+          self.finishLoadingModel(success: true, modelName: displayName)
+        case .failure(let error):
+          print(error)
+          self.finishLoadingModel(success: false, modelName: displayName)
+        }
+      }
+    }
+  }
 
   private func finishLoadingModel(success: Bool, modelName: String) {
     DispatchQueue.main.async {
@@ -531,6 +626,55 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.isLoadingModel = false
 
       self.modelTableView.reloadData()
+      
+      // Notify external display of model change
+      if success {
+        // Update currentModelName
+        self.currentModelName = processString(modelName)
+        
+        let yoloTask = self.convertTaskNameToYOLOTask(self.currentTask)
+        
+        // Determine the correct model path for external display
+        var fullModelPath = ""
+        
+        // Use the stored entry from loadModel
+        if let entry = self.currentLoadingEntry {
+            if entry.isLocalBundle {
+                // For local bundle models
+                if let folderURL = self.tasks.first(where: { $0.name == self.currentTask })?.folder,
+                   let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil) {
+                    let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+                    fullModelPath = modelURL.path
+                    print("📦 External display local model path: \(fullModelPath)")
+                }
+            } else {
+                // For remote models, use the cached path
+                let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let localModelURL = documentsDirectory
+                  .appendingPathComponent(entry.identifier)
+                  .appendingPathExtension("mlmodelc")
+                fullModelPath = localModelURL.path
+                print("☁️ External display cached model path: \(fullModelPath)")
+                
+                // Verify the cached model exists
+                if !FileManager.default.fileExists(atPath: fullModelPath) {
+                    print("❌ Cached model not found at: \(fullModelPath)")
+                    return
+                }
+            }
+        }
+        
+        // Only notify if we have a valid path
+        if !fullModelPath.isEmpty {
+            ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+            print("✅ Model loaded successfully and notified to external display: \(modelName)")
+            
+            // Also check if external display is waiting for initial model
+            self.checkAndNotifyExternalDisplayIfReady()
+        } else {
+            print("❌ Could not determine model path for external display")
+        }
+      }
 
       if let ip = self.selectedIndexPath {
         self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
@@ -562,7 +706,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
+  func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
     switch task {
     case "Detect": return .detect
     case "Segment": return .segment
@@ -607,6 +751,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     currentTask = newTask
     selectedIndexPath = nil
+    
+    // Notify external display of task change immediately
+    NotificationCenter.default.post(
+      name: .taskDidChange,
+      object: nil,
+      userInfo: ["task": newTask]
+    )
 
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
@@ -651,6 +802,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
   }
 
+
+
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
@@ -660,7 +813,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-
+      
     } else {
       // Portrait mode
       focus.isHidden = true
@@ -698,6 +851,52 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
+  
+  @objc func sliderValueChanged(_ sender: UISlider) {
+    // Send threshold values to external display
+    let conf = Double(round(100 * yoloView.sliderConf.value)) / 100
+    let iou = Double(round(100 * yoloView.sliderIoU.value)) / 100
+    let maxItems = Int(yoloView.sliderNumItems.value)
+    
+    NotificationCenter.default.post(
+      name: .thresholdDidChange,
+      object: nil,
+      userInfo: [
+        "conf": conf,
+        "iou": iou,
+        "maxItems": maxItems
+      ]
+    )
+    
+    print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
+  }
+  
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+  
+  private func debugCheckModelFolders() {
+    print("\n🔍 DEBUG: Checking model folders...")
+    let folders = ["DetectModels", "SegmentModels", "ClassifyModels", "PoseModels", "OBBModels"]
+    
+    for folder in folders {
+      if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {
+        print("✅ \(folder) found at: \(folderURL.path)")
+        
+        do {
+          let files = try FileManager.default.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
+          let models = files.filter { $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage" }
+          print("   📦 Models: \(models.map { $0.lastPathComponent })")
+        } catch {
+          print("   ❌ Error reading folder: \(error)")
+        }
+      } else {
+        print("❌ \(folder) NOT FOUND in bundle")
+      }
+    }
+    print("\n")
+  }
+
 }
 
 // MARK: - UITableViewDataSource, UITableViewDelegate
@@ -719,16 +918,14 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     let entry = currentModels[indexPath.row]
 
     // Check if the model is remote and not yet downloaded
-    let yoloTask = self.convertTaskNameToYOLOTask(currentTask)
     let isDownloaded =
-      entry.isLocal
-      || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))
+      entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
 
     // Format model name using the processString function
-    let formattedName = processString(entry.name)
+    let formattedName = processString(entry.displayName)
 
     // Configure the cell
-    cell.configure(with: formattedName, isRemote: !entry.isLocal, isDownloaded: isDownloaded)
+    cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
 
     return cell
   }
@@ -749,12 +946,25 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 // MARK: - YOLOViewDelegate
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-    labelFPS.textColor = .white
+    DispatchQueue.main.async {
+      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+      self.labelFPS.textColor = .white
+    }
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
     DispatchQueue.main.async {
+      // Share results with external display
+      ExternalDisplayManager.shared.shareResults(result)
+      
+      // Also send via notification for direct communication
+      NotificationCenter.default.post(
+        name: .yoloResultsAvailable,
+        object: nil,
+        userInfo: ["result": result]
+      )
     }
   }
+
 }
+

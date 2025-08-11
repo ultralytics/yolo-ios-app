@@ -1134,7 +1134,7 @@ extension YOLOView {
   private func copyVisualizationLayer(_ layer: CALayer, isFullFrame: Bool = false) -> CALayer? {
     let tempLayer = CALayer()
     let overlayFrame = self.overlayLayer.frame
-    
+
     if isFullFrame {
       tempLayer.frame = CGRect(
         x: overlayFrame.origin.x,
@@ -1153,10 +1153,10 @@ extension YOLOView {
       )
       tempLayer.contents = layer.contents
     }
-    
+
     tempLayer.opacity = layer.opacity
     copyLayerProperties(from: layer, to: tempLayer)
-    
+
     // Copy sublayers if present
     if let sublayers = layer.sublayers {
       for sublayer in sublayers {

@@ -195,7 +195,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
-    
+
     activityIndicator.startAnimating()
     boundingBoxViews.forEach { box in
       box.hide()

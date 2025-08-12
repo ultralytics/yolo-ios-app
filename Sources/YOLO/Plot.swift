@@ -228,7 +228,7 @@ func generateCombinedMaskImage(
   if returnIndividualMasks {
     probabilityMasks = Array(
       repeating: Array(
-        repeating: [Float](repeating: 0.0, count: maskWidth),
+        repeating: Array(repeating: Float(0.0), count: maskWidth),
         count: maskHeight
       ),
       count: N
@@ -479,7 +479,7 @@ func drawSinglePersonKeypoints(
   _ = Float(imageViewSize.width / originalImageSize.width)
   _ = Float(imageViewSize.height / originalImageSize.height)
 
-  var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
+  var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, Float(0)), count: 17)
 
   for i in 0..<17 {
     let x = keypoints[i].x * Float(imageViewSize.width)

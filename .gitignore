@@ -242,3 +242,4 @@ fabric.properties
 .swiftpm/xcode/xcuserdata/
 Tests/YOLOTests/Resources/*.mlpackage
 *.xcuserdatad/
+CLAUDE.md

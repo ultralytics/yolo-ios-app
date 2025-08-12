@@ -70,18 +70,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - Loading State Management
   private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
-    if loading {
-      activityIndicator.startAnimating()
-      view.isUserInteractionEnabled = false
-      modelTableView.isUserInteractionEnabled = false
-      
-      if showOverlay { updateLoadingOverlay(true) }
-    } else {
-      activityIndicator.stopAnimating()
-      view.isUserInteractionEnabled = true
-      modelTableView.isUserInteractionEnabled = true
-      updateLoadingOverlay(false)
-    }
+    loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
+    [view, modelTableView].forEach { $0.isUserInteractionEnabled = !loading }
+    if showOverlay && loading { updateLoadingOverlay(true) }
+    if !loading { updateLoadingOverlay(false) }
   }
   
   private func updateLoadingOverlay(_ show: Bool) {
@@ -174,14 +166,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
 
     yoloView.delegate = self
-    yoloView.labelName.isHidden = true
-    yoloView.labelFPS.isHidden = true
+    [yoloView.labelName, yoloView.labelFPS].forEach { $0?.isHidden = true }
 
     // Setup labels
-    [labelName, labelFPS, labelVersion].forEach {
-      $0?.textColor = .white
-      $0?.overrideUserInterfaceStyle = .dark
-    }
+    [labelName, labelFPS, labelVersion].forEach { $0?.textColor = .white; $0?.overrideUserInterfaceStyle = .dark }
     
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
@@ -251,21 +239,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
-
+    modelTableView.isHidden = currentModels.isEmpty
+    modelTableView.reloadData()
+    
     if !currentModels.isEmpty {
-      modelTableView.isHidden = false
-      modelTableView.reloadData()
-
       DispatchQueue.main.async {
         let firstIndex = IndexPath(row: 0, section: 0)
         self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
         self.selectedIndexPath = firstIndex
-        let firstModel = self.currentModels[0]
-        self.loadModel(entry: firstModel, forTask: taskName)
+        self.loadModel(entry: self.currentModels[0], forTask: taskName)
       }
-    } else {
-      print("No models found for task: \(taskName)")
-      modelTableView.isHidden = true
     }
   }
 
@@ -335,8 +318,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func resetDownloadProgress() {
     downloadProgressView.progress = 0.0
-    downloadProgressView.isHidden = true
-    downloadProgressLabel.isHidden = true
+    [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
   }
 
   private func finishLoadingModel(success: Bool, modelName: String) {

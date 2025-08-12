@@ -25,19 +25,19 @@ public class YOLO: @unchecked Sendable {
 
     downloader.download(from: url, task: task) { [weak self] result in
       guard let self = self else { return }
-      
+
       switch result {
       case .success(let modelPath):
         let handleSuccess: @Sendable (Predictor) -> Void = { predictor in
           self.predictor = predictor
           completion(.success(self))
         }
-        
+
         let handleFailure: @Sendable (Error) -> Void = { error in
           print("Failed to load model with error: \(error)")
           completion(.failure(error))
         }
-        
+
         switch task {
         case .classify:
           Classifier.create(unwrappedModelURL: modelPath) { result in
@@ -48,7 +48,7 @@ public class YOLO: @unchecked Sendable {
               handleFailure(error)
             }
           }
-          
+
         case .segment:
           Segmenter.create(unwrappedModelURL: modelPath) { result in
             switch result {
@@ -58,7 +58,7 @@ public class YOLO: @unchecked Sendable {
               handleFailure(error)
             }
           }
-          
+
         case .pose:
           PoseEstimator.create(unwrappedModelURL: modelPath) { result in
             switch result {
@@ -68,7 +68,7 @@ public class YOLO: @unchecked Sendable {
               handleFailure(error)
             }
           }
-          
+
         case .obb:
           ObbDetector.create(unwrappedModelURL: modelPath) { result in
             switch result {
@@ -78,7 +78,7 @@ public class YOLO: @unchecked Sendable {
               handleFailure(error)
             }
           }
-          
+
         default:
           ObjectDetector.create(unwrappedModelURL: modelPath) { result in
             switch result {
@@ -89,7 +89,7 @@ public class YOLO: @unchecked Sendable {
             }
           }
         }
-        
+
       case .failure(let error):
         completion(.failure(error))
       }

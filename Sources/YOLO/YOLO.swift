@@ -23,10 +23,73 @@ public class YOLO: @unchecked Sendable {
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
     let downloader = YOLOModelDownloader()
 
-    downloader.download(from: url, task: task) { result in
+    downloader.download(from: url, task: task) { [weak self] result in
+      guard let self = self else { return }
+      
       switch result {
       case .success(let modelPath):
-        self.loadModel(from: modelPath, task: task, completion: completion)
+        let handleSuccess: @Sendable (Predictor) -> Void = { predictor in
+          self.predictor = predictor
+          completion(.success(self))
+        }
+        
+        let handleFailure: @Sendable (Error) -> Void = { error in
+          print("Failed to load model with error: \(error)")
+          completion(.failure(error))
+        }
+        
+        switch task {
+        case .classify:
+          Classifier.create(unwrappedModelURL: modelPath) { result in
+            switch result {
+            case .success(let predictor):
+              handleSuccess(predictor)
+            case .failure(let error):
+              handleFailure(error)
+            }
+          }
+          
+        case .segment:
+          Segmenter.create(unwrappedModelURL: modelPath) { result in
+            switch result {
+            case .success(let predictor):
+              handleSuccess(predictor)
+            case .failure(let error):
+              handleFailure(error)
+            }
+          }
+          
+        case .pose:
+          PoseEstimator.create(unwrappedModelURL: modelPath) { result in
+            switch result {
+            case .success(let predictor):
+              handleSuccess(predictor)
+            case .failure(let error):
+              handleFailure(error)
+            }
+          }
+          
+        case .obb:
+          ObbDetector.create(unwrappedModelURL: modelPath) { result in
+            switch result {
+            case .success(let predictor):
+              handleSuccess(predictor)
+            case .failure(let error):
+              handleFailure(error)
+            }
+          }
+          
+        default:
+          ObjectDetector.create(unwrappedModelURL: modelPath) { result in
+            switch result {
+            case .success(let predictor):
+              handleSuccess(predictor)
+            case .failure(let error):
+              handleFailure(error)
+            }
+          }
+        }
+        
       case .failure(let error):
         completion(.failure(error))
       }

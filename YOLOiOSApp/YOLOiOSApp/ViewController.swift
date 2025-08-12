@@ -32,39 +32,25 @@ class ModelTableViewCell: UITableViewCell {
   
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
     super.init(style: .default, reuseIdentifier: reuseIdentifier)
-    setupCell()
-  }
-  
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-  
-  private func setupCell() {
     backgroundColor = .clear
     selectionStyle = .default
     textLabel?.textAlignment = .center
     textLabel?.font = .systemFont(ofSize: 14, weight: .medium)
     textLabel?.adjustsFontSizeToFitWidth = true
     textLabel?.minimumScaleFactor = 0.7
-    textLabel?.textColor = .white
-    
-    let selectedBGView = UIView()
-    selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-    selectedBGView.layer.cornerRadius = 5
-    selectedBackgroundView = selectedBGView
+    let bg = UIView()
+    bg.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
+    bg.layer.cornerRadius = 5
+    selectedBackgroundView = bg
   }
+  
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
   
   func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
     textLabel?.text = modelName
     textLabel?.textColor = (isRemote && !isDownloaded) ? .lightGray : .white
-    
-    if isRemote && !isDownloaded {
-      let config = UIImage.SymbolConfiguration(pointSize: 14)
-      imageView?.image = UIImage(systemName: "icloud.and.arrow.down", withConfiguration: config)
-      imageView?.tintColor = .white
-    } else {
-      imageView?.image = nil
-    }
+    imageView?.image = (isRemote && !isDownloaded) ? UIImage(systemName: "icloud.and.arrow.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14)) : nil
+    imageView?.tintColor = .white
   }
   
   override func layoutSubviews() {
@@ -149,6 +135,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     static let logoURL = "https://www.ultralytics.com"
     static let progressViewWidth: CGFloat = 200
     static let activityIndicatorSize: CGFloat = 100
+    static let taskMap: [String: YOLOTask] = [
+      "Detect": .detect,
+      "Segment": .segment,
+      "Classify": .classify,
+      "Pose": .pose,
+      "OBB": .obb
+    ]
   }
 
   private let modelTableView: UITableView = {
@@ -336,7 +329,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
     
-    let yoloTask = convertTaskNameToYOLOTask(task)
+    let yoloTask = Constants.taskMap[task] ?? .detect
     
     if entry.isLocal {
       loadLocalModel(entry: entry, task: task, yoloTask: yoloTask)
@@ -418,16 +411,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
-    switch task {
-    case "Detect": return .detect
-    case "Segment": return .segment
-    case "Classify": return .classify
-    case "Pose": return .pose
-    case "OBB": return .obb
-    default: return .detect
-    }
-  }
 
   @IBAction func vibrate(_ sender: Any) {
     selection.selectionChanged()
@@ -568,7 +551,7 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     let entry = currentModels[indexPath.row]
 
     // Check if the model is remote and not yet downloaded
-    let yoloTask = self.convertTaskNameToYOLOTask(currentTask)
+    let yoloTask = Constants.taskMap[currentTask] ?? .detect
     let isDownloaded =
       entry.isLocal
       || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))

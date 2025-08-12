@@ -10,7 +10,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     private var yoloView: YOLOView?
     private var isInitialized = false
     private var currentTask: YOLOTask = .detect
-    private var currentModelName: String = "yolo11n.mlmodel"
+    private var currentModelName: String = "yolo11n"
     
     // UI Elements with proper scaling
     private var labelName: UILabel!
@@ -186,6 +186,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     }
     
     private func setupYOLOView() {
+        // Create YOLOView without model initially - will be set when main app notifies
         yoloView = YOLOView(frame: view.bounds)
         yoloView?.delegate = self
         yoloView?.backgroundColor = .clear
@@ -213,6 +214,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.hideYOLOViewControls()
+            // Don't load initial model - wait for main app to notify us
             NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
         }
     }

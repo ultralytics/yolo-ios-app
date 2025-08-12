@@ -13,23 +13,15 @@
 
 import Foundation
 
-private let baseURL = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
-
 /// A dictionary mapping task names to available remote models with their download URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = {
+  let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
   let sizes = ["n", "s", "m", "l", "x"]
-  let tasks: [(name: String, suffix: String)] = [
-    ("Detect", ""),
-    ("Segment", "-seg"),
-    ("Classify", "-cls"),
-    ("Pose", "-pose"),
-    ("OBB", "-obb")
-  ]
-  
+  let tasks = [("Detect", ""), ("Segment", "-seg"), ("Classify", "-cls"), ("Pose", "-pose"), ("OBB", "-obb")]
   return tasks.reduce(into: [:]) { result, task in
-    result[task.name] = sizes.map { size in
-      let model = "yolo11\(size)\(task.suffix)"
-      return (model, URL(string: "\(baseURL)/\(model).mlpackage.zip")!)
+    result[task.0] = sizes.map { size in
+      let model = "yolo11\(size)\(task.1)"
+      return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
     }
   }
 }()

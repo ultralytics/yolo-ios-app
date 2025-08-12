@@ -28,7 +28,7 @@ let package = Package(
       name: "YOLOTests",
       dependencies: ["YOLO"],
       resources: [
-        .copy("Resources")
+        .process("Resources")
       ]
     ),
   ]

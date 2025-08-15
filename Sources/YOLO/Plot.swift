@@ -520,7 +520,8 @@ func drawSinglePersonKeypoints(
         let endConf = points[endIdx].1
 
         if startConf >= confThreshold && endConf >= confThreshold {
-          let limbColorIndex = index < limbColorIndices.count ? limbColorIndices[index] : index % posePalette.count
+          let limbColorIndex =
+            index < limbColorIndices.count ? limbColorIndices[index] : index % posePalette.count
           drawLine(
             on: layer, from: startPoint, to: endPoint, color: limbColorIndex,
             lineWidth: lineWidth)

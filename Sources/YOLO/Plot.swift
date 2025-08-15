@@ -479,9 +479,11 @@ func drawSinglePersonKeypoints(
   _ = Float(imageViewSize.width / originalImageSize.width)
   _ = Float(imageViewSize.height / originalImageSize.height)
 
-  var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: 17)
+  // Dynamic keypoint count support
+  let numKeypoints = keypoints.count
+  var points: [(CGPoint, Float)] = Array(repeating: (CGPoint.zero, 0), count: numKeypoints)
 
-  for i in 0..<17 {
+  for i in 0..<numKeypoints {
     let x = keypoints[i].x * Float(imageViewSize.width)
     let y = keypoints[i].y * Float(imageViewSize.height)
     let conf = confs[i]
@@ -494,28 +496,36 @@ func drawSinglePersonKeypoints(
     {
       points[i] = (point, conf)
 
-      drawCircle(on: layer, at: point, radius: radius, color: kptColorIndices[i])
+      // Use modulo to cycle through available colors for any number of keypoints
+      let colorIndex = i < kptColorIndices.count ? kptColorIndices[i] : i % posePalette.count
+      drawCircle(on: layer, at: point, radius: radius, color: colorIndex)
     }
   }
 
   if drawSkeleton {
-    for (index, bone) in skeleton.enumerated() {
-      let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
+    // Only draw skeleton if we have the standard 17 keypoints
+    // For other keypoint counts, skeleton connectivity would need model-specific configuration
+    if numKeypoints == 17 {
+      for (index, bone) in skeleton.enumerated() {
+        let (startIdx, endIdx) = (bone[0] - 1, bone[1] - 1)
 
-      guard startIdx < points.count, endIdx < points.count else {
-        print("Invalid skeleton indices: \(startIdx), \(endIdx)")
-        continue
-      }
+        guard startIdx < points.count, endIdx < points.count else {
+          print("Invalid skeleton indices: \(startIdx), \(endIdx)")
+          continue
+        }
 
-      let startPoint = points[startIdx].0
-      let endPoint = points[endIdx].0
-      let startConf = points[startIdx].1
-      let endConf = points[endIdx].1
+        let startPoint = points[startIdx].0
+        let endPoint = points[endIdx].0
+        let startConf = points[startIdx].1
+        let endConf = points[endIdx].1
 
-      if startConf >= confThreshold && endConf >= confThreshold {
-        drawLine(
-          on: layer, from: startPoint, to: endPoint, color: limbColorIndices[index],
-          lineWidth: lineWidth)
+        if startConf >= confThreshold && endConf >= confThreshold {
+          let limbColorIndex =
+            index < limbColorIndices.count ? limbColorIndices[index] : index % posePalette.count
+          drawLine(
+            on: layer, from: startPoint, to: endPoint, color: limbColorIndex,
+            lineWidth: lineWidth)
+        }
       }
     }
   }

@@ -63,9 +63,6 @@
                                         <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Focus" translatesAutoresizingMaskIntoConstraints="NO" id="q1Z-jK-UQS">
-                                        <rect key="frame" x="0.0" y="223.66666666666663" width="393" height="405"/>
-                                    </imageView>
                                     <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
                                         <rect key="frame" x="215" y="625" width="159" height="67"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
@@ -80,10 +77,6 @@
                                     <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="ShC-gv-PaQ" secondAttribute="topMargin" constant="-10" id="4VU-KS-qnX"/>
                                     <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="5" id="CsQ-eU-xjO"/>
                                     <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="DEd-UO-Mod"/>
-                                    <constraint firstAttribute="trailing" secondItem="q1Z-jK-UQS" secondAttribute="trailing" id="EpS-OI-uaC"/>
-                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="centerY" secondItem="ShC-gv-PaQ" secondAttribute="centerY" id="RRe-Jj-na9"/>
-                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="leading" secondItem="ShC-gv-PaQ" secondAttribute="leading" id="d57-2L-ne7"/>
-                                    <constraint firstItem="q1Z-jK-UQS" firstAttribute="height" secondItem="ShC-gv-PaQ" secondAttribute="height" multiplier="0.475352" id="oNB-Ef-CH0"/>
                                     <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="onI-er-Sda"/>
                                     <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="zJN-OL-7hd"/>
                                 </constraints>
@@ -102,7 +95,6 @@
                     <connections>
                         <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
                         <outlet property="activityIndicator" destination="lOR-xu-27i" id="RHs-yl-MIU"/>
-                        <outlet property="focus" destination="q1Z-jK-UQS" id="WfE-1w-1z1"/>
                         <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
                         <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
                         <outlet property="labelVersion" destination="OCe-bb-RWv" id="MoL-rU-F2n"/>
@@ -123,7 +115,6 @@
     </scenes>
     <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
     <resources>
-        <image name="Focus" width="414" height="414"/>
         <image name="ultralytics_yolo_logotype.png" width="1406" height="394"/>
         <systemColor name="groupTableViewBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

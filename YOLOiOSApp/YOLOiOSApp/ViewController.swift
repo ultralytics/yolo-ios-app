@@ -132,7 +132,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var labelFPS: UILabel!
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var focus: UIImageView!
   @IBOutlet weak var logoImage: UIImageView!
 
   let selection = UISelectionFeedbackGenerator()
@@ -656,14 +655,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     if view.bounds.width > view.bounds.height {
       // Landscape mode
-      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.2
       modelTableView.frame = CGRect(
         x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
 
     } else {
       // Portrait mode
-      focus.isHidden = true
       let tableViewWidth = view.bounds.width * 0.4
       modelTableView.frame = CGRect(
         x: view.bounds.width - tableViewWidth - 8,

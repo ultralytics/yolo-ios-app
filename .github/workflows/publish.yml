@@ -10,17 +10,17 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: 'Branch to publish'
+        description: "Branch to publish"
         required: true
-        default: 'main'
+        default: "main"
         type: string
       release:
-        description: 'Create new tag and release'
+        description: "Create new tag and release"
         required: true
         type: boolean
         default: false
       testflight:
-        description: 'Publish to TestFlight'
+        description: "Publish to TestFlight"
         required: true
         type: boolean
         default: true
@@ -53,26 +53,26 @@ jobs:
         shell: python
         run: |
           import os, re
-          
+
           # Read MARKETING_VERSION from project.pbxproj
           with open('YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj', 'r') as f:
               content = f.read()
-          
+
           version_match = re.search(r'MARKETING_VERSION = ([^;]+);', content)
           if not version_match:
               raise ValueError("MARKETING_VERSION not found in project.pbxproj")
-          
+
           marketing_version = version_match.group(1).strip()
           current_tag = f'v{marketing_version}'
-          
+
           # Check if tag already exists
           tag_exists = os.system(f'git rev-parse {current_tag} >/dev/null 2>&1') == 0
           new_version = not tag_exists
-          
+
           os.system(f'echo "new_version={str(new_version).lower()}" >> $GITHUB_OUTPUT')
           os.system(f'echo "current_tag={current_tag}" >> $GITHUB_OUTPUT')
           os.system(f'echo "marketing_version={marketing_version}" >> $GITHUB_OUTPUT')
-          
+
           if new_version:
               print(f'New marketing version {current_tag} detected ✅')
           else:
@@ -137,20 +137,20 @@ jobs:
           git config user.name "UltralyticsAssistant"
           git config user.email "web@ultralytics.com"
           git fetch origin
-          
+
           # Create testflight branch from source
           git checkout -B testflight origin/${{ inputs.source_branch || 'main' }}
-          
+
           # Squash all commits into one
           FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
           git reset --soft $FIRST_COMMIT
-          
+
           # Resolve dependencies and add to commit
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
           git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          
+
           # Single commit with version info
           MARKETING_VERSION="${{ needs.check.outputs.marketing_version }}"
           CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "YOLOiOSApp/YOLOiOSApp/Info.plist")

@@ -38,7 +38,7 @@ jobs:
           IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
           DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
           DESTINATION=${DESTINATION:-name=iPhone 14}
-          
+
           xcodebuild \
             -scheme YOLO \
             -sdk iphonesimulator \
@@ -54,7 +54,7 @@ jobs:
 
           # Prioritize XCTest bundle executable for library/framework coverage
           XCTEST_BUNDLE_PATH=$(find Build/Build/Products -path "*Debug-iphonesimulator/*.xctest" -type d | head -1)
-          
+
           if [ -n "$XCTEST_BUNDLE_PATH" ]; then
             TEST_BUNDLE_NAME=$(basename "$XCTEST_BUNDLE_PATH" .xctest)
             CANDIDATE_PATH="$XCTEST_BUNDLE_PATH/$TEST_BUNDLE_NAME"
@@ -80,7 +80,7 @@ jobs:
               fi
             fi
           fi
-          
+
           if [ -n "$BINARY_PATH" ] && [ -f "$BINARY_PATH" ] && [ -n "$PROFDATA_PATH" ] && [ -f "$PROFDATA_PATH" ]; then
             echo "Generating lcov report with Binary: $BINARY_PATH and Profile Data: $PROFDATA_PATH"
             xcrun llvm-cov export \

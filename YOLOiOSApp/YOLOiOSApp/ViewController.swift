@@ -18,170 +18,92 @@ import CoreMedia
 import UIKit
 import YOLO
 
-// Definition of custom table view cell
+// MARK: - Extensions
+extension Result {
+  var isSuccess: Bool { if case .success = self { return true } else { return false } }
+}
+
+// MARK: - ModelTableViewCell
 class ModelTableViewCell: UITableViewCell {
   static let identifier = "ModelTableViewCell"
 
-  private let modelNameLabel: UILabel = {
-    let label = UILabel()
-    label.textAlignment = .center
-    label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-    label.translatesAutoresizingMaskIntoConstraints = false
-    // Configure auto text size adjustment for long content
-    label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.7  // Scale down to 70% minimum
-    label.lineBreakMode = .byClipping  // Clip text instead of using ellipsis
-    return label
-  }()
-
-  private let downloadIconImageView: UIImageView = {
-    let imageView = UIImageView(image: UIImage(systemName: "icloud.and.arrow.down"))
-    imageView.tintColor = .white
-    imageView.contentMode = .scaleAspectFit
-    imageView.translatesAutoresizingMaskIntoConstraints = false
-    imageView.isHidden = true
-    return imageView
-  }()
-
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-    super.init(style: style, reuseIdentifier: reuseIdentifier)
-    setupUI()
-  }
-
-  required init?(coder: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
-  }
-
-  private func setupUI() {
+    super.init(style: .default, reuseIdentifier: reuseIdentifier)
     backgroundColor = .clear
     selectionStyle = .default
-
-    contentView.addSubview(modelNameLabel)
-    contentView.addSubview(downloadIconImageView)
-
-    NSLayoutConstraint.activate([
-      // Center the label
-      modelNameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),  // Add center X alignment
-      modelNameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-      // Set margin from the leading edge
-      modelNameLabel.leadingAnchor.constraint(
-        greaterThanOrEqualTo: contentView.leadingAnchor, constant: 8),
-      // Ensure margin between label and download icon
-      modelNameLabel.trailingAnchor.constraint(
-        lessThanOrEqualTo: downloadIconImageView.leadingAnchor, constant: -4),
-
-      // Position download icon at the trailing edge
-      downloadIconImageView.trailingAnchor.constraint(
-        equalTo: contentView.trailingAnchor, constant: -4),
-      downloadIconImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-      downloadIconImageView.widthAnchor.constraint(equalToConstant: 16),  // Slightly smaller to save space
-      downloadIconImageView.heightAnchor.constraint(equalToConstant: 16),
-    ])
-
-    // Configure the background view for selection state
-    let selectedBGView = UIView()
-    selectedBGView.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-    selectedBGView.layer.cornerRadius = 5  // More gentle corner radius
-    selectedBGView.layer.masksToBounds = true
-    selectedBackgroundView = selectedBGView
+    textLabel?.textAlignment = .center
+    textLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+    textLabel?.adjustsFontSizeToFitWidth = true
+    textLabel?.minimumScaleFactor = 0.7
+    selectedBackgroundView = {
+      let v = UIView()
+      v.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
+      v.layer.cornerRadius = 5
+      return v
+    }()
   }
 
-  // Method to configure the cell
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
   func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
-    modelNameLabel.text = modelName
-
-    // Show download icon only for remote models that are not yet downloaded
-    let showDownloadIcon = isRemote && !isDownloaded
-    downloadIconImageView.isHidden = !showDownloadIcon
-
-    // Adjust text priorities based on icon visibility
-    if showDownloadIcon {
-      // Keep center alignment when icon is visible
-      modelNameLabel.textAlignment = .center
-      // Adjust width to accommodate icon space
-      modelNameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-      // Set priority to ensure center alignment is respected
-      modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    } else {
-      // Keep center alignment when no icon is present
-      modelNameLabel.textAlignment = .center
-      // Expand to full width
-      modelNameLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-      // Prioritize center alignment
-      modelNameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    }
+    textLabel?.text = modelName
+    textLabel?.textColor = (isRemote && !isDownloaded) ? .lightGray : .white
+    imageView?.image =
+      (isRemote && !isDownloaded)
+      ? UIImage(
+        systemName: "icloud.and.arrow.down",
+        withConfiguration: UIImage.SymbolConfiguration(pointSize: 14)) : nil
+    imageView?.tintColor = .white
   }
 
   override func layoutSubviews() {
     super.layoutSubviews()
-
-    // Adjust selection background view size - reduce margins to bring frame closer to table view
-    if let selectedBGView = selectedBackgroundView {
-      selectedBGView.frame = bounds.insetBy(dx: 2, dy: 1)
-    }
+    selectedBackgroundView?.frame = bounds.insetBy(dx: 2, dy: 1)
   }
 }
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
 
-  @IBOutlet weak var yoloView: YOLOView!
-  @IBOutlet var View0: UIView!
-  @IBOutlet var segmentedControl: UISegmentedControl!
-  @IBOutlet weak var labelName: UILabel!
-  @IBOutlet weak var labelFPS: UILabel!
-  @IBOutlet weak var labelVersion: UILabel!
-  @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var focus: UIImageView!
-  @IBOutlet weak var logoImage: UIImageView!
+  @IBOutlet weak var yoloView: YOLOView!, View0: UIView!, segmentedControl: UISegmentedControl!,
+    labelName: UILabel!, labelFPS: UILabel!, labelVersion: UILabel!,
+    activityIndicator: UIActivityIndicatorView!, logoImage: UIImageView!
 
   let selection = UISelectionFeedbackGenerator()
-  var firstLoad = true
 
-  private let downloadProgressView: UIProgressView = {
-    let pv = UIProgressView(progressViewStyle: .default)
-    pv.progress = 0.0
-    pv.isHidden = true
-    return pv
-  }()
-
-  private let downloadProgressLabel: UILabel = {
-    let label = UILabel()
-    label.text = ""
-    label.textAlignment = .center
-    label.textColor = .systemGray
-    label.font = UIFont.systemFont(ofSize: 14)
-    label.isHidden = true
-    return label
-  }()
+  private let downloadProgressView = UIProgressView(progressViewStyle: .default)
+  private let downloadProgressLabel = UILabel()
 
   private var loadingOverlayView: UIView?
 
-  func showLoadingOverlay() {
-    guard loadingOverlayView == nil else { return }
-    let overlay = UIView(frame: view.bounds)
-    overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-
-    view.addSubview(overlay)
-    loadingOverlayView = overlay
-    view.bringSubviewToFront(downloadProgressView)
-    view.bringSubviewToFront(downloadProgressLabel)
-
-    view.isUserInteractionEnabled = false
+  // MARK: - Loading State Management
+  private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
+    loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
+    [view, modelTableView].forEach { $0.isUserInteractionEnabled = !loading }
+    if showOverlay && loading { updateLoadingOverlay(true) }
+    if !loading { updateLoadingOverlay(false) }
   }
 
-  func hideLoadingOverlay() {
-    loadingOverlayView?.removeFromSuperview()
-    loadingOverlayView = nil
-    view.isUserInteractionEnabled = true
+  private func updateLoadingOverlay(_ show: Bool) {
+    if show && loadingOverlayView == nil {
+      let overlay = UIView(frame: view.bounds)
+      overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+      view.addSubview(overlay)
+      loadingOverlayView = overlay
+      view.bringSubviewToFront(downloadProgressView)
+      view.bringSubviewToFront(downloadProgressLabel)
+    } else if !show {
+      loadingOverlayView?.removeFromSuperview()
+      loadingOverlayView = nil
+    }
   }
 
-  private let tasks: [(name: String, folder: String)] = [
-    ("Classify", "ClassifyModels"),  // index 0
-    ("Segment", "SegmentModels"),  // index 1
-    ("Detect", "DetectModels"),  // index 2
-    ("Pose", "PoseModels"),  // index 3
-    ("OBB", "OBBModels"),  // index 4
+  private let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
+    ("Classify", "ClassifyModels", .classify),
+    ("Segment", "SegmentModels", .segment),
+    ("Detect", "DetectModels", .detect),
+    ("Pose", "PoseModels", .pose),
+    ("OBB", "OBBModels", .obb),
   ]
 
   private var modelsForTask: [String: [String]] = [:]
@@ -192,6 +114,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private var currentModelName: String = ""
 
   private var isLoadingModel = false
+
+  // MARK: - Constants
+  private struct Constants {
+    static let defaultTaskIndex = 2  // Detect
+    static let tableRowHeight: CGFloat = 30
+    static let logoURL = "https://www.ultralytics.com"
+    static let progressViewWidth: CGFloat = 200
+  }
 
   private let modelTableView: UITableView = {
     let table = UITableView()
@@ -208,419 +138,222 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    setupTaskSegmentedControl()
-    loadModelsForAllTasks()
+    // Setup segmented control and load models
+    segmentedControl.removeAllSegments()
+    tasks.enumerated().forEach { index, task in
+      segmentedControl.insertSegment(withTitle: task.name, at: index, animated: false)
+      modelsForTask[task.name] = getModelFiles(in: task.folder)
+    }
 
-    if tasks.indices.contains(2) {
-      segmentedControl.selectedSegmentIndex = 2
-      currentTask = tasks[2].name
+    if tasks.indices.contains(Constants.defaultTaskIndex) {
+      segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
+      currentTask = tasks[Constants.defaultTaskIndex].name
       reloadModelEntriesAndLoadFirst(for: currentTask)
     }
 
     setupTableView()
 
-    // Setup logo tap gesture
+    // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
-
-    // Setup share button
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
-
     yoloView.delegate = self
-    yoloView.labelName.isHidden = true
-    yoloView.labelFPS.isHidden = true
+    [yoloView.labelName, yoloView.labelFPS].forEach { $0?.isHidden = true }
 
-    // Force label text color to white
-    labelName.textColor = .white
-    labelFPS.textColor = .white
-    labelVersion.textColor = .white
-
-    // Set app version
+    // Setup labels and version
+    [labelName, labelFPS, labelVersion].forEach {
+      $0?.textColor = .white
+      $0?.overrideUserInterfaceStyle = .dark
+    }
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
     {
       labelVersion.text = "v\(version) (\(build))"
     }
 
-    labelName.overrideUserInterfaceStyle = .dark
-    labelFPS.overrideUserInterfaceStyle = .dark
-    labelVersion.overrideUserInterfaceStyle = .dark
-
-    downloadProgressView.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(downloadProgressView)
-
-    downloadProgressLabel.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(downloadProgressLabel)
+    // Setup progress views
+    [downloadProgressView, downloadProgressLabel].forEach {
+      $0.isHidden = true
+      $0.translatesAutoresizingMaskIntoConstraints = false
+      view.addSubview($0)
+    }
+    downloadProgressLabel.textAlignment = .center
+    downloadProgressLabel.textColor = .systemGray
+    downloadProgressLabel.font = .systemFont(ofSize: 14)
 
     NSLayoutConstraint.activate([
       downloadProgressView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       downloadProgressView.topAnchor.constraint(
         equalTo: activityIndicator.bottomAnchor, constant: 8),
-      downloadProgressView.widthAnchor.constraint(equalToConstant: 200),
+      downloadProgressView.widthAnchor.constraint(equalToConstant: Constants.progressViewWidth),
       downloadProgressView.heightAnchor.constraint(equalToConstant: 2),
-
       downloadProgressLabel.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
       downloadProgressLabel.topAnchor.constraint(
         equalTo: downloadProgressView.bottomAnchor, constant: 8),
     ])
-
-    // Progress handler will be set when downloading
   }
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-
-    // Force text color to white whenever the screen appears
-    enforceWhiteTextColor()
-
-    // Override system appearance mode setting to ensure consistent styling
     view.overrideUserInterfaceStyle = .dark
   }
 
-  // Called when trait collection changes (dark mode/light mode)
-  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-    super.traitCollectionDidChange(previousTraitCollection)
-
-    // Maintain white text color even when appearance mode changes
-    enforceWhiteTextColor()
-  }
-
-  // Common method to set label text color to white
-  private func enforceWhiteTextColor() {
-    labelName.textColor = .white
-    labelFPS.textColor = .white
-    labelVersion.textColor = .white
-  }
-
-  private func setupTaskSegmentedControl() {
-    segmentedControl.removeAllSegments()
-    for (index, taskInfo) in tasks.enumerated() {
-      segmentedControl.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
-    }
-  }
-
-  private func loadModelsForAllTasks() {
-    for taskInfo in tasks {
-      let taskName = taskInfo.name
-      let folderName = taskInfo.folder
-      let modelFiles = getModelFiles(in: folderName)
-      modelsForTask[taskName] = modelFiles
-    }
-  }
-
   private func getModelFiles(in folderName: String) -> [String] {
-    guard let folderURL = Bundle.main.url(forResource: folderName, withExtension: nil) else {
-      return []
-    }
-    do {
-      let fileURLs = try FileManager.default.contentsOfDirectory(
-        at: folderURL,
-        includingPropertiesForKeys: nil,
-        options: [.skipsHiddenFiles]
+    guard let folderURL = Bundle.main.url(forResource: folderName, withExtension: nil),
+      let fileURLs = try? FileManager.default.contentsOfDirectory(
+        at: folderURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]
       )
-      let modelFiles =
-        fileURLs
-        .filter { $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage" }
-        .map { $0.lastPathComponent }
+    else { return [] }
 
-      if folderName == "DetectModels" {
-        return reorderDetectionModels(modelFiles)
-      } else {
-        return modelFiles.sorted()
-      }
+    let modelFiles =
+      fileURLs
+      .filter { ["mlmodel", "mlpackage"].contains($0.pathExtension) }
+      .map { $0.lastPathComponent }
 
-    } catch {
-      print("Error reading contents of folder \(folderName): \(error)")
-      return []
-    }
+    return folderName == "DetectModels" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
   }
 
   private func reorderDetectionModels(_ fileNames: [String]) -> [String] {
-    let officialOrder: [Character: Int] = ["n": 0, "m": 1, "s": 2, "l": 3, "x": 4]
-
-    var customModels: [String] = []
-    var officialModels: [String] = []
-
-    for fileName in fileNames {
-      let baseName = (fileName as NSString).deletingPathExtension.lowercased()
-
-      if baseName.hasPrefix("yolo"),
-        let lastChar = baseName.last,
-        officialOrder.keys.contains(lastChar)
-      {
-        officialModels.append(fileName)
-      } else {
-        customModels.append(fileName)
-      }
+    let order: [Character: Int] = ["n": 0, "m": 1, "s": 2, "l": 3, "x": 4]
+    let (official, custom) = fileNames.reduce(into: ([String](), [String]())) { result, name in
+      let base = (name as NSString).deletingPathExtension.lowercased()
+      base.hasPrefix("yolo") && order[base.last ?? "z"] != nil
+        ? result.0.append(name) : result.1.append(name)
     }
-
-    customModels.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-
-    officialModels.sort { fileA, fileB in
-      let baseA = (fileA as NSString).deletingPathExtension.lowercased()
-      let baseB = (fileB as NSString).deletingPathExtension.lowercased()
-      guard let lastA = baseA.last, let lastB = baseB.last,
-        let indexA = officialOrder[lastA], let indexB = officialOrder[lastB]
-      else {
-        return baseA < baseB
+    return custom.sorted()
+      + official.sorted {
+        order[($0 as NSString).deletingPathExtension.lowercased().last ?? "z"] ?? 99 < order[
+          ($1 as NSString).deletingPathExtension.lowercased().last ?? "z"] ?? 99
       }
-      return indexA < indexB
-    }
-
-    return customModels + officialModels
   }
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
+    modelTableView.isHidden = currentModels.isEmpty
+    modelTableView.reloadData()
 
     if !currentModels.isEmpty {
-      modelTableView.isHidden = false
-      modelTableView.reloadData()
-
       DispatchQueue.main.async {
         let firstIndex = IndexPath(row: 0, section: 0)
         self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
         self.selectedIndexPath = firstIndex
-        let firstModel = self.currentModels[0]
-        self.loadModel(entry: firstModel, forTask: taskName)
+        self.loadModel(entry: self.currentModels[0], forTask: taskName)
       }
-    } else {
-      print("No models found for task: \(taskName)")
-      modelTableView.isHidden = true
     }
   }
 
   private func makeModelEntries(for taskName: String) -> [(name: String, url: URL?, isLocal: Bool)]
   {
-    let localFileNames = modelsForTask[taskName] ?? []
-    let localModels = localFileNames.map { fileName in
-      let displayName = (fileName as NSString).deletingPathExtension
-      return (name: displayName, url: nil as URL?, isLocal: true)
+    let localModels = (modelsForTask[taskName] ?? []).map {
+      (name: ($0 as NSString).deletingPathExtension, url: nil as URL?, isLocal: true)
     }
-
-    // Get local model names for filtering
     let localModelNames = Set(localModels.map { $0.name.lowercased() })
-
-    let remoteList = remoteModelsInfo[taskName] ?? []
-    let remoteModels = remoteList.compactMap {
-      (modelName, url) -> (name: String, url: URL?, isLocal: Bool)? in
-      // Only include remote models if no local model with the same name exists
-      guard !localModelNames.contains(modelName.lowercased()) else { return nil }
-      return (name: modelName, url: url, isLocal: false)
+    let remoteModels = (remoteModelsInfo[taskName] ?? []).compactMap { modelName, url in
+      localModelNames.contains(modelName.lowercased())
+        ? nil : (name: modelName, url: url, isLocal: false)
     }
-
     return localModels + remoteModels
   }
 
   private func loadModel(entry: (name: String, url: URL?, isLocal: Bool), forTask task: String) {
-    guard !isLoadingModel else {
-      print("Model is already loading. Please wait.")
-      return
-    }
+    guard !isLoadingModel else { return }
     isLoadingModel = true
     yoloView.resetLayers()
-    if !firstLoad {
-      showLoadingOverlay()
-      yoloView.setInferenceFlag(ok: false)
-    } else {
-      firstLoad = false
+    yoloView.setInferenceFlag(ok: false)
+    setLoadingState(true, showOverlay: true)
+    resetDownloadProgress()
+
+    let yoloTask = tasks.first(where: { $0.name == task })?.yoloTask ?? .detect
+    let loadWithPath = { [weak self] (path: String) in
+      self?.downloadProgressLabel.text = "Loading \(entry.name)"
+      self?.downloadProgressLabel.isHidden = false
+      self?.yoloView.setModel(modelPathOrName: path, task: yoloTask) { result in
+        self?.finishLoadingModel(success: result.isSuccess, modelName: entry.name)
+      }
     }
 
-    self.activityIndicator.startAnimating()
-    self.downloadProgressView.progress = 0.0
-    self.downloadProgressView.isHidden = true
-    self.downloadProgressLabel.isHidden = true
-    self.view.isUserInteractionEnabled = false
-    self.modelTableView.isUserInteractionEnabled = false
-
-    print("Start loading model: \(entry.name)")
-
     if entry.isLocal {
-      DispatchQueue.global().async { [weak self] in
-        guard let self = self else { return }
-        let yoloTask = self.convertTaskNameToYOLOTask(task)
-
-        guard let folderURL = self.tasks.first(where: { $0.name == task })?.folder,
-          let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-        else {
-          DispatchQueue.main.async {
-            self.finishLoadingModel(success: false, modelName: entry.name)
-          }
-          return
-        }
-
-        let fileName = entry.name + ".mlpackage"
-        let modelURL = folderPathURL.appendingPathComponent(fileName)
-        DispatchQueue.main.async {
-          self.downloadProgressLabel.isHidden = false
-          self.downloadProgressLabel.text = "Loading \(entry.name)"
-          self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
-            switch result {
-            case .success():
-              self.finishLoadingModel(success: true, modelName: entry.name)
-            case .failure(let error):
-              print(error)
-              self.finishLoadingModel(success: false, modelName: entry.name)
-            }
-          }
-        }
+      guard let folderPath = tasks.first(where: { $0.name == task })?.folder,
+        let url = Bundle.main.url(forResource: folderPath, withExtension: nil)
+      else {
+        return finishLoadingModel(success: false, modelName: entry.name)
       }
+      loadWithPath(url.appendingPathComponent(entry.name + ".mlpackage").path)
     } else if let remoteURL = entry.url {
-      let yoloTask = self.convertTaskNameToYOLOTask(task)
-
-      // Use YOLOModelDownloader from the package
-      let downloader = YOLOModelDownloader()
-
-      self.downloadProgressView.progress = 0.0
-      self.downloadProgressView.isHidden = false
-      self.downloadProgressLabel.isHidden = false
-
-      downloader.download(
-        from: remoteURL,
-        task: yoloTask,
+      [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = false }
+      YOLOModelDownloader().download(
+        from: remoteURL, task: yoloTask,
         progress: { [weak self] progress in
-          guard let self = self else { return }
           DispatchQueue.main.async {
-            self.downloadProgressView.progress = Float(progress)
-            self.downloadProgressLabel.isHidden = false
-            let percentage = Int(progress * 100)
-            self.downloadProgressLabel.text = "Downloading \(percentage)%"
+            self?.downloadProgressView.progress = Float(progress)
+            self?.downloadProgressLabel.text = "Downloading \(Int(progress * 100))%"
           }
         },
         completion: { [weak self] result in
-          guard let self = self else { return }
           switch result {
-          case .success(let modelPath):
-            DispatchQueue.main.async {
-              self.downloadProgressLabel.text = "Loading \(entry.name)"
-              self.yoloView.setModel(modelPathOrName: modelPath.path, task: yoloTask) { result in
-                switch result {
-                case .success():
-                  self.finishLoadingModel(success: true, modelName: entry.name)
-                case .failure(let error):
-                  print(error)
-                  self.finishLoadingModel(success: false, modelName: entry.name)
-                }
-              }
-            }
-          case .failure(let error):
-            print("Download failed: \(error)")
-            self.finishLoadingModel(success: false, modelName: entry.name)
+          case .success(let path): DispatchQueue.main.async { loadWithPath(path.path) }
+          case .failure: self?.finishLoadingModel(success: false, modelName: entry.name)
           }
-        }
-      )
+        })
     } else {
-      self.finishLoadingModel(success: false, modelName: entry.name)
+      finishLoadingModel(success: false, modelName: entry.name)
     }
   }
 
-  // This function is no longer needed as YOLOModelDownloader handles caching
+  private func resetDownloadProgress() {
+    downloadProgressView.progress = 0.0
+    [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
+  }
 
   private func finishLoadingModel(success: Bool, modelName: String) {
     DispatchQueue.main.async {
-      self.activityIndicator.stopAnimating()
-      self.downloadProgressView.isHidden = true
-
-      self.downloadProgressLabel.isHidden = true
-      //            self.downloadProgressLabel.isHidden = false
-      //            self.downloadProgressLabel.text = "Loading \(modelName)"
-
-      self.view.isUserInteractionEnabled = true
-      self.modelTableView.isUserInteractionEnabled = true
+      self.setLoadingState(false)
       self.isLoadingModel = false
+      self.resetDownloadProgress()
 
       self.modelTableView.reloadData()
-
       if let ip = self.selectedIndexPath {
         self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
       }
-      if !self.firstLoad {
-        self.hideLoadingOverlay()
-      }
-      self.yoloView.setInferenceFlag(ok: true)
+
+      self.yoloView.setInferenceFlag(ok: success)
 
       if success {
-        print("Finished loading model: \(modelName)")
         self.currentModelName = modelName
-        DispatchQueue.main.async {
-          self.labelName.text = processString(modelName)
-          // Force text color to white
-          self.labelName.textColor = .white
-        }
-
-        self.downloadProgressLabel.text = "Finished loading model \(modelName)"
-        self.downloadProgressLabel.isHidden = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-          self.downloadProgressLabel.isHidden = true
-          self.downloadProgressLabel.text = ""
-        }
-
-      } else {
-        print("Failed to load model: \(modelName)")
+        self.labelName.text = processString(modelName)
       }
     }
   }
 
-  private func convertTaskNameToYOLOTask(_ task: String) -> YOLOTask {
-    switch task {
-    case "Detect": return .detect
-    case "Segment": return .segment
-    case "Classify": return .classify
-    case "Pose": return .pose
-    case "OBB": return .obb
-    default: return .detect
-    }
-  }
-
-  @IBAction func vibrate(_ sender: Any) {
-    selection.selectionChanged()
-  }
+  @IBAction func vibrate(_ sender: Any) { selection.selectionChanged() }
 
   @IBAction func indexChanged(_ sender: UISegmentedControl) {
     selection.selectionChanged()
+    guard tasks.indices.contains(sender.selectedSegmentIndex) else { return }
 
-    let index = sender.selectedSegmentIndex
-    guard tasks.indices.contains(index) else { return }
-
-    let newTask = tasks[index].name
+    let newTask = tasks[sender.selectedSegmentIndex].name
 
     if (modelsForTask[newTask]?.isEmpty ?? true) && (remoteModelsInfo[newTask]?.isEmpty ?? true) {
       let alert = UIAlertController(
         title: "\(newTask) Models not found",
-        message: "Please add or define models for \(newTask).",
-        preferredStyle: .alert
-      )
+        message: "Please add or define models for \(newTask).", preferredStyle: .alert)
       alert.addAction(
-        UIAlertAction(
-          title: "OK", style: .cancel,
-          handler: { _ in
-            alert.dismiss(animated: true)
-          }))
-      self.present(alert, animated: true)
-
-      if let oldIndex = tasks.firstIndex(where: { $0.name == currentTask }) {
-        sender.selectedSegmentIndex = oldIndex
-      }
+        UIAlertAction(title: "OK", style: .cancel) { _ in alert.dismiss(animated: true) })
+      present(alert, animated: true)
+      sender.selectedSegmentIndex = tasks.firstIndex { $0.name == currentTask } ?? 0
       return
     }
 
     currentTask = newTask
     selectedIndexPath = nil
-
     reloadModelEntriesAndLoadFirst(for: currentTask)
-
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
-    )
+    updateTableViewBGFrame()
   }
 
   @objc func logoButton() {
     selection.selectionChanged()
-    if let link = URL(string: "https://www.ultralytics.com") {
+    if let link = URL(string: Constants.logoURL) {
       UIApplication.shared.open(link)
     }
   }
@@ -630,70 +363,51 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelTableView.dataSource = self
     modelTableView.register(
       ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
-
     modelTableView.backgroundColor = .clear
     modelTableView.separatorStyle = .none
     modelTableView.isScrollEnabled = false
-
-    tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
-    tableViewBGView.layer.cornerRadius = 5  // 選択時の枠のcorner radiusに合わせる
-    tableViewBGView.clipsToBounds = true
-
-    yoloView.addSubview(tableViewBGView)
-    yoloView.addSubview(modelTableView)
-
     modelTableView.translatesAutoresizingMaskIntoConstraints = false
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
-    )
+    tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
+    tableViewBGView.layer.cornerRadius = 5
+    tableViewBGView.clipsToBounds = true
+    [tableViewBGView, modelTableView].forEach { yoloView.addSubview($0) }
+    updateTableViewBGFrame()
   }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    if view.bounds.width > view.bounds.height {
-      // Landscape mode
-      focus.isHidden = true
-      let tableViewWidth = view.bounds.width * 0.2
-      modelTableView.frame = CGRect(
-        x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+    // Layout model table view
+    let isLandscape = view.bounds.width > view.bounds.height
+    let tableViewWidth = view.bounds.width * (isLandscape ? 0.2 : 0.4)
 
-    } else {
-      // Portrait mode
-      focus.isHidden = true
-      let tableViewWidth = view.bounds.width * 0.4
-      modelTableView.frame = CGRect(
-        x: view.bounds.width - tableViewWidth - 8,
-        y: segmentedControl.frame.maxY + 25,
-        width: tableViewWidth,
-        height: 200)
-    }
+    modelTableView.frame =
+      isLandscape
+      ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+      : CGRect(
+        x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25,
+        width: tableViewWidth, height: 200)
 
+    updateTableViewBGFrame()
+  }
+
+  private func updateTableViewBGFrame() {
     tableViewBGView.frame = CGRect(
       x: modelTableView.frame.minX - 1,
       y: modelTableView.frame.minY - 1,
       width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * 30 + 2)
+      height: CGFloat(currentModels.count * Int(Constants.tableRowHeight) + 2)
     )
   }
 
   @objc func shareButtonTapped() {
     selection.selectionChanged()
-    yoloView.capturePhoto { [weak self] captured in
-      guard let self = self else { return }
-      if let image = captured {
-        DispatchQueue.main.async {
-          let activityViewController = UIActivityViewController(
-            activityItems: [image], applicationActivities: nil
-          )
-          activityViewController.popoverPresentationController?.sourceView = self.View0
-          self.present(activityViewController, animated: true, completion: nil)
-        }
-      } else {
-        print("error capturing photo")
+    yoloView.capturePhoto { [weak self] image in
+      guard let self = self, let image = image else { return print("error capturing photo") }
+      DispatchQueue.main.async {
+        let vc = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        vc.popoverPresentationController?.sourceView = self.View0
+        self.present(vc, animated: true)
       }
     }
   }
@@ -704,32 +418,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
 extension ViewController: UITableViewDataSource, UITableViewDelegate {
 
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return currentModels.count
+    currentModels.count
   }
 
   func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-    return 30
+    Constants.tableRowHeight
   }
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    // Get custom cell
     let cell =
       tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath)
       as! ModelTableViewCell
     let entry = currentModels[indexPath.row]
-
-    // Check if the model is remote and not yet downloaded
-    let yoloTask = self.convertTaskNameToYOLOTask(currentTask)
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
     let isDownloaded =
       entry.isLocal
       || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))
-
-    // Format model name using the processString function
-    let formattedName = processString(entry.name)
-
-    // Configure the cell
-    cell.configure(with: formattedName, isRemote: !entry.isLocal, isDownloaded: isDownloaded)
-
+    cell.configure(
+      with: processString(entry.name), isRemote: !entry.isLocal, isDownloaded: isDownloaded)
     return cell
   }
 
@@ -742,8 +448,6 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
     loadModel(entry: selectedEntry, forTask: currentTask)
   }
 
-  // This method is no longer needed as we adjust cell background layout in layoutSubviews
-
 }
 
 // MARK: - YOLOViewDelegate
@@ -754,7 +458,5 @@ extension ViewController {
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-    DispatchQueue.main.async {
-    }
   }
 }

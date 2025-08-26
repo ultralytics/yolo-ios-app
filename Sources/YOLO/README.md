@@ -296,9 +296,6 @@ YOLOCamera(
     cameraPosition: .back
 )
 .onAppear {
-    // Access the underlying view if needed for threshold configuration
-    // Note: Direct threshold configuration for YOLOCamera may require
-    // additional implementation or accessing the underlying YOLOView
 }
 ```
 

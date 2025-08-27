@@ -65,6 +65,11 @@ class ModelTableViewCell: UITableViewCell {
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
 
+  // MARK: - External Display Support (Optional)
+  // NOTE: The following orientation overrides are part of the OPTIONAL external display feature.
+  // They can be safely removed if external display support is not needed.
+  // See ExternalDisplay/ directory for implementation details.
+  
   // Override supported orientations based on external display connection
   override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
     // Use SceneDelegate's state to determine orientation support
@@ -91,7 +96,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   let selection = UISelectionFeedbackGenerator()
 
-  // Store current loading entry for external display notification
+  // Store current loading entry for external display notification (Optional feature)
   var currentLoadingEntry: ModelEntry?
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
@@ -164,6 +169,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Debug: Check model folders
     debugCheckModelFolders()
 
+    // MARK: External Display Setup (Optional)
+    // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
+    // This code enhances the app for external monitor/TV connections but can be safely removed.
+    // See ExternalDisplay/ directory and README for more information.
+    
     // Setup external display notifications
     setupExternalDisplayNotifications()
 
@@ -475,7 +485,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       self.modelTableView.reloadData()
 
-      // Notify external display of model change
+      // Notify external display of model change (Optional feature - can be safely removed)
       if success {
         // Update currentModelName
         self.currentModelName = processString(modelName)
@@ -562,7 +572,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     currentTask = newTask
     selectedIndexPath = nil
 
-    // Notify external display of task change immediately
+    // Notify external display of task change immediately (Optional external display feature)
     NotificationCenter.default.post(
       name: .taskDidChange,
       object: nil,
@@ -635,7 +645,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   @objc func sliderValueChanged(_ sender: UISlider) {
-    // Send threshold values to external display
+    // Send threshold values to external display (Optional external display feature)
     let conf = Double(round(100 * yoloView.sliderConf.value)) / 100
     let iou = Double(round(100 * yoloView.sliderIoU.value)) / 100
     let maxItems = Int(yoloView.sliderNumItems.value)
@@ -736,10 +746,10 @@ extension ViewController {
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
     DispatchQueue.main.async {
-      // Share results with external display
+      // Share results with external display (Optional external display feature)
       ExternalDisplayManager.shared.shareResults(result)
 
-      // Also send via notification for direct communication
+      // Also send via notification for direct communication (Optional external display feature)
       NotificationCenter.default.post(
         name: .yoloResultsAvailable,
         object: nil,

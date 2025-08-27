@@ -106,6 +106,30 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
 - **Multiple AI Models:** Choose from a range of preloaded Ultralytics YOLO11 models, from the lightweight YOLO11n ('nano') optimized for edge devices to the powerful YOLO11x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://docs.ultralytics.com/hub/quickstart/) trained on your own data after exporting them to the CoreML format.
 
+### 📺 External Display Support (Optional)
+
+The app includes **optional** external display optimizations that enhance the user experience when connected to an external monitor or TV via AirPlay or wired connection. **This feature is NOT required for the core functionality or development of the app** - it's an additional enhancement for specific use cases.
+
+**Note for Developers:** The external display code is contained in the `ExternalDisplay/` directory and can be safely ignored or removed if you don't need this functionality. The app will work perfectly without it.
+
+#### External Display Features:
+- **Automatic Display Detection:** The app detects when an external display is connected and automatically adjusts the interface
+- **Optimized Layout:** When connected to an external display, the camera feed is shown on the external screen while controls remain on the device
+- **Orientation Management:** Automatically switches to landscape mode for better viewing on external displays
+- **Seamless Handoff:** Camera control automatically transfers between the device and external display
+
+#### Files Related to External Display (Optional):
+```
+YOLOiOSApp/ExternalDisplay/
+├── ExternalDisplayManager.swift       # Manages external display connections
+├── ExternalSceneDelegate.swift        # Handles external display scene lifecycle
+├── ExternalViewController.swift       # Controls external display content
+├── NotificationExtensions.swift       # Notification helpers for display events
+└── ViewController+ExternalDisplay.swift # ViewController extensions for display support
+```
+
+**Important:** If you're forking or modifying this app for your own use, you can completely ignore or remove the ExternalDisplay directory without affecting the core YOLO inference capabilities.
+
 ## 🧪 Testing
 
 The YOLO iOS App includes a suite of unit and integration tests to ensure functionality and reliability.

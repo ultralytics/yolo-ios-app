@@ -186,7 +186,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
       currentTask = tasks[Constants.defaultTaskIndex].name
-      
+
       // Load models and auto-select first one if no external display
       if UIScreen.screens.count == 1 {
         // No external display - load model and start inference

@@ -110,7 +110,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 The app includes **optional** external display optimizations that enhance the user experience when connected to an external monitor or TV via AirPlay or wired connection. **This feature is NOT required for the core functionality or development of the app** - it's an additional enhancement for specific use cases.
 
-**Note for Developers:** The external display code is contained in the `ExternalDisplay/` directory and can be safely ignored or removed if you don't need this functionality. The app will work perfectly without it.
+**Note for Developers:** The external display code is contained in the `ExternalDisplay/` directory and can be safely ignored if you don't need this functionality. The feature remains dormant until an external display is connected.
 
 #### External Display Features:
 
@@ -130,7 +130,7 @@ YOLOiOSApp/ExternalDisplay/
 └── ViewController+ExternalDisplay.swift # ViewController extensions for display support
 ```
 
-**Important:** If you're forking or modifying this app for your own use, you can completely ignore or remove the ExternalDisplay directory without affecting the core YOLO inference capabilities.
+**Important:** If you're forking or modifying this app for your own use, you can completely ignore the ExternalDisplay directory. The external display features will remain inactive unless a display is connected.
 
 ## 🧪 Testing
 

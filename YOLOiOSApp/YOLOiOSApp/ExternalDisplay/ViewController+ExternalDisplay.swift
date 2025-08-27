@@ -3,8 +3,8 @@
 // MARK: - OPTIONAL External Display Support
 // This extension provides optional external display functionality for the YOLO iOS app.
 // It enhances the user experience when connected to an external monitor or TV but is
-// NOT required for the core app functionality. This entire file and the ExternalDisplay
-// directory can be safely removed if external display support is not needed.
+// NOT required for the core app functionality. The features remain dormant until 
+// an external display is connected.
 
 import UIKit
 import YOLO

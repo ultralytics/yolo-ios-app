@@ -67,7 +67,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - External Display Support (Optional)
   // NOTE: The following orientation overrides are part of the OPTIONAL external display feature.
-  // They can be safely removed if external display support is not needed.
+  // These features remain dormant until an external display is connected.
   // See ExternalDisplay/ directory for implementation details.
 
   // Override supported orientations based on external display connection
@@ -171,7 +171,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // MARK: External Display Setup (Optional)
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
-    // This code enhances the app for external monitor/TV connections but can be safely removed.
+    // This code enhances the app for external monitor/TV connections and remains dormant when not in use.
     // See ExternalDisplay/ directory and README for more information.
 
     // Setup external display notifications
@@ -516,7 +516,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       self.modelTableView.reloadData()
 
-      // Notify external display of model change (Optional feature - can be safely removed)
+      // Notify external display of model change (Optional feature)
       if success {
         // Update currentModelName
         self.currentModelName = processString(modelName)

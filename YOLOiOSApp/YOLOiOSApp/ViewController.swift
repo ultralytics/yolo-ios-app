@@ -69,7 +69,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // NOTE: The following orientation overrides are part of the OPTIONAL external display feature.
   // They can be safely removed if external display support is not needed.
   // See ExternalDisplay/ directory for implementation details.
-  
+
   // Override supported orientations based on external display connection
   override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
     // Use SceneDelegate's state to determine orientation support
@@ -173,7 +173,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
     // This code enhances the app for external monitor/TV connections but can be safely removed.
     // See ExternalDisplay/ directory and README for more information.
-    
+
     // Setup external display notifications
     setupExternalDisplayNotifications()
 

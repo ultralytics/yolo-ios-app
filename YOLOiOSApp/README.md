@@ -113,12 +113,14 @@ The app includes **optional** external display optimizations that enhance the us
 **Note for Developers:** The external display code is contained in the `ExternalDisplay/` directory and can be safely ignored or removed if you don't need this functionality. The app will work perfectly without it.
 
 #### External Display Features:
+
 - **Automatic Display Detection:** The app detects when an external display is connected and automatically adjusts the interface
 - **Optimized Layout:** When connected to an external display, the camera feed is shown on the external screen while controls remain on the device
 - **Orientation Management:** Automatically switches to landscape mode for better viewing on external displays
 - **Seamless Handoff:** Camera control automatically transfers between the device and external display
 
 #### Files Related to External Display (Optional):
+
 ```
 YOLOiOSApp/ExternalDisplay/
 ├── ExternalDisplayManager.swift       # Manages external display connections

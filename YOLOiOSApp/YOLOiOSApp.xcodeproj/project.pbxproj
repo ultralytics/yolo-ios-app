@@ -46,10 +46,10 @@
 		734B44452D42F7CF00D2CA6A /* OBBModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OBBModels; sourceTree = "<group>"; };
 		734B44462D42F7CF00D2CA6A /* PoseModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PoseModels; sourceTree = "<group>"; };
 		734B44472D42F7CF00D2CA6A /* SegmentModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SegmentModels; sourceTree = "<group>"; };
-		737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDisplayManager.swift; sourceTree = "<group>"; };
-		737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSceneDelegate.swift; sourceTree = "<group>"; };
-		737AB29B2E3E6418003FA92B /* ExternalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalViewController.swift; sourceTree = "<group>"; };
-		737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationExtensions.swift; sourceTree = "<group>"; };
+		737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalDisplayManager.swift"; sourceTree = "<group>"; };
+		737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalSceneDelegate.swift"; sourceTree = "<group>"; };
+		737AB29B2E3E6418003FA92B /* ExternalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalViewController.swift"; sourceTree = "<group>"; };
+		737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationExtensions.swift"; sourceTree = "<group>"; };
 		737AB29D2E3E6418003FA92B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
 		73D95D1A2D45DB800050E640 /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
@@ -72,14 +72,10 @@
 		636EFC9B21E62DD300DE43BC /* YOLOiOSApp */ = {
 			isa = PBXGroup;
 			children = (
-				737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */,
-				737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */,
-				737AB29B2E3E6418003FA92B /* ExternalViewController.swift */,
-				737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */,
+				73EF45A02E3E6418003FA92B /* ExternalDisplay */,
 				737AB29D2E3E6418003FA92B /* SceneDelegate.swift */,
 				636EFCA721E62DD300DE43BC /* AppDelegate.swift */,
 				636EFC9C21E62DD300DE43BC /* ViewController.swift */,
-				636EFC9D21E62DD300DE43BC /* ViewController+ExternalDisplay.swift */,
 				73D95D152D45DA510050E640 /* ModelDownloadManager.swift */,
 				73D95D1A2D45DB800050E640 /* RemoteModels.swift */,
 				6323C44D22186177008AE681 /* LaunchScreen.storyboard */,
@@ -90,6 +86,18 @@
 				6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */,
 			);
 			path = YOLOiOSApp;
+			sourceTree = "<group>";
+		};
+		73EF45A02E3E6418003FA92B /* ExternalDisplay */ = {
+			isa = PBXGroup;
+			children = (
+				737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */,
+				737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */,
+				737AB29B2E3E6418003FA92B /* ExternalViewController.swift */,
+				737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */,
+				636EFC9D21E62DD300DE43BC /* ViewController+ExternalDisplay.swift */,
+			);
+			path = ExternalDisplay;
 			sourceTree = "<group>";
 		};
 		7BCB410E21C3096100BFC4D0 = {

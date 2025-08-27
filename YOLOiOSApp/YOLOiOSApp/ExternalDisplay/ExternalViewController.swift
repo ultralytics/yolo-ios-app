@@ -272,8 +272,25 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       }
     }
 
-    yoloView?.setModel(modelPathOrName: modelName, task: task) { [weak self] result in
-      guard case .success = result else { return }
+    // Determine the actual model path to use
+    var actualModelPath = modelName
+    
+    // Check if this is a full path (local bundle model) or just an identifier (downloaded model)
+    if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage") && !modelName.contains(".mlmodel") {
+      // This is a downloaded model identifier, construct the full path
+      let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      let localModelURL = documentsDirectory.appendingPathComponent(modelName).appendingPathExtension("mlmodelc")
+      actualModelPath = localModelURL.path
+      print("📱 External display loading cached model from: \(actualModelPath)")
+    } else {
+      print("📱 External display loading bundle model from: \(actualModelPath)")
+    }
+
+    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+      guard case .success = result else { 
+        print("❌ Failed to load model on external display: \(actualModelPath)")
+        return 
+      }
 
       DispatchQueue.main.async {
         self?.updateModelNameLabel()

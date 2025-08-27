@@ -507,19 +507,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
               print("📦 External display local model path: \(fullModelPath)")
             }
           } else {
-            // For remote models, use the cached path
+            // For remote/downloaded models, we need to pass the identifier only
+            // The external display will handle loading from cache
+            fullModelPath = entry.identifier
+            print("☁️ External display will load cached model: \(fullModelPath)")
+            
+            // Verify the cached model exists locally first
             let documentsDirectory = FileManager.default.urls(
               for: .documentDirectory, in: .userDomainMask)[0]
             let localModelURL =
               documentsDirectory
               .appendingPathComponent(entry.identifier)
               .appendingPathExtension("mlmodelc")
-            fullModelPath = localModelURL.path
-            print("☁️ External display cached model path: \(fullModelPath)")
-
-            // Verify the cached model exists
-            if !FileManager.default.fileExists(atPath: fullModelPath) {
-              print("❌ Cached model not found at: \(fullModelPath)")
+            
+            if !FileManager.default.fileExists(atPath: localModelURL.path) {
+              print("❌ Cached model not found at: \(localModelURL.path)")
               return
             }
           }

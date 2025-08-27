@@ -77,7 +77,7 @@ extension ViewController {
 
   func notifyExternalDisplayOfCurrentModel() {
     // Get current model info and send to external display
-    let yoloTask = convertTaskNameToYOLOTask(currentTask)
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     var fullModelPath = currentModelName
     if let entry = currentLoadingEntry
@@ -138,7 +138,7 @@ extension ViewController {
   @objc func handleExternalDisplayReady(_ notification: Notification) {
     guard !currentTask.isEmpty && !currentModels.isEmpty else { return }
 
-    let yoloTask = convertTaskNameToYOLOTask(currentTask)
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     let currentEntry =
       currentModels.first(where: { processString($0.displayName) == currentModelName })

@@ -129,7 +129,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
+  let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
     ("Classify", "ClassifyModels", .classify),
     ("Segment", "SegmentModels", .segment),
     ("Detect", "DetectModels", .detect),
@@ -146,7 +146,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private var isLoadingModel = false
 
-  private let modelTableView: UITableView = {
+  let modelTableView: UITableView = {
     let table = UITableView()
     table.isHidden = true
     table.layer.cornerRadius = 5  // Match corner radius of other elements

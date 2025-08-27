@@ -196,7 +196,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
       currentTask = tasks[Constants.defaultTaskIndex].name
-
+      
       // Load models and auto-select first one if no external display
       if UIScreen.screens.count == 1 {
         // No external display - load model and start inference
@@ -369,8 +369,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
       return
     }
     isLoadingModel = true
-    yoloView.resetLayers()
-    yoloView.setInferenceFlag(ok: false)
+    
+    // Check if external display is connected
+    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    
+    // Only reset YOLOView if no external display is connected
+    if !hasExternalDisplay {
+      yoloView.resetLayers()
+      yoloView.setInferenceFlag(ok: false)
+    }
+    
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
 
@@ -379,6 +387,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     print("  - identifier: \(entry.identifier)")
     print("  - isLocalBundle: \(entry.isLocalBundle)")
     print("  - task: \(task)")
+    print("  - hasExternalDisplay: \(hasExternalDisplay)")
 
     // Store current entry for external display notification
     currentLoadingEntry = entry
@@ -402,13 +411,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
         DispatchQueue.main.async {
           self.downloadProgressLabel.isHidden = false
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
-          self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
-            switch result {
-            case .success():
-              self.finishLoadingModel(success: true, modelName: entry.displayName)
-            case .failure(let error):
-              print(error)
-              self.finishLoadingModel(success: false, modelName: entry.displayName)
+          
+          // Check if external display is connected
+          let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+          
+          if hasExternalDisplay {
+            // External display is connected - skip YOLOView loading, just notify external display
+            print("External display connected - skipping main YOLOView model load")
+            self.finishLoadingModel(success: true, modelName: entry.displayName)
+          } else {
+            // Normal model loading on main YOLOView
+            self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
+              switch result {
+              case .success():
+                self.finishLoadingModel(success: true, modelName: entry.displayName)
+              case .failure(let error):
+                print(error)
+                self.finishLoadingModel(success: false, modelName: entry.displayName)
+              }
             }
           }
         }
@@ -460,13 +480,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
     DispatchQueue.main.async {
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
-      self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
-        switch result {
-        case .success():
-          self.finishLoadingModel(success: true, modelName: displayName)
-        case .failure(let error):
-          print(error)
-          self.finishLoadingModel(success: false, modelName: displayName)
+      
+      // Check if external display is connected
+      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      
+      if hasExternalDisplay {
+        // External display is connected - skip YOLOView loading, just notify external display
+        print("External display connected - skipping main YOLOView cached model load")
+        self.finishLoadingModel(success: true, modelName: displayName)
+      } else {
+        // Normal model loading on main YOLOView
+        self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
+          switch result {
+          case .success():
+            self.finishLoadingModel(success: true, modelName: displayName)
+          case .failure(let error):
+            print(error)
+            self.finishLoadingModel(success: false, modelName: displayName)
+          }
         }
       }
     }
@@ -543,7 +574,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
       }
 
-      self.yoloView.setInferenceFlag(ok: success)
+      // Check if external display is connected
+      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      
+      // Only set inference flag on YOLOView if no external display
+      if !hasExternalDisplay {
+        self.yoloView.setInferenceFlag(ok: success)
+      }
 
       if success {
         self.currentModelName = modelName

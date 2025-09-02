@@ -20,6 +20,20 @@ import YOLO
 
 // MARK: - External Display Support
 extension ViewController {
+  
+  // Associated object key for tracking external display state
+  private struct AssociatedKeys {
+    static var isExternalDisplayConnected = "isExternalDisplayConnected"
+  }
+  
+  private var isExternalDisplayConnected: Bool {
+    get {
+      return objc_getAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected) as? Bool ?? false
+    }
+    set {
+      objc_setAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+  }
 
   func setupExternalDisplayNotifications() {
     // Listen for external display connection
@@ -49,6 +63,7 @@ extension ViewController {
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
     DispatchQueue.main.async {
+      self.isExternalDisplayConnected = true
       self.yoloView.stop()
       self.yoloView.setInferenceFlag(ok: false)
       self.showExternalDisplayStatus()
@@ -76,6 +91,16 @@ extension ViewController {
           self.yoloView.switchCameraButton,
           self.yoloView.shareButton,
         ].forEach { $0.isHidden = true }
+        
+        // Update num items label to show only max value (without detection count) in external display mode
+        self.yoloView.labelSliderNumItems.text = "\(Int(self.yoloView.sliderNumItems.value)) Num Items Threshold"
+        
+        // Add target to maintain label format when slider changes
+        self.yoloView.sliderNumItems.addTarget(
+          self, 
+          action: #selector(self.updateNumItemsLabelForExternalDisplay), 
+          for: .valueChanged
+        )
         
         // Update table view constraints after orientation change
         self.modelTableView.setNeedsLayout()
@@ -108,6 +133,13 @@ extension ViewController {
       UIViewController.attemptRotationToDeviceOrientation()
     }
   }
+  
+  @objc private func updateNumItemsLabelForExternalDisplay() {
+    // Maintain external display label format when slider changes
+    if isExternalDisplayConnected {
+      yoloView.labelSliderNumItems.text = "\(Int(yoloView.sliderNumItems.value)) Num Items Threshold"
+    }
+  }
 
   func notifyExternalDisplayOfCurrentModel() {
     // Get current model info and send to external display
@@ -129,6 +161,7 @@ extension ViewController {
 
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
     DispatchQueue.main.async {
+      self.isExternalDisplayConnected = false
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
 
@@ -140,6 +173,16 @@ extension ViewController {
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
       ].forEach { $0.isHidden = false }
+      
+      // Remove the external display label update target
+      self.yoloView.sliderNumItems.removeTarget(
+        self, 
+        action: #selector(self.updateNumItemsLabelForExternalDisplay), 
+        for: .valueChanged
+      )
+      
+      // Restore normal num items label format (with detection count)
+      self.yoloView.sliderChanged(self.yoloView.sliderNumItems)
 
       self.yoloView.resume()
       self.yoloView.setInferenceFlag(ok: true)

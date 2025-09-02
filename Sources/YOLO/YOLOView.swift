@@ -936,7 +936,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     //      frameSizeCaptured = false
   }
 
-  @objc func sliderChanged(_ sender: Any) {
+  @objc public func sliderChanged(_ sender: Any) {
 
     if sender as? UISlider === sliderNumItems {
       if let predictor = videoCapture.predictor as? BasePredictor {

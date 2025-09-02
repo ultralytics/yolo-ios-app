@@ -648,16 +648,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
+    // Check if external display is connected
+    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    
     // Layout model table view
     let isLandscape = view.bounds.width > view.bounds.height
     let tableViewWidth = view.bounds.width * (isLandscape ? 0.2 : 0.4)
 
-    modelTableView.frame =
-      isLandscape
-      ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-      : CGRect(
-        x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25,
-        width: tableViewWidth, height: 200)
+    // For external display mode, always use landscape positioning even if iPhone is portrait
+    if hasExternalDisplay {
+      // Use landscape positioning for external display mode
+      modelTableView.frame = CGRect(
+        x: segmentedControl.frame.maxX + 20, 
+        y: 20, 
+        width: min(tableViewWidth, view.bounds.width * 0.25), // Limit width to avoid overlap
+        height: 200
+      )
+    } else {
+      // Normal positioning based on actual orientation
+      modelTableView.frame =
+        isLandscape
+        ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
+        : CGRect(
+          x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25,
+          width: tableViewWidth, height: 200)
+    }
 
     updateTableViewBGFrame()
   }

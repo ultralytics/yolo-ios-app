@@ -44,22 +44,36 @@ extension ViewController {
       self.yoloView.setInferenceFlag(ok: false)
       self.showExternalDisplayStatus()
 
-      // Keep controls visible except switch camera and share buttons
-      [
-        self.yoloView.sliderConf, self.yoloView.labelSliderConf,
-        self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
-        self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
-        self.yoloView.playButton, self.yoloView.pauseButton,
-        self.modelTableView, self.tableViewBGView,
-      ].forEach { $0.isHidden = false }
-      
-      // Hide switch camera and share buttons in external display mode
-      [
-        self.yoloView.switchCameraButton,
-        self.yoloView.shareButton,
-      ].forEach { $0.isHidden = true }
-
+      // First request orientation change
       self.requestLandscapeOrientation()
+      
+      // Delay UI updates to allow orientation change to complete
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Force layout update after orientation change
+        self.view.setNeedsLayout()
+        self.view.layoutIfNeeded()
+        
+        // Keep controls visible except switch camera and share buttons
+        [
+          self.yoloView.sliderConf, self.yoloView.labelSliderConf,
+          self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
+          self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
+          self.yoloView.playButton, self.yoloView.pauseButton,
+          self.modelTableView, self.tableViewBGView,
+        ].forEach { $0.isHidden = false }
+        
+        // Hide switch camera and share buttons in external display mode
+        [
+          self.yoloView.switchCameraButton,
+          self.yoloView.shareButton,
+        ].forEach { $0.isHidden = true }
+        
+        // Update table view constraints after orientation change
+        self.modelTableView.setNeedsLayout()
+        self.modelTableView.layoutIfNeeded()
+        self.tableViewBGView.setNeedsLayout()
+        self.tableViewBGView.layoutIfNeeded()
+      }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         if self.currentLoadingEntry != nil || !self.currentModels.isEmpty {

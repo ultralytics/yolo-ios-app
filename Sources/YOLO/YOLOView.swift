@@ -969,11 +969,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     sliderConf.value = Float(conf)
     sliderIoU.value = Float(iou)
     sliderNumItems.value = Float(numItems)
-    
+
     // Update labels
     self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
     self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
-    
+
     // Update current items count in label
     let currentItemsText = self.labelSliderNumItems.text ?? ""
     if let range = currentItemsText.range(of: " items") {
@@ -982,7 +982,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     } else {
       self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
     }
-    
+
     // Update predictor thresholds
     if let predictor = videoCapture.predictor as? BasePredictor {
       predictor.setConfidenceThreshold(confidence: conf)

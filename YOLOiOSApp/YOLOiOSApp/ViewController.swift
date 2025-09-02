@@ -661,7 +661,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         width: tableViewWidth, height: 200)
 
     updateTableViewBGFrame()
-    
+
     // External display specific layout adjustments (Optional external display feature)
     adjustLayoutForExternalDisplayIfNeeded()
   }

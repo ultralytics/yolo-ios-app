@@ -20,18 +20,21 @@ import YOLO
 
 // MARK: - External Display Support
 extension ViewController {
-  
+
   // Associated object key for tracking external display state
   private struct AssociatedKeys {
     static var isExternalDisplayConnected = "isExternalDisplayConnected"
   }
-  
+
   private var isExternalDisplayConnected: Bool {
     get {
-      return objc_getAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected) as? Bool ?? false
+      return objc_getAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected) as? Bool
+        ?? false
     }
     set {
-      objc_setAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+      objc_setAssociatedObject(
+        self, &AssociatedKeys.isExternalDisplayConnected, newValue,
+        .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
   }
 
@@ -70,13 +73,13 @@ extension ViewController {
 
       // First request orientation change
       self.requestLandscapeOrientation()
-      
+
       // Delay UI updates to allow orientation change to complete
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
         // Force layout update after orientation change
         self.view.setNeedsLayout()
         self.view.layoutIfNeeded()
-        
+
         // Keep controls visible except switch camera and share buttons
         [
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
@@ -85,23 +88,24 @@ extension ViewController {
           self.yoloView.playButton, self.yoloView.pauseButton,
           self.modelTableView, self.tableViewBGView,
         ].forEach { $0.isHidden = false }
-        
+
         // Hide switch camera and share buttons in external display mode
         [
           self.yoloView.switchCameraButton,
           self.yoloView.shareButton,
         ].forEach { $0.isHidden = true }
-        
+
         // Update num items label to show only max value (without detection count) in external display mode
-        self.yoloView.labelSliderNumItems.text = "\(Int(self.yoloView.sliderNumItems.value)) Num Items Threshold"
-        
+        self.yoloView.labelSliderNumItems.text =
+          "\(Int(self.yoloView.sliderNumItems.value)) Num Items Threshold"
+
         // Add target to maintain label format when slider changes
         self.yoloView.sliderNumItems.addTarget(
-          self, 
-          action: #selector(self.updateNumItemsLabelForExternalDisplay), 
+          self,
+          action: #selector(self.updateNumItemsLabelForExternalDisplay),
           for: .valueChanged
         )
-        
+
         // Update table view constraints after orientation change
         self.modelTableView.setNeedsLayout()
         self.modelTableView.layoutIfNeeded()
@@ -133,11 +137,12 @@ extension ViewController {
       UIViewController.attemptRotationToDeviceOrientation()
     }
   }
-  
+
   @objc private func updateNumItemsLabelForExternalDisplay() {
     // Maintain external display label format when slider changes
     if isExternalDisplayConnected {
-      yoloView.labelSliderNumItems.text = "\(Int(yoloView.sliderNumItems.value)) Num Items Threshold"
+      yoloView.labelSliderNumItems.text =
+        "\(Int(yoloView.sliderNumItems.value)) Num Items Threshold"
     }
   }
 
@@ -167,20 +172,20 @@ extension ViewController {
 
       self.modelTableView.isHidden = false
       self.tableViewBGView.isHidden = false
-      
+
       // Show switch camera and share buttons again when returning to iPhone-only mode
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
       ].forEach { $0.isHidden = false }
-      
+
       // Remove the external display label update target
       self.yoloView.sliderNumItems.removeTarget(
-        self, 
-        action: #selector(self.updateNumItemsLabelForExternalDisplay), 
+        self,
+        action: #selector(self.updateNumItemsLabelForExternalDisplay),
         for: .valueChanged
       )
-      
+
       // Restore normal num items label format (with detection count)
       self.yoloView.sliderChanged(self.yoloView.sliderNumItems)
 
@@ -217,28 +222,28 @@ extension ViewController {
       }
     }
   }
-  
+
   // MARK: - Layout Adjustments for External Display
-  
+
   /// Adjusts the layout of UI elements when external display is connected
   /// This method is called from viewDidLayoutSubviews to apply external display specific layout
   func adjustLayoutForExternalDisplayIfNeeded() {
     // Check if external display is connected
     let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
-    
+
     guard hasExternalDisplay else { return }
-    
+
     // For external display mode, always use landscape positioning even if iPhone is portrait
     // This prevents the model dropdown from appearing in the wrong position
     let tableViewWidth = view.bounds.width * 0.25  // Limit width to avoid overlap
-    
+
     modelTableView.frame = CGRect(
       x: segmentedControl.frame.maxX + 20,
       y: 20,
       width: tableViewWidth,
       height: 200
     )
-    
+
     // Update background frame to match
     updateTableViewBGFrame()
   }

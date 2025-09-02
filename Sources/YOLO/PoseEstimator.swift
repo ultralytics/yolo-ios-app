@@ -32,7 +32,8 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
         var keypointsList = [Keypoints]()
         var boxes = [Box]()
 
-        for person in preds {
+        let limitedPreds = preds.prefix(self.numItemsThreshold)
+        for person in limitedPreds {
           boxes.append(person.box)
           keypointsList.append(person.keypoints)
         }
@@ -83,7 +84,8 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
           var keypointsForImage = [[(x: Float, y: Float)]]()
           var confsList: [[Float]] = []
 
-          for person in preds {
+          let limitedPreds = preds.prefix(self.numItemsThreshold)
+          for person in limitedPreds {
             boxes.append(person.box)
             keypointsList.append(person.keypoints)
             keypointsForImage.append(person.keypoints.xyn)

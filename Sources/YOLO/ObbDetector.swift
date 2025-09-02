@@ -31,7 +31,8 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
         )
 
         var obbResults: [OBBResult] = []
-        for result in nmsResults {
+        let limitedResults = nmsResults.prefix(self.numItemsThreshold)
+        for result in limitedResults {
           let box = result.box
           let score = result.score
           let clsIdx = labels[result.cls]
@@ -82,7 +83,8 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
           )
 
           var obbResults: [OBBResult] = []
-          for result in nmsResults {
+          let limitedResults = nmsResults.prefix(self.numItemsThreshold)
+          for result in limitedResults {
             let box = result.box
             let score = result.score
             let clsIdx = labels[result.cls]

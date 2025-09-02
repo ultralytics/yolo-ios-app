@@ -942,6 +942,14 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       if let predictor = videoCapture.predictor as? BasePredictor {
         let numItems = Int(sliderNumItems.value)
         predictor.setNumItemsThreshold(numItems: numItems)
+        // Update the label to reflect the new max items value
+        let currentItemsText = self.labelSliderNumItems.text ?? ""
+        if let range = currentItemsText.range(of: " items") {
+          let currentCount = String(currentItemsText[..<range.lowerBound])
+          self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
+        } else {
+          self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
+        }
       }
     }
     let conf = Double(round(100 * sliderConf.value)) / 100

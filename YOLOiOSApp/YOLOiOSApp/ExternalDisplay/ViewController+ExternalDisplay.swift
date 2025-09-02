@@ -5,6 +5,15 @@
 // It enhances the user experience when connected to an external monitor or TV but is
 // NOT required for the core app functionality. The features remain dormant until
 // an external display is connected.
+//
+// Features handled in this extension:
+// - External display connection/disconnection detection
+// - UI adjustments for external display mode:
+//   * Hide switch camera and share buttons (not supported in external display mode)
+//   * Adjust model dropdown positioning to prevent overlap
+//   * Force landscape orientation for better external display experience
+// - Model and threshold synchronization with external display
+// - Camera session management (stop iPhone camera when external display is active)
 
 import UIKit
 import YOLO
@@ -164,6 +173,31 @@ extension ViewController {
         UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
       }
     }
+  }
+  
+  // MARK: - Layout Adjustments for External Display
+  
+  /// Adjusts the layout of UI elements when external display is connected
+  /// This method is called from viewDidLayoutSubviews to apply external display specific layout
+  func adjustLayoutForExternalDisplayIfNeeded() {
+    // Check if external display is connected
+    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    
+    guard hasExternalDisplay else { return }
+    
+    // For external display mode, always use landscape positioning even if iPhone is portrait
+    // This prevents the model dropdown from appearing in the wrong position
+    let tableViewWidth = view.bounds.width * 0.25  // Limit width to avoid overlap
+    
+    modelTableView.frame = CGRect(
+      x: segmentedControl.frame.maxX + 20,
+      y: 20,
+      width: tableViewWidth,
+      height: 200
+    )
+    
+    // Update background frame to match
+    updateTableViewBGFrame()
   }
 
   @objc func handleExternalDisplayReady(_ notification: Notification) {

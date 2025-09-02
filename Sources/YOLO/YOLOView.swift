@@ -963,6 +963,34 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  /// Update thresholds programmatically (for external display sync)
+  public func updateThresholds(conf: Double, iou: Double, numItems: Int) {
+    // Update slider values
+    sliderConf.value = Float(conf)
+    sliderIoU.value = Float(iou)
+    sliderNumItems.value = Float(numItems)
+    
+    // Update labels
+    self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
+    self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    
+    // Update current items count in label
+    let currentItemsText = self.labelSliderNumItems.text ?? ""
+    if let range = currentItemsText.range(of: " items") {
+      let currentCount = String(currentItemsText[..<range.lowerBound])
+      self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
+    } else {
+      self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
+    }
+    
+    // Update predictor thresholds
+    if let predictor = videoCapture.predictor as? BasePredictor {
+      predictor.setConfidenceThreshold(confidence: conf)
+      predictor.setIouThreshold(iou: iou)
+      predictor.setNumItemsThreshold(numItems: numItems)
+    }
+  }
+
   @objc func pinch(_ pinch: UIPinchGestureRecognizer) {
     guard let device = videoCapture.captureDevice else { return }
 

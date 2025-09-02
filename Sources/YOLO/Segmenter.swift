@@ -151,7 +151,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         // 2. Post-process detection results
         let detectedObjects = postProcessSegment(
-          feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
+          feature: pred, confidenceThreshold: Float(self.confidenceThreshold), iouThreshold: Float(self.iouThreshold))
 
         // 3. Construct bounding box information
         let detectionsCount = detectedObjects.count

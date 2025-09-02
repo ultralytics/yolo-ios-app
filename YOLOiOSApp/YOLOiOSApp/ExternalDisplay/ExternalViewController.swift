@@ -327,18 +327,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       return
     }
 
-    // Update YOLOView thresholds
-    yoloView.sliderConf.value = Float(conf)
-    yoloView.sliderIoU.value = Float(iou)
-    yoloView.sliderNumItems.value = Float(maxItems)
-
-    // Update slider labels
-    yoloView.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
-    yoloView.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
-
-    // The threshold values will be applied when the next frame is processed
-    // since YOLOView reads these slider values during inference
-
+    // Use the new updateThresholds method to properly sync all threshold values
+    yoloView.updateThresholds(conf: conf, iou: iou, numItems: maxItems)
   }
 
   @objc private func handleTaskChange(_ notification: Notification) {

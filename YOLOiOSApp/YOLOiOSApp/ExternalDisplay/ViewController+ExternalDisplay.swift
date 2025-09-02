@@ -44,15 +44,20 @@ extension ViewController {
       self.yoloView.setInferenceFlag(ok: false)
       self.showExternalDisplayStatus()
 
-      // Keep controls visible
+      // Keep controls visible except switch camera and share buttons
       [
         self.yoloView.sliderConf, self.yoloView.labelSliderConf,
         self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
         self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
         self.yoloView.playButton, self.yoloView.pauseButton,
-        self.yoloView.switchCameraButton,
         self.modelTableView, self.tableViewBGView,
       ].forEach { $0.isHidden = false }
+      
+      // Hide switch camera and share buttons in external display mode
+      [
+        self.yoloView.switchCameraButton,
+        self.yoloView.shareButton,
+      ].forEach { $0.isHidden = true }
 
       self.requestLandscapeOrientation()
 
@@ -106,6 +111,12 @@ extension ViewController {
 
       self.modelTableView.isHidden = false
       self.tableViewBGView.isHidden = false
+      
+      // Show switch camera and share buttons again when returning to iPhone-only mode
+      [
+        self.yoloView.switchCameraButton,
+        self.yoloView.shareButton,
+      ].forEach { $0.isHidden = false }
 
       self.yoloView.resume()
       self.yoloView.setInferenceFlag(ok: true)

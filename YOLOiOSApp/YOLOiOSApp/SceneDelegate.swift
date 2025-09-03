@@ -6,8 +6,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
   var window: UIWindow?
 
-  // Track external display connection state
-  static var hasExternalDisplay = false
+  // Track external display connection state (thread-safe)
+  private static var _hasExternalDisplay = false
+  private static let externalDisplayQueue = DispatchQueue(label: "com.ultralytics.externalDisplay.state")
+  
+  static var hasExternalDisplay: Bool {
+    get {
+      return externalDisplayQueue.sync { _hasExternalDisplay }
+    }
+    set {
+      externalDisplayQueue.sync { _hasExternalDisplay = newValue }
+    }
+  }
 
   func scene(
     _ scene: UIScene, willConnectTo session: UISceneSession,

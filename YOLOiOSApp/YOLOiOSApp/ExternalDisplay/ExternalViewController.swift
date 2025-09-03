@@ -267,8 +267,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     currentModelName = modelName
 
     if let taskIndex = tasks.firstIndex(where: { $0.value == task }) {
-      DispatchQueue.main.async {
-        self.segmentedControl.selectedSegmentIndex = taskIndex
+      DispatchQueue.main.async { [weak self] in
+        self?.segmentedControl.selectedSegmentIndex = taskIndex
       }
     }
 
@@ -279,13 +279,20 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage")
       && !modelName.contains(".mlmodel")
     {
-      // This is a downloaded model identifier, construct the full path
-      let documentsDirectory = FileManager.default.urls(
-        for: .documentDirectory, in: .userDomainMask)[0]
-      let localModelURL = documentsDirectory.appendingPathComponent(modelName)
-        .appendingPathExtension("mlmodelc")
-      actualModelPath = localModelURL.path
-      print("📱 External display loading cached model from: \(actualModelPath)")
+      // This is a downloaded model identifier
+      // First check if the model is actually downloaded
+      if ModelCacheManager.shared.isModelDownloaded(key: modelName) {
+        // Construct the full path for the downloaded model
+        let documentsDirectory = FileManager.default.urls(
+          for: .documentDirectory, in: .userDomainMask)[0]
+        let localModelURL = documentsDirectory.appendingPathComponent(modelName)
+          .appendingPathExtension("mlmodelc")
+        actualModelPath = localModelURL.path
+        print("📱 External display loading cached model from: \(actualModelPath)")
+      } else {
+        print("❌ Model not downloaded yet: \(modelName)")
+        return  // Exit early if model is not downloaded
+      }
     } else {
       print("📱 External display loading bundle model from: \(actualModelPath)")
     }
@@ -312,9 +319,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
     }
 
-    labelName.text = nameWithoutExtension.replacingOccurrences(
-      of: "yolo", with: "YOLO", options: .caseInsensitive
-    )
+    // Use processString to properly format the model name (handles YOLO11n-seg -> YOLO11n Seg, etc.)
+    labelName.text = processString(nameWithoutExtension)
   }
 
   @objc private func handleThresholdChange(_ notification: Notification) {
@@ -371,8 +377,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 // MARK: - YOLOViewDelegate
 extension ExternalViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    DispatchQueue.main.async {
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+    DispatchQueue.main.async { [weak self] in
+      self?.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
     }
   }
 

@@ -321,7 +321,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelTableView.reloadData()
 
     if !currentModels.isEmpty {
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
         let firstIndex = IndexPath(row: 0, section: 0)
         self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
         self.selectedIndexPath = firstIndex
@@ -401,14 +402,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
         guard let folderURL = self.tasks.first(where: { $0.name == task })?.folder,
           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
         else {
-          DispatchQueue.main.async {
-            self.finishLoadingModel(success: false, modelName: entry.displayName)
+          DispatchQueue.main.async { [weak self] in
+            self?.finishLoadingModel(success: false, modelName: entry.displayName)
           }
           return
         }
 
         let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+          guard let self = self else { return }
           self.downloadProgressLabel.isHidden = false
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
@@ -448,6 +450,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.downloadProgressView.progress = 0.0
         self.downloadProgressView.isHidden = false
         self.downloadProgressLabel.isHidden = false
+        
+        // Set initial downloading message with proper model name
+        self.downloadProgressLabel.text = "Downloading \(processString(entry.displayName))"
 
         let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
 
@@ -477,7 +482,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
       "mlmodelc")
 
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
@@ -509,7 +515,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func finishLoadingModel(success: Bool, modelName: String) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
       self.setLoadingState(false)
       self.isLoadingModel = false
       self.resetDownloadProgress()
@@ -583,7 +590,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
 
       if success {
-        self.currentModelName = modelName
+        // currentModelName is already set above in the notification section
         self.labelName.text = processString(modelName)
       }
     }
@@ -679,7 +686,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     selection.selectionChanged()
     yoloView.capturePhoto { [weak self] image in
       guard let self = self, let image = image else { return print("error capturing photo") }
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
         let vc = UIActivityViewController(activityItems: [image], applicationActivities: nil)
         vc.popoverPresentationController?.sourceView = self.View0
         self.present(vc, animated: true)
@@ -781,14 +789,15 @@ extension ViewController: UITableViewDataSource, UITableViewDelegate {
 // MARK: - YOLOViewDelegate
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    DispatchQueue.main.async {
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-      self.labelFPS.textColor = .white
+    DispatchQueue.main.async { [weak self] in
+      self?.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+      self?.labelFPS.textColor = .white
     }
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard self != nil else { return }
       // Share results with external display (Optional external display feature)
       ExternalDisplayManager.shared.shareResults(result)
 

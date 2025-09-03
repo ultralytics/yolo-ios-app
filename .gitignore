@@ -248,3 +248,4 @@ Tests/YOLOTests/Resources/*.mlpackage
 # Claude-related files
 CLAUDE.md
 CLAUDE.md.backup
+.build/

@@ -252,7 +252,9 @@ func generateCombinedMaskImage(
 
     // Get class color
     let _colorIndex = classID % ultralyticsColors.count
-    let color = ultralyticsColors[_colorIndex].toRGBComponents()!
+    guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
+      return
+    }
     let r = UInt8(color.red)
     let g = UInt8(color.green)
     let b = UInt8(color.blue)
@@ -384,7 +386,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     let color = ultralyticsColors[colorIndex]
     drawContext.setStrokeColor(color.cgColor)
     drawContext.setLineWidth(CGFloat(lineWidth))
-    let confidencePercent = round(result.probs!.top5Confs[i] * 1000) / 10
+    let confidencePercent = round((result.probs?.top5Confs[i] ?? 0) * 1000) / 10
     let labelText = " \(candidate) \(confidencePercent)% "
     let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
     let attrs: [NSAttributedString.Key: Any] = [

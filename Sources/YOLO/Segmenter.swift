@@ -312,9 +312,9 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let classIndex = result.1
       if classBuckets[classIndex] == nil {
         classBuckets[classIndex] = []
-        classBuckets[classIndex]!.reserveCapacity(results.count / numClasses + 1)
+        classBuckets[classIndex]?.reserveCapacity(results.count / numClasses + 1)
       }
-      classBuckets[classIndex]!.append(result)
+      classBuckets[classIndex]?.append(result)
     }
 
     var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []

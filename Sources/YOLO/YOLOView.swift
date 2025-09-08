@@ -343,9 +343,25 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   func setUpBoundingBoxViews() {
     // Ensure all bounding box views are initialized up to the maximum allowed.
     while boundingBoxViews.count < maxBoundingBoxViews {
-      boundingBoxViews.append(BoundingBoxView())
+      let boxView = BoundingBoxView()
+      
+      // Check if this is likely an external display based on view size
+      let viewBounds = self.bounds
+      let maxDimension = max(viewBounds.width, viewBounds.height)
+      
+      // External displays are typically much larger than iPhone screens
+      // iPhone screens are typically < 1000 points in their largest dimension
+      if maxDimension > 1000 {
+        // Scale font size and line width for external display
+        // Use a proportional size similar to what's used elsewhere (height * 0.025-0.03)
+        let scaledFontSize = max(24, viewBounds.height * 0.03)
+        let scaledLineWidth = max(6, viewBounds.height * 0.005)
+        boxView.setFontSize(scaledFontSize)
+        boxView.setLineWidth(scaledLineWidth)
+      }
+      
+      boundingBoxViews.append(boxView)
     }
-
   }
 
   func setupOverlayLayer() {
@@ -635,7 +651,18 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let textLayer = CATextLayer()
     textLayer.contentsScale = UIScreen.main.scale  // Retina display support
     textLayer.alignmentMode = .left
-    let fontSize = self.bounds.height * 0.02
+    
+    // Check if this is likely an external display and scale font accordingly
+    let viewBounds = self.bounds
+    let maxDimension = max(viewBounds.width, viewBounds.height)
+    let fontSize: CGFloat
+    
+    if maxDimension > 1000 {
+      fontSize = max(36, viewBounds.height * 0.04)
+    } else {
+      fontSize = viewBounds.height * 0.035
+    }
+    
     textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
     textLayer.fontSize = fontSize
     textLayer.foregroundColor = UIColor.white.cgColor
@@ -1049,7 +1076,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
-    let newCameraDevice = bestCaptureDevice(position: nextCameraPosition)
+    guard let newCameraDevice = bestCaptureDevice(position: nextCameraPosition) else {
+      return
+    }
 
     guard let videoInput1 = try? AVCaptureDeviceInput(device: newCameraDevice) else {
       return

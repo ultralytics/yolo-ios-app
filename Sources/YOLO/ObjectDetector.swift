@@ -35,7 +35,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
-    detector.featureProvider = ThresholdProvider(
+    detector?.featureProvider = ThresholdProvider(
       iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 
@@ -47,7 +47,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   override func setIouThreshold(iou: Double) {
     iouThreshold = iou
-    detector.featureProvider = ThresholdProvider(
+    detector?.featureProvider = ThresholdProvider(
       iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
   }
 

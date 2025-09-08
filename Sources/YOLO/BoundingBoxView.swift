@@ -20,6 +20,9 @@ class BoundingBoxView {
 
   /// The layer that displays the label and confidence score for the detected object.
   let textLayer: CATextLayer
+  
+  /// The base font size that can be scaled for external displays
+  private var baseFontSize: CGFloat = 14
 
   /// Initializes a new BoundingBoxView with configured shape and text layers.
   init() {
@@ -31,9 +34,21 @@ class BoundingBoxView {
     textLayer = CATextLayer()
     textLayer.isHidden = true  // Initially hidden; shown with label when a detection occurs
     textLayer.contentsScale = UIScreen.main.scale  // Ensure the text is sharp on retina displays
-    textLayer.fontSize = 14  // Set font size for the label text
+    textLayer.fontSize = baseFontSize  // Set font size for the label text
     textLayer.font = UIFont(name: "Avenir", size: textLayer.fontSize)  // Use Avenir font for labels
     textLayer.alignmentMode = .center  // Center-align the text within the layer
+  }
+  
+  /// Sets the font size for the text layer (useful for external displays)
+  func setFontSize(_ size: CGFloat) {
+    baseFontSize = size
+    textLayer.fontSize = size
+    textLayer.font = UIFont(name: "Avenir", size: size)
+  }
+  
+  /// Sets the line width for the bounding box (useful for external displays)
+  func setLineWidth(_ width: CGFloat) {
+    shapeLayer.lineWidth = width
   }
 
   /// Adds the bounding box and text layers to a specified parent layer.

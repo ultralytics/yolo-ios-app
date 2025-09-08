@@ -655,11 +655,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
-    // Layout model table view
     let isLandscape = view.bounds.width > view.bounds.height
     let tableViewWidth = view.bounds.width * (isLandscape ? 0.2 : 0.4)
 
-    // Normal positioning based on actual orientation
     modelTableView.frame =
       isLandscape
       ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
@@ -669,11 +667,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     updateTableViewBGFrame()
 
-    // External display specific layout adjustments (Optional external display feature)
     adjustLayoutForExternalDisplayIfNeeded()
   }
 
-  func updateTableViewBGFrame() {  // Made internal for external display extension access
+  func updateTableViewBGFrame() {
     tableViewBGView.frame = CGRect(
       x: modelTableView.frame.minX - 1,
       y: modelTableView.frame.minY - 1,

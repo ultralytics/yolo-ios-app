@@ -253,7 +253,7 @@ func generateCombinedMaskImage(
     // Get class color
     let _colorIndex = classID % ultralyticsColors.count
     guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
-      return
+      continue
     }
     let r = UInt8(color.red)
     let g = UInt8(color.green)

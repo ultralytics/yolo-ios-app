@@ -344,11 +344,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     // Ensure all bounding box views are initialized up to the maximum allowed.
     while boundingBoxViews.count < maxBoundingBoxViews {
       let boxView = BoundingBoxView()
-      
+
       // Check if this is likely an external display based on view size
       let viewBounds = self.bounds
       let maxDimension = max(viewBounds.width, viewBounds.height)
-      
+
       // External displays are typically much larger than iPhone screens
       // iPhone screens are typically < 1000 points in their largest dimension
       if maxDimension > 1000 {
@@ -359,7 +359,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         boxView.setFontSize(scaledFontSize)
         boxView.setLineWidth(scaledLineWidth)
       }
-      
+
       boundingBoxViews.append(boxView)
     }
   }
@@ -651,18 +651,18 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let textLayer = CATextLayer()
     textLayer.contentsScale = UIScreen.main.scale  // Retina display support
     textLayer.alignmentMode = .left
-    
+
     // Check if this is likely an external display and scale font accordingly
     let viewBounds = self.bounds
     let maxDimension = max(viewBounds.width, viewBounds.height)
     let fontSize: CGFloat
-    
+
     if maxDimension > 1000 {
       fontSize = max(36, viewBounds.height * 0.04)
     } else {
       fontSize = viewBounds.height * 0.035
     }
-    
+
     textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
     textLayer.fontSize = fontSize
     textLayer.foregroundColor = UIColor.white.cgColor

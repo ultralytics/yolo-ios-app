@@ -75,7 +75,7 @@ extension ViewController {
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
         self.adjustLayoutForExternalDisplayIfNeeded()
-        
+
         self.view.setNeedsLayout()
         self.view.layoutIfNeeded()
         [
@@ -177,7 +177,9 @@ extension ViewController {
       self.yoloView.setInferenceFlag(ok: true)
 
       if let currentEntry = self.currentLoadingEntry {
-        if let modelIndex = self.currentModels.firstIndex(where: { $0.identifier == currentEntry.identifier }) {
+        if let modelIndex = self.currentModels.firstIndex(where: {
+          $0.identifier == currentEntry.identifier
+        }) {
           let indexPath = IndexPath(row: modelIndex, section: 0)
           self.modelTableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
           self.selectedIndexPath = indexPath

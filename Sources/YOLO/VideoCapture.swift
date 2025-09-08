@@ -85,7 +85,7 @@ class VideoCapture: NSObject, @unchecked Sendable {
       return false
     }
     captureDevice = device
-    
+
     do {
       videoInput = try AVCaptureDeviceInput(device: device)
     } catch {

@@ -450,7 +450,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.downloadProgressView.progress = 0.0
         self.downloadProgressView.isHidden = false
         self.downloadProgressLabel.isHidden = false
-        
+
         // Set initial downloading message with proper model name
         self.downloadProgressLabel.text = "Downloading \(processString(entry.displayName))"
 

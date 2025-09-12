@@ -12,4 +12,5 @@ extension Notification.Name {
   static let yoloResultsAvailable = Notification.Name("YOLOResultsAvailable")
   static let thresholdDidChange = Notification.Name("ThresholdDidChange")
   static let taskDidChange = Notification.Name("TaskDidChange")
+  static let detectionCountDidUpdate = Notification.Name("DetectionCountDidUpdate")
 }

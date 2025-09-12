@@ -62,6 +62,14 @@ extension ViewController {
       name: .externalDisplayReady,
       object: nil
     )
+    
+    // Listen for detection count updates from external display
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleDetectionCountUpdate(_:)),
+      name: .detectionCountDidUpdate,
+      object: nil
+    )
   }
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
@@ -91,7 +99,7 @@ extension ViewController {
           self.yoloView.shareButton,
         ].forEach { $0.isHidden = true }
         self.yoloView.labelSliderNumItems.text =
-          "\(Int(self.yoloView.sliderNumItems.value)) Num Items Threshold"
+          "0 items (max \(Int(self.yoloView.sliderNumItems.value)))"
 
         self.yoloView.sliderNumItems.addTarget(
           self,
@@ -131,8 +139,21 @@ extension ViewController {
 
   @objc private func updateNumItemsLabelForExternalDisplay() {
     if isExternalDisplayConnected {
-      yoloView.labelSliderNumItems.text =
-        "\(Int(yoloView.sliderNumItems.value)) Num Items Threshold"
+      let maxValue = Int(yoloView.sliderNumItems.value)
+      let currentText = yoloView.labelSliderNumItems.text ?? ""
+      let currentCount = Int(currentText.split(separator: " ").first ?? "0") ?? 0
+      yoloView.labelSliderNumItems.text = "\(currentCount) items (max \(maxValue))"
+    }
+  }
+  
+  @objc private func handleDetectionCountUpdate(_ notification: Notification) {
+    guard isExternalDisplayConnected,
+          let count = notification.userInfo?["count"] as? Int else { return }
+    
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      let maxValue = Int(self.yoloView.sliderNumItems.value)
+      self.yoloView.labelSliderNumItems.text = "\(count) items (max \(maxValue))"
     }
   }
 

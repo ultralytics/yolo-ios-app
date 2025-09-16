@@ -65,9 +65,9 @@ class ModelTableViewCell: UITableViewCell {
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
 
-  @IBOutlet weak var yoloView: YOLOView!, View0: UIView!, segmentedControl: UISegmentedControl!,
+  @IBOutlet weak var yoloView: YOLOView!, View0: UIView!, segmentedControl: UISegmentedControl!, 
     labelName: UILabel!, labelFPS: UILabel!, labelVersion: UILabel!,
-    activityIndicator: UIActivityIndicatorView!, logoImage: UIImageView!
+                     activityIndicator: UIActivityIndicatorView!, logoImage: UIImageView!, modelSegmentedControl: UISegmentedControl!
 
   let selection = UISelectionFeedbackGenerator()
 
@@ -152,6 +152,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupTableView()
+
+    modelSegmentedControl.isHidden = false
+    modelSegmentedControl.overrideUserInterfaceStyle = .dark
+    modelSegmentedControl.apportionsSegmentWidthsByContent = true
 
     // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true

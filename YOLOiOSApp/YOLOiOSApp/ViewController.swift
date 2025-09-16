@@ -23,44 +23,7 @@ extension Result {
   var isSuccess: Bool { if case .success = self { return true } else { return false } }
 }
 
-// MARK: - ModelTableViewCell
-class ModelTableViewCell: UITableViewCell {
-  static let identifier = "ModelTableViewCell"
-
-  override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-    super.init(style: .default, reuseIdentifier: reuseIdentifier)
-    backgroundColor = .clear
-    selectionStyle = .default
-    textLabel?.textAlignment = .center
-    textLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-    textLabel?.adjustsFontSizeToFitWidth = true
-    textLabel?.minimumScaleFactor = 0.7
-    selectedBackgroundView = {
-      let v = UIView()
-      v.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-      v.layer.cornerRadius = 5
-      return v
-    }()
-  }
-
-  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-  func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
-    textLabel?.text = modelName
-    textLabel?.textColor = (isRemote && !isDownloaded) ? .lightGray : .white
-    imageView?.image =
-      (isRemote && !isDownloaded)
-      ? UIImage(
-        systemName: "icloud.and.arrow.down",
-        withConfiguration: UIImage.SymbolConfiguration(pointSize: 14)) : nil
-    imageView?.tintColor = .white
-  }
-
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    selectedBackgroundView?.frame = bounds.insetBy(dx: 2, dy: 1)
-  }
-}
+// MARK: - Model Selection Helpers
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
@@ -79,7 +42,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // MARK: - Loading State Management
   private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
     loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
-    [view, modelTableView].forEach { $0.isUserInteractionEnabled = !loading }
+    view.isUserInteractionEnabled = !loading
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
   }
@@ -109,6 +72,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private var modelsForTask: [String: [String]] = [:]
 
   private var currentModels: [(name: String, url: URL?, isLocal: Bool)] = []
+  private var standardModels: [ModelSelectionManager.ModelSize: ModelSelectionManager.ModelInfo] = [:]
+  private var customModels: [ModelSelectionManager.ModelInfo] = []
 
   private var currentTask: String = ""
   private var currentModelName: String = ""
@@ -118,22 +83,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // MARK: - Constants
   private struct Constants {
     static let defaultTaskIndex = 2  // Detect
-    static let tableRowHeight: CGFloat = 30
     static let logoURL = "https://www.ultralytics.com"
     static let progressViewWidth: CGFloat = 200
   }
 
-  private let modelTableView: UITableView = {
-    let table = UITableView()
-    table.isHidden = true
-    table.layer.cornerRadius = 5  // Match corner radius of other elements
-    table.clipsToBounds = true
-    return table
-  }()
-
-  private let tableViewBGView = UIView()
-
-  private var selectedIndexPath: IndexPath?
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -151,11 +104,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       reloadModelEntriesAndLoadFirst(for: currentTask)
     }
 
-    setupTableView()
-
-    modelSegmentedControl.isHidden = false
-    modelSegmentedControl.overrideUserInterfaceStyle = .dark
-    modelSegmentedControl.apportionsSegmentWidthsByContent = true
+    setupModelSegmentedControl()
 
     // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true
@@ -234,16 +183,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
-    modelTableView.isHidden = currentModels.isEmpty
-    modelTableView.reloadData()
+    let categorized = ModelSelectionManager.categorizeModels(from: currentModels)
+    standardModels = categorized.standard
+    customModels = categorized.custom
 
-    if !currentModels.isEmpty {
-      DispatchQueue.main.async {
-        let firstIndex = IndexPath(row: 0, section: 0)
-        self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-        self.selectedIndexPath = firstIndex
-        self.loadModel(entry: self.currentModels[0], forTask: taskName)
-      }
+    ModelSelectionManager.setupSegmentedControl(modelSegmentedControl, hasCustomModels: !customModels.isEmpty)
+
+    if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
+       let model = standardModels[firstSize] {
+      loadModel(entry: (model.name, model.url, model.isLocal), forTask: taskName)
+    } else if !customModels.isEmpty {
+      showCustomModelPicker()
     }
   }
 
@@ -316,11 +266,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.isLoadingModel = false
       self.resetDownloadProgress()
 
-      self.modelTableView.reloadData()
-      if let ip = self.selectedIndexPath {
-        self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
-      }
-
       self.yoloView.setInferenceFlag(ok: success)
 
       if success {
@@ -350,9 +295,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     currentTask = newTask
-    selectedIndexPath = nil
     reloadModelEntriesAndLoadFirst(for: currentTask)
-    updateTableViewBGFrame()
   }
 
   @objc func logoButton() {
@@ -362,47 +305,52 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func setupTableView() {
-    modelTableView.delegate = self
-    modelTableView.dataSource = self
-    modelTableView.register(
-      ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
-    modelTableView.backgroundColor = .clear
-    modelTableView.separatorStyle = .none
-    modelTableView.isScrollEnabled = false
-    modelTableView.translatesAutoresizingMaskIntoConstraints = false
-    tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
-    tableViewBGView.layer.cornerRadius = 5
-    tableViewBGView.clipsToBounds = true
-    [tableViewBGView, modelTableView].forEach { yoloView.addSubview($0) }
-    updateTableViewBGFrame()
+  private func setupModelSegmentedControl() {
+    modelSegmentedControl.isHidden = false
+    modelSegmentedControl.overrideUserInterfaceStyle = .dark
+    modelSegmentedControl.apportionsSegmentWidthsByContent = true
+    modelSegmentedControl.addTarget(self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
+  }
+
+  @objc private func modelSizeChanged(_ sender: UISegmentedControl) {
+    selection.selectionChanged()
+
+    if sender.selectedSegmentIndex < ModelSelectionManager.ModelSize.allCases.count {
+      let size = ModelSelectionManager.ModelSize.allCases[sender.selectedSegmentIndex]
+      if let model = standardModels[size] {
+        loadModel(entry: (model.name, model.url, model.isLocal), forTask: currentTask)
+      }
+    } else {
+      showCustomModelPicker()
+    }
+  }
+
+  private func showCustomModelPicker() {
+    let alert = UIAlertController(title: "Select Custom Model", message: nil, preferredStyle: .actionSheet)
+
+    for model in customModels {
+      alert.addAction(UIAlertAction(title: processString(model.name), style: .default) { [weak self] _ in
+        self?.loadModel(entry: (model.name, model.url, model.isLocal), forTask: self?.currentTask ?? "")
+      })
+    }
+
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+      self?.modelSegmentedControl.selectedSegmentIndex = 0
+      self?.modelSizeChanged(self?.modelSegmentedControl ?? UISegmentedControl())
+    })
+
+    if let popover = alert.popoverPresentationController {
+      popover.sourceView = modelSegmentedControl
+      popover.sourceRect = modelSegmentedControl.bounds
+    }
+
+    present(alert, animated: true)
   }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-
-    // Layout model table view
-    let isLandscape = view.bounds.width > view.bounds.height
-    let tableViewWidth = view.bounds.width * (isLandscape ? 0.2 : 0.4)
-
-    modelTableView.frame =
-      isLandscape
-      ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-      : CGRect(
-        x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25,
-        width: tableViewWidth, height: 200)
-
-    updateTableViewBGFrame()
   }
 
-  private func updateTableViewBGFrame() {
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * Int(Constants.tableRowHeight) + 2)
-    )
-  }
 
   @objc func shareButtonTapped() {
     selection.selectionChanged()
@@ -418,41 +366,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
 }
 
-// MARK: - UITableViewDataSource, UITableViewDelegate
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
-
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    currentModels.count
-  }
-
-  func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-    Constants.tableRowHeight
-  }
-
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell =
-      tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath)
-      as! ModelTableViewCell
-    let entry = currentModels[indexPath.row]
-    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
-    let isDownloaded =
-      entry.isLocal
-      || (entry.url != nil && YOLOModelCache.shared.isCached(url: entry.url!, task: yoloTask))
-    cell.configure(
-      with: processString(entry.name), isRemote: !entry.isLocal, isDownloaded: isDownloaded)
-    return cell
-  }
-
-  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    selection.selectionChanged()
-
-    selectedIndexPath = indexPath
-    let selectedEntry = currentModels[indexPath.row]
-
-    loadModel(entry: selectedEntry, forTask: currentTask)
-  }
-
-}
 
 // MARK: - YOLOViewDelegate
 extension ViewController {

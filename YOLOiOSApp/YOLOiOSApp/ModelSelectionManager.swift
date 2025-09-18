@@ -106,7 +106,7 @@ struct ModelSelectionManager {
         return name
     }
 
-    static func setupSegmentedControl(_ control: UISegmentedControl, standardModels: [ModelSize: ModelInfo], hasCustomModels: Bool, currentTask: YOLOTask, preserveSelection: Bool = false) {
+    static func setupSegmentedControl(_ control: UISegmentedControl, standardModels: [ModelSize: ModelInfo], currentTask: YOLOTask, preserveSelection: Bool = false) {
         let previousSelection = preserveSelection ? control.selectedSegmentIndex : -1
 
         control.removeAllSegments()
@@ -131,10 +131,6 @@ struct ModelSelectionManager {
                 control.insertSegment(withTitle: size.displayName, at: index, animated: false)
                 control.setEnabled(false, forSegmentAt: index)
             }
-        }
-
-        if hasCustomModels {
-            control.insertSegment(withTitle: "Custom", at: control.numberOfSegments, animated: false)
         }
 
         if preserveSelection && previousSelection >= 0 && previousSelection < control.numberOfSegments {
@@ -167,10 +163,6 @@ struct ModelSelectionManager {
             } else if !control.isEnabledForSegment(at: index) {
                 setSegmentTextColor(control, at: index, color: .gray)
             }
-        }
-
-        if control.numberOfSegments > ModelSize.allCases.count {
-            setSegmentTextColor(control, at: control.numberOfSegments - 1, color: .white)
         }
     }
 

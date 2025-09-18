@@ -276,6 +276,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func resetDownloadProgress() {
     downloadProgressView.progress = 0.0
+    downloadProgressLabel.text = ""
     [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
   }
 

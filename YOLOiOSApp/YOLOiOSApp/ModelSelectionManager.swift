@@ -123,7 +123,7 @@ struct ModelSelectionManager {
                 if isDownloaded {
                     titleWithIcon = displayTitle
                 } else {
-                    titleWithIcon = "↓ \(displayTitle)"
+                    titleWithIcon = "⤓ \(displayTitle)"
                 }
                 control.insertSegment(withTitle: titleWithIcon, at: index, animated: false)
                 control.setEnabled(true, forSegmentAt: index)

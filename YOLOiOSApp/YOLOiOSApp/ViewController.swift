@@ -23,6 +23,12 @@ extension Result {
   var isSuccess: Bool { if case .success = self { return true } else { return false } }
 }
 
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
+}
+
 // MARK: - Model Selection Helpers
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
@@ -152,6 +158,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.overrideUserInterfaceStyle = .dark
   }
 
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+  }
+
   private func getModelFiles(in folderName: String) -> [String] {
     guard let folderURL = Bundle.main.url(forResource: folderName, withExtension: nil),
       let fileURLs = try? FileManager.default.contentsOfDirectory(
@@ -187,7 +197,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     standardModels = categorized.standard
     customModels = categorized.custom
 
-    ModelSelectionManager.setupSegmentedControl(modelSegmentedControl, hasCustomModels: !customModels.isEmpty)
+    let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
+    ModelSelectionManager.setupSegmentedControl(modelSegmentedControl, standardModels: standardModels, hasCustomModels: !customModels.isEmpty, currentTask: yoloTask)
 
     if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
        let model = standardModels[firstSize] {
@@ -266,6 +277,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.isLoadingModel = false
       self.resetDownloadProgress()
 
+      if success {
+        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        ModelSelectionManager.setupSegmentedControl(
+          self.modelSegmentedControl,
+          standardModels: self.standardModels,
+          hasCustomModels: !self.customModels.isEmpty,
+          currentTask: yoloTask,
+          preserveSelection: true
+        )
+      }
+
       self.yoloView.setInferenceFlag(ok: success)
 
       if success {
@@ -310,6 +332,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelSegmentedControl.overrideUserInterfaceStyle = .dark
     modelSegmentedControl.apportionsSegmentWidthsByContent = true
     modelSegmentedControl.addTarget(self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
+  }
+
+  func updateModelSegmentedControlAppearance() {
+    guard modelSegmentedControl != nil else { return }
+
+    modelSegmentedControl.overrideUserInterfaceStyle = .dark
+    modelSegmentedControl.backgroundColor = .clear
+
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    ModelSelectionManager.updateSegmentAppearance(modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
   }
 
   @objc private func modelSizeChanged(_ sender: UISegmentedControl) {

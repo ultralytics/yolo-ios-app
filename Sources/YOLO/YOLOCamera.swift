@@ -72,7 +72,7 @@ struct YOLOViewRepresentable: UIViewRepresentable {
     } else if let modelPathOrName = modelPathOrName {
       finalModelPathOrName = modelPathOrName
     } else {
-      fatalError("Either modelPathOrName or modelURL must be provided")
+      finalModelPathOrName = "yolo11n"
     }
 
     return YOLOView(frame: .zero, modelPathOrName: finalModelPathOrName, task: task)

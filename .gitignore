@@ -1,4 +1,10 @@
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
+CLAUDE.md
+CLAUDE.md.backup
+trae_config.yaml
+trae_config.yml
+*.env
+.env*
 
 
 # Xcode GitIgnore ------------------------------------------------------------------------------------------------------
@@ -18,6 +24,7 @@ xcuserdata/*
 
 ## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
 DerivedData/
+Build/
 *.moved-aside
 *.pbxuser
 !default.pbxuser
@@ -246,3 +253,4 @@ Tests/YOLOTests/Resources/*.mlpackage
 # Claude-related files
 CLAUDE.md
 CLAUDE.md.backup
+.build/

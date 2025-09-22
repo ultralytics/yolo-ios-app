@@ -31,7 +31,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   private(set) var isModelLoaded: Bool = false
 
   /// The Vision CoreML model used for inference operations.
-  var detector: VNCoreMLModel!
+  var detector: VNCoreMLModel?
 
   /// The Vision request that processes images using the CoreML model.
   var visionRequest: VNCoreMLRequest?
@@ -49,7 +49,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   weak var currentOnInferenceTimeListener: InferenceTimeListener?
 
   /// The size of the input image or camera frame.
-  var inputSize: CGSize!
+  var inputSize: CGSize = CGSize(width: 640, height: 640)
 
   /// The required input dimensions for the model (width and height in pixels).
   var modelInputSize: (width: Int, height: Int) = (0, 0)
@@ -161,11 +161,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         predictor.modelInputSize = predictor.getModelInputSize(for: mlModel)
 
         // (4) Create VNCoreMLModel, VNCoreMLRequest, etc.
-        predictor.detector = try VNCoreMLModel(for: mlModel)
-        predictor.detector.featureProvider = ThresholdProvider()
+        let coreMLModel = try VNCoreMLModel(for: mlModel)
+        coreMLModel.featureProvider = ThresholdProvider()
+        predictor.detector = coreMLModel
         predictor.visionRequest = {
           let request = VNCoreMLRequest(
-            model: predictor.detector,
+            model: coreMLModel,
             completionHandler: {
               [weak predictor] request, error in
               guard let predictor = predictor else {

@@ -46,11 +46,11 @@ public class VideoCapture: NSObject, @unchecked Sendable {
   public var previewLayer: AVCaptureVideoPreviewLayer?
   public weak var delegate: VideoCaptureDelegate?
   var captureDevice: AVCaptureDevice?
-  
+
   public func stopCapture() {
     captureSession.stopRunning()
   }
-  
+
   public func startCapture() {
     captureSession.startRunning()
   }
@@ -107,9 +107,9 @@ public class VideoCapture: NSObject, @unchecked Sendable {
       return false
     }
 
-    guard let input = videoInput else { 
+    guard let input = videoInput else {
       print("❌ Video input is nil")
-      return false 
+      return false
     }
     if captureSession.canAddInput(input) {
       captureSession.addInput(input)

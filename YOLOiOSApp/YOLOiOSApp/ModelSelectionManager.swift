@@ -116,8 +116,11 @@ struct ModelSelectionManager {
                 let fullName = (model.name as NSString).deletingPathExtension
                 let displayTitle = removeTaskSuffix(from: fullName)
 
+                // Check if model is downloaded using ModelCacheManager for remote models
+                // Use the model name without extension as the key (e.g., "yolo11n", "yolo11m-seg")
+                let modelKey = (model.name as NSString).deletingPathExtension
                 let isDownloaded = model.isLocal ||
-                    (model.url != nil && YOLOModelCache.shared.isCached(url: model.url!, task: currentTask))
+                    (model.url != nil && ModelCacheManager.shared.isModelDownloaded(key: modelKey))
 
                 let titleWithIcon: String
                 if isDownloaded {
@@ -152,8 +155,11 @@ struct ModelSelectionManager {
             guard index < control.numberOfSegments else { break }
 
             if let model = standardModels[size] {
+                // Check if model is downloaded using ModelCacheManager for remote models
+                // Use the model name without extension as the key (e.g., "yolo11n", "yolo11m-seg")
+                let modelKey = (model.name as NSString).deletingPathExtension
                 let isDownloaded = model.isLocal ||
-                    (model.url != nil && YOLOModelCache.shared.isCached(url: model.url!, task: currentTask))
+                    (model.url != nil && ModelCacheManager.shared.isModelDownloaded(key: modelKey))
 
                 if !isDownloaded {
                     setSegmentTextColor(control, at: index, color: .systemGray)

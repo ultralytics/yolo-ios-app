@@ -39,6 +39,16 @@ extension ViewController {
   }
 
   func setupExternalDisplayNotifications() {
+    print("Setting up external display notifications")
+
+    // Check if external display is already connected at startup
+    if UIScreen.screens.count > 1 {
+      print("External display already connected at startup - triggering connection handler")
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        self.handleExternalDisplayConnected(Notification(name: .externalDisplayConnected))
+      }
+    }
+
     // Listen for external display connection
     NotificationCenter.default.addObserver(
       self,
@@ -286,12 +296,15 @@ extension ViewController {
 
   func showExternalDisplayStatus() {
     let statusLabel = UILabel()
-    statusLabel.text = "External Display Connected"
+    statusLabel.text = "📱 Camera is shown on external display\n🔄 Please use landscape orientation"
     statusLabel.textColor = .white
-    statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+    statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
     statusLabel.textAlignment = .center
-    statusLabel.font = .systemFont(ofSize: 14, weight: .medium)
-    statusLabel.layer.cornerRadius = 5
+    statusLabel.font = .systemFont(ofSize: 18, weight: .medium)
+    statusLabel.numberOfLines = 0
+    statusLabel.adjustsFontSizeToFitWidth = true
+    statusLabel.minimumScaleFactor = 0.8
+    statusLabel.layer.cornerRadius = 10
     statusLabel.layer.masksToBounds = true
     statusLabel.tag = 9999
 
@@ -300,9 +313,9 @@ extension ViewController {
     statusLabel.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      statusLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 50),
-      statusLabel.widthAnchor.constraint(equalToConstant: 200),
-      statusLabel.heightAnchor.constraint(equalToConstant: 30),
+      statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      statusLabel.widthAnchor.constraint(equalToConstant: 280),
+      statusLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
     ])
   }
 

@@ -111,7 +111,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   var currentModels: [ModelEntry] = []
   private var standardModels: [ModelSelectionManager.ModelSize: ModelSelectionManager.ModelInfo] = [:]
-  private var customModels: [ModelSelectionManager.ModelInfo] = []
+  var customModels: [ModelSelectionManager.ModelInfo] = []
 
   var currentTask: String = ""
   var currentModelName: String = ""
@@ -156,28 +156,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
       currentTask = tasks[Constants.defaultTaskIndex].name
 
-      // Load models and auto-select first one if no external display
-      if UIScreen.screens.count == 1 {
-        // No external display - load model and start inference
-        reloadModelEntriesAndLoadFirst(for: currentTask)
-      } else {
-        // External display connected - stop main YOLOView
-        print("External display detected at startup - stopping main YOLOView")
-        yoloView.stop()
-        yoloView.isHidden = true
+      // Always load models initially - external display handling will stop camera if needed
+      reloadModelEntriesAndLoadFirst(for: currentTask)
 
-        // Load model list for UI but don't auto-select
-        currentModels = makeModelEntries(for: currentTask)
-        modelTableView.reloadData()
-
-        if !currentModels.isEmpty {
-          modelTableView.isHidden = false
-        }
-
-        // Ensure camera is fully released
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          print("Main YOLOView fully stopped, external display can now use camera")
-        }
+      // Check for external display after initial setup
+      if UIScreen.screens.count > 1 {
+        print("External display may be connected at startup - will be handled by notifications")
       }
     }
 
@@ -497,12 +481,22 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.resetDownloadProgress()
 
       if success {
+        // Update the segmented control to reflect downloaded status
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+
+        // Rebuild the control to update download icons
         ModelSelectionManager.setupSegmentedControl(
           self.modelSegmentedControl,
           standardModels: self.standardModels,
           currentTask: yoloTask,
           preserveSelection: true
+        )
+
+        // Also update appearance to ensure correct colors
+        ModelSelectionManager.updateSegmentAppearance(
+          self.modelSegmentedControl,
+          standardModels: self.standardModels,
+          currentTask: yoloTask
         )
       }
 

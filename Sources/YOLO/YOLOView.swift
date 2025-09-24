@@ -154,6 +154,19 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     setupOverlayLayer()
   }
 
+  /// Initialize YOLOView without a model (camera only)
+  public override init(frame: CGRect) {
+    self.videoCapture = VideoCapture()
+    self.task = .detect  // Default task
+    super.init(frame: frame)
+    setUpOrientationChangeNotification()
+    self.setUpBoundingBoxViews()
+    self.setupUI()
+    self.videoCapture.delegate = self
+    start(position: .back)
+    setupOverlayLayer()
+  }
+
   required init?(coder: NSCoder) {
     self.videoCapture = VideoCapture()
     super.init(coder: coder)
@@ -176,6 +189,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     task: YOLOTask,
     completion: ((Result<Void, Error>) -> Void)? = nil
   ) {
+    // If modelPathOrName is empty, it means no model was provided yet
+    if modelPathOrName.isEmpty {
+      self.activityIndicator.stopAnimating()
+      completion?(.failure(PredictorError.modelFileNotFound))
+      return
+    }
+
     activityIndicator.startAnimating()
     boundingBoxViews.forEach { box in
       box.hide()
@@ -323,9 +343,25 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   func setUpBoundingBoxViews() {
     // Ensure all bounding box views are initialized up to the maximum allowed.
     while boundingBoxViews.count < maxBoundingBoxViews {
-      boundingBoxViews.append(BoundingBoxView())
-    }
+      let boxView = BoundingBoxView()
 
+      // Check if this is likely an external display based on view size
+      let viewBounds = self.bounds
+      let maxDimension = max(viewBounds.width, viewBounds.height)
+
+      // External displays are typically much larger than iPhone screens
+      // iPhone screens are typically < 1000 points in their largest dimension
+      if maxDimension > 1000 {
+        // Scale font size and line width for external display
+        // Use a proportional size similar to what's used elsewhere (height * 0.025-0.03)
+        let scaledFontSize = max(24, viewBounds.height * 0.03)
+        let scaledLineWidth = max(6, viewBounds.height * 0.005)
+        boxView.setFontSize(scaledFontSize)
+        boxView.setLineWidth(scaledLineWidth)
+      }
+
+      boundingBoxViews.append(boxView)
+    }
   }
 
   func setupOverlayLayer() {
@@ -615,7 +651,18 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let textLayer = CATextLayer()
     textLayer.contentsScale = UIScreen.main.scale  // Retina display support
     textLayer.alignmentMode = .left
-    let fontSize = self.bounds.height * 0.02
+
+    // Check if this is likely an external display and scale font accordingly
+    let viewBounds = self.bounds
+    let maxDimension = max(viewBounds.width, viewBounds.height)
+    let fontSize: CGFloat
+
+    if maxDimension > 1000 {
+      fontSize = max(36, viewBounds.height * 0.04)
+    } else {
+      fontSize = viewBounds.height * 0.035
+    }
+
     textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
     textLayer.fontSize = fontSize
     textLayer.foregroundColor = UIColor.white.cgColor
@@ -916,12 +963,20 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     //      frameSizeCaptured = false
   }
 
-  @objc func sliderChanged(_ sender: Any) {
+  @objc public func sliderChanged(_ sender: Any) {
 
     if sender as? UISlider === sliderNumItems {
       if let predictor = videoCapture.predictor as? BasePredictor {
         let numItems = Int(sliderNumItems.value)
         predictor.setNumItemsThreshold(numItems: numItems)
+        // Update the label to reflect the new max items value
+        let currentItemsText = self.labelSliderNumItems.text ?? ""
+        if let range = currentItemsText.range(of: " items") {
+          let currentCount = String(currentItemsText[..<range.lowerBound])
+          self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
+        } else {
+          self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
+        }
       }
     }
     let conf = Double(round(100 * sliderConf.value)) / 100
@@ -932,6 +987,34 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       predictor.setIouThreshold(iou: iou)
       predictor.setConfidenceThreshold(confidence: conf)
 
+    }
+  }
+
+  /// Update thresholds programmatically (for external display sync)
+  public func updateThresholds(conf: Double, iou: Double, numItems: Int) {
+    // Update slider values
+    sliderConf.value = Float(conf)
+    sliderIoU.value = Float(iou)
+    sliderNumItems.value = Float(numItems)
+
+    // Update labels
+    self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
+    self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+
+    // Update current items count in label
+    let currentItemsText = self.labelSliderNumItems.text ?? ""
+    if let range = currentItemsText.range(of: " items") {
+      let currentCount = String(currentItemsText[..<range.lowerBound])
+      self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
+    } else {
+      self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
+    }
+
+    // Update predictor thresholds
+    if let predictor = videoCapture.predictor as? BasePredictor {
+      predictor.setConfidenceThreshold(confidence: conf)
+      predictor.setIouThreshold(iou: iou)
+      predictor.setNumItemsThreshold(numItems: numItems)
     }
   }
 
@@ -993,7 +1076,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
-    let newCameraDevice = bestCaptureDevice(position: nextCameraPosition)
+    guard let newCameraDevice = bestCaptureDevice(position: nextCameraPosition) else {
+      return
+    }
 
     guard let videoInput1 = try? AVCaptureDeviceInput(device: newCameraDevice) else {
       return

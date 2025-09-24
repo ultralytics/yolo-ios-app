@@ -59,7 +59,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let alphaScale: CGFloat = 0.9 / 0.8  // (1.0 - 0.2)
       let alphaOffset: CGFloat = -0.2 * alphaScale
 
-      for p in detectedObjects {
+      let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
+      for p in limitedObjects {
         let box = p.0
         let rect = CGRect(
           x: box.minX / modelWidth, y: box.minY / modelHeight,
@@ -78,7 +79,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       DispatchQueue.global(qos: .userInitiated).async {
         guard
           let procceessedMasks = generateCombinedMaskImage(
-            detectedObjects: detectedObjects,
+            detectedObjects: Array(limitedObjects),
             protos: masks,
             inputWidth: self.modelInputSize.width,
             inputHeight: self.modelInputSize.height,
@@ -150,7 +151,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         // 2. Post-process detection results
         let detectedObjects = postProcessSegment(
-          feature: pred, confidenceThreshold: 0.25, iouThreshold: 0.4)
+          feature: pred, confidenceThreshold: Float(self.confidenceThreshold),
+          iouThreshold: Float(self.iouThreshold))
 
         // 3. Construct bounding box information
         let detectionsCount = detectedObjects.count
@@ -162,7 +164,8 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         let inputWidth = Int(inputSize.width)
         let inputHeight = Int(inputSize.height)
 
-        for p in detectedObjects {
+        let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
+        for p in limitedObjects {
           let box = p.0
           let rect = CGRect(
             x: box.minX / modelWidth, y: box.minY / modelHeight,
@@ -180,7 +183,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         // 4. Generate mask image
         guard
           let processedMasks = generateCombinedMaskImage(
-            detectedObjects: detectedObjects,
+            detectedObjects: Array(limitedObjects),
             protos: masks,
             inputWidth: self.modelInputSize.width,
             inputHeight: self.modelInputSize.height,
@@ -309,9 +312,9 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       let classIndex = result.1
       if classBuckets[classIndex] == nil {
         classBuckets[classIndex] = []
-        classBuckets[classIndex]!.reserveCapacity(results.count / numClasses + 1)
+        classBuckets[classIndex]?.reserveCapacity(results.count / numClasses + 1)
       }
-      classBuckets[classIndex]!.append(result)
+      classBuckets[classIndex]?.append(result)
     }
 
     var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []

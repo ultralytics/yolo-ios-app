@@ -114,7 +114,6 @@ struct ModelSelectionManager {
       }
     }
 
-   
     if result.lowercased().hasPrefix("yolo") {
       let afterYolo = result.dropFirst(4)
       result = "YOLO" + afterYolo
@@ -229,7 +228,7 @@ struct ModelSelectionManager {
   {
     return standardModels[size]
   }
-  
+
   private static func setupResponsiveFontSize(for control: UISegmentedControl) {
     let screenWidth = UIScreen.main.bounds.width
 
@@ -237,16 +236,17 @@ struct ModelSelectionManager {
     let baseScreenWidth: CGFloat = 375
     let scaleFactor = screenWidth / baseScreenWidth
     let responsiveFontSize = max(7, min(12, baseFontSize * scaleFactor))
-    
-    control.setTitleTextAttributes([
-      .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .medium),
-      .foregroundColor: UIColor.white
-    ], for: .normal)
-    
-    control.setTitleTextAttributes([
-      .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .semibold),
-      .foregroundColor: UIColor.white
-    ], for: .selected)
+
+    control.setTitleTextAttributes(
+      [
+        .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .medium),
+        .foregroundColor: UIColor.white,
+      ], for: .normal)
+
+    control.setTitleTextAttributes(
+      [
+        .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .semibold),
+        .foregroundColor: UIColor.white,
+      ], for: .selected)
   }
 }
-

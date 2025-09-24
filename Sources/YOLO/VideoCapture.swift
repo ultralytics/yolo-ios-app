@@ -18,7 +18,7 @@ import Vision
 
 /// Protocol for receiving video capture frame processing results.
 @MainActor
-protocol VideoCaptureDelegate: AnyObject {
+public protocol VideoCaptureDelegate: AnyObject {
   func onPredict(result: YOLOResult)
   func onInferenceTime(speed: Double, fps: Double)
 }
@@ -41,11 +41,19 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
   }
 }
 
-class VideoCapture: NSObject, @unchecked Sendable {
-  var predictor: Predictor!
-  var previewLayer: AVCaptureVideoPreviewLayer?
-  weak var delegate: VideoCaptureDelegate?
+public class VideoCapture: NSObject, @unchecked Sendable {
+  public var predictor: Predictor!
+  public var previewLayer: AVCaptureVideoPreviewLayer?
+  public weak var delegate: VideoCaptureDelegate?
   var captureDevice: AVCaptureDevice?
+  
+  public func stopCapture() {
+    captureSession.stopRunning()
+  }
+  
+  public func startCapture() {
+    captureSession.startRunning()
+  }
   let captureSession = AVCaptureSession()
   var videoInput: AVCaptureDeviceInput? = nil
   let videoOutput = AVCaptureVideoDataOutput()
@@ -59,15 +67,17 @@ class VideoCapture: NSObject, @unchecked Sendable {
 
   private var currentBuffer: CVPixelBuffer?
 
-  func setUp(
+  public func setUp(
     sessionPreset: AVCaptureSession.Preset = .hd1280x720,
     position: AVCaptureDevice.Position,
     orientation: UIDeviceOrientation,
     completion: @escaping (Bool) -> Void
   ) {
+    print("📹 VideoCapture setUp called with position: \(position)")
     cameraQueue.async {
       let success = self.setUpCamera(
         sessionPreset: sessionPreset, position: position, orientation: orientation)
+      print("📹 VideoCapture setup result: \(success)")
       DispatchQueue.main.async {
         completion(success)
       }
@@ -78,23 +88,34 @@ class VideoCapture: NSObject, @unchecked Sendable {
     sessionPreset: AVCaptureSession.Preset, position: AVCaptureDevice.Position,
     orientation: UIDeviceOrientation
   ) -> Bool {
+    print("📹 setUpCamera called with position: \(position)")
     captureSession.beginConfiguration()
     captureSession.sessionPreset = sessionPreset
 
     guard let device = bestCaptureDevice(position: position) else {
+      print("❌ No capture device found for position: \(position)")
       return false
     }
+    print("✅ Found capture device: \(device.localizedName)")
     captureDevice = device
 
     do {
       videoInput = try AVCaptureDeviceInput(device: device)
+      print("✅ Video input created successfully")
     } catch {
+      print("❌ Failed to create video input: \(error)")
       return false
     }
 
-    guard let input = videoInput else { return false }
+    guard let input = videoInput else { 
+      print("❌ Video input is nil")
+      return false 
+    }
     if captureSession.canAddInput(input) {
       captureSession.addInput(input)
+      print("✅ Video input added to session")
+    } else {
+      print("❌ Cannot add video input to session")
     }
     var videoOrientation = AVCaptureVideoOrientation.portrait
     switch orientation {
@@ -247,7 +268,7 @@ class VideoCapture: NSObject, @unchecked Sendable {
 }
 
 extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
-  func captureOutput(
+  public func captureOutput(
     _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
     from connection: AVCaptureConnection
   ) {
@@ -258,7 +279,7 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
 
 extension VideoCapture: AVCapturePhotoCaptureDelegate {
   @available(iOS 11.0, *)
-  func photoOutput(
+  public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     guard let data = photo.fileDataRepresentation(),
@@ -272,13 +293,13 @@ extension VideoCapture: AVCapturePhotoCaptureDelegate {
 }
 
 extension VideoCapture: ResultsListener, InferenceTimeListener {
-  func on(inferenceTime: Double, fpsRate: Double) {
+  public func on(inferenceTime: Double, fpsRate: Double) {
     DispatchQueue.main.async {
       self.delegate?.onInferenceTime(speed: inferenceTime, fps: fpsRate)
     }
   }
 
-  func on(result: YOLOResult) {
+  public func on(result: YOLOResult) {
     DispatchQueue.main.async {
       self.delegate?.onPredict(result: result)
     }

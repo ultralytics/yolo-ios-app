@@ -32,7 +32,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   /// Delegate object - Receives performance metrics and YOLO detection results
   public weak var delegate: YOLOViewDelegate?
 
-  func onInferenceTime(speed: Double, fps: Double) {
+  public func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async {
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
       // Notify delegate of performance metrics
@@ -41,7 +41,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  func onPredict(result: YOLOResult) {
+  public func onPredict(result: YOLOResult) {
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
@@ -92,7 +92,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  var onDetection: ((YOLOResult) -> Void)?
+  public var onDetection: ((YOLOResult) -> Void)?
   private var videoCapture: VideoCapture
   private var busy = false
   private var currentBuffer: CVPixelBuffer?

@@ -25,7 +25,7 @@ import Vision
 ///
 /// - Note: Object detection models output rectangular bounding boxes around detected objects.
 /// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
-class ObjectDetector: BasePredictor, @unchecked Sendable {
+public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Sets the confidence threshold and updates the model's feature provider.
   ///
@@ -109,7 +109,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///
   /// - Parameter image: The CIImage to analyze for object detection.
   /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
-  override func predictOnImage(image: CIImage) -> YOLOResult {
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)

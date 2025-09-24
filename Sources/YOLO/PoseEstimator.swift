@@ -18,7 +18,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
-class PoseEstimator: BasePredictor, @unchecked Sendable {
+public class PoseEstimator: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
   override func processObservations(for request: VNRequest, error: Error?) {
@@ -57,7 +57,7 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
 
   }
 
-  override func predictOnImage(image: CIImage) -> YOLOResult {
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)

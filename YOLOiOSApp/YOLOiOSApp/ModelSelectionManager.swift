@@ -106,13 +106,21 @@ struct ModelSelectionManager {
   private static func removeTaskSuffix(from name: String) -> String {
     let taskSuffixes = ["-seg", "-cls", "-pose", "-obb"]
 
+    var result = name
     for suffix in taskSuffixes {
       if name.hasSuffix(suffix) {
-        return String(name.dropLast(suffix.count))
+        result = String(name.dropLast(suffix.count))
+        break
       }
     }
 
-    return name
+   
+    if result.lowercased().hasPrefix("yolo") {
+      let afterYolo = result.dropFirst(4)
+      result = "YOLO" + afterYolo
+    }
+
+    return result
   }
 
   static func setupSegmentedControl(
@@ -154,6 +162,8 @@ struct ModelSelectionManager {
     } else {
       control.selectedSegmentIndex = 0
     }
+
+    setupResponsiveFontSize(for: control)
 
     control.setNeedsLayout()
     control.layoutIfNeeded()
@@ -219,4 +229,24 @@ struct ModelSelectionManager {
   {
     return standardModels[size]
   }
+  
+  private static func setupResponsiveFontSize(for control: UISegmentedControl) {
+    let screenWidth = UIScreen.main.bounds.width
+
+    let baseFontSize: CGFloat = 8
+    let baseScreenWidth: CGFloat = 375
+    let scaleFactor = screenWidth / baseScreenWidth
+    let responsiveFontSize = max(7, min(12, baseFontSize * scaleFactor))
+    
+    control.setTitleTextAttributes([
+      .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .medium),
+      .foregroundColor: UIColor.white
+    ], for: .normal)
+    
+    control.setTitleTextAttributes([
+      .font: UIFont.systemFont(ofSize: responsiveFontSize, weight: .semibold),
+      .foregroundColor: UIColor.white
+    ], for: .selected)
+  }
 }
+

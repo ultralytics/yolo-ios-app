@@ -27,6 +27,81 @@ import Vision
 /// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
 class ObjectDetector: BasePredictor, @unchecked Sendable {
 
+  /// Processes MultiArray output format (1 × 300 × 6) from NMS-enabled CoreML models.
+  ///
+  /// This method handles models that output detections as a MultiArray instead of
+  /// VNRecognizedObjectObservation. The expected format is [1, 300, 6] where each
+  /// detection contains 6 values.
+  ///
+  /// - Parameter multiArray: The MLMultiArray containing detection results.
+  /// - Returns: An array of Box objects representing the detected objects.
+  private func processMultiArrayDetections(multiArray: MLMultiArray) -> [Box] {
+    var boxes = [Box]()
+    let numDetections = multiArray.shape[1].intValue
+
+    for i in 0..<min(numDetections, self.numItemsThreshold) {
+      // Extract detection values
+      // MLMultiArray uses linear indexing for 3D arrays: [batch, detection, value]
+      // For shape [1, 300, 6], the index is: detection * 6 + value
+      let baseIndex = i * 6
+
+      let x1 = Float(truncating: multiArray[baseIndex])
+      let y1 = Float(truncating: multiArray[baseIndex + 1])
+      let x2 = Float(truncating: multiArray[baseIndex + 2])
+      let y2 = Float(truncating: multiArray[baseIndex + 3])
+      let value4 = Float(truncating: multiArray[baseIndex + 4])
+      let value5 = Float(truncating: multiArray[baseIndex + 5])
+
+      // Based on debug output: value4 is confidence, value5 is class_id
+      let confidence = value4
+      let classId = Int(value5)
+
+      // Skip detections below confidence threshold
+      if confidence < Float(self.confidenceThreshold) {
+        continue
+      }
+
+      // Coordinates are already in pixel space (0-640 typically)
+      // Convert to image space based on actual input size
+      let modelWidth = Float(modelInputSize.width)
+      let modelHeight = Float(modelInputSize.height)
+
+      // Calculate box dimensions
+      let width = x2 - x1
+      let height = y2 - y1
+
+      // Create normalized box for xywhn
+      let normalizedBox = CGRect(
+        x: CGFloat(x1 / modelWidth),
+        y: CGFloat(y1 / modelHeight),
+        width: CGFloat(width / modelWidth),
+        height: CGFloat(height / modelHeight)
+      )
+
+      // Convert to image coordinates
+      let imageRect = CGRect(
+        x: CGFloat(x1) * inputSize.width / CGFloat(modelWidth),
+        y: CGFloat(y1) * inputSize.height / CGFloat(modelHeight),
+        width: CGFloat(width) * inputSize.width / CGFloat(modelWidth),
+        height: CGFloat(height) * inputSize.height / CGFloat(modelHeight)
+      )
+
+      // Get class label
+      let label = classId < labels.count ? labels[classId] : "unknown"
+
+      let box = Box(
+        index: classId,
+        cls: label,
+        conf: confidence,
+        xywh: imageRect,
+        xywhn: normalizedBox
+      )
+      boxes.append(box)
+    }
+
+    return boxes
+  }
+
   /// Sets the confidence threshold and updates the model's feature provider.
   ///
   /// This overridden method ensures that when the confidence threshold is changed,
@@ -61,9 +136,10 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///   - request: The completed Vision request containing object detection results.
   ///   - error: Any error that occurred during the Vision request.
   override func processObservations(for request: VNRequest, error: Error?) {
-    if let results = request.results as? [VNRecognizedObjectObservation] {
-      var boxes = [Box]()
+    var boxes = [Box]()
 
+    // Try to cast to VNRecognizedObjectObservation first
+    if let results = request.results as? [VNRecognizedObjectObservation] {
       for i in 0..<100 {
         if i < results.count && i < self.numItemsThreshold {
           let prediction = results[i]
@@ -83,22 +159,31 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
           boxes.append(box)
         }
       }
-
-      // Measure FPS
-      if self.t1 < 10.0 {  // valid dt
-        self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+    } else if let observations = request.results as? [VNCoreMLFeatureValueObservation],
+              let firstObservation = observations.first,
+              let multiArray = firstObservation.featureValue.multiArrayValue {
+      // Handle MultiArray output format (1 × 300 × 6)
+      // Check if it's the expected shape [1, 300, 6]
+      if multiArray.shape.count == 3,
+         multiArray.shape[1].intValue == 300,
+         multiArray.shape[2].intValue == 6 {
+        // Process MultiArray detections
+        boxes = processMultiArrayDetections(multiArray: multiArray)
       }
-      self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-      self.t3 = CACurrentMediaTime()
-
-      self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-      //                self.currentOnFpsRateListener?.on(fpsRate: 1 / self.t4)
-      let result = YOLOResult(
-        orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
-
-      self.currentOnResultsListener?.on(result: result)
-
     }
+
+    // Measure FPS
+    if self.t1 < 10.0 {  // valid dt
+      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+    }
+    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+    self.t3 = CACurrentMediaTime()
+
+    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
+    let result = YOLOResult(
+      orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
+
+    self.currentOnResultsListener?.on(result: result)
   }
 
   /// Processes a static image and returns object detection results.
@@ -124,6 +209,8 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
 
     do {
       try requestHandler.perform([request])
+
+      // Try to cast to VNRecognizedObjectObservation first
       if let results = request.results as? [VNRecognizedObjectObservation] {
         for i in 0..<100 {
           if i < results.count && i < self.numItemsThreshold {
@@ -143,6 +230,15 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
               index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
             boxes.append(box)
           }
+        }
+      } else if let observations = request.results as? [VNCoreMLFeatureValueObservation],
+                let firstObservation = observations.first,
+                let multiArray = firstObservation.featureValue.multiArrayValue {
+        // Handle MultiArray output format
+        if multiArray.shape.count == 3,
+           multiArray.shape[1].intValue == 300,
+           multiArray.shape[2].intValue == 6 {
+          boxes = processMultiArrayDetections(multiArray: multiArray)
         }
       }
     } catch {

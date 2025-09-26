@@ -100,7 +100,8 @@ struct ModelSelectionManager {
       let range = NSRange(location: 0, length: afterYoloString.count)
 
       if let match = modelSizeRegex.firstMatch(in: afterYoloString, options: [], range: range),
-         match.numberOfRanges > 1 {
+        match.numberOfRanges > 1
+      {
         let sizeRange = match.range(at: 1)
         if let range = Range(sizeRange, in: afterYoloString) {
           return afterYoloString[range].first

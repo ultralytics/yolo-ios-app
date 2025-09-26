@@ -27,6 +27,15 @@ struct ModelSelectionManager {
     let isCustom: Bool
   }
 
+  private static let modelSizeRegex: NSRegularExpression = {
+    do {
+      return try NSRegularExpression(pattern: "^\\d+([nsmxl])", options: [])
+    } catch {
+      print("Failed to create model size regex: \(error)")
+      return try! NSRegularExpression(pattern: "^$", options: [])
+    }
+  }()
+
   static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)]) -> (
     standard: [ModelSize: ModelInfo], custom: [ModelInfo]
   ) {
@@ -87,15 +96,15 @@ struct ModelSelectionManager {
 
     if nameWithoutSuffix.hasPrefix("yolo") && !nameWithoutSuffix.dropFirst(4).isEmpty {
       let afterYolo = nameWithoutSuffix.dropFirst(4)
-      let pattern = "^\\d+([nsmxl])"
-      if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-        let match = regex.firstMatch(
-          in: String(afterYolo), options: [], range: NSRange(location: 0, length: afterYolo.count)),
+      let afterYoloString = String(afterYolo)
+      let range = NSRange(location: 0, length: afterYoloString.count)
+
+      if let match = modelSizeRegex.firstMatch(in: afterYoloString, options: [], range: range),
         match.numberOfRanges > 1
       {
         let sizeRange = match.range(at: 1)
-        if let range = Range(sizeRange, in: String(afterYolo)) {
-          return String(afterYolo)[range].first
+        if let range = Range(sizeRange, in: afterYoloString) {
+          return afterYoloString[range].first
         }
       }
     }

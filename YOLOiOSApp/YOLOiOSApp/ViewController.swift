@@ -53,10 +53,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
     return true
   }
 
-  @IBOutlet weak var yoloView: YOLOView!, View0: UIView!, segmentedControl: UISegmentedControl!,
-    labelName: UILabel!, labelFPS: UILabel!, labelVersion: UILabel!,
-    activityIndicator: UIActivityIndicatorView!, logoImage: UIImageView!,
-    modelSegmentedControl: UISegmentedControl!
+  @IBOutlet weak var yoloView: YOLOView!
+  @IBOutlet weak var View0: UIView!
+  @IBOutlet weak var segmentedControl: UISegmentedControl!
+  @IBOutlet weak var modelSegmentedControl: UISegmentedControl!
+  @IBOutlet weak var labelName: UILabel!
+  @IBOutlet weak var labelFPS: UILabel!
+  @IBOutlet weak var labelVersion: UILabel!
+  @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+  @IBOutlet weak var logoImage: UIImageView!
 
   var customModelButton: UIButton!
 

@@ -79,7 +79,7 @@ class Segmenter: BasePredictor, @unchecked Sendable {
       // Capture needed values before async block
       let capturedMasks = masks
       let capturedBoxes = boxes
-      let capturedInputSize = self.inputSize!
+      let capturedInputSize = self.inputSize
       let capturedModelInputSize = self.modelInputSize
       let capturedT2 = self.t2
       let capturedT4 = self.t4

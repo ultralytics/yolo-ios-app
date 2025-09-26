@@ -23,44 +23,13 @@ extension Result {
   var isSuccess: Bool { if case .success = self { return true } else { return false } }
 }
 
-// MARK: - ModelTableViewCell
-class ModelTableViewCell: UITableViewCell {
-  static let identifier = "ModelTableViewCell"
-
-  override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-    super.init(style: .default, reuseIdentifier: reuseIdentifier)
-    backgroundColor = .clear
-    selectionStyle = .default
-    textLabel?.textAlignment = .center
-    textLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-    textLabel?.adjustsFontSizeToFitWidth = true
-    textLabel?.minimumScaleFactor = 0.7
-    selectedBackgroundView = {
-      let v = UIView()
-      v.backgroundColor = UIColor(white: 1.0, alpha: 0.3)
-      v.layer.cornerRadius = 5
-      return v
-    }()
-  }
-
-  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-  func configure(with modelName: String, isRemote: Bool, isDownloaded: Bool) {
-    textLabel?.text = modelName
-    textLabel?.textColor = (isRemote && !isDownloaded) ? .lightGray : .white
-    imageView?.image =
-      (isRemote && !isDownloaded)
-      ? UIImage(
-        systemName: "icloud.and.arrow.down",
-        withConfiguration: UIImage.SymbolConfiguration(pointSize: 14)) : nil
-    imageView?.tintColor = .white
-  }
-
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    selectedBackgroundView?.frame = bounds.insetBy(dx: 2, dy: 1)
+extension Array {
+  subscript(safe index: Int) -> Element? {
+    return indices.contains(index) ? self[index] : nil
   }
 }
+
+// MARK: - Model Selection Helpers
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
@@ -84,15 +53,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     return true
   }
 
-  @IBOutlet weak var yoloView: YOLOView!
-  @IBOutlet weak var View0: UIView!
-  @IBOutlet weak var segmentedControl: UISegmentedControl!
-  @IBOutlet weak var labelName: UILabel!
-  @IBOutlet weak var labelFPS: UILabel!
-  @IBOutlet weak var labelVersion: UILabel!
-  @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  @IBOutlet weak var focus: UIImageView!
-  @IBOutlet weak var logoImage: UIImageView!
+  @IBOutlet weak var yoloView: YOLOView!, View0: UIView!, segmentedControl: UISegmentedControl!,
+    labelName: UILabel!, labelFPS: UILabel!, labelVersion: UILabel!,
+    activityIndicator: UIActivityIndicatorView!, logoImage: UIImageView!,
+    modelSegmentedControl: UISegmentedControl!
+
+  var customModelButton: UIButton!
 
   let selection = UISelectionFeedbackGenerator()
 
@@ -115,7 +81,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // MARK: - Loading State Management
   private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
     loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
-    [view, modelTableView].forEach { $0.isUserInteractionEnabled = !loading }
+    view.isUserInteractionEnabled = !loading
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
   }
@@ -145,23 +111,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private var modelsForTask: [String: [String]] = [:]
 
   var currentModels: [ModelEntry] = []
+  private var standardModels: [ModelSelectionManager.ModelSize: ModelSelectionManager.ModelInfo] =
+    [:]
+  var customModels: [ModelSelectionManager.ModelInfo] = []
 
   var currentTask: String = ""
   var currentModelName: String = ""
 
   private var isLoadingModel = false
-
-  let modelTableView: UITableView = {
-    let table = UITableView()
-    table.isHidden = true
-    table.layer.cornerRadius = 5  // Match corner radius of other elements
-    table.clipsToBounds = true
-    return table
-  }()
-
-  let tableViewBGView = UIView()
-
-  var selectedIndexPath: IndexPath?
+  private var isCustomModelSelected = false
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -193,36 +151,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
       modelsForTask[task.name] = getModelFiles(in: task.folder)
     }
 
+    setupModelSegmentedControl()
+    setupCustomModelButton()
+
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
       currentTask = tasks[Constants.defaultTaskIndex].name
 
-      // Load models and auto-select first one if no external display
-      if UIScreen.screens.count == 1 {
-        // No external display - load model and start inference
-        reloadModelEntriesAndLoadFirst(for: currentTask)
-      } else {
-        // External display connected - stop main YOLOView
-        print("External display detected at startup - stopping main YOLOView")
-        yoloView.stop()
-        yoloView.isHidden = true
+      // Always load models initially - external display handling will stop camera if needed
+      reloadModelEntriesAndLoadFirst(for: currentTask)
 
-        // Load model list for UI but don't auto-select
-        currentModels = makeModelEntries(for: currentTask)
-        modelTableView.reloadData()
-
-        if !currentModels.isEmpty {
-          modelTableView.isHidden = false
-        }
-
-        // Ensure camera is fully released
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          print("Main YOLOView fully stopped, external display can now use camera")
-        }
+      // Check for external display after initial setup
+      if UIScreen.screens.count > 1 {
+        print("External display may be connected at startup - will be handled by notifications")
       }
     }
-
-    setupTableView()
 
     // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true
@@ -286,6 +229,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.overrideUserInterfaceStyle = .dark
   }
 
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+  }
+
   private func getModelFiles(in folderName: String) -> [String] {
     guard let folderURL = Bundle.main.url(forResource: folderName, withExtension: nil),
       let fileURLs = try? FileManager.default.contentsOfDirectory(
@@ -317,17 +264,32 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
-    modelTableView.isHidden = currentModels.isEmpty
-    modelTableView.reloadData()
+    let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
+    let categorized = ModelSelectionManager.categorizeModels(from: modelTuples)
+    standardModels = categorized.standard
+    customModels = categorized.custom
 
-    if !currentModels.isEmpty {
-      DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
-        let firstIndex = IndexPath(row: 0, section: 0)
-        self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-        self.selectedIndexPath = firstIndex
-        self.loadModel(entry: self.currentModels[0], forTask: taskName)
-      }
+    let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
+    ModelSelectionManager.setupSegmentedControl(
+      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+
+    customModelButton?.isHidden = customModels.isEmpty
+    isCustomModelSelected = false
+    updateCustomButtonAppearance()
+
+    if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
+      let model = standardModels[firstSize]
+    {
+      let entry = ModelEntry(
+        displayName: (model.name as NSString).deletingPathExtension,
+        identifier: model.name,
+        isLocalBundle: model.isLocal,
+        isRemote: model.url != nil,
+        remoteURL: model.url
+      )
+      loadModel(entry: entry, forTask: taskName)
+    } else if !customModels.isEmpty {
+      showCustomModelPicker()
     }
   }
 
@@ -511,6 +473,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func resetDownloadProgress() {
     downloadProgressView.progress = 0.0
+    downloadProgressLabel.text = ""
     [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
   }
 
@@ -521,7 +484,25 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.isLoadingModel = false
       self.resetDownloadProgress()
 
-      self.modelTableView.reloadData()
+      if success {
+        // Update the segmented control to reflect downloaded status
+        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+
+        // Rebuild the control to update download icons
+        ModelSelectionManager.setupSegmentedControl(
+          self.modelSegmentedControl,
+          standardModels: self.standardModels,
+          currentTask: yoloTask,
+          preserveSelection: true
+        )
+
+        // Also update appearance to ensure correct colors
+        ModelSelectionManager.updateSegmentAppearance(
+          self.modelSegmentedControl,
+          standardModels: self.standardModels,
+          currentTask: yoloTask
+        )
+      }
 
       // Notify external display of model change (Optional feature)
       if success {
@@ -577,10 +558,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
 
-      if let ip = self.selectedIndexPath {
-        self.modelTableView.selectRow(at: ip, animated: false, scrollPosition: .none)
-      }
-
       // Check if external display is connected
       let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
 
@@ -616,7 +593,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     currentTask = newTask
-    selectedIndexPath = nil
 
     // Notify external display of task change immediately (Optional external display feature)
     NotificationCenter.default.post(
@@ -624,9 +600,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       object: nil,
       userInfo: ["task": newTask]
     )
-
     reloadModelEntriesAndLoadFirst(for: currentTask)
-    updateTableViewBGFrame()
   }
 
   @objc func logoButton() {
@@ -636,47 +610,136 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func setupTableView() {
-    modelTableView.delegate = self
-    modelTableView.dataSource = self
-    modelTableView.register(
-      ModelTableViewCell.self, forCellReuseIdentifier: ModelTableViewCell.identifier)
-    modelTableView.backgroundColor = .clear
-    modelTableView.separatorStyle = .none
-    modelTableView.isScrollEnabled = false
-    modelTableView.translatesAutoresizingMaskIntoConstraints = false
-    tableViewBGView.backgroundColor = .darkGray.withAlphaComponent(0.3)
-    tableViewBGView.layer.cornerRadius = 5
-    tableViewBGView.clipsToBounds = true
-    [tableViewBGView, modelTableView].forEach { yoloView.addSubview($0) }
-    updateTableViewBGFrame()
+  private func setupModelSegmentedControl() {
+    modelSegmentedControl.isHidden = false
+    modelSegmentedControl.overrideUserInterfaceStyle = .dark
+    modelSegmentedControl.apportionsSegmentWidthsByContent = true
+    modelSegmentedControl.addTarget(
+      self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
+
+    modelSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+    ])
+  }
+
+  private func setupCustomModelButton() {
+    customModelButton = UIButton(type: .system)
+    customModelButton.setTitle("Custom", for: .normal)
+    customModelButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+    customModelButton.setTitleColor(.white, for: .normal)
+    customModelButton.setTitleColor(.systemBlue, for: .selected)
+    customModelButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
+    customModelButton.layer.cornerRadius = 8
+    customModelButton.layer.borderWidth = 1
+    customModelButton.layer.borderColor = UIColor.systemGray.cgColor
+    customModelButton.addTarget(
+      self, action: #selector(customModelButtonTapped), for: .touchUpInside)
+    customModelButton.translatesAutoresizingMaskIntoConstraints = false
+
+    View0.addSubview(customModelButton)
+
+    NSLayoutConstraint.activate([
+      customModelButton.topAnchor.constraint(
+        equalTo: modelSegmentedControl.bottomAnchor, constant: 8),
+      customModelButton.leadingAnchor.constraint(equalTo: modelSegmentedControl.leadingAnchor),
+      customModelButton.trailingAnchor.constraint(equalTo: modelSegmentedControl.trailingAnchor),
+      customModelButton.heightAnchor.constraint(equalToConstant: 28),
+    ])
+
+    customModelButton.isHidden = true
+  }
+
+  func updateModelSegmentedControlAppearance() {
+    guard modelSegmentedControl != nil else { return }
+
+    modelSegmentedControl.overrideUserInterfaceStyle = .dark
+    modelSegmentedControl.backgroundColor = .clear
+
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    ModelSelectionManager.updateSegmentAppearance(
+      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+  }
+
+  private func updateCustomButtonAppearance() {
+    if isCustomModelSelected {
+      customModelButton?.isSelected = true
+      customModelButton?.backgroundColor = .systemBlue.withAlphaComponent(0.2)
+      customModelButton?.layer.borderColor = UIColor.systemBlue.cgColor
+      modelSegmentedControl.selectedSegmentIndex = UISegmentedControl.noSegment
+    } else {
+      customModelButton?.isSelected = false
+      customModelButton?.backgroundColor = .systemBackground.withAlphaComponent(0.1)
+      customModelButton?.layer.borderColor = UIColor.systemGray.cgColor
+    }
+  }
+
+  @objc private func customModelButtonTapped() {
+    selection.selectionChanged()
+    showCustomModelPicker()
+  }
+
+  @objc private func modelSizeChanged(_ sender: UISegmentedControl) {
+    selection.selectionChanged()
+
+    isCustomModelSelected = false
+    updateCustomButtonAppearance()
+
+    if sender.selectedSegmentIndex < ModelSelectionManager.ModelSize.allCases.count {
+      let size = ModelSelectionManager.ModelSize.allCases[sender.selectedSegmentIndex]
+      if let model = standardModels[size] {
+        let entry = ModelEntry(
+          displayName: (model.name as NSString).deletingPathExtension,
+          identifier: model.name,
+          isLocalBundle: model.isLocal,
+          isRemote: model.url != nil,
+          remoteURL: model.url
+        )
+        loadModel(entry: entry, forTask: currentTask)
+      }
+    }
+  }
+
+  private func showCustomModelPicker() {
+    let alert = UIAlertController(
+      title: "Select Custom Model", message: nil, preferredStyle: .actionSheet)
+
+    for model in customModels {
+      alert.addAction(
+        UIAlertAction(title: processString(model.name), style: .default) { [weak self] _ in
+          self?.isCustomModelSelected = true
+          self?.updateCustomButtonAppearance()
+          let entry = ModelEntry(
+            displayName: (model.name as NSString).deletingPathExtension,
+            identifier: model.name,
+            isLocalBundle: model.isLocal,
+            isRemote: model.url != nil,
+            remoteURL: model.url
+          )
+          self?.loadModel(entry: entry, forTask: self?.currentTask ?? "")
+        })
+    }
+
+    alert.addAction(
+      UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+        if self?.isCustomModelSelected == false {
+          self?.modelSegmentedControl.selectedSegmentIndex = 0
+          self?.modelSizeChanged(self?.modelSegmentedControl ?? UISegmentedControl())
+        }
+      })
+
+    if let popover = alert.popoverPresentationController {
+      popover.sourceView = customModelButton ?? modelSegmentedControl
+      popover.sourceRect = customModelButton?.bounds ?? modelSegmentedControl.bounds
+    }
+
+    present(alert, animated: true)
   }
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-
-    let isLandscape = view.bounds.width > view.bounds.height
-    let tableViewWidth = view.bounds.width * (isLandscape ? 0.2 : 0.4)
-
-    modelTableView.frame =
-      isLandscape
-      ? CGRect(x: segmentedControl.frame.maxX + 20, y: 20, width: tableViewWidth, height: 200)
-      : CGRect(
-        x: view.bounds.width - tableViewWidth - 8, y: segmentedControl.frame.maxY + 25,
-        width: tableViewWidth, height: 200)
-
-    updateTableViewBGFrame()
-
     adjustLayoutForExternalDisplayIfNeeded()
-  }
-
-  func updateTableViewBGFrame() {
-    tableViewBGView.frame = CGRect(
-      x: modelTableView.frame.minX - 1,
-      y: modelTableView.frame.minY - 1,
-      width: modelTableView.frame.width + 2,
-      height: CGFloat(currentModels.count * Int(Constants.tableRowHeight) + 2)
-    )
   }
 
   @objc func shareButtonTapped() {
@@ -738,47 +801,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
     print("\n")
-  }
-
-}
-
-// MARK: - UITableViewDataSource, UITableViewDelegate
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
-
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    currentModels.count
-  }
-
-  func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-    Constants.tableRowHeight
-  }
-
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell =
-      tableView.dequeueReusableCell(withIdentifier: ModelTableViewCell.identifier, for: indexPath)
-      as! ModelTableViewCell
-    let entry = currentModels[indexPath.row]
-
-    // Check if the model is remote and not yet downloaded
-    let isDownloaded =
-      entry.isRemote ? ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) : true
-
-    // Format model name using the processString function
-    let formattedName = processString(entry.displayName)
-
-    // Configure the cell
-    cell.configure(with: formattedName, isRemote: entry.isRemote, isDownloaded: isDownloaded)
-
-    return cell
-  }
-
-  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    selection.selectionChanged()
-
-    selectedIndexPath = indexPath
-    let selectedEntry = currentModels[indexPath.row]
-
-    loadModel(entry: selectedEntry, forTask: currentTask)
   }
 
 }

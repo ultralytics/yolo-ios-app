@@ -952,18 +952,18 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let sliderWidth: CGFloat = width * 0.46
     let sliderHeight: CGFloat = height * 0.02
 
-    sliderNumItems.frame = CGRect(
-      x: width * 0.01, y: center.y - sliderHeight - height * 0.24,
+    labelSliderNumItems.frame = CGRect(
+      x: width * 0.01, y: center.y + height * 0.16,
       width: sliderWidth, height: sliderHeight
     )
 
-    labelSliderNumItems.frame = CGRect(
-      x: width * 0.01, y: sliderNumItems.frame.minY - sliderHeight - 10,
+    sliderNumItems.frame = CGRect(
+      x: width * 0.01, y: labelSliderNumItems.frame.maxY + 10,
       width: sliderWidth, height: sliderHeight
     )
 
     labelSliderConf.frame = CGRect(
-      x: width * 0.01, y: center.y + height * 0.24,
+      x: width * 0.01, y: sliderNumItems.frame.maxY + 10,
       width: sliderWidth * 1.5, height: sliderHeight
     )
 

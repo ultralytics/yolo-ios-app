@@ -254,3 +254,5 @@ Tests/YOLOTests/Resources/*.mlpackage
 CLAUDE.md
 CLAUDE.md.backup
 .build/
+
+Package.resolved

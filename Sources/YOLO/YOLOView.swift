@@ -355,6 +355,62 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     videoCapture.start()
   }
 
+  // MARK: - Threshold Configuration Methods
+
+  /// Sets the maximum number of detection items to include in results.
+  /// - Parameter numItems: The maximum number of items to include (default is 30).
+  public func setNumItemsThreshold(_ numItems: Int) {
+    sliderNumItems.value = Float(numItems)
+    (videoCapture.predictor as? BasePredictor)?.setNumItemsThreshold(numItems: numItems)
+  }
+
+  /// Gets the current maximum number of detection items.
+  /// - Returns: The current threshold value.
+  public func getNumItemsThreshold() -> Int { Int(sliderNumItems.value) }
+
+  /// Sets the confidence threshold for filtering results.
+  /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
+  public func setConfidenceThreshold(_ confidence: Double) {
+    guard (0.0...1.0).contains(confidence) else {
+      print("Warning: Confidence threshold should be between 0.0 and 1.0")
+      return
+    }
+    sliderConf.value = Float(confidence)
+    labelSliderConf.text = String(format: "%.2f Confidence Threshold", confidence)
+    (videoCapture.predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
+  }
+
+  /// Gets the current confidence threshold.
+  /// - Returns: The current confidence threshold value.
+  public func getConfidenceThreshold() -> Double { Double(sliderConf.value) }
+
+  /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
+  public func setIouThreshold(_ iou: Double) {
+    guard (0.0...1.0).contains(iou) else {
+      print("Warning: IoU threshold should be between 0.0 and 1.0")
+      return
+    }
+    sliderIoU.value = Float(iou)
+    labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    (videoCapture.predictor as? BasePredictor)?.setIouThreshold(iou: iou)
+  }
+
+  /// Gets the current IoU threshold.
+  /// - Returns: The current IoU threshold value.
+  public func getIouThreshold() -> Double { Double(sliderIoU.value) }
+
+  /// Sets all thresholds at once.
+  /// - Parameters:
+  ///   - numItems: The maximum number of items to include.
+  ///   - confidence: The confidence threshold value (0.0 to 1.0).
+  ///   - iou: The IoU threshold value (0.0 to 1.0).
+  public func setThresholds(numItems: Int? = nil, confidence: Double? = nil, iou: Double? = nil) {
+    numItems.map { setNumItemsThreshold($0) }
+    confidence.map { setConfidenceThreshold($0) }
+    iou.map { setIouThreshold($0) }
+  }
+
   func setUpBoundingBoxViews() {
     // Ensure all bounding box views are initialized up to the maximum allowed.
     while boundingBoxViews.count < maxBoundingBoxViews {
@@ -1174,73 +1230,45 @@ extension YOLOView {
     return copy
   }
 
-  /// Creates a copy of the mask layer for capture
-  private func copyMaskLayer(_ maskLayer: CALayer) -> CALayer? {
-    let tempLayer = CALayer()
-    let overlayFrame = self.overlayLayer.frame
-    let maskFrame = maskLayer.frame
-
-    // Adjust mask frame to be relative to the main view, not overlayLayer
-    tempLayer.frame = CGRect(
-      x: overlayFrame.origin.x + maskFrame.origin.x,
-      y: overlayFrame.origin.y + maskFrame.origin.y,
-      width: maskFrame.width,
-      height: maskFrame.height
-    )
-    tempLayer.contents = maskLayer.contents
-    copyLayerProperties(from: maskLayer, to: tempLayer)
-    return tempLayer
-  }
-
-  /// Creates a copy of the pose layer including all sublayers
-  private func copyPoseLayer(_ poseLayer: CALayer) -> CALayer? {
+  /// Creates a copy of a visualization layer for capture
+  private func copyVisualizationLayer(_ layer: CALayer, isFullFrame: Bool = false) -> CALayer? {
     let tempLayer = CALayer()
     let overlayFrame = self.overlayLayer.frame
 
-    tempLayer.frame = CGRect(
-      x: overlayFrame.origin.x,
-      y: overlayFrame.origin.y,
-      width: overlayFrame.width,
-      height: overlayFrame.height
-    )
-    tempLayer.opacity = poseLayer.opacity
-
-    // Copy all sublayers (keypoints and skeleton lines)
-    if let sublayers = poseLayer.sublayers {
-      for sublayer in sublayers {
-        if let shapeLayer = sublayer as? CAShapeLayer {
-          tempLayer.addSublayer(copyShapeLayer(shapeLayer))
-        } else {
-          let copyLayer = CALayer()
-          copyLayer.frame = sublayer.frame
-          copyLayerProperties(from: sublayer, to: copyLayer)
-          tempLayer.addSublayer(copyLayer)
-        }
-      }
+    if isFullFrame {
+      tempLayer.frame = CGRect(
+        x: overlayFrame.origin.x,
+        y: overlayFrame.origin.y,
+        width: overlayFrame.width,
+        height: overlayFrame.height
+      )
+    } else {
+      // For mask layer - adjust frame to be relative to main view
+      let layerFrame = layer.frame
+      tempLayer.frame = CGRect(
+        x: overlayFrame.origin.x + layerFrame.origin.x,
+        y: overlayFrame.origin.y + layerFrame.origin.y,
+        width: layerFrame.width,
+        height: layerFrame.height
+      )
+      tempLayer.contents = layer.contents
     }
-    return tempLayer
-  }
 
-  /// Creates a copy of the OBB layer including all sublayers
-  private func copyOBBLayer(_ obbLayer: CALayer) -> CALayer? {
-    let tempLayer = CALayer()
-    let overlayFrame = self.overlayLayer.frame
+    tempLayer.opacity = layer.opacity
+    copyLayerProperties(from: layer, to: tempLayer)
 
-    tempLayer.frame = CGRect(
-      x: overlayFrame.origin.x,
-      y: overlayFrame.origin.y,
-      width: overlayFrame.width,
-      height: overlayFrame.height
-    )
-    tempLayer.opacity = obbLayer.opacity
-
-    // Copy all sublayers
-    if let sublayers = obbLayer.sublayers {
+    // Copy sublayers if present
+    if let sublayers = layer.sublayers {
       for sublayer in sublayers {
         if let shapeLayer = sublayer as? CAShapeLayer {
           tempLayer.addSublayer(copyShapeLayer(shapeLayer))
         } else if let textLayer = sublayer as? CATextLayer {
           tempLayer.addSublayer(copyTextLayer(textLayer))
+        } else {
+          let copyLayer = CALayer()
+          copyLayer.frame = sublayer.frame
+          copyLayerProperties(from: sublayer, to: copyLayer)
+          tempLayer.addSublayer(copyLayer)
         }
       }
     }
@@ -1297,7 +1325,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
 
         // Add mask layer if present (for segmentation task)
         if let maskLayer = self.maskLayer, !maskLayer.isHidden {
-          if let tempLayer = copyMaskLayer(maskLayer) {
+          if let tempLayer = copyVisualizationLayer(maskLayer, isFullFrame: false) {
             self.layer.addSublayer(tempLayer)
             tempLayers.append(tempLayer)
           }
@@ -1305,7 +1333,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
 
         // Add pose layer if present (for pose task)
         if let poseLayer = self.poseLayer {
-          if let tempLayer = copyPoseLayer(poseLayer) {
+          if let tempLayer = copyVisualizationLayer(poseLayer, isFullFrame: true) {
             self.layer.addSublayer(tempLayer)
             tempLayers.append(tempLayer)
           }
@@ -1313,7 +1341,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
 
         // Add OBB layer if present (for OBB task)
         if let obbLayer = self.obbLayer, !obbLayer.isHidden {
-          if let tempLayer = copyOBBLayer(obbLayer) {
+          if let tempLayer = copyVisualizationLayer(obbLayer, isFullFrame: true) {
             self.layer.addSublayer(tempLayer)
             tempLayers.append(tempLayer)
           }

@@ -24,9 +24,9 @@ extension Result {
 }
 
 extension Array {
-    subscript(safe index: Int) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
+  subscript(safe index: Int) -> Element? {
+    return indices.contains(index) ? self[index] : nil
+  }
 }
 
 // MARK: - Model Selection Helpers
@@ -116,7 +116,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private var modelsForTask: [String: [String]] = [:]
 
   var currentModels: [ModelEntry] = []
-  private var standardModels: [ModelSelectionManager.ModelSize: ModelSelectionManager.ModelInfo] = [:]
+  private var standardModels: [ModelSelectionManager.ModelSize: ModelSelectionManager.ModelInfo] =
+    [:]
   var customModels: [ModelSelectionManager.ModelInfo] = []
 
   var currentTask: String = ""
@@ -274,14 +275,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
     customModels = categorized.custom
 
     let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
-    ModelSelectionManager.setupSegmentedControl(modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+    ModelSelectionManager.setupSegmentedControl(
+      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
 
     customModelButton?.isHidden = customModels.isEmpty
     isCustomModelSelected = false
     updateCustomButtonAppearance()
 
     if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
-       let model = standardModels[firstSize] {
+      let model = standardModels[firstSize]
+    {
       let entry = ModelEntry(
         displayName: (model.name as NSString).deletingPathExtension,
         identifier: model.name,
@@ -560,7 +563,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
 
-
       // Check if external display is connected
       let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
 
@@ -617,7 +619,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelSegmentedControl.isHidden = false
     modelSegmentedControl.overrideUserInterfaceStyle = .dark
     modelSegmentedControl.apportionsSegmentWidthsByContent = true
-    modelSegmentedControl.addTarget(self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
+    modelSegmentedControl.addTarget(
+      self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
   }
 
   private func setupCustomModelButton() {
@@ -630,16 +633,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
     customModelButton.layer.cornerRadius = 8
     customModelButton.layer.borderWidth = 1
     customModelButton.layer.borderColor = UIColor.systemGray.cgColor
-    customModelButton.addTarget(self, action: #selector(customModelButtonTapped), for: .touchUpInside)
+    customModelButton.addTarget(
+      self, action: #selector(customModelButtonTapped), for: .touchUpInside)
     customModelButton.translatesAutoresizingMaskIntoConstraints = false
 
     View0.addSubview(customModelButton)
 
     NSLayoutConstraint.activate([
-      customModelButton.topAnchor.constraint(equalTo: modelSegmentedControl.bottomAnchor, constant: 8),
+      customModelButton.topAnchor.constraint(
+        equalTo: modelSegmentedControl.bottomAnchor, constant: 8),
       customModelButton.leadingAnchor.constraint(equalTo: modelSegmentedControl.leadingAnchor),
       customModelButton.trailingAnchor.constraint(equalTo: modelSegmentedControl.trailingAnchor),
-      customModelButton.heightAnchor.constraint(equalToConstant: 28)
+      customModelButton.heightAnchor.constraint(equalToConstant: 28),
     ])
 
     customModelButton.isHidden = true
@@ -652,7 +657,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelSegmentedControl.backgroundColor = .clear
 
     let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
-    ModelSelectionManager.updateSegmentAppearance(modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+    ModelSelectionManager.updateSegmentAppearance(
+      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
   }
 
   private func updateCustomButtonAppearance() {
@@ -695,29 +701,32 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func showCustomModelPicker() {
-    let alert = UIAlertController(title: "Select Custom Model", message: nil, preferredStyle: .actionSheet)
+    let alert = UIAlertController(
+      title: "Select Custom Model", message: nil, preferredStyle: .actionSheet)
 
     for model in customModels {
-      alert.addAction(UIAlertAction(title: processString(model.name), style: .default) { [weak self] _ in
-        self?.isCustomModelSelected = true
-        self?.updateCustomButtonAppearance()
-        let entry = ModelEntry(
-          displayName: (model.name as NSString).deletingPathExtension,
-          identifier: model.name,
-          isLocalBundle: model.isLocal,
-          isRemote: model.url != nil,
-          remoteURL: model.url
-        )
-        self?.loadModel(entry: entry, forTask: self?.currentTask ?? "")
-      })
+      alert.addAction(
+        UIAlertAction(title: processString(model.name), style: .default) { [weak self] _ in
+          self?.isCustomModelSelected = true
+          self?.updateCustomButtonAppearance()
+          let entry = ModelEntry(
+            displayName: (model.name as NSString).deletingPathExtension,
+            identifier: model.name,
+            isLocalBundle: model.isLocal,
+            isRemote: model.url != nil,
+            remoteURL: model.url
+          )
+          self?.loadModel(entry: entry, forTask: self?.currentTask ?? "")
+        })
     }
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-      if self?.isCustomModelSelected == false {
-        self?.modelSegmentedControl.selectedSegmentIndex = 0
-        self?.modelSizeChanged(self?.modelSegmentedControl ?? UISegmentedControl())
-      }
-    })
+    alert.addAction(
+      UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+        if self?.isCustomModelSelected == false {
+          self?.modelSegmentedControl.selectedSegmentIndex = 0
+          self?.modelSizeChanged(self?.modelSegmentedControl ?? UISegmentedControl())
+        }
+      })
 
     if let popover = alert.popoverPresentationController {
       popover.sourceView = customModelButton ?? modelSegmentedControl

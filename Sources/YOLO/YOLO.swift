@@ -90,14 +90,7 @@ public class YOLO: @unchecked Sendable {
     case .obb:
       ObbDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
     default:
-      ObjectDetector.create(
-        unwrappedModelURL: modelURL,
-        completion: { result in
-          switch result {
-          case .success(let predictor): handleSuccess(predictor: predictor)
-          case .failure(let error): handleFailure(error)
-          }
-        })
+      ObjectDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
 
     }
   }

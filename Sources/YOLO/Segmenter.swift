@@ -76,26 +76,38 @@ class Segmenter: BasePredictor, @unchecked Sendable {
         alphas.append(alpha)
       }
 
-      DispatchQueue.global(qos: .userInitiated).async {
+      // Capture needed values before async block
+      let capturedMasks = masks
+      let capturedBoxes = boxes
+      let capturedInputSize = self.inputSize!
+      let capturedModelInputSize = self.modelInputSize
+      let capturedT2 = self.t2
+      let capturedT4 = self.t4
+      let capturedLabels = self.labels
+
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
-          let procceessedMasks = generateCombinedMaskImage(
-            detectedObjects: Array(limitedObjects),
-            protos: masks,
-            inputWidth: self.modelInputSize.width,
-            inputHeight: self.modelInputSize.height,
+          let processedMasks = generateCombinedMaskImage(
+            detectedObjects: detectedObjects,
+            protos: capturedMasks,
+            inputWidth: capturedModelInputSize.width,
+            inputHeight: capturedModelInputSize.height,
             threshold: 0.5
 
           ) as? (CGImage?, [[[Float]]])
         else {
-          DispatchQueue.main.async { self.isUpdating = false }
+          DispatchQueue.main.async { [weak self] in
+            self?.isUpdating = false
+          }
           return
         }
-        let maskResults = Masks(masks: procceessedMasks.1, combinedMask: procceessedMasks.0)
+        let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
         let result = YOLOResult(
-          orig_shape: self.inputSize, boxes: boxes, masks: maskResults, speed: self.t2,
-          fps: 1 / self.t4, names: self.labels)
-        self.updateTime()
-        self.currentOnResultsListener?.on(result: result)
+          orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
+          speed: capturedT2,
+          fps: 1 / capturedT4, names: capturedLabels)
+        self?.updateTime()
+        self?.currentOnResultsListener?.on(result: result)
       }
     }
   }
@@ -241,13 +253,32 @@ class Segmenter: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
     // Pre-allocate result arrays with estimated capacity
-    let resultsWrapper = ResultsWrapper()
-    resultsWrapper.reserveCapacity(min(numAnchors / 10, 100))  // Estimate ~10% detection rate
+    let estimatedCapacity = min(numAnchors / 10, 100)  // Estimate ~10% detection rate
+    let resultsWrapper = ResultsWrapper(capacity: estimatedCapacity)
+
+    // Wrapper for thread-safe results collection
+    final class ResultsWrapper: @unchecked Sendable {
+      private let lock = NSLock()
+      private var results: [(CGRect, Int, Float, MLMultiArray)]
+
+      init(capacity: Int) {
+        self.results = []
+        self.results.reserveCapacity(capacity)
+      }
+
+      func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
+        lock.lock()
+        results.append(result)
+        lock.unlock()
+      }
+
+      func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
+        return results
+      }
+    }
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-    _ = DispatchQueue(label: "resultsQueue", attributes: .concurrent)
-    let resultsLock = NSLock()
 
     // Pre-allocate reusable arrays outside the loop
     let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
@@ -299,26 +330,27 @@ class Segmenter: BasePredictor, @unchecked Sendable {
 
         let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
 
-        resultsLock.lock()
         resultsWrapper.append(result)
-        resultsLock.unlock()
+
       }
     }
 
+    // Get results from wrapper
+    let collectedResults = resultsWrapper.getResults()
+
     // Optimize NMS by grouping results by class first
-    let results = resultsWrapper.getResults()
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
-    for result in results {
+    for result in collectedResults {
       let classIndex = result.1
       if classBuckets[classIndex] == nil {
         classBuckets[classIndex] = []
-        classBuckets[classIndex]?.reserveCapacity(results.count / numClasses + 1)
+        classBuckets[classIndex]!.reserveCapacity(collectedResults.count / numClasses + 1)
       }
       classBuckets[classIndex]?.append(result)
     }
 
     var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []
-    selectedBoxesAndFeatures.reserveCapacity(results.count)
+    selectedBoxesAndFeatures.reserveCapacity(collectedResults.count)
 
     for (_, classResults) in classBuckets {
       let boxesOnly = classResults.map { $0.0 }

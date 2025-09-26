@@ -63,9 +63,15 @@ class VideoCapture: NSObject, @unchecked Sendable {
     sessionPreset: AVCaptureSession.Preset = .hd1280x720,
     position: AVCaptureDevice.Position,
     orientation: UIDeviceOrientation,
-    completion: @escaping (Bool) -> Void
+    completion: @escaping @Sendable (Bool) -> Void
   ) {
-    cameraQueue.async {
+    cameraQueue.async { [weak self] in
+      guard let self = self else {
+        DispatchQueue.main.async {
+          completion(false)
+        }
+        return
+      }
       let success = self.setUpCamera(
         sessionPreset: sessionPreset, position: position, orientation: orientation)
       DispatchQueue.main.async {
@@ -168,16 +174,16 @@ class VideoCapture: NSObject, @unchecked Sendable {
 
   func start() {
     if !captureSession.isRunning {
-      DispatchQueue.global().async {
-        self.captureSession.startRunning()
+      DispatchQueue.global().async { [weak self] in
+        self?.captureSession.startRunning()
       }
     }
   }
 
   func stop() {
     if captureSession.isRunning {
-      DispatchQueue.global().async {
-        self.captureSession.stopRunning()
+      DispatchQueue.global().async { [weak self] in
+        self?.captureSession.stopRunning()
       }
     }
   }
@@ -273,14 +279,14 @@ extension VideoCapture: AVCapturePhotoCaptureDelegate {
 
 extension VideoCapture: ResultsListener, InferenceTimeListener {
   func on(inferenceTime: Double, fpsRate: Double) {
-    DispatchQueue.main.async {
-      self.delegate?.onInferenceTime(speed: inferenceTime, fps: fpsRate)
+    DispatchQueue.main.async { [weak self] in
+      self?.delegate?.onInferenceTime(speed: inferenceTime, fps: fpsRate)
     }
   }
 
   func on(result: YOLOResult) {
-    DispatchQueue.main.async {
-      self.delegate?.onPredict(result: result)
+    DispatchQueue.main.async { [weak self] in
+      self?.delegate?.onPredict(result: result)
     }
   }
 }

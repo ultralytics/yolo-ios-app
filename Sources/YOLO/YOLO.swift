@@ -16,7 +16,7 @@ import SwiftUI
 import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
-public class YOLO {
+public class YOLO: @unchecked Sendable {
   var predictor: Predictor!
 
   /// Initialize YOLO with remote URL for automatic download and caching
@@ -129,6 +129,7 @@ public class YOLO {
           case .failure(let error): handleFailure(error)
           }
         })
+
     }
   }
 

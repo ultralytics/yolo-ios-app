@@ -129,18 +129,44 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
     var scores = [Float]()
     var features = [[Float]]()
 
+    // Wrapper for thread-safe collections
+    final class CollectionsWrapper: @unchecked Sendable {
+      private let lock = NSLock()
+      private var boxes: [CGRect] = []
+      private var scores: [Float] = []
+      private var features: [[Float]] = []
+
+      func append(box: CGRect, score: Float, feature: [Float]) {
+        lock.lock()
+        boxes.append(box)
+        scores.append(score)
+        features.append(feature)
+        lock.unlock()
+      }
+
+      func getCollections() -> (boxes: [CGRect], scores: [Float], features: [[Float]]) {
+        return (boxes, scores, features)
+      }
+    }
+
+    // Wrapper to make pointer Sendable
+    struct PointerWrapper: @unchecked Sendable {
+      let pointer: UnsafeMutablePointer<Float>
+    }
+
     let featurePointer = UnsafeMutablePointer<Float>(OpaquePointer(prediction.dataPointer))
-    let lock = DispatchQueue(label: "com.example.lock")
+    let pointerWrapper = PointerWrapper(pointer: featurePointer)
+    let collectionsWrapper = CollectionsWrapper()
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
       let confIndex = 4 * numAnchors + j
-      let confidence = featurePointer[confIndex]
+      let confidence = pointerWrapper.pointer[confIndex]
 
       if confidence > confidenceThreshold {
-        let x = featurePointer[j]
-        let y = featurePointer[numAnchors + j]
-        let width = featurePointer[2 * numAnchors + j]
-        let height = featurePointer[3 * numAnchors + j]
+        let x = pointerWrapper.pointer[j]
+        let y = pointerWrapper.pointer[numAnchors + j]
+        let width = pointerWrapper.pointer[2 * numAnchors + j]
+        let height = pointerWrapper.pointer[3 * numAnchors + j]
 
         let boxWidth = CGFloat(width)
         let boxHeight = CGFloat(height)
@@ -153,16 +179,18 @@ class PoseEstimator: BasePredictor, @unchecked Sendable {
         var boxFeatures = [Float](repeating: 0, count: featureCount)
         for k in 0..<featureCount {
           let key = (5 + k) * numAnchors + j
-          boxFeatures[k] = featurePointer[key]
+          boxFeatures[k] = pointerWrapper.pointer[key]
         }
 
-        lock.sync {
-          boxes.append(boundingBox)
-          scores.append(confidence)
-          features.append(boxFeatures)
-        }
+        collectionsWrapper.append(box: boundingBox, score: confidence, feature: boxFeatures)
       }
     }
+
+    // Get collections from wrapper
+    let collections = collectionsWrapper.getCollections()
+    boxes = collections.boxes
+    scores = collections.scores
+    features = collections.features
 
     let selectedIndices = nonMaxSuppression(boxes: boxes, scores: scores, threshold: iouThreshold)
 

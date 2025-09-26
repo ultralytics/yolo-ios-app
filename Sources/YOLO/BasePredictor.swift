@@ -102,7 +102,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
-    completion: @escaping (Result<BasePredictor, Error>) -> Void
+    completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     // Create an instance (synchronously, cheap)
     let predictor = Self.init()

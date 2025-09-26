@@ -33,7 +33,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public weak var delegate: YOLOViewDelegate?
 
   func onInferenceTime(speed: Double, fps: Double) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
       self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
       // Notify delegate of performance metrics
 
@@ -49,7 +50,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     onDetection?(result)
 
     if task == .segment {
-      DispatchQueue.main.async {
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
         if let maskImage = result.masks?.combinedMask {
 
           guard let maskLayer = self.maskLayer else { return }
@@ -187,7 +189,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setModel(
     modelPathOrName: String,
     task: YOLOTask,
-    completion: ((Result<Void, Error>) -> Void)? = nil
+    completion: (@Sendable (Result<Void, Error>) -> Void)? = nil
   ) {
     // If modelPathOrName is empty, it means no model was provided yet
     if modelPathOrName.isEmpty {
@@ -236,46 +238,54 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
 
     // Common success handling for all tasks
-    func handleSuccess(predictor: Predictor) {
-      self.videoCapture.predictor = predictor
-      self.activityIndicator.stopAnimating()
-      self.labelName.text = processString(modelName)
-      completion?(.success(()))
+    let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
+      Task { @MainActor in
+        guard let self = self else { return }
+        self.videoCapture.predictor = predictor
+        self.activityIndicator.stopAnimating()
+        self.labelName.text = processString(self.modelName)
+        completion?(.success(()))
+      }
     }
 
     // Common failure handling for all tasks
-    func handleFailure(_ error: Error) {
-      print("Failed to load model with error: \(error)")
-      self.activityIndicator.stopAnimating()
-      completion?(.failure(error))
+    let handleFailure: @Sendable (Error) -> Void = { [weak self] error in
+      Task { @MainActor in
+        guard let self = self else { return }
+        print("Failed to load model with error: \(error)")
+        self.activityIndicator.stopAnimating()
+        completion?(.failure(error))
+      }
     }
 
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     case .pose:
-      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -283,22 +293,24 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     case .obb:
       ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        [weak self] result in
+        @Sendable [weak self] result in
         switch result {
         case .success(let predictor):
-          self?.obbLayer?.isHidden = false
-
-          handleSuccess(predictor: predictor)
+          Task { @MainActor in
+            self?.obbLayer?.isHidden = false
+          }
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
       }
 
     default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { result in
+      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
+        @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor: predictor)
+          handleSuccess(predictor)
         case .failure(let error):
           handleFailure(error)
         }
@@ -311,22 +323,25 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       busy = true
       let orientation = UIDevice.current.orientation
       videoCapture.setUp(sessionPreset: .photo, position: position, orientation: orientation) {
-        success in
-        // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
-        if success {
-          // Add the video preview into the UI.
-          if let previewLayer = self.videoCapture.previewLayer {
-            self.layer.insertSublayer(previewLayer, at: 0)
-            self.videoCapture.previewLayer?.frame = self.bounds  // resize preview layer
-            for box in self.boundingBoxViews {
-              box.addToLayer(previewLayer)
+        [weak self] success in
+        Task { @MainActor in
+          guard let self = self else { return }
+          // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
+          if success {
+            // Add the video preview into the UI.
+            if let previewLayer = self.videoCapture.previewLayer {
+              self.layer.insertSublayer(previewLayer, at: 0)
+              self.videoCapture.previewLayer?.frame = self.bounds  // resize preview layer
+              for box in self.boundingBoxViews {
+                box.addToLayer(previewLayer)
+              }
             }
-          }
-          self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
-          // Once everything is set up, we can start capturing live video.
-          self.videoCapture.start()
+            self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
+            // Once everything is set up, we can start capturing live video.
+            self.videoCapture.start()
 
-          self.busy = false
+            self.busy = false
+          }
         }
       }
     }
@@ -1246,7 +1261,9 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
         jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
 
-      Task { @MainActor in
+      Task { @MainActor [weak self] in
+        guard let self = self else { return }
+
         var isCameraFront = false
         if let currentInput = self.videoCapture.captureSession.inputs.first
           as? AVCaptureDeviceInput,

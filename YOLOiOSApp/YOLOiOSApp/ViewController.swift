@@ -621,6 +621,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelSegmentedControl.apportionsSegmentWidthsByContent = true
     modelSegmentedControl.addTarget(
       self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
+
+    modelSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+    ])
   }
 
   private func setupCustomModelButton() {

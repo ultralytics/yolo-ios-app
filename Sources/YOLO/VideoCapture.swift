@@ -82,7 +82,6 @@ public class VideoCapture: NSObject, @unchecked Sendable {
       }
       let success = self.setUpCamera(
         sessionPreset: sessionPreset, position: position, orientation: orientation)
-      print("📹 VideoCapture setup result: \(success)")
       DispatchQueue.main.async {
         completion(success)
       }
@@ -93,34 +92,29 @@ public class VideoCapture: NSObject, @unchecked Sendable {
     sessionPreset: AVCaptureSession.Preset, position: AVCaptureDevice.Position,
     orientation: UIDeviceOrientation
   ) -> Bool {
-    print("📹 setUpCamera called with position: \(position)")
     captureSession.beginConfiguration()
     captureSession.sessionPreset = sessionPreset
 
     guard let device = bestCaptureDevice(position: position) else {
-      print("❌ No capture device found for position: \(position)")
       return false
     }
-    print("✅ Found capture device: \(device.localizedName)")
     captureDevice = device
 
     do {
       videoInput = try AVCaptureDeviceInput(device: device)
-      print("✅ Video input created successfully")
     } catch {
-      print("❌ Failed to create video input: \(error)")
+      print("Failed to create video input: \(error)")
       return false
     }
 
     guard let input = videoInput else {
-      print("❌ Video input is nil")
+      print("Video input is nil")
       return false
     }
     if captureSession.canAddInput(input) {
       captureSession.addInput(input)
-      print("✅ Video input added to session")
     } else {
-      print("❌ Cannot add video input to session")
+      print("Cannot add video input to session")
     }
     var videoOrientation = AVCaptureVideoOrientation.portrait
     switch orientation {

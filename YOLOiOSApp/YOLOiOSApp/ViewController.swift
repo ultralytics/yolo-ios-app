@@ -29,8 +29,6 @@ extension Array {
   }
 }
 
-// MARK: - Model Selection Helpers
-
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
 
@@ -477,10 +475,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.resetDownloadProgress()
 
       if success {
-        // Update the segmented control to reflect downloaded status
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
 
-        // Rebuild the control to update download icons
         ModelSelectionManager.setupSegmentedControl(
           self.modelSegmentedControl,
           standardModels: self.standardModels,
@@ -488,7 +484,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
           preserveSelection: true
         )
 
-        // Also update appearance to ensure correct colors
         ModelSelectionManager.updateSegmentAppearance(
           self.modelSegmentedControl,
           standardModels: self.standardModels,

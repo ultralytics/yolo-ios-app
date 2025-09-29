@@ -78,7 +78,6 @@
                                             <segment title="medium"/>
                                             <segment title=" large"/>
                                             <segment title="xlarge"/>
-                                            <segment title="Custom"/>
                                         </segments>
                                     </segmentedControl>
                                 </subviews>

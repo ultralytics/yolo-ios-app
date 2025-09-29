@@ -24,7 +24,6 @@ struct ModelSelectionManager {
     let url: URL?
     let isLocal: Bool
     let size: ModelSize?
-    let isCustom: Bool
   }
 
   private static let modelSizeRegex: NSRegularExpression = {
@@ -36,11 +35,8 @@ struct ModelSelectionManager {
     }
   }()
 
-  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)]) -> (
-    standard: [ModelSize: ModelInfo], custom: [ModelInfo]
-  ) {
+  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)]) -> [ModelSize: ModelInfo] {
     var standardModels: [ModelSize: ModelInfo] = [:]
-    var customModels: [ModelInfo] = []
 
     for model in models {
       let baseName = (model.name as NSString).deletingPathExtension.lowercased()
@@ -55,32 +51,13 @@ struct ModelSelectionManager {
             name: model.name,
             url: model.url,
             isLocal: model.isLocal,
-            size: size,
-            isCustom: false
+            size: size
           )
-        } else {
-          customModels.append(
-            ModelInfo(
-              name: model.name,
-              url: model.url,
-              isLocal: model.isLocal,
-              size: nil,
-              isCustom: true
-            ))
         }
-      } else {
-        customModels.append(
-          ModelInfo(
-            name: model.name,
-            url: model.url,
-            isLocal: model.isLocal,
-            size: nil,
-            isCustom: true
-          ))
       }
     }
 
-    return (standardModels, customModels)
+    return standardModels
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {

@@ -101,7 +101,7 @@ extension ViewController {
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
           self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
           self.yoloView.playButton, self.yoloView.pauseButton,
-          self.modelSegmentedControl, self.customModelButton,
+          self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
 
         [
@@ -118,8 +118,6 @@ extension ViewController {
         )
         self.modelSegmentedControl.setNeedsLayout()
         self.modelSegmentedControl.layoutIfNeeded()
-        self.customModelButton?.setNeedsLayout()
-        self.customModelButton?.layoutIfNeeded()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -192,7 +190,6 @@ extension ViewController {
       self.hideExternalDisplayStatus()
 
       self.modelSegmentedControl.isHidden = false
-      self.customModelButton?.isHidden = self.customModels.isEmpty
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,

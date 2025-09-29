@@ -35,7 +35,9 @@ struct ModelSelectionManager {
     }
   }()
 
-  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)]) -> [ModelSize: ModelInfo] {
+  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)])
+    -> [ModelSize: ModelInfo]
+  {
     var standardModels: [ModelSize: ModelInfo] = [:]
 
     for model in models {

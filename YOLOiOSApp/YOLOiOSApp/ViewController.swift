@@ -63,7 +63,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var logoImage: UIImageView!
 
-
   let selection = UISelectionFeedbackGenerator()
 
   // Store current loading entry for external display notification (Optional feature)
@@ -271,7 +270,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
     ModelSelectionManager.setupSegmentedControl(
       modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
-
 
     if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
       let model = standardModels[firstSize]
@@ -618,7 +616,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ])
   }
 
-
   func updateModelSegmentedControlAppearance() {
     guard modelSegmentedControl != nil else { return }
 
@@ -629,8 +626,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ModelSelectionManager.updateSegmentAppearance(
       modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
   }
-
-
 
   @objc private func modelSizeChanged(_ sender: UISegmentedControl) {
     selection.selectionChanged()
@@ -649,7 +644,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
   }
-
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()

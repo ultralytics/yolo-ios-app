@@ -611,6 +611,29 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ])
   }
 
+  private func setupCustomModelButton() {
+    customModelButton = UIButton(type: .system)
+    customModelButton.setTitle("Custom", for: .normal)
+    customModelButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
+    customModelButton.setTitleColor(.white, for: .normal)
+    customModelButton.setTitleColor(.systemBlue, for: .selected)
+    customModelButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
+    customModelButton.layer.cornerRadius = 8
+    customModelButton.layer.borderWidth = 1
+    customModelButton.layer.borderColor = UIColor.systemGray.cgColor
+    customModelButton.addTarget(
+      self, action: #selector(customModelButtonTapped), for: .touchUpInside)
+    customModelButton.translatesAutoresizingMaskIntoConstraints = false
+
+    View0.addSubview(customModelButton)
+
+    modelSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+    ])
+  }
+
   func updateModelSegmentedControlAppearance() {
     guard modelSegmentedControl != nil else { return }
 

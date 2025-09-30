@@ -102,7 +102,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
-    completion: @escaping (Result<BasePredictor, Error>) -> Void
+    completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     // Create an instance (synchronously, cheap)
     let predictor = Self.init()
@@ -207,7 +207,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///   - sampleBuffer: The camera frame buffer to process.
   ///   - onResultsListener: Optional listener to receive prediction results.
   ///   - onInferenceTime: Optional listener to receive performance metrics.
-  func predict(
+  public func predict(
     sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
     onInferenceTime: InferenceTimeListener?
   ) {
@@ -297,7 +297,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///
   /// - Parameter image: The CIImage to process.
   /// - Returns: A YOLOResult containing the prediction outputs.
-  func predictOnImage(image: CIImage) -> YOLOResult {
+  public func predictOnImage(image: CIImage) -> YOLOResult {
     // Base implementation returns an empty result - must be overridden by subclasses
     return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
   }

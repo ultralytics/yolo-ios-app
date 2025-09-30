@@ -250,7 +250,7 @@ class CameraViewController: UIViewController {
 }
 ```
 
-With just a few lines of code, you can integrate real-time, YOLO-based inference into your application’s camera feed. For more advanced use cases, explore the customization options available for these components.
+With just a few lines of code, you can integrate real-time, YOLO-based inference into your application's camera feed. For more advanced use cases, explore the customization options available for these components.
 
 ## ⚙️ How to Obtain YOLO Core ML Models
 

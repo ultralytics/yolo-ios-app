@@ -18,7 +18,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO models that detect objects using oriented (rotated) bounding boxes.
-class ObbDetector: BasePredictor, @unchecked Sendable {
+public class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -59,7 +59,7 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
 
   }
 
-  override func predictOnImage(image: CIImage) -> YOLOResult {
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
@@ -128,20 +128,37 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
       let score: Float
       let cls: Int
     }
-    var rawDetections = [Detection?](repeating: nil, count: numAnchors)
+
+    // Wrapper to make pointer and array Sendable for Swift 6
+    struct PointerWrapper: @unchecked Sendable {
+      let pointer: UnsafeMutablePointer<Float>
+    }
+
+    struct DetectionsWrapper: @unchecked Sendable {
+      let detections: UnsafeMutablePointer<Detection?>
+    }
+
+    let pointerWrapper = PointerWrapper(pointer: pointer)
+    let detectionsPtr = UnsafeMutablePointer<Detection?>.allocate(capacity: numAnchors)
+    detectionsPtr.initialize(repeating: nil, count: numAnchors)
+    defer {
+      detectionsPtr.deinitialize(count: numAnchors)
+      detectionsPtr.deallocate()
+    }
+    let detectionsWrapper = DetectionsWrapper(detections: detectionsPtr)
 
     // 1) Parallel-extract predictions
     DispatchQueue.concurrentPerform(iterations: numAnchors) { i in
-      let cx = pointer[i] / inputW
-      let cy = pointer[numAnchors + i] / inputH
-      let w = pointer[2 * numAnchors + i] / inputW
-      let h = pointer[3 * numAnchors + i] / inputH
+      let cx = pointerWrapper.pointer[i] / inputW
+      let cy = pointerWrapper.pointer[numAnchors + i] / inputH
+      let w = pointerWrapper.pointer[2 * numAnchors + i] / inputW
+      let h = pointerWrapper.pointer[3 * numAnchors + i] / inputH
 
       // Find best class & score
       var bestScore: Float = 0
       var bestClass: Int = 0
       for c in 0..<numClasses {
-        let sc = pointer[(4 + c) * numAnchors + i]
+        let sc = pointerWrapper.pointer[(4 + c) * numAnchors + i]
         if sc > bestScore {
           bestScore = sc
           bestClass = c
@@ -150,15 +167,17 @@ class ObbDetector: BasePredictor, @unchecked Sendable {
 
       // Angle is the last channel
       let angleIndex = (4 + numClasses) * numAnchors + i
-      let angle = pointer[angleIndex]
+      let angle = pointerWrapper.pointer[angleIndex]
 
       // Threshold
       if bestScore > confidenceThreshold {
         let obb = OBB(cx: cx, cy: cy, w: w, h: h, angle: angle)
-        rawDetections[i] = Detection(obb: obb, score: bestScore, cls: bestClass)
+        detectionsWrapper.detections[i] = Detection(obb: obb, score: bestScore, cls: bestClass)
       }
     }
 
+    // Convert pointer array to Swift array
+    let rawDetections = Array(UnsafeBufferPointer(start: detectionsPtr, count: numAnchors))
     let detections = rawDetections.compactMap { $0 }  // remove nil
 
     // 2) Run faster OBB NMS
@@ -434,7 +453,7 @@ func obbIoU(_ box1: OBB, _ box2: OBB) -> Float {
 //    return selectedIndices
 //}
 /// Store cached geometry for faster OBB IoU checks.
-struct OBBInfo {
+public struct OBBInfo {
   let box: OBB
   let polygon: Polygon  // The 4 corners in order
   let area: CGFloat

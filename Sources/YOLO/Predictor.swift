@@ -18,7 +18,7 @@ import Vision
 ///
 /// This protocol defines a callback mechanism for receiving results from YOLO model inference.
 /// Implementers receive notifications with processed results when model inference is complete.
-protocol ResultsListener: AnyObject {
+public protocol ResultsListener: AnyObject {
   /// Called when a new prediction result is available.
   ///
   /// - Parameter result: The processed YOLO model prediction result, containing detections,
@@ -30,7 +30,7 @@ protocol ResultsListener: AnyObject {
 ///
 /// This protocol defines a callback mechanism for monitoring the performance of YOLO model inference.
 /// Implementers receive notifications with timing information to track inference speed.
-protocol InferenceTimeListener: AnyObject {
+public protocol InferenceTimeListener: AnyObject {
   /// Called when inference timing information is available.
   ///
   /// - Parameters:
@@ -48,7 +48,7 @@ protocol InferenceTimeListener: AnyObject {
 /// This protocol defines the contract that all YOLO model prediction implementations must fulfill.
 /// It provides methods for processing both camera frames and static images, and managing prediction state.
 /// Specialized implementations exist for different model types (detection, segmentation, etc.).
-protocol Predictor {
+public protocol Predictor {
   /// Processes a camera frame buffer and delivers results via callback.
   ///
   /// - Parameters:

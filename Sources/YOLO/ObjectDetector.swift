@@ -25,7 +25,7 @@ import Vision
 ///
 /// - Note: Object detection models output rectangular bounding boxes around detected objects.
 /// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
-class ObjectDetector: BasePredictor, @unchecked Sendable {
+public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Sets the confidence threshold and updates the model's feature provider.
   ///
@@ -64,24 +64,22 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
     if let results = request.results as? [VNRecognizedObjectObservation] {
       var boxes = [Box]()
 
-      for i in 0..<100 {
-        if i < results.count && i < self.numItemsThreshold {
-          let prediction = results[i]
-          let invertedBox = CGRect(
-            x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
-            width: prediction.boundingBox.width, height: prediction.boundingBox.height)
-          let imageRect = VNImageRectForNormalizedRect(
-            invertedBox, Int(inputSize.width), Int(inputSize.height))
+      for i in 0..<min(results.count, self.numItemsThreshold) {
+        let prediction = results[i]
+        let invertedBox = CGRect(
+          x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
+          width: prediction.boundingBox.width, height: prediction.boundingBox.height)
+        let imageRect = VNImageRectForNormalizedRect(
+          invertedBox, Int(inputSize.width), Int(inputSize.height))
 
-          // The labels array is a list of VNClassificationObservation objects,
-          // with the highest scoring class first in the list.
-          let label = prediction.labels[0].identifier
-          let index = self.labels.firstIndex(of: label) ?? 0
-          let confidence = prediction.labels[0].confidence
-          let box = Box(
-            index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
-          boxes.append(box)
-        }
+        // The labels array is a list of VNClassificationObservation objects,
+        // with the highest scoring class first in the list.
+        let label = prediction.labels[0].identifier
+        let index = self.labels.firstIndex(of: label) ?? 0
+        let confidence = prediction.labels[0].confidence
+        let box = Box(
+          index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
+        boxes.append(box)
       }
 
       // Measure FPS
@@ -109,7 +107,7 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///
   /// - Parameter image: The CIImage to analyze for object detection.
   /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
-  override func predictOnImage(image: CIImage) -> YOLOResult {
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
@@ -125,24 +123,22 @@ class ObjectDetector: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let results = request.results as? [VNRecognizedObjectObservation] {
-        for i in 0..<100 {
-          if i < results.count && i < self.numItemsThreshold {
-            let prediction = results[i]
-            let invertedBox = CGRect(
-              x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
-              width: prediction.boundingBox.width, height: prediction.boundingBox.height)
-            let imageRect = VNImageRectForNormalizedRect(
-              invertedBox, Int(inputSize.width), Int(inputSize.height))
+        for i in 0..<min(results.count, self.numItemsThreshold) {
+          let prediction = results[i]
+          let invertedBox = CGRect(
+            x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
+            width: prediction.boundingBox.width, height: prediction.boundingBox.height)
+          let imageRect = VNImageRectForNormalizedRect(
+            invertedBox, Int(inputSize.width), Int(inputSize.height))
 
-            // The labels array is a list of VNClassificationObservation objects,
-            // with the highest scoring class first in the list.
-            let label = prediction.labels[0].identifier
-            let index = self.labels.firstIndex(of: label) ?? 0
-            let confidence = prediction.labels[0].confidence
-            let box = Box(
-              index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
-            boxes.append(box)
-          }
+          // The labels array is a list of VNClassificationObservation objects,
+          // with the highest scoring class first in the list.
+          let label = prediction.labels[0].identifier
+          let index = self.labels.firstIndex(of: label) ?? 0
+          let confidence = prediction.labels[0].confidence
+          let box = Box(
+            index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox)
+          boxes.append(box)
         }
       }
     } catch {

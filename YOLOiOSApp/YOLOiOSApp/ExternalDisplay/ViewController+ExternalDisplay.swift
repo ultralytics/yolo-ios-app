@@ -121,8 +121,6 @@ extension ViewController {
         )
         self.modelSegmentedControl.setNeedsLayout()
         self.modelSegmentedControl.layoutIfNeeded()
-        self.customModelButton?.setNeedsLayout()
-        self.customModelButton?.layoutIfNeeded()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -195,7 +193,6 @@ extension ViewController {
       self.hideExternalDisplayStatus()
 
       self.modelSegmentedControl.isHidden = false
-      self.customModelButton?.isHidden = self.customModels.isEmpty
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,

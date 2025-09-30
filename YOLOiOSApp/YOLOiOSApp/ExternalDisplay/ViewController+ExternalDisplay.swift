@@ -101,8 +101,11 @@ extension ViewController {
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
           self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
           self.yoloView.playButton, self.yoloView.pauseButton,
-          self.modelSegmentedControl, self.customModelButton,
+          self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
+
+        // Only show custom model button if custom models exist
+        self.customModelButton?.isHidden = self.customModels.isEmpty
 
         [
           self.yoloView.switchCameraButton,

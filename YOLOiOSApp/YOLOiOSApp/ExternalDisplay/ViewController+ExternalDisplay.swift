@@ -39,6 +39,16 @@ extension ViewController {
   }
 
   func setupExternalDisplayNotifications() {
+    print("Setting up external display notifications")
+
+    // Check if external display is already connected at startup
+    if UIScreen.screens.count > 1 {
+      print("External display already connected at startup - triggering connection handler")
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        self.handleExternalDisplayConnected(Notification(name: .externalDisplayConnected))
+      }
+    }
+
     // Listen for external display connection
     NotificationCenter.default.addObserver(
       self,
@@ -91,8 +101,11 @@ extension ViewController {
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
           self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
           self.yoloView.playButton, self.yoloView.pauseButton,
-          self.modelTableView, self.tableViewBGView,
-        ].forEach { $0.isHidden = false }
+          self.modelSegmentedControl,
+        ].forEach { $0?.isHidden = false }
+
+        // Only show custom model button if custom models exist
+        self.customModelButton?.isHidden = self.customModels.isEmpty
 
         [
           self.yoloView.switchCameraButton,
@@ -106,10 +119,8 @@ extension ViewController {
           action: #selector(self.updateNumItemsLabelForExternalDisplay),
           for: .valueChanged
         )
-        self.modelTableView.setNeedsLayout()
-        self.modelTableView.layoutIfNeeded()
-        self.tableViewBGView.setNeedsLayout()
-        self.tableViewBGView.layoutIfNeeded()
+        self.modelSegmentedControl.setNeedsLayout()
+        self.modelSegmentedControl.layoutIfNeeded()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -181,8 +192,7 @@ extension ViewController {
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
 
-      self.modelTableView.isHidden = false
-      self.tableViewBGView.isHidden = false
+      self.modelSegmentedControl.isHidden = false
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
@@ -199,25 +209,8 @@ extension ViewController {
       self.yoloView.setInferenceFlag(ok: true)
 
       if let currentEntry = self.currentLoadingEntry {
-        if let modelIndex = self.currentModels.firstIndex(where: {
-          $0.identifier == currentEntry.identifier
-        }) {
-          let indexPath = IndexPath(row: modelIndex, section: 0)
-          self.modelTableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-          self.selectedIndexPath = indexPath
-          self.loadModel(entry: currentEntry, forTask: self.currentTask)
-        } else {
-          if !self.currentModels.isEmpty {
-            let firstIndex = IndexPath(row: 0, section: 0)
-            self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-            self.selectedIndexPath = firstIndex
-            self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
-          }
-        }
-      } else if self.selectedIndexPath == nil && !self.currentModels.isEmpty {
-        let firstIndex = IndexPath(row: 0, section: 0)
-        self.modelTableView.selectRow(at: firstIndex, animated: false, scrollPosition: .none)
-        self.selectedIndexPath = firstIndex
+        self.loadModel(entry: currentEntry, forTask: self.currentTask)
+      } else if !self.currentModels.isEmpty {
         self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
       }
 
@@ -252,16 +245,8 @@ extension ViewController {
 
     guard hasExternalDisplay else { return }
 
-    let tableViewWidth = view.bounds.width * 0.25
-
-    modelTableView.frame = CGRect(
-      x: segmentedControl.frame.maxX + 20,
-      y: 20,
-      width: tableViewWidth,
-      height: 200
-    )
-
-    updateTableViewBGFrame()
+    // Layout adjustments for external display mode if needed
+    // The segmented control and custom button are already properly positioned
   }
 
   @objc func handleExternalDisplayReady(_ notification: Notification) {
@@ -330,7 +315,7 @@ extension ViewController {
       statusLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       statusLabel.widthAnchor.constraint(equalToConstant: 280),
-      statusLabel.heightAnchor.constraint(equalToConstant: 140),
+      statusLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
     ])
   }
 

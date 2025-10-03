@@ -228,7 +228,7 @@ func generateCombinedMaskImage(
   if returnIndividualMasks {
     probabilityMasks = Array(
       repeating: Array(
-        repeating: [Float](repeating: 0.0, count: maskWidth),
+        repeating: Array(repeating: Float(0.0), count: maskWidth),
         count: maskHeight
       ),
       count: N

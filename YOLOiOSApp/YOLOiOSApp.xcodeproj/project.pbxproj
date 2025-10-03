@@ -29,6 +29,7 @@
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
 		73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73D95D182D45DAA50050E640 /* ZIPFoundation */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
+		73D95D1C2D45DB900050E640 /* ModelSelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1B2D45DB900050E640 /* ModelSelectionManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,13 +47,14 @@
 		734B44452D42F7CF00D2CA6A /* OBBModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OBBModels; sourceTree = "<group>"; };
 		734B44462D42F7CF00D2CA6A /* PoseModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PoseModels; sourceTree = "<group>"; };
 		734B44472D42F7CF00D2CA6A /* SegmentModels */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SegmentModels; sourceTree = "<group>"; };
-		737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalDisplayManager.swift"; sourceTree = "<group>"; };
-		737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalSceneDelegate.swift"; sourceTree = "<group>"; };
-		737AB29B2E3E6418003FA92B /* ExternalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ExternalViewController.swift"; sourceTree = "<group>"; };
-		737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationExtensions.swift"; sourceTree = "<group>"; };
+		737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDisplayManager.swift; sourceTree = "<group>"; };
+		737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSceneDelegate.swift; sourceTree = "<group>"; };
+		737AB29B2E3E6418003FA92B /* ExternalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalViewController.swift; sourceTree = "<group>"; };
+		737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationExtensions.swift; sourceTree = "<group>"; };
 		737AB29D2E3E6418003FA92B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		73D95D152D45DA510050E640 /* ModelDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadManager.swift; sourceTree = "<group>"; };
 		73D95D1A2D45DB800050E640 /* RemoteModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteModels.swift; sourceTree = "<group>"; };
+		73D95D1B2D45DB900050E640 /* ModelSelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSelectionManager.swift; sourceTree = "<group>"; };
 		7BCB411721C3096100BFC4D0 /* YOLOiOSApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOLOiOSApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -78,6 +80,7 @@
 				636EFC9C21E62DD300DE43BC /* ViewController.swift */,
 				73D95D152D45DA510050E640 /* ModelDownloadManager.swift */,
 				73D95D1A2D45DB800050E640 /* RemoteModels.swift */,
+				73D95D1B2D45DB900050E640 /* ModelSelectionManager.swift */,
 				6323C44D22186177008AE681 /* LaunchScreen.storyboard */,
 				6323C44F22186177008AE681 /* Main.storyboard */,
 				633BC6FA22EDE73D00821BCA /* Settings.bundle */,
@@ -229,6 +232,7 @@
 			files = (
 				73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */,
 				73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */,
+				73D95D1C2D45DB900050E640 /* ModelSelectionManager.swift in Sources */,
 				636EFCB321E62DD300DE43BC /* AppDelegate.swift in Sources */,
 				737AB29E2E3E6418003FA92B /* SceneDelegate.swift in Sources */,
 				737AB29F2E3E6418003FA92B /* NotificationExtensions.swift in Sources */,
@@ -369,7 +373,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
@@ -379,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.7.13;
+				MARKETING_VERSION = 8.7.27;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -397,7 +401,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 0;
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
@@ -407,7 +411,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.7.13;
+				MARKETING_VERSION = 8.7.27;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

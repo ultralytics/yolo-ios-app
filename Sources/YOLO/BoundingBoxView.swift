@@ -14,7 +14,7 @@ import UIKit
 
 /// Manages the visualization of bounding boxes and associated labels for object detection results.
 @MainActor
-class BoundingBoxView {
+public class BoundingBoxView {
   /// The layer that draws the bounding box around a detected object.
   let shapeLayer: CAShapeLayer
 
@@ -95,7 +95,7 @@ class BoundingBoxView {
   }
 }
 
-struct BoundingBoxInfo {
+public struct BoundingBoxInfo {
   var rect: CGRect
   var strokeColor: UIColor
   var strokeWidth: CGFloat

@@ -17,7 +17,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
-class Classifier: BasePredictor, @unchecked Sendable {
+public class Classifier: BasePredictor, @unchecked Sendable {
 
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
@@ -119,7 +119,7 @@ class Classifier: BasePredictor, @unchecked Sendable {
 
   }
 
-  override func predictOnImage(image: CIImage) -> YOLOResult {
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)

@@ -66,6 +66,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // Store current loading entry for external display notification (Optional feature)
   var currentLoadingEntry: ModelEntry?
 
+  // Custom model selection button (created programmatically)
+  var customModelButton: UIButton!
+
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
 
@@ -151,6 +154,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupModelSegmentedControl()
+    setupCustomModelButton()
 
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
@@ -632,6 +636,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
       modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
       modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
     ])
+  }
+
+  // MARK: - Actions
+  @objc func customModelButtonTapped() {
+    selection.selectionChanged()
+    // Placeholder action for custom model selection; integrate picker if needed
   }
 
   func updateModelSegmentedControlAppearance() {

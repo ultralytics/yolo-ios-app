@@ -611,8 +611,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ])
   }
 
+  var customModelButton : UIButton!
+  var customModels : [YOLO] = []
+    
   private func setupCustomModelButton() {
-    customModelButton = UIButton(type: .system)
+    let customModelButton = UIButton(type: .system)
     customModelButton.setTitle("Custom", for: .normal)
     customModelButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
     customModelButton.setTitleColor(.white, for: .normal)
@@ -680,6 +683,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
     }
   }
+    @objc func customModelButtonTapped() {
+    }
+
 
   @objc func sliderValueChanged(_ sender: UISlider) {
     // Send threshold values to external display (Optional external display feature)

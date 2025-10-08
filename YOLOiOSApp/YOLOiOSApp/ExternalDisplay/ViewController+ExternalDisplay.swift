@@ -104,8 +104,7 @@ extension ViewController {
           self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
 
-        // Only show custom model button if custom models exist
-        self.customModelButton?.isHidden = self.customModels.isEmpty
+        self.customModelButton?.isHidden = self.currentModels.isEmpty
 
         [
           self.yoloView.switchCameraButton,

@@ -22,27 +22,32 @@ public struct YOLOCamera: View {
   public let modelURL: URL?
   public let task: YOLOTask
   public let cameraPosition: AVCaptureDevice.Position
+  public let onDetection: ((YOLOResult) -> Void)? 
 
   public init(
     modelPathOrName: String,
     task: YOLOTask = .detect,
-    cameraPosition: AVCaptureDevice.Position = .back
+    cameraPosition: AVCaptureDevice.Position = .back,
+    onDetection: ((YOLOResult) -> Void)? = nil 
   ) {
     self.modelPathOrName = modelPathOrName
     self.modelURL = nil
     self.task = task
     self.cameraPosition = cameraPosition
+    self.onDetection = onDetection  
   }
 
   public init(
     url: URL,
     task: YOLOTask = .detect,
-    cameraPosition: AVCaptureDevice.Position = .back
+    cameraPosition: AVCaptureDevice.Position = .back,
+    onDetection: ((YOLOResult) -> Void)? = nil
   ) {
     self.modelPathOrName = nil
     self.modelURL = url
     self.task = task
     self.cameraPosition = cameraPosition
+    self.onDetection = onDetection 
   }
 
   public var body: some View {
@@ -53,6 +58,7 @@ public struct YOLOCamera: View {
       cameraPosition: cameraPosition
     ) { result in
       self.yoloResult = result
+      self.onDetection?(result) 
     }
   }
 }

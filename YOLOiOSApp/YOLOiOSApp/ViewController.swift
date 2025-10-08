@@ -615,7 +615,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var customModels : [YOLO] = []
     
   private func setupCustomModelButton() {
-    let customModelButton = UIButton(type: .system)
+    customModelButton = UIButton(type: .system)
     customModelButton.setTitle("Custom", for: .normal)
     customModelButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
     customModelButton.setTitleColor(.white, for: .normal)

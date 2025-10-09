@@ -40,7 +40,7 @@ jobs:
       marketing_version: ${{ steps.check_version.outputs.marketing_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
       - run: uv pip install --system --no-cache ultralytics-actions
@@ -89,7 +89,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
@@ -97,7 +97,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
       - run: uv pip install --system --no-cache ultralytics-actions
@@ -124,7 +124,7 @@ jobs:
       name: Release - TestFlight
       url: https://appstoreconnect.apple.com/apps
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -170,7 +170,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Extract PR Details
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

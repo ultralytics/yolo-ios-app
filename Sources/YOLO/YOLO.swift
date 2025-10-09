@@ -91,7 +91,6 @@ public class YOLO: @unchecked Sendable {
       ObbDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
     default:
       ObjectDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
-
     }
   }
 

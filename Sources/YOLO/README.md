@@ -252,6 +252,59 @@ class CameraViewController: UIViewController {
 
 With just a few lines of code, you can integrate real-time, YOLO-based inference into your application's camera feed. For more advanced use cases, explore the customization options available for these components.
 
+### Threshold Configuration
+
+Both `YOLO` and `YOLOView`/`YOLOCamera` classes provide methods to configure detection thresholds:
+
+#### YOLO Class Methods
+
+```swift
+// Set individual thresholds
+model.setNumItemsThreshold(100)        // Maximum number of detections (default: 30)
+model.setConfidenceThreshold(0.5)      // Confidence threshold 0.0-1.0 (default: 0.25)
+model.setIouThreshold(0.6)             // IoU threshold for NMS 0.0-1.0 (default: 0.4)
+
+// Or set all thresholds at once
+model.setThresholds(numItems: 100, confidence: 0.5, iou: 0.6)
+
+// Get current threshold values
+let numItems = model.getNumItemsThreshold()       // Returns Int?
+let confidence = model.getConfidenceThreshold()   // Returns Double?
+let iou = model.getIouThreshold()                 // Returns Double?
+```
+
+#### YOLOView/YOLOCamera Methods
+
+```swift
+// For UIKit (YOLOView)
+yoloView.setNumItemsThreshold(50)
+yoloView.setConfidenceThreshold(0.3)
+yoloView.setIouThreshold(0.5)
+
+// Or set all at once
+yoloView.setThresholds(numItems: 50, confidence: 0.3, iou: 0.5)
+
+// Get current values
+let numItems = yoloView.getNumItemsThreshold()    // Returns Int
+let confidence = yoloView.getConfidenceThreshold() // Returns Double
+let iou = yoloView.getIouThreshold()              // Returns Double
+
+// For SwiftUI (YOLOCamera) - set during initialization
+YOLOCamera(
+    modelPathOrName: "yolo11n",
+    task: .detect,
+    cameraPosition: .back
+)
+.onAppear {
+}
+```
+
+**Note:**
+
+- `numItemsThreshold`: Controls the maximum number of detections returned
+- `confidenceThreshold`: Filters out detections below this confidence level
+- `iouThreshold`: Controls Non-Maximum Suppression overlap threshold
+
 ## ⚙️ How to Obtain YOLO Core ML Models
 
 You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) models compatible with this package in Core ML format using two methods:

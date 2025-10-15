@@ -50,18 +50,22 @@ public struct AnnotationConfig {
   public let lineWidth: CGFloat?
   /// Font weight for annotation labels
   public let fontWeight: UIFont.Weight
-  
-  public init(fontSize: CGFloat? = nil, lineWidth: CGFloat? = nil, fontWeight: UIFont.Weight = .semibold) {
+
+  public init(
+    fontSize: CGFloat? = nil, lineWidth: CGFloat? = nil, fontWeight: UIFont.Weight = .semibold
+  ) {
     self.fontSize = fontSize
     self.lineWidth = lineWidth
     self.fontWeight = fontWeight
   }
-  
+
   /// Default configuration with automatic scaling
   public static let `default` = AnnotationConfig()
-  
+
   /// Configuration with custom font size
-  public static func custom(fontSize: CGFloat, fontWeight: UIFont.Weight = .semibold) -> AnnotationConfig {
+  public static func custom(fontSize: CGFloat, fontWeight: UIFont.Weight = .semibold)
+    -> AnnotationConfig
+  {
     return AnnotationConfig(fontSize: fontSize, fontWeight: fontWeight)
   }
 }
@@ -114,7 +118,9 @@ let skeleton = [
   [5, 7],
 ]
 
-public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default) -> UIImage {
+public func drawYOLODetections(
+  on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default
+) -> UIImage {
   let context = CIContext(options: nil)
   guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
     return UIImage()
@@ -375,7 +381,9 @@ func composeImageWithMask(
   return UIImage(cgImage: composedImage)
 }
 
-public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default) -> UIImage {
+public func drawYOLOClassifications(
+  on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default
+) -> UIImage {
   let context = CIContext(options: nil)
   guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
     return UIImage()
@@ -1104,8 +1112,8 @@ public func drawYOLOSegmentationWithBoxes(
 
 /// Draw YOLO detections with custom font size
 public func drawYOLODetections(
-  on ciImage: CIImage, 
-  result: YOLOResult, 
+  on ciImage: CIImage,
+  result: YOLOResult,
   fontSize: CGFloat
 ) -> UIImage {
   let config = AnnotationConfig.custom(fontSize: fontSize)
@@ -1114,8 +1122,8 @@ public func drawYOLODetections(
 
 /// Draw YOLO classifications with custom font size
 public func drawYOLOClassifications(
-  on ciImage: CIImage, 
-  result: YOLOResult, 
+  on ciImage: CIImage,
+  result: YOLOResult,
   fontSize: CGFloat
 ) -> UIImage {
   let config = AnnotationConfig.custom(fontSize: fontSize)

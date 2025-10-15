@@ -122,7 +122,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var activityIndicator = UIActivityIndicatorView()
   public var playButton = UIButton()
   public var pauseButton = UIButton()
-  
+
   // Font size configuration
   public var annotationConfig: AnnotationConfig = .default
   public var switchCameraButton = UIButton()
@@ -402,15 +402,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   /// Gets the current IoU threshold.
   /// - Returns: The current IoU threshold value.
   public func getIouThreshold() -> Double { Double(sliderIoU.value) }
-  
+
   /// Updates the annotation configuration for font size and line width
   public func setAnnotationConfig(_ config: AnnotationConfig) {
     annotationConfig = config
-    
+
     // Check if this is likely an external display
     let viewBounds = self.bounds
     let maxDimension = max(viewBounds.width, viewBounds.height)
-    
+
     // Update existing bounding box views with new font size
     for boxView in boundingBoxViews {
       if maxDimension > 1000 {
@@ -464,7 +464,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         // Use annotation config for font size and line width on regular displays
         let fontSize = annotationConfig.fontSize ?? 14.0
         let lineWidth = annotationConfig.lineWidth ?? 4.0
-        
+
         boxView.setFontSize(fontSize)
         boxView.setLineWidth(lineWidth)
       }

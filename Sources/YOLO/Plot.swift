@@ -42,6 +42,30 @@ let ultralyticsColors: [UIColor] = [
   UIColor(red: 162 / 255, green: 255 / 255, blue: 11 / 255, alpha: 0.6),
 ]
 
+/// Configuration for annotation rendering parameters
+public struct AnnotationConfig {
+  /// Font size for annotation labels. If nil, uses automatic scaling based on image dimensions.
+  public let fontSize: CGFloat?
+  /// Line width for bounding boxes. If nil, uses automatic scaling based on image dimensions.
+  public let lineWidth: CGFloat?
+  /// Font weight for annotation labels
+  public let fontWeight: UIFont.Weight
+  
+  public init(fontSize: CGFloat? = nil, lineWidth: CGFloat? = nil, fontWeight: UIFont.Weight = .semibold) {
+    self.fontSize = fontSize
+    self.lineWidth = lineWidth
+    self.fontWeight = fontWeight
+  }
+  
+  /// Default configuration with automatic scaling
+  public static let `default` = AnnotationConfig()
+  
+  /// Configuration with custom font size
+  public static func custom(fontSize: CGFloat, fontWeight: UIFont.Weight = .semibold) -> AnnotationConfig {
+    return AnnotationConfig(fontSize: fontSize, fontWeight: fontWeight)
+  }
+}
+
 let posePalette: [[CGFloat]] = [
   [255, 128, 0],
   [255, 153, 51],
@@ -90,7 +114,7 @@ let skeleton = [
   [5, 7],
 ]
 
-public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIImage {
+public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default) -> UIImage {
   let context = CIContext(options: nil)
   guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
     return UIImage()
@@ -109,9 +133,9 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
   drawContext.draw(cgImage, in: CGRect(origin: .zero, size: imageSize))
   drawContext.restoreGState()
 
-  // Calculate line width and font size proportionally to image dimensions
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  // Calculate line width and font size based on configuration
+  let lineWidth = config.lineWidth ?? max(width, height) / 200
+  let fontSize = config.fontSize ?? max(width, height) / 50
 
   for box in result.boxes {
     let colorIndex = box.index % ultralyticsColors.count
@@ -122,7 +146,7 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
     drawContext.stroke(rect)
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
+    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: config.fontWeight)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
@@ -351,7 +375,7 @@ func composeImageWithMask(
   return UIImage(cgImage: composedImage)
 }
 
-public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {
+public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult, config: AnnotationConfig = .default) -> UIImage {
   let context = CIContext(options: nil)
   guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
     return UIImage()
@@ -373,9 +397,9 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     return UIImage(ciImage: ciImage)
   }
 
-  // Calculate line width and font size proportionally to image dimensions
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  // Calculate line width and font size based on configuration
+  let lineWidth = config.lineWidth ?? max(width, height) / 200
+  let fontSize = config.fontSize ?? max(width, height) / 50
   let labelMargin = CGFloat(fontSize / 2)
 
   for (i, candidate) in top5.enumerated() {
@@ -388,7 +412,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     drawContext.setLineWidth(CGFloat(lineWidth))
     let confidencePercent = round((result.probs?.top5Confs[i] ?? 0) * 1000) / 10
     let labelText = " \(candidate) \(confidencePercent)% "
-    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: .semibold)
+    let font = UIFont.systemFont(ofSize: CGFloat(fontSize), weight: config.fontWeight)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
@@ -681,16 +705,16 @@ class OBBRenderer {
     on layer: CALayer,
     imageViewSize: CGSize,
     originalImageSize: CGSize,
-    lineWidth: CGFloat = 2.0
+    config: AnnotationConfig = .default
   ) {
     usedLayerCount = 0
 
     let scaleX = imageViewSize.width
     let scaleY = imageViewSize.height
 
-    // Calculate line width and font size dynamically based on image dimensions
-    let dynamicLineWidth = max(imageViewSize.width, imageViewSize.height) / 200
-    let dynamicFontSize = max(imageViewSize.width, imageViewSize.height) / 50
+    // Calculate line width and font size based on configuration
+    let dynamicLineWidth = config.lineWidth ?? max(imageViewSize.width, imageViewSize.height) / 200
+    let dynamicFontSize = config.fontSize ?? max(imageViewSize.width, imageViewSize.height) / 50
 
     for detection in obbDetections {
       let bundle = getLayerBundle(for: layer)
@@ -721,7 +745,7 @@ class OBBRenderer {
       shapeLayer.isHidden = false
 
       let text = detection.cls + String(format: " %.2f", detection.confidence)
-      let font = UIFont.systemFont(ofSize: dynamicFontSize)
+      let font = UIFont.systemFont(ofSize: dynamicFontSize, weight: config.fontWeight)
 
       let attributes: [NSAttributedString.Key: Any] = [
         .font: font
@@ -763,7 +787,8 @@ class OBBRenderer {
 func drawOBBsOnCIImage(
   ciImage: CIImage,
   obbDetections: [OBBResult],
-  targetSize: CGSize? = nil
+  targetSize: CGSize? = nil,
+  config: AnnotationConfig = .default
 ) -> UIImage? {
 
   let context = CIContext(options: nil)
@@ -773,9 +798,9 @@ func drawOBBsOnCIImage(
     return nil
   }
 
-  // Calculate line width and font size proportionally to image dimensions
-  let lineWidth: CGFloat = max(extent.width, extent.height) / 200
-  let fontSize = max(extent.width, extent.height) / 50
+  // Calculate line width and font size based on configuration
+  let lineWidth: CGFloat = config.lineWidth ?? max(extent.width, extent.height) / 200
+  let fontSize = config.fontSize ?? max(extent.width, extent.height) / 50
   let outputSize = targetSize ?? CGSize(width: extent.width, height: extent.height)
 
   UIGraphicsBeginImageContextWithOptions(outputSize, false, 1.0)
@@ -810,7 +835,7 @@ func drawOBBsOnCIImage(
 
     let labelText = "\(detection.cls) \(String(format: "%.2f", detection.confidence))%"
     let attrs: [NSAttributedString.Key: Any] = [
-      .font: UIFont.systemFont(ofSize: fontSize),
+      .font: UIFont.systemFont(ofSize: fontSize, weight: config.fontWeight),
       .foregroundColor: UIColor.white,
       .backgroundColor: color.withAlphaComponent(0.7),
     ]
@@ -839,7 +864,8 @@ public func drawYOLOPoseWithBoxes(
   boundingBoxes: [Box],
   originalImageSize: CGSize,
   confThreshold: Float = 0.25,
-  drawSkeleton: Bool = true
+  drawSkeleton: Bool = true,
+  config: AnnotationConfig = .default
 ) -> UIImage? {
   // 1. Convert CIImage to CGImage only once
   let context = CIContext(options: nil)
@@ -853,10 +879,10 @@ public func drawYOLOPoseWithBoxes(
   let height = CGFloat(cgImage.height)
   let renderedSize = CGSize(width: width, height: height)
 
-  // 2. Calculate drawing sizes
+  // 2. Calculate drawing sizes based on configuration
   let circleRadius = max(width, height) / 100
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  let lineWidth = config.lineWidth ?? max(width, height) / 200
+  let fontSize = config.fontSize ?? max(width, height) / 50
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -891,7 +917,7 @@ public func drawYOLOPoseWithBoxes(
     // Prepare label
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+    let font = UIFont.systemFont(ofSize: fontSize, weight: config.fontWeight)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
@@ -957,7 +983,8 @@ public func drawYOLOSegmentationWithBoxes(
   ciImage: CIImage,
   boxes: [Box],
   maskImage: CGImage?,
-  originalImageSize: CGSize
+  originalImageSize: CGSize,
+  config: AnnotationConfig = .default
 ) -> UIImage? {
   // 1. Convert CIImage to CGImage only once
   let context = CIContext(options: nil)
@@ -971,9 +998,9 @@ public func drawYOLOSegmentationWithBoxes(
   let height = CGFloat(cgImage.height)
   let renderedSize = CGSize(width: width, height: height)
 
-  // 2. Calculate drawing sizes
-  let lineWidth = max(width, height) / 200
-  let fontSize = max(width, height) / 50
+  // 2. Calculate drawing sizes based on configuration
+  let lineWidth = config.lineWidth ?? max(width, height) / 200
+  let fontSize = config.fontSize ?? max(width, height) / 50
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -1032,7 +1059,7 @@ public func drawYOLOSegmentationWithBoxes(
     // Prepare label
     let confidencePercent = Int(box.conf * 100)
     let labelText = "\(box.cls) \(confidencePercent)%"
-    let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+    let font = UIFont.systemFont(ofSize: fontSize, weight: config.fontWeight)
     let attrs: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: UIColor.white,
@@ -1071,4 +1098,84 @@ public func drawYOLOSegmentationWithBoxes(
   UIGraphicsEndImageContext()
 
   return finalImage
+}
+
+// MARK: - Convenience Functions for Font Size Control
+
+/// Draw YOLO detections with custom font size
+public func drawYOLODetections(
+  on ciImage: CIImage, 
+  result: YOLOResult, 
+  fontSize: CGFloat
+) -> UIImage {
+  let config = AnnotationConfig.custom(fontSize: fontSize)
+  return drawYOLODetections(on: ciImage, result: result, config: config)
+}
+
+/// Draw YOLO classifications with custom font size
+public func drawYOLOClassifications(
+  on ciImage: CIImage, 
+  result: YOLOResult, 
+  fontSize: CGFloat
+) -> UIImage {
+  let config = AnnotationConfig.custom(fontSize: fontSize)
+  return drawYOLOClassifications(on: ciImage, result: result, config: config)
+}
+
+/// Draw YOLO pose with boxes and custom font size
+public func drawYOLOPoseWithBoxes(
+  ciImage: CIImage,
+  keypointsList: [[(x: Float, y: Float)]],
+  confsList: [[Float]],
+  boundingBoxes: [Box],
+  originalImageSize: CGSize,
+  confThreshold: Float = 0.25,
+  drawSkeleton: Bool = true,
+  fontSize: CGFloat
+) -> UIImage? {
+  let config = AnnotationConfig.custom(fontSize: fontSize)
+  return drawYOLOPoseWithBoxes(
+    ciImage: ciImage,
+    keypointsList: keypointsList,
+    confsList: confsList,
+    boundingBoxes: boundingBoxes,
+    originalImageSize: originalImageSize,
+    confThreshold: confThreshold,
+    drawSkeleton: drawSkeleton,
+    config: config
+  )
+}
+
+/// Draw YOLO segmentation with boxes and custom font size
+public func drawYOLOSegmentationWithBoxes(
+  ciImage: CIImage,
+  boxes: [Box],
+  maskImage: CGImage?,
+  originalImageSize: CGSize,
+  fontSize: CGFloat
+) -> UIImage? {
+  let config = AnnotationConfig.custom(fontSize: fontSize)
+  return drawYOLOSegmentationWithBoxes(
+    ciImage: ciImage,
+    boxes: boxes,
+    maskImage: maskImage,
+    originalImageSize: originalImageSize,
+    config: config
+  )
+}
+
+/// Draw OBB detections on CIImage with custom font size
+public func drawOBBsOnCIImage(
+  ciImage: CIImage,
+  obbDetections: [OBBResult],
+  targetSize: CGSize? = nil,
+  fontSize: CGFloat
+) -> UIImage? {
+  let config = AnnotationConfig.custom(fontSize: fontSize)
+  return drawOBBsOnCIImage(
+    ciImage: ciImage,
+    obbDetections: obbDetections,
+    targetSize: targetSize,
+    config: config
+  )
 }

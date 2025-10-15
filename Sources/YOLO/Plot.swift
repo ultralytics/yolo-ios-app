@@ -134,8 +134,8 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult, config: 
   drawContext.restoreGState()
 
   // Calculate line width and font size based on configuration
-  let lineWidth = config.lineWidth ?? max(width, height) / 200
-  let fontSize = config.fontSize ?? max(width, height) / 50
+  let lineWidth = config.lineWidth ?? CGFloat(max(width, height)) / 200
+  let fontSize = config.fontSize ?? CGFloat(max(width, height)) / 50
 
   for box in result.boxes {
     let colorIndex = box.index % ultralyticsColors.count
@@ -398,8 +398,8 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult, con
   }
 
   // Calculate line width and font size based on configuration
-  let lineWidth = config.lineWidth ?? max(width, height) / 200
-  let fontSize = config.fontSize ?? max(width, height) / 50
+  let lineWidth = config.lineWidth ?? CGFloat(max(width, height)) / 200
+  let fontSize = config.fontSize ?? CGFloat(max(width, height)) / 50
   let labelMargin = CGFloat(fontSize / 2)
 
   for (i, candidate) in top5.enumerated() {
@@ -799,8 +799,8 @@ func drawOBBsOnCIImage(
   }
 
   // Calculate line width and font size based on configuration
-  let lineWidth: CGFloat = config.lineWidth ?? max(extent.width, extent.height) / 200
-  let fontSize = config.fontSize ?? max(extent.width, extent.height) / 50
+  let lineWidth: CGFloat = config.lineWidth ?? CGFloat(max(extent.width, extent.height)) / 200
+  let fontSize = config.fontSize ?? CGFloat(max(extent.width, extent.height)) / 50
   let outputSize = targetSize ?? CGSize(width: extent.width, height: extent.height)
 
   UIGraphicsBeginImageContextWithOptions(outputSize, false, 1.0)
@@ -881,8 +881,8 @@ public func drawYOLOPoseWithBoxes(
 
   // 2. Calculate drawing sizes based on configuration
   let circleRadius = max(width, height) / 100
-  let lineWidth = config.lineWidth ?? max(width, height) / 200
-  let fontSize = config.fontSize ?? max(width, height) / 50
+  let lineWidth = config.lineWidth ?? CGFloat(max(width, height)) / 200
+  let fontSize = config.fontSize ?? CGFloat(max(width, height)) / 50
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
@@ -999,8 +999,8 @@ public func drawYOLOSegmentationWithBoxes(
   let renderedSize = CGSize(width: width, height: height)
 
   // 2. Calculate drawing sizes based on configuration
-  let lineWidth = config.lineWidth ?? max(width, height) / 200
-  let fontSize = config.fontSize ?? max(width, height) / 50
+  let lineWidth = config.lineWidth ?? CGFloat(max(width, height)) / 200
+  let fontSize = config.fontSize ?? CGFloat(max(width, height)) / 50
 
   // 3. Create a single rendering context
   UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)

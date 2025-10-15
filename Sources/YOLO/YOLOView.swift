@@ -89,7 +89,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         on: obbLayer,
         imageViewSize: self.overlayLayer.frame.size,
         originalImageSize: result.orig_shape,  // Example
-        lineWidth: 3
+        config: annotationConfig
       )
     }
   }
@@ -122,6 +122,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var activityIndicator = UIActivityIndicatorView()
   public var playButton = UIButton()
   public var pauseButton = UIButton()
+  
+  // Font size configuration
+  public var annotationConfig: AnnotationConfig = .default
   public var switchCameraButton = UIButton()
   public var shareButton = UIButton()
   public var toolbar = UIView()
@@ -399,6 +402,34 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   /// Gets the current IoU threshold.
   /// - Returns: The current IoU threshold value.
   public func getIouThreshold() -> Double { Double(sliderIoU.value) }
+  
+  /// Updates the annotation configuration for font size and line width
+  public func setAnnotationConfig(_ config: AnnotationConfig) {
+    annotationConfig = config
+    
+    // Check if this is likely an external display
+    let viewBounds = self.bounds
+    let maxDimension = max(viewBounds.width, viewBounds.height)
+    
+    // Update existing bounding box views with new font size
+    for boxView in boundingBoxViews {
+      if maxDimension > 1000 {
+        // External display - use scaled values
+        let scaledFontSize = max(24, viewBounds.height * 0.03)
+        let scaledLineWidth = max(6, viewBounds.height * 0.005)
+        boxView.setFontSize(scaledFontSize)
+        boxView.setLineWidth(scaledLineWidth)
+      } else {
+        // Regular display - use annotation config
+        if let fontSize = config.fontSize {
+          boxView.setFontSize(fontSize)
+        }
+        if let lineWidth = config.lineWidth {
+          boxView.setLineWidth(lineWidth)
+        }
+      }
+    }
+  }
 
   /// Sets all thresholds at once.
   /// - Parameters:
@@ -429,6 +460,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         let scaledLineWidth = max(6, viewBounds.height * 0.005)
         boxView.setFontSize(scaledFontSize)
         boxView.setLineWidth(scaledLineWidth)
+      } else {
+        // Use annotation config for font size and line width on regular displays
+        let fontSize = annotationConfig.fontSize ?? 14.0
+        let lineWidth = annotationConfig.lineWidth ?? 4.0
+        
+        boxView.setFontSize(fontSize)
+        boxView.setLineWidth(lineWidth)
       }
 
       boundingBoxViews.append(boxView)
@@ -729,9 +767,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let fontSize: CGFloat
 
     if maxDimension > 1000 {
+      // External display - use larger font
       fontSize = max(36, viewBounds.height * 0.04)
     } else {
-      fontSize = viewBounds.height * 0.035
+      // Regular display - use annotation config or default scaling
+      fontSize = annotationConfig.fontSize ?? (viewBounds.height * 0.035)
     }
 
     textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)

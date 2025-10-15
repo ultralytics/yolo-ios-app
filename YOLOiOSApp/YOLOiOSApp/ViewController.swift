@@ -60,6 +60,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var logoImage: UIImageView!
+  
+  // Font size controls
+  private var fontSizeSlider: UISlider!
+  private var fontSizeLabel: UILabel!
+  private var fontSizeValueLabel: UILabel!
 
   let selection = UISelectionFeedbackGenerator()
 
@@ -73,6 +78,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let downloadProgressLabel = UILabel()
 
   private var loadingOverlayView: UIView?
+  
+  // Font size configuration
+  private var currentFontSize: CGFloat = 16.0
+  private var annotationConfig: AnnotationConfig {
+    return AnnotationConfig.custom(fontSize: currentFontSize)
+  }
 
   // MARK: - Constants
   private struct Constants {
@@ -182,6 +193,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.sliderIoU.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
     yoloView.sliderNumItems.addTarget(
       self, action: #selector(sliderValueChanged), for: .valueChanged)
+    
+    // Setup font size controls
+    setupFontSizeControls()
 
     // Setup labels and version
     [labelName, labelFPS, labelVersion].forEach {
@@ -709,9 +723,88 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
   }
+  
+  @objc func fontSizeSliderChanged(_ sender: UISlider) {
+    currentFontSize = CGFloat(sender.value)
+    fontSizeValueLabel.text = String(format: "%.0f", currentFontSize)
+    
+    // Update YOLOView with new annotation config
+    yoloView.setAnnotationConfig(annotationConfig)
+    
+    // Notify external display of font size change (Optional external display feature)
+    NotificationCenter.default.post(
+      name: .fontSizeDidChange,
+      object: nil,
+      userInfo: ["fontSize": currentFontSize]
+    )
+    
+    print("🔤 Font size changed to: \(currentFontSize)")
+  }
+  
+  /// Test method to demonstrate font size functionality
+  private func testFontSizeFunctionality() {
+    print("🧪 Testing font size functionality...")
+    
+    // Test different font sizes
+    let testSizes: [CGFloat] = [12, 16, 20, 24, 32]
+    
+    for size in testSizes {
+      let config = AnnotationConfig.custom(fontSize: size)
+      yoloView.setAnnotationConfig(config)
+      print("✅ Set font size to \(size)")
+    }
+    
+    // Reset to default
+    yoloView.setAnnotationConfig(.default)
+    print("✅ Reset to default font size")
+  }
 
   deinit {
     NotificationCenter.default.removeObserver(self)
+  }
+
+  private func setupFontSizeControls() {
+    // Create font size slider
+    fontSizeSlider = UISlider()
+    fontSizeSlider.minimumValue = 8.0
+    fontSizeSlider.maximumValue = 48.0
+    fontSizeSlider.value = Float(currentFontSize)
+    fontSizeSlider.addTarget(self, action: #selector(fontSizeSliderChanged), for: .valueChanged)
+    
+    // Create labels
+    fontSizeLabel = UILabel()
+    fontSizeLabel.text = "Font Size"
+    fontSizeLabel.textColor = .white
+    fontSizeLabel.font = UIFont.systemFont(ofSize: 14)
+    
+    fontSizeValueLabel = UILabel()
+    fontSizeValueLabel.text = String(format: "%.0f", currentFontSize)
+    fontSizeValueLabel.textColor = .white
+    fontSizeValueLabel.font = UIFont.systemFont(ofSize: 12)
+    fontSizeValueLabel.textAlignment = .center
+    
+    // Add to view hierarchy
+    [fontSizeSlider, fontSizeLabel, fontSizeValueLabel].forEach {
+      $0?.translatesAutoresizingMaskIntoConstraints = false
+      view.addSubview($0!)
+    }
+    
+    // Setup constraints
+    NSLayoutConstraint.activate([
+      // Font size label
+      fontSizeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      fontSizeLabel.topAnchor.constraint(equalTo: modelSegmentedControl.bottomAnchor, constant: 20),
+      
+      // Font size slider
+      fontSizeSlider.leadingAnchor.constraint(equalTo: fontSizeLabel.trailingAnchor, constant: 10),
+      fontSizeSlider.centerYAnchor.constraint(equalTo: fontSizeLabel.centerYAnchor),
+      fontSizeSlider.widthAnchor.constraint(equalToConstant: 150),
+      
+      // Font size value label
+      fontSizeValueLabel.leadingAnchor.constraint(equalTo: fontSizeSlider.trailingAnchor, constant: 10),
+      fontSizeValueLabel.centerYAnchor.constraint(equalTo: fontSizeLabel.centerYAnchor),
+      fontSizeValueLabel.widthAnchor.constraint(equalToConstant: 30)
+    ])
   }
 
   private func debugCheckModelFolders() {

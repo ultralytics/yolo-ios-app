@@ -166,7 +166,7 @@ public class YOLOModelDownloader: NSObject {
         try FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)
       }
 
-      _ = try archive.extract(entry, to: destinationPath)
+      try archive.extract(entry, to: destinationPath)
     }
   }
 
@@ -202,7 +202,7 @@ public class YOLOModelDownloader: NSObject {
     case "mlmodel", "mlpackage":
       do {
         let compiledURL = try MLModel.compileModel(at: modelURL)
-        _ = try MLModel(contentsOf: compiledURL)  // Verify compilation
+        let _ = try MLModel(contentsOf: compiledURL)  // Verify compilation
         return compiledURL
       } catch {
         throw DownloadError.compilationFailed(error)

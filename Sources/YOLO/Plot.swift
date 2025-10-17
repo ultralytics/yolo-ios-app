@@ -251,8 +251,8 @@ func generateCombinedMaskImage(
     let startIdx = originalIndex * HW
 
     // Get class color
-    let _colorIndex = classID % ultralyticsColors.count
-    guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
+    let colorIndex = classID % ultralyticsColors.count
+    guard let color = ultralyticsColors[colorIndex].toRGBComponents() else {
       continue
     }
     let r = UInt8(color.red)
@@ -478,8 +478,8 @@ func drawSinglePersonKeypoints(
   //        return
   //      }
   let lineWidth = radius * 0.4
-  _ = Float(imageViewSize.width / originalImageSize.width)
-  _ = Float(imageViewSize.height / originalImageSize.height)
+  let scaleX = Float(imageViewSize.width / originalImageSize.width)
+  let scaleY = Float(imageViewSize.height / originalImageSize.height)
 
   // Dynamic keypoint count support
   let numKeypoints = keypoints.count

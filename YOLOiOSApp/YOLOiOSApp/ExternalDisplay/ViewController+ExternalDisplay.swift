@@ -20,10 +20,25 @@ import YOLO
 
 // MARK: - External Display Support
 extension ViewController {
+  
+ 
+  private func checkForExternalDisplay() -> Bool {
+    if #available(iOS 16.0, *) {
+
+      return UIApplication.shared.connectedScenes.contains { scene in
+        if let windowScene = scene as? UIWindowScene {
+          return windowScene.screen != UIScreen.main
+        }
+        return false
+      }
+    } else {
+      return UIScreen.screens.count > 1
+    }
+  }
 
   // Associated object key for tracking external display state
   private struct AssociatedKeys {
-    static var isExternalDisplayConnected = "isExternalDisplayConnected"
+    static var isExternalDisplayConnected: UInt8 = 0
   }
 
   private var isExternalDisplayConnected: Bool {
@@ -42,7 +57,7 @@ extension ViewController {
     print("Setting up external display notifications")
 
     // Check if external display is already connected at startup
-    if UIScreen.screens.count > 1 {
+    if checkForExternalDisplay() {
       print("External display already connected at startup - triggering connection handler")
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         self.handleExternalDisplayConnected(Notification(name: .externalDisplayConnected))
@@ -240,7 +255,7 @@ extension ViewController {
   // MARK: - Layout Adjustments for External Display
 
   func adjustLayoutForExternalDisplayIfNeeded() {
-    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = checkForExternalDisplay() || SceneDelegate.hasExternalDisplay
 
     guard hasExternalDisplay else { return }
 
@@ -284,7 +299,7 @@ extension ViewController {
   }
 
   func checkForExternalDisplays() {
-    let hasExternalDisplay = UIScreen.screens.count > 1
+    let hasExternalDisplay = checkForExternalDisplay()
 
     if hasExternalDisplay {
       _ = UIApplication.shared.connectedScenes

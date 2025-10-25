@@ -256,7 +256,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.4).
   ///
   /// Used to filter overlapping detections during non-maximum suppression.
-  var iouThreshold = 0.4
+  var iouThreshold = 0.7
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///

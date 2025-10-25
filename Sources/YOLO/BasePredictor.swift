@@ -177,7 +177,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
                 predictor.processObservations(for: request, error: error)
               }
             })
-          request.imageCropAndScaleOption = .scaleFill
+          request.imageCropAndScaleOption = .scaleFit
           return request
         }()
 

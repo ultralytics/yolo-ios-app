@@ -16,7 +16,7 @@ class BasePredictorTests: XCTestCase {
     XCTAssertFalse(predictor.isModelLoaded)
     XCTAssertEqual(predictor.labels.count, 0)
     XCTAssertEqual(predictor.confidenceThreshold, 0.25, accuracy: 0.001)
-    XCTAssertEqual(predictor.iouThreshold, 0.4, accuracy: 0.001)
+    XCTAssertEqual(predictor.iouThreshold, 0.7, accuracy: 0.001)
     XCTAssertEqual(predictor.numItemsThreshold, 30)
     XCTAssertFalse(predictor.isUpdating)
     XCTAssertNil(predictor.currentBuffer)

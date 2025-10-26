@@ -15,6 +15,9 @@ import AVFoundation
 import UIKit
 import Vision
 
+import SpriteKit
+
+
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
@@ -69,17 +72,39 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)
     } else if task == .pose {
       self.removeAllSubLayers(parentLayer: poseLayer)
-      var keypointList = [[(x: Float, y: Float)]]()
+      
+      // Convert keypoints for skeleton mask
+      var keypointsList = [[(x: Float, y: Float)]]()
       var confsList = [[Float]]()
 
       for keypoint in result.keypointsList {
-        keypointList.append(keypoint.xyn)
+        keypointsList.append(keypoint.xyn)
         confsList.append(keypoint.conf)
       }
-      guard let poseLayer = poseLayer else { return }
-      drawKeypoints(
-        keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
-        on: poseLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
+      
+      // Create and display realistic skeleton on main thread
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        guard let skeletonView = self.skeletonView else { return }
+        
+        // Ensure skeleton view is properly configured
+        skeletonView.frame = self.overlayLayer.frame
+        
+        // Create skeleton scene
+        let skeletonMask = RealisticSkeletonMask()
+        let scene = skeletonMask.createRealisticSkeletonScene(
+          keypointsList: keypointsList,
+          confsList: confsList,
+          boundingBoxes: result.boxes,
+          sceneSize: skeletonView.frame.size,
+          confThreshold: 0.25
+        )
+        
+        // Present the scene
+        skeletonView.presentScene(scene)
+      }
+      
+
     } else if task == .obb {
       //            self.setupObbLayerIfNeeded()
       guard let obbLayer = self.obbLayer else { return }
@@ -130,6 +155,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   private var maskLayer: CALayer?
   private var poseLayer: CALayer?
   private var obbLayer: CALayer?
+  private var skeletonView: SKView?
 
   let obbRenderer = OBBRenderer()
 
@@ -485,6 +511,20 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  func setupSkeletonViewIfNeeded() {
+    if skeletonView == nil {
+      let skView = SKView(frame: overlayLayer.bounds)
+      skView.backgroundColor = .clear
+      skView.allowsTransparency = true
+      skView.ignoresSiblingOrder = false
+      skView.isUserInteractionEnabled = false
+      skView.isOpaque = false
+      // Insert above camera preview but below UI controls
+      self.insertSubview(skView, at: 1)
+      self.skeletonView = skView
+    }
+  }
+
   func setupObbLayerIfNeeded() {
     if obbLayer == nil {
       let layer = CALayer()
@@ -500,6 +540,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     removeAllSubLayers(parentLayer: poseLayer)
     removeAllSubLayers(parentLayer: overlayLayer)
 
+    skeletonView?.presentScene(nil)
+    skeletonView?.removeFromSuperview()
+    skeletonView = nil
+
     maskLayer = nil
     poseLayer = nil
     obbLayer?.isHidden = true
@@ -513,6 +557,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()
+      setupSkeletonViewIfNeeded()
     case .obb:
       setupObbLayerIfNeeded()
       overlayLayer.addSublayer(obbLayer!)
@@ -855,6 +900,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
+
+    // Update skeleton view frame to match overlay layer
+    skeletonView?.frame = overlayLayer.frame
 
     // Apply consistent toolbar styling
     applyToolbarStyling(isLandscape: isLandscape)

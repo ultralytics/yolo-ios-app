@@ -14,6 +14,7 @@
 
 import Accelerate
 import Foundation
+import SpriteKit
 import UIKit
 import Vision
 
@@ -241,5 +242,63 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     }
 
     return results
+  }
+}
+
+
+/// Extension for realistic skeleton visualization
+extension PoseEstimator {
+  /// Create a realistic skeleton visualization for static images
+  public func createRealisticSkeletonImage(
+    from image: CIImage,
+    result: YOLOResult
+  ) -> UIImage? {
+    guard !result.keypointsList.isEmpty else { return nil }
+    
+    // Convert keypoints format
+    var keypointsList: [[(x: Float, y: Float)]] = []
+    var confsList: [[Float]] = []
+    
+    for keypoints in result.keypointsList {
+      keypointsList.append(keypoints.xyn)
+      confsList.append(keypoints.conf)
+    }
+    
+    // Create skeleton scene
+    let skeletonMask = RealisticSkeletonMask()
+    let scene = skeletonMask.createRealisticSkeletonScene(
+      keypointsList: keypointsList,
+      confsList: confsList,
+      boundingBoxes: result.boxes,
+      sceneSize: CGSize(width: image.extent.width, height: image.extent.height),
+      confThreshold: 0.25
+    )
+    
+    // Render scene to image
+    let skView = SKView(frame: CGRect(origin: .zero, size: scene.size))
+    skView.backgroundColor = .clear
+    skView.allowsTransparency = true
+    skView.presentScene(scene)
+    
+    // Convert to UIImage
+    UIGraphicsBeginImageContextWithOptions(scene.size, false, 0)
+    skView.drawHierarchy(in: skView.bounds, afterScreenUpdates: true)
+    let skeletonImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    // Combine with original image
+    return combineImages(background: UIImage(ciImage: image), overlay: skeletonImage)
+  }
+  
+  private func combineImages(background: UIImage?, overlay: UIImage?) -> UIImage? {
+    guard let bg = background, let over = overlay else { return background }
+    
+    UIGraphicsBeginImageContextWithOptions(bg.size, false, 0)
+    bg.draw(at: .zero)
+    over.draw(at: .zero)
+    let combined = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return combined
   }
 }

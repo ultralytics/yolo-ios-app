@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   actions:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Run Ultralytics Actions
         uses: ultralytics/actions@main

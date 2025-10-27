@@ -19,9 +19,13 @@ permissions:
 
 jobs:
   actions:
-    # Run on ubuntu as problems with docformatter on macOS-26 with Python 3.14
-    runs-on: ubuntu-latest
+    # Run with Python 3.13 as problems with docformatter on macOS-26 with Python 3.14
+    runs-on: macos-26
     steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
       - name: Run Ultralytics Actions
         uses: ultralytics/actions@main
         with:
@@ -29,7 +33,7 @@ jobs:
           labels: true # Auto-label issues/PRs using AI
           python: true # Format Python with Ruff and docformatter
           prettier: true # Format YAML, JSON, Markdown, CSS
-          swift: false # Format Swift (requires macos-latest)
+          swift: true # Format Swift (requires macos-latest)
           spelling: true # Check spelling with codespell
           links: false # Check broken links with Lychee
           summary: true # Generate AI-powered PR summaries

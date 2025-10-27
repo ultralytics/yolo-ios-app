@@ -92,6 +92,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         
         // Create skeleton scene
         let skeletonMask = RealisticSkeletonMask()
+        
+        // Get skeleton type from PoseEstimator if available
+        if let poseEstimator = self.videoCapture.predictor as? PoseEstimator {
+          skeletonMask.skeletonType = poseEstimator.skeletonType
+        }
+        
         let scene = skeletonMask.createRealisticSkeletonScene(
           keypointsList: keypointsList,
           confsList: confsList,
@@ -121,6 +127,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
   public var onDetection: ((YOLOResult) -> Void)?
   private var videoCapture: VideoCapture
+  
+  /// Public accessor for the current predictor
+  public var currentPredictor: Predictor? {
+    return videoCapture.predictor
+  }
+  
   private var busy = false
   private var currentBuffer: CVPixelBuffer?
   var framesDone = 0

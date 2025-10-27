@@ -1,117 +1,87 @@
 // RealisticSkeletonMask.swift
-// Add this to your Sources/YOLO directory
+// Full skeleton visualization using a single skeleton image
 
 import SpriteKit
 import UIKit
 import CoreGraphics
 
-/// Creates a realistic human skeleton visualization using actual bone images
+/// Skeleton type options
+public enum SkeletonType {
+    case full       // Regular full skeleton
+    case silly      // Silly/funny skeleton
+}
+
+/// Creates a realistic human skeleton visualization using a full skeleton image
 public class RealisticSkeletonMask {
     
-    // Define bone mappings for a realistic skeleton
-    private struct SkeletonBone {
-        let imageName: String
-        let startKeypoint: Int
-        let endKeypoint: Int
-        let width: CGFloat // Relative width
-        let zPosition: CGFloat // Layer ordering
-    }
+    private var fullSkeletonTexture: SKTexture?
+    private var sillySkeletonTexture: SKTexture?
     
-    // Map YOLO keypoints to skeleton bones
-    // YOLO keypoints: 0=nose, 1-2=eyes, 3-4=ears, 5-6=shoulders, 7-8=elbows, 
-    // 9-10=wrists, 11-12=hips, 13-14=knees, 15-16=ankles
-    private let skeletonBones: [SkeletonBone] = [
-        // Skull
-        SkeletonBone(imageName: "skull", startKeypoint: 0, endKeypoint: 0, width: 80, zPosition: 10),
-        
-        // Spine and ribcage
-        SkeletonBone(imageName: "ribcage", startKeypoint: 5, endKeypoint: 11, width: 100, zPosition: 5),
-        SkeletonBone(imageName: "spine", startKeypoint: 5, endKeypoint: 11, width: 30, zPosition: 4),
-        
-        // Arms - Right
-        SkeletonBone(imageName: "clavicle_right", startKeypoint: 5, endKeypoint: 6, width: 25, zPosition: 6),
-        SkeletonBone(imageName: "humerus", startKeypoint: 6, endKeypoint: 8, width: 20, zPosition: 7),
-        SkeletonBone(imageName: "radius_ulna", startKeypoint: 8, endKeypoint: 10, width: 15, zPosition: 8),
-        SkeletonBone(imageName: "hand", startKeypoint: 10, endKeypoint: 10, width: 20, zPosition: 9),
-        
-        // Arms - Left
-        SkeletonBone(imageName: "clavicle_left", startKeypoint: 5, endKeypoint: 5, width: 25, zPosition: 6),
-        SkeletonBone(imageName: "humerus", startKeypoint: 5, endKeypoint: 7, width: 20, zPosition: 7),
-        SkeletonBone(imageName: "radius_ulna", startKeypoint: 7, endKeypoint: 9, width: 15, zPosition: 8),
-        SkeletonBone(imageName: "hand", startKeypoint: 9, endKeypoint: 9, width: 20, zPosition: 9),
-        
-        // Pelvis
-        SkeletonBone(imageName: "pelvis", startKeypoint: 11, endKeypoint: 12, width: 80, zPosition: 5),
-        
-        // Legs - Right
-        SkeletonBone(imageName: "femur", startKeypoint: 12, endKeypoint: 14, width: 25, zPosition: 7),
-        SkeletonBone(imageName: "tibia_fibula", startKeypoint: 14, endKeypoint: 16, width: 20, zPosition: 8),
-        SkeletonBone(imageName: "foot", startKeypoint: 16, endKeypoint: 16, width: 25, zPosition: 9),
-        
-        // Legs - Left
-        SkeletonBone(imageName: "femur", startKeypoint: 11, endKeypoint: 13, width: 25, zPosition: 7),
-        SkeletonBone(imageName: "tibia_fibula", startKeypoint: 13, endKeypoint: 15, width: 20, zPosition: 8),
-        SkeletonBone(imageName: "foot", startKeypoint: 15, endKeypoint: 15, width: 25, zPosition: 9)
-    ]
-    
-    private var boneTextures: [String: SKTexture] = [:]
+    /// Current skeleton type to display
+    public var skeletonType: SkeletonType = .full
     
     public init() {
-        loadBoneTextures()
+        loadSkeletonTextures()
     }
     
-    /// Load or generate bone textures
-    private func loadBoneTextures() {
-        // Try to load actual bone images from bundle
-        let boneNames = ["skull", "ribcage", "spine", "clavicle_right", "clavicle_left",
-                        "humerus", "radius_ulna", "hand", "pelvis", "femur", 
-                        "tibia_fibula", "foot"]
+    /// Load both skeleton textures
+    private func loadSkeletonTextures() {
+        // Load full skeleton
+        if let image = UIImage(named: "full-skeleton") {
+            fullSkeletonTexture = SKTexture(image: image)
+        } else {
+            print("⚠️ Failed to load full-skeleton image")
+            fullSkeletonTexture = generateFallbackSkeleton()
+        }
         
-        for boneName in boneNames {
-            if let image = UIImage(named: "skeleton_\(boneName)") {
-                boneTextures[boneName] = SKTexture(image: image)
-            } else {
-                // Generate procedural bone texture if image not available
-                boneTextures[boneName] = generateProceduralBoneTexture(for: boneName)
-            }
+        // Load silly skeleton
+        if let image = UIImage(named: "silly-skeleton") {
+            sillySkeletonTexture = SKTexture(image: image)
+        } else {
+            print("⚠️ Failed to load silly-skeleton image")
+            sillySkeletonTexture = fullSkeletonTexture // Fallback to full skeleton
         }
     }
     
-    /// Generate procedural bone textures when images aren't available
-    private func generateProceduralBoneTexture(for boneName: String) -> SKTexture {
-        let size: CGSize
-        switch boneName {
-        case "skull":
-            size = CGSize(width: 100, height: 120)
-        case "ribcage":
-            size = CGSize(width: 150, height: 180)
-        case "pelvis":
-            size = CGSize(width: 120, height: 80)
-        case "hand", "foot":
-            size = CGSize(width: 40, height: 50)
-        default:
-            size = CGSize(width: 30, height: 100)
+    /// Get the currently selected skeleton texture
+    private var currentSkeletonTexture: SKTexture? {
+        switch skeletonType {
+        case .full:
+            return fullSkeletonTexture
+        case .silly:
+            return sillySkeletonTexture
         }
+    }
+    
+    /// Generate a simple fallback skeleton if image is missing
+    private func generateFallbackSkeleton() -> SKTexture {
+        let size = CGSize(width: 327, height: 762)
         
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
         guard let context = UIGraphicsGetCurrentContext() else {
             return SKTexture()
         }
         
-        // Draw bone-like shape
-        context.setFillColor(UIColor(white: 0.95, alpha: 1.0).cgColor)
+        // Draw a simple skeleton shape
+        context.setStrokeColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
+        context.setLineWidth(8)
         
-        switch boneName {
-        case "skull":
-            drawSkull(in: context, size: size)
-        case "ribcage":
-            drawRibcage(in: context, size: size)
-        case "pelvis":
-            drawPelvis(in: context, size: size)
-        case "hand", "foot":
-            drawExtremity(in: context, size: size)
-        default:
-            drawLongBone(in: context, size: size)
+        // Spine
+        context.move(to: CGPoint(x: size.width / 2, y: 50))
+        context.addLine(to: CGPoint(x: size.width / 2, y: size.height - 100))
+        context.strokePath()
+        
+        // Skull
+        let skullRect = CGRect(x: size.width / 2 - 40, y: 10, width: 80, height: 80)
+        context.addEllipse(in: skullRect)
+        context.strokePath()
+        
+        // Ribcage
+        for i in 0..<5 {
+            let y = CGFloat(120 + i * 30)
+            context.move(to: CGPoint(x: size.width / 2 - 50, y: y))
+            context.addLine(to: CGPoint(x: size.width / 2 + 50, y: y))
+            context.strokePath()
         }
         
         let image = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
@@ -120,153 +90,7 @@ public class RealisticSkeletonMask {
         return SKTexture(image: image)
     }
     
-    /// Draw skull shape
-    private func drawSkull(in context: CGContext, size: CGSize) {
-        let skullPath = UIBezierPath(ovalIn: CGRect(x: size.width * 0.1, 
-                                                    y: 0, 
-                                                    width: size.width * 0.8, 
-                                                    height: size.height * 0.7))
-        
-        // Jaw
-        let jawPath = UIBezierPath()
-        jawPath.move(to: CGPoint(x: size.width * 0.2, y: size.height * 0.6))
-        jawPath.addQuadCurve(to: CGPoint(x: size.width * 0.8, y: size.height * 0.6),
-                            controlPoint: CGPoint(x: size.width * 0.5, y: size.height * 0.9))
-        
-        // Eye sockets
-        let leftEye = UIBezierPath(ovalIn: CGRect(x: size.width * 0.25, 
-                                                  y: size.height * 0.3,
-                                                  width: size.width * 0.2, 
-                                                  height: size.height * 0.15))
-        let rightEye = UIBezierPath(ovalIn: CGRect(x: size.width * 0.55, 
-                                                   y: size.height * 0.3,
-                                                   width: size.width * 0.2, 
-                                                   height: size.height * 0.15))
-        
-        // Draw with bone color
-        context.setFillColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
-        context.addPath(skullPath.cgPath)
-        context.fillPath()
-        context.addPath(jawPath.cgPath)
-        context.fillPath()
-        
-        // Draw eye sockets (dark)
-        context.setFillColor(UIColor(white: 0.2, alpha: 0.8).cgColor)
-        context.addPath(leftEye.cgPath)
-        context.fillPath()
-        context.addPath(rightEye.cgPath)
-        context.fillPath()
-    }
-    
-    /// Draw ribcage shape
-    private func drawRibcage(in context: CGContext, size: CGSize) {
-        context.setStrokeColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
-        context.setLineWidth(3)
-        
-        // Draw ribs
-        for i in 0..<8 {
-            let y = CGFloat(i) * size.height / 8 + 10
-            let width = size.width * (0.9 - CGFloat(i) * 0.05)
-            let xOffset = (size.width - width) / 2
-            
-            let ribPath = UIBezierPath()
-            ribPath.move(to: CGPoint(x: xOffset, y: y))
-            ribPath.addQuadCurve(to: CGPoint(x: xOffset + width, y: y),
-                                controlPoint: CGPoint(x: size.width / 2, y: y + 15))
-            
-            context.addPath(ribPath.cgPath)
-            context.strokePath()
-        }
-        
-        // Sternum
-        context.move(to: CGPoint(x: size.width / 2, y: 0))
-        context.addLine(to: CGPoint(x: size.width / 2, y: size.height * 0.8))
-        context.strokePath()
-    }
-    
-    /// Draw pelvis shape
-    private func drawPelvis(in context: CGContext, size: CGSize) {
-        let pelvisPath = UIBezierPath()
-        
-        // Ilium (hip bones)
-        pelvisPath.move(to: CGPoint(x: 0, y: size.height * 0.3))
-        pelvisPath.addCurve(to: CGPoint(x: size.width, y: size.height * 0.3),
-                          controlPoint1: CGPoint(x: size.width * 0.2, y: 0),
-                          controlPoint2: CGPoint(x: size.width * 0.8, y: 0))
-        pelvisPath.addCurve(to: CGPoint(x: size.width * 0.7, y: size.height),
-                          controlPoint1: CGPoint(x: size.width * 0.9, y: size.height * 0.6),
-                          controlPoint2: CGPoint(x: size.width * 0.8, y: size.height * 0.9))
-        pelvisPath.addLine(to: CGPoint(x: size.width * 0.3, y: size.height))
-        pelvisPath.addCurve(to: CGPoint(x: 0, y: size.height * 0.3),
-                          controlPoint1: CGPoint(x: size.width * 0.2, y: size.height * 0.9),
-                          controlPoint2: CGPoint(x: size.width * 0.1, y: size.height * 0.6))
-        
-        context.setFillColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
-        context.addPath(pelvisPath.cgPath)
-        context.fillPath()
-    }
-    
-    /// Draw long bone (femur, humerus, etc.)
-    private func drawLongBone(in context: CGContext, size: CGSize) {
-        let bonePath = UIBezierPath()
-        
-        // Bone shaft with enlarged ends (epiphyses)
-        bonePath.move(to: CGPoint(x: size.width * 0.3, y: 0))
-        bonePath.addLine(to: CGPoint(x: size.width * 0.7, y: 0))
-        bonePath.addQuadCurve(to: CGPoint(x: size.width * 0.6, y: size.height * 0.1),
-                              controlPoint: CGPoint(x: size.width * 0.8, y: size.height * 0.05))
-        bonePath.addLine(to: CGPoint(x: size.width * 0.6, y: size.height * 0.9))
-        bonePath.addQuadCurve(to: CGPoint(x: size.width * 0.7, y: size.height),
-                              controlPoint: CGPoint(x: size.width * 0.8, y: size.height * 0.95))
-        bonePath.addLine(to: CGPoint(x: size.width * 0.3, y: size.height))
-        bonePath.addQuadCurve(to: CGPoint(x: size.width * 0.4, y: size.height * 0.9),
-                              controlPoint: CGPoint(x: size.width * 0.2, y: size.height * 0.95))
-        bonePath.addLine(to: CGPoint(x: size.width * 0.4, y: size.height * 0.1))
-        bonePath.addQuadCurve(to: CGPoint(x: size.width * 0.3, y: 0),
-                              controlPoint: CGPoint(x: size.width * 0.2, y: size.height * 0.05))
-        bonePath.close()
-        
-        // Bone color with slight gradient
-        context.setFillColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
-        context.addPath(bonePath.cgPath)
-        context.fillPath()
-        
-        // Add bone texture lines
-        context.setStrokeColor(UIColor(red: 0.85, green: 0.82, blue: 0.78, alpha: 0.5).cgColor)
-        context.setLineWidth(0.5)
-        for i in stride(from: size.height * 0.2, to: size.height * 0.8, by: 5) {
-            context.move(to: CGPoint(x: size.width * 0.4, y: i))
-            context.addLine(to: CGPoint(x: size.width * 0.6, y: i))
-        }
-        context.strokePath()
-    }
-    
-    /// Draw hand or foot
-    private func drawExtremity(in context: CGContext, size: CGSize) {
-        context.setFillColor(UIColor(red: 0.95, green: 0.92, blue: 0.88, alpha: 1.0).cgColor)
-        
-        // Palm/sole
-        let mainPart = UIBezierPath(roundedRect: CGRect(x: size.width * 0.2, 
-                                                       y: size.height * 0.3,
-                                                       width: size.width * 0.6, 
-                                                       height: size.height * 0.5),
-                                   cornerRadius: 5)
-        context.addPath(mainPart.cgPath)
-        context.fillPath()
-        
-        // Fingers/toes (simplified)
-        for i in 0..<5 {
-            let fingerRect = CGRect(x: size.width * (0.15 + CGFloat(i) * 0.15),
-                                   y: 0,
-                                   width: size.width * 0.1,
-                                   height: size.height * 0.35)
-            let fingerPath = UIBezierPath(roundedRect: fingerRect, cornerRadius: 2)
-            context.addPath(fingerPath.cgPath)
-            context.fillPath()
-        }
-    }
-    
-    /// Create the skeleton scene
+    /// Create the skeleton scene with full skeleton images
     public func createRealisticSkeletonScene(
         keypointsList: [[(x: Float, y: Float)]],
         confsList: [[Float]],
@@ -278,7 +102,7 @@ public class RealisticSkeletonMask {
         scene.backgroundColor = .clear
         scene.scaleMode = .aspectFill
         
-        // Add atmospheric background (optional)
+        // Add atmospheric background
         addAtmosphericEffects(to: scene)
         
         // Process each detected person
@@ -287,12 +111,13 @@ public class RealisticSkeletonMask {
             
             let confs = confsList[personIndex]
             
-            // Create skeleton for this person
-            addRealisticSkeletonToScene(
+            // Add full skeleton for this person
+            addFullSkeletonToScene(
                 scene: scene,
                 keypoints: keypoints,
                 confs: confs,
                 personIndex: personIndex,
+                sceneSize: sceneSize,
                 confThreshold: confThreshold
             )
         }
@@ -300,130 +125,194 @@ public class RealisticSkeletonMask {
         return scene
     }
     
-    /// Add a realistic skeleton to the scene
-    private func addRealisticSkeletonToScene(
+    /// Add a full skeleton image positioned and scaled for a detected person
+    private func addFullSkeletonToScene(
         scene: SKScene,
         keypoints: [(x: Float, y: Float)],
         confs: [Float],
         personIndex: Int,
+        sceneSize: CGSize,
         confThreshold: Float
     ) {
-        // Convert keypoints to scene coordinates
+        guard let texture = currentSkeletonTexture else { return }
+        
+        // YOLO keypoints: 0=nose, 5-6=shoulders, 11-12=hips, 15-16=ankles
+        guard keypoints.count >= 17 else { return }
+        
+        // Convert normalized keypoints to scene coordinates
         let sceneKeypoints = keypoints.map { kp in
             CGPoint(
-                x: CGFloat(kp.x) * scene.size.width,
-                y: scene.size.height - (CGFloat(kp.y) * scene.size.height)
+                x: CGFloat(kp.x) * sceneSize.width,
+                y: sceneSize.height - (CGFloat(kp.y) * sceneSize.height)
             )
         }
         
-        // Create skeleton container
-        let skeletonNode = SKNode()
-        skeletonNode.name = "realistic_skeleton_\(personIndex)"
-        
-        // Sort bones by z-position for proper layering
-        let sortedBones = skeletonBones.sorted { $0.zPosition < $1.zPosition }
-        
-        // Add each bone
-        for bone in sortedBones {
-            guard bone.startKeypoint < sceneKeypoints.count,
-                  bone.endKeypoint < sceneKeypoints.count,
-                  bone.startKeypoint < confs.count,
-                  bone.endKeypoint < confs.count else { continue }
-            
-            // Check confidence
-            if bone.startKeypoint == bone.endKeypoint {
-                // Single point bone (skull, hand, foot)
-                if confs[bone.startKeypoint] >= confThreshold {
-                    addSinglePointBone(bone, at: sceneKeypoints[bone.startKeypoint], to: skeletonNode)
-                }
-            } else {
-                // Two-point bone
-                if confs[bone.startKeypoint] >= confThreshold && 
-                   confs[bone.endKeypoint] >= confThreshold {
-                    addTwoPointBone(bone, 
-                                  from: sceneKeypoints[bone.startKeypoint],
-                                  to: sceneKeypoints[bone.endKeypoint],
-                                  to: skeletonNode)
-                }
-            }
+        // Calculate skeleton position and scale based on key body points
+        guard let (position, scale, rotation) = calculateSkeletonTransform(
+            keypoints: sceneKeypoints,
+            confs: confs,
+            confThreshold: confThreshold
+        ) else {
+            return
         }
         
-        // Add X-ray effect
-        addXRayEffect(to: skeletonNode)
+        // Create skeleton sprite
+        let skeletonSprite = SKSpriteNode(texture: texture)
         
-        scene.addChild(skeletonNode)
-    }
-    
-    /// Add single-point bone (skull, hands, feet)
-    private func addSinglePointBone(_ bone: SkeletonBone, at point: CGPoint, to parent: SKNode) {
-        guard let texture = boneTextures[bone.imageName] else { return }
+        // Adjust position: lower by 30 pixels to reach legs better
+        skeletonSprite.position = CGPoint(x: position.x, y: position.y - 75)
         
-        let boneSprite = SKSpriteNode(texture: texture)
-        boneSprite.position = point
-        boneSprite.size = CGSize(width: bone.width, height: bone.width * 1.2)
-        boneSprite.zPosition = bone.zPosition
-        boneSprite.alpha = 0.9
+        // Set base scale
+        skeletonSprite.setScale(scale)
         
-        // Add glow effect
-        let glowNode = SKEffectNode()
-        glowNode.shouldRasterize = true
-        glowNode.filter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": 2.0])
-        glowNode.addChild(boneSprite)
+        // Extend vertical scale to reach the legs (1.15 = 15% taller)
+        skeletonSprite.yScale *= 1.15
         
-        parent.addChild(glowNode)
-    }
-    
-    /// Add two-point bone (long bones)
-    private func addTwoPointBone(_ bone: SkeletonBone, from start: CGPoint, to end: CGPoint, to parent: SKNode) {
-        guard let texture = boneTextures[bone.imageName] else { return }
+        // Fix upside-down issue: Flip the sprite vertically
+        skeletonSprite.yScale *= -1
         
-        let distance = hypot(end.x - start.x, end.y - start.y)
-        let angle = atan2(end.y - start.y, end.x - start.x) - .pi / 2
+        // Apply rotation to match body orientation
+        skeletonSprite.zRotation = rotation
         
-        let boneSprite = SKSpriteNode(texture: texture)
-        boneSprite.position = CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
-        boneSprite.size = CGSize(width: bone.width, height: distance)
-        boneSprite.zRotation = angle
-        boneSprite.zPosition = bone.zPosition
-        boneSprite.alpha = 0.9
+        skeletonSprite.alpha = 0.9
+        skeletonSprite.name = "full_skeleton_\(personIndex)"
         
-        // Add subtle animation
-        let fadeAction = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.7, duration: 1.0),
-            SKAction.fadeAlpha(to: 0.9, duration: 1.0)
-        ])
-        boneSprite.run(SKAction.repeatForever(fadeAction))
-        
-        parent.addChild(boneSprite)
-    }
-    
-    /// Add X-ray/ghostly effect
-    private func addXRayEffect(to node: SKNode) {
-        // Add a subtle blue-white tint
-        let tintNode = SKEffectNode()
-        tintNode.filter = CIFilter(name: "CIColorMonochrome", parameters: [
-            "inputColor": CIColor(red: 0.8, green: 0.9, blue: 1.0),
+        // Add color tint for X-ray effect (removed blur for clarity)
+        let tintFilter = CIFilter(name: "CIColorMonochrome", parameters: [
+            "inputColor": CIColor(red: 0.85, green: 0.92, blue: 1.0),
             "inputIntensity": 0.3
         ])
         
-        // Move all children to effect node
-        let children = node.children
-        for child in children {
-            child.removeFromParent()
-            tintNode.addChild(child)
-        }
+        let effectNode = SKEffectNode()
+        effectNode.filter = tintFilter
+        effectNode.shouldRasterize = true
+        effectNode.addChild(skeletonSprite)
         
-        node.addChild(tintNode)
+        // Add subtle animation
+        let fadeAction = SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.75, duration: 1.5),
+            SKAction.fadeAlpha(to: 0.95, duration: 1.5)
+        ])
+        effectNode.run(SKAction.repeatForever(fadeAction))
+        
+        scene.addChild(effectNode)
     }
     
-    /// Add atmospheric effects to make it look more X-ray like
+    /// Calculate the position, scale, and rotation for the full skeleton
+    private func calculateSkeletonTransform(
+        keypoints: [CGPoint],
+        confs: [Float],
+        confThreshold: Float
+    ) -> (position: CGPoint, scale: CGFloat, rotation: CGFloat)? {
+        
+        // Key indices: 0=nose, 5=L.shoulder, 6=R.shoulder, 11=L.hip, 12=R.hip, 15=L.ankle, 16=R.ankle
+        let noseIdx = 0
+        let leftShoulderIdx = 5
+        let rightShoulderIdx = 6
+        let leftHipIdx = 11
+        let rightHipIdx = 12
+        let leftAnkleIdx = 15
+        let rightAnkleIdx = 16
+        
+        // Check if we have sufficient confident keypoints
+        guard confs[leftShoulderIdx] >= confThreshold || confs[rightShoulderIdx] >= confThreshold,
+              confs[leftHipIdx] >= confThreshold || confs[rightHipIdx] >= confThreshold else {
+            return nil
+        }
+        
+        // Calculate shoulder center
+        var shoulderCenter = CGPoint.zero
+        var shoulderCount = 0
+        if confs[leftShoulderIdx] >= confThreshold {
+            shoulderCenter.x += keypoints[leftShoulderIdx].x
+            shoulderCenter.y += keypoints[leftShoulderIdx].y
+            shoulderCount += 1
+        }
+        if confs[rightShoulderIdx] >= confThreshold {
+            shoulderCenter.x += keypoints[rightShoulderIdx].x
+            shoulderCenter.y += keypoints[rightShoulderIdx].y
+            shoulderCount += 1
+        }
+        if shoulderCount > 0 {
+            shoulderCenter.x /= CGFloat(shoulderCount)
+            shoulderCenter.y /= CGFloat(shoulderCount)
+        }
+        
+        // Calculate hip center
+        var hipCenter = CGPoint.zero
+        var hipCount = 0
+        if confs[leftHipIdx] >= confThreshold {
+            hipCenter.x += keypoints[leftHipIdx].x
+            hipCenter.y += keypoints[leftHipIdx].y
+            hipCount += 1
+        }
+        if confs[rightHipIdx] >= confThreshold {
+            hipCenter.x += keypoints[rightHipIdx].x
+            hipCenter.y += keypoints[rightHipIdx].y
+            hipCount += 1
+        }
+        if hipCount > 0 {
+            hipCenter.x /= CGFloat(hipCount)
+            hipCenter.y /= CGFloat(hipCount)
+        }
+        
+        // Calculate ankle center (for full body height)
+        var ankleCenter = CGPoint.zero
+        var ankleCount = 0
+        if confs[leftAnkleIdx] >= confThreshold {
+            ankleCenter.x += keypoints[leftAnkleIdx].x
+            ankleCenter.y += keypoints[leftAnkleIdx].y
+            ankleCount += 1
+        }
+        if confs[rightAnkleIdx] >= confThreshold {
+            ankleCenter.x += keypoints[rightAnkleIdx].x
+            ankleCenter.y += keypoints[rightAnkleIdx].y
+            ankleCount += 1
+        }
+        if ankleCount > 0 {
+            ankleCenter.x /= CGFloat(ankleCount)
+            ankleCenter.y /= CGFloat(ankleCount)
+        }
+        
+        // Calculate skeleton position (center between shoulders and hips)
+        let torsoCenter = CGPoint(
+            x: (shoulderCenter.x + hipCenter.x) / 2,
+            y: (shoulderCenter.y + hipCenter.y) / 2
+        )
+        
+        // Calculate torso height for scaling
+        let torsoHeight = abs(shoulderCenter.y - hipCenter.y)
+        
+        // Full body height (if ankles are detected)
+        var bodyHeight = torsoHeight * 2.5 // Default multiplier
+        if ankleCount > 0 && confs[noseIdx] >= confThreshold {
+            let fullHeight = abs(keypoints[noseIdx].y - ankleCenter.y)
+            if fullHeight > torsoHeight {
+                bodyHeight = fullHeight
+            }
+        }
+        
+        // Calculate scale based on detected body height
+        // Skeleton image is 762 tall, torso is roughly 40% of that
+        let skeletonHeight: CGFloat = 762
+        let scale = bodyHeight / skeletonHeight
+        
+        // Calculate rotation based on shoulder-hip alignment
+        let dx = hipCenter.x - shoulderCenter.x
+        let dy = hipCenter.y - shoulderCenter.y
+        let rotation = atan2(dx, dy) // Rotation in radians
+        
+        return (position: torsoCenter, scale: max(scale, 0.1), rotation: rotation)
+    }
+    
+    /// Add atmospheric effects for X-ray appearance
     private func addAtmosphericEffects(to scene: SKScene) {
-        // Add subtle vignette
+        // Add subtle dark vignette
         let vignette = SKShapeNode(rect: scene.frame)
         vignette.fillColor = .clear
         vignette.strokeColor = .black
-        vignette.lineWidth = 100
-        vignette.alpha = 0.3
+        vignette.lineWidth = 80
+        vignette.alpha = 0.25
         vignette.zPosition = 100
         vignette.blendMode = .multiply
         

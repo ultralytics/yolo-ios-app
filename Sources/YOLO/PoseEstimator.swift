@@ -21,6 +21,15 @@ import Vision
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
 public class PoseEstimator: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
+  
+  /// Enable realistic skeleton visualization instead of regular pose drawing
+  public var useRealisticSkeleton: Bool = false
+  
+  /// Confidence threshold for skeleton bone visibility
+  public var skeletonConfThreshold: Float = 0.25
+  
+  /// Skeleton type to display (full or silly)
+  public var skeletonType: SkeletonType = .full
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -93,14 +102,26 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
             confsList.append(person.keypoints.conf)
           }
 
-          // 新しい統合描画関数を使用
-          let annotatedImage = drawYOLOPoseWithBoxes(
-            ciImage: image,
-            keypointsList: keypointsForImage,
-            confsList: confsList,
-            boundingBoxes: boxes,
-            originalImageSize: inputSize
-          )
+          // Choose visualization method
+          let annotatedImage: UIImage?
+          if useRealisticSkeleton {
+            // Use skeleton visualization
+            annotatedImage = createRealisticSkeletonOverlay(
+              ciImage: image,
+              keypointsList: keypointsForImage,
+              confsList: confsList,
+              boundingBoxes: boxes
+            )
+          } else {
+            // Use regular pose drawing
+            annotatedImage = drawYOLOPoseWithBoxes(
+              ciImage: image,
+              keypointsList: keypointsForImage,
+              confsList: confsList,
+              boundingBoxes: boxes,
+              originalImageSize: inputSize
+            )
+          }
 
           let result = YOLOResult(
             orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
@@ -266,12 +287,13 @@ extension PoseEstimator {
     
     // Create skeleton scene
     let skeletonMask = RealisticSkeletonMask()
+    skeletonMask.skeletonType = self.skeletonType
     let scene = skeletonMask.createRealisticSkeletonScene(
       keypointsList: keypointsList,
       confsList: confsList,
       boundingBoxes: result.boxes,
       sceneSize: CGSize(width: image.extent.width, height: image.extent.height),
-      confThreshold: 0.25
+      confThreshold: skeletonConfThreshold
     )
     
     // Render scene to image
@@ -290,12 +312,59 @@ extension PoseEstimator {
     return combineImages(background: UIImage(ciImage: image), overlay: skeletonImage)
   }
   
+  /// Create realistic skeleton overlay on original image
+  internal func createRealisticSkeletonOverlay(
+    ciImage: CIImage,
+    keypointsList: [[(x: Float, y: Float)]],
+    confsList: [[Float]],
+    boundingBoxes: [Box]
+  ) -> UIImage? {
+    guard !keypointsList.isEmpty else { return nil }
+    
+    let imageSize = CGSize(width: ciImage.extent.width, height: ciImage.extent.height)
+    
+    // Create skeleton scene
+    let skeletonMask = RealisticSkeletonMask()
+    skeletonMask.skeletonType = self.skeletonType
+    let scene = skeletonMask.createRealisticSkeletonScene(
+      keypointsList: keypointsList,
+      confsList: confsList,
+      boundingBoxes: boundingBoxes,
+      sceneSize: imageSize,
+      confThreshold: skeletonConfThreshold
+    )
+    
+    // Render skeleton scene to UIImage
+    let renderer = UIGraphicsImageRenderer(size: imageSize)
+    let skeletonImage = renderer.image { context in
+      let skView = SKView(frame: CGRect(origin: .zero, size: imageSize))
+      skView.backgroundColor = .clear
+      skView.allowsTransparency = true
+      skView.presentScene(scene)
+      
+      // Give SpriteKit a moment to render
+      RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.01))
+      
+      skView.layer.render(in: context.cgContext)
+    }
+    
+    // Convert CIImage to UIImage
+    let context = CIContext(options: nil)
+    guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+      return skeletonImage
+    }
+    let backgroundImage = UIImage(cgImage: cgImage)
+    
+    // Combine background and skeleton
+    return combineImages(background: backgroundImage, overlay: skeletonImage)
+  }
+  
   private func combineImages(background: UIImage?, overlay: UIImage?) -> UIImage? {
     guard let bg = background, let over = overlay else { return background }
     
     UIGraphicsBeginImageContextWithOptions(bg.size, false, 0)
     bg.draw(at: .zero)
-    over.draw(at: .zero)
+    over.draw(at: .zero, blendMode: .normal, alpha: 1.0)
     let combined = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     

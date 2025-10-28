@@ -71,7 +71,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   
   // Skeleton toggle button (for pose models)
   var skeletonToggleButton: UIButton!
-  private var currentSkeletonType: SkeletonType = .full
+  private var currentSkeletonType: SkeletonType = .articulated  // Start with articulated to show custom images
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
@@ -387,6 +387,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
             self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
               switch result {
               case .success():
+                // Apply skeleton settings immediately after model loads successfully
+                Task { @MainActor in
+                  if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
+                    poseEstimator.useRealisticSkeleton = true
+                    poseEstimator.skeletonType = self.currentSkeletonType
+                    print("✅ [LOCAL] Applied skeleton settings after model load: type=\(self.currentSkeletonType)")
+                  }
+                }
                 self.finishLoadingModel(success: true, modelName: entry.displayName)
               case .failure(let error):
                 print(error)
@@ -460,6 +468,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
           switch result {
           case .success():
+            // Apply skeleton settings immediately after model loads successfully
+            Task { @MainActor in
+              if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
+                poseEstimator.useRealisticSkeleton = true
+                poseEstimator.skeletonType = self.currentSkeletonType
+                print("✅ [CACHED] Applied skeleton settings after model load: type=\(self.currentSkeletonType)")
+              }
+            }
             self.finishLoadingModel(success: true, modelName: displayName)
           case .failure(let error):
             print(error)
@@ -566,8 +582,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
         // currentModelName is already set above in the notification section
         self.labelName.text = processString(modelName)
         
-        // Enable skeleton mode for pose models
-        self.updateSkeletonButtonVisibility()
+        // Enable skeleton mode for pose models (with small delay to ensure predictor is set)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          self.updateSkeletonButtonVisibility()
+          print("🦴 Skeleton settings applied: isPose=\(self.currentTask == "Pose"), type=\(self.currentSkeletonType)")
+        }
       }
     }
   }
@@ -614,6 +633,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if let poseEstimator = yoloView.currentPredictor as? PoseEstimator {
         poseEstimator.useRealisticSkeleton = true
         poseEstimator.skeletonType = currentSkeletonType
+        print("✅ Applied skeleton settings: useRealisticSkeleton=true, type=\(currentSkeletonType)")
+      } else {
+        print("❌ Failed to apply skeleton settings: currentPredictor is nil or not PoseEstimator")
+        print("   currentPredictor type: \(type(of: yoloView.currentPredictor))")
       }
     }
   }
@@ -664,7 +687,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   
   private func setupSkeletonToggleButton() {
     skeletonToggleButton = UIButton(type: .system)
-    skeletonToggleButton.setTitle("💀 Switch", for: .normal)
+    skeletonToggleButton.setTitle("🦴 Parts", for: .normal)  // Start with articulated
     skeletonToggleButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
     skeletonToggleButton.setTitleColor(.white, for: .normal)
     skeletonToggleButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.8)
@@ -698,12 +721,30 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @objc func skeletonToggleButtonTapped() {
     selection.selectionChanged()
     
-    // Toggle skeleton type
-    currentSkeletonType = currentSkeletonType == .full ? .silly : .full
+    // Cycle through skeleton types: Full → Articulated → Silly → Full
+    switch currentSkeletonType {
+    case .full:
+      currentSkeletonType = .articulated
+    case .articulated:
+      currentSkeletonType = .silly
+    case .silly:
+      currentSkeletonType = .full
+    }
     
-    // Update button title
-    let emoji = currentSkeletonType == .full ? "💀" : "🤪"
-    let title = currentSkeletonType == .full ? "Full" : "Silly"
+    // Update button title with appropriate emoji and text
+    let emoji: String
+    let title: String
+    switch currentSkeletonType {
+    case .full:
+      emoji = "💀"
+      title = "Full"
+    case .articulated:
+      emoji = "🦴"
+      title = "Parts"
+    case .silly:
+      emoji = "🤪"
+      title = "Silly"
+    }
     skeletonToggleButton.setTitle("\(emoji) \(title)", for: .normal)
     
     // Update YOLOView's pose estimator if it exists

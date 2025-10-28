@@ -285,16 +285,32 @@ extension PoseEstimator {
       confsList.append(keypoints.conf)
     }
     
-    // Create skeleton scene
-    let skeletonMask = RealisticSkeletonMask()
-    skeletonMask.skeletonType = self.skeletonType
-    let scene = skeletonMask.createRealisticSkeletonScene(
-      keypointsList: keypointsList,
-      confsList: confsList,
-      boundingBoxes: result.boxes,
-      sceneSize: CGSize(width: image.extent.width, height: image.extent.height),
-      confThreshold: skeletonConfThreshold
-    )
+    // Create skeleton scene based on type
+    let scene: SKScene
+    let imageSize = CGSize(width: image.extent.width, height: image.extent.height)
+    
+    if self.skeletonType == .articulated {
+      // Use articulated skeleton with separate body parts
+      let articulatedMask = ArticulatedSkeletonMask()
+      scene = articulatedMask.createArticulatedSkeletonScene(
+        keypointsList: keypointsList,
+        confsList: confsList,
+        boundingBoxes: result.boxes,
+        sceneSize: imageSize,
+        confThreshold: skeletonConfThreshold
+      )
+    } else {
+      // Use full skeleton image
+      let skeletonMask = RealisticSkeletonMask()
+      skeletonMask.skeletonType = self.skeletonType
+      scene = skeletonMask.createRealisticSkeletonScene(
+        keypointsList: keypointsList,
+        confsList: confsList,
+        boundingBoxes: result.boxes,
+        sceneSize: imageSize,
+        confThreshold: skeletonConfThreshold
+      )
+    }
     
     // Render scene to image
     let skView = SKView(frame: CGRect(origin: .zero, size: scene.size))
@@ -323,16 +339,30 @@ extension PoseEstimator {
     
     let imageSize = CGSize(width: ciImage.extent.width, height: ciImage.extent.height)
     
-    // Create skeleton scene
-    let skeletonMask = RealisticSkeletonMask()
-    skeletonMask.skeletonType = self.skeletonType
-    let scene = skeletonMask.createRealisticSkeletonScene(
-      keypointsList: keypointsList,
-      confsList: confsList,
-      boundingBoxes: boundingBoxes,
-      sceneSize: imageSize,
-      confThreshold: skeletonConfThreshold
-    )
+    // Create skeleton scene based on type
+    let scene: SKScene
+    if self.skeletonType == .articulated {
+      // Use articulated skeleton with separate body parts
+      let articulatedMask = ArticulatedSkeletonMask()
+      scene = articulatedMask.createArticulatedSkeletonScene(
+        keypointsList: keypointsList,
+        confsList: confsList,
+        boundingBoxes: boundingBoxes,
+        sceneSize: imageSize,
+        confThreshold: skeletonConfThreshold
+      )
+    } else {
+      // Use full skeleton image
+      let skeletonMask = RealisticSkeletonMask()
+      skeletonMask.skeletonType = self.skeletonType
+      scene = skeletonMask.createRealisticSkeletonScene(
+        keypointsList: keypointsList,
+        confsList: confsList,
+        boundingBoxes: boundingBoxes,
+        sceneSize: imageSize,
+        confThreshold: skeletonConfThreshold
+      )
+    }
     
     // Render skeleton scene to UIImage
     let renderer = UIGraphicsImageRenderer(size: imageSize)

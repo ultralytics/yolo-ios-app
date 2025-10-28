@@ -7,8 +7,9 @@ import CoreGraphics
 
 /// Skeleton type options
 public enum SkeletonType {
-    case full       // Regular full skeleton
-    case silly      // Silly/funny skeleton
+    case full          // Regular full skeleton
+    case silly         // Silly/funny skeleton
+    case articulated   // Articulated body parts skeleton
 }
 
 /// Creates a realistic human skeleton visualization using a full skeleton image
@@ -50,6 +51,9 @@ public class RealisticSkeletonMask {
             return fullSkeletonTexture
         case .silly:
             return sillySkeletonTexture
+        case .articulated:
+            // Articulated skeleton uses separate body parts, not a single texture
+            return nil
         }
     }
     

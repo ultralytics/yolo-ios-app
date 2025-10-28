@@ -90,21 +90,38 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         // Ensure skeleton view is properly configured
         skeletonView.frame = self.overlayLayer.frame
         
-        // Create skeleton scene
-        let skeletonMask = RealisticSkeletonMask()
-        
-        // Get skeleton type from PoseEstimator if available
+        // Get skeleton type from PoseEstimator
+        var skeletonType: SkeletonType = .full
         if let poseEstimator = self.videoCapture.predictor as? PoseEstimator {
-          skeletonMask.skeletonType = poseEstimator.skeletonType
+          skeletonType = poseEstimator.skeletonType
         }
         
-        let scene = skeletonMask.createRealisticSkeletonScene(
-          keypointsList: keypointsList,
-          confsList: confsList,
-          boundingBoxes: result.boxes,
-          sceneSize: skeletonView.frame.size,
-          confThreshold: 0.25
-        )
+        // Create appropriate skeleton scene based on type
+        let scene: SKScene
+        if skeletonType == .articulated {
+          // Use articulated skeleton with separate body parts
+          print("🦴 Using ArticulatedSkeletonMask for real-time rendering")
+          let articulatedMask = ArticulatedSkeletonMask()
+          scene = articulatedMask.createArticulatedSkeletonScene(
+            keypointsList: keypointsList,
+            confsList: confsList,
+            boundingBoxes: result.boxes,
+            sceneSize: skeletonView.frame.size,
+            confThreshold: 0.25
+          )
+        } else {
+          // Use full or silly skeleton image
+          print("🦴 Using RealisticSkeletonMask with type: \(skeletonType)")
+          let skeletonMask = RealisticSkeletonMask()
+          skeletonMask.skeletonType = skeletonType
+          scene = skeletonMask.createRealisticSkeletonScene(
+            keypointsList: keypointsList,
+            confsList: confsList,
+            boundingBoxes: result.boxes,
+            sceneSize: skeletonView.frame.size,
+            confThreshold: 0.25
+          )
+        }
         
         // Present the scene
         skeletonView.presentScene(scene)

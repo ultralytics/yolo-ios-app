@@ -288,18 +288,18 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         let localModelURL = documentsDirectory.appendingPathComponent(modelName)
           .appendingPathExtension("mlmodelc")
         actualModelPath = localModelURL.path
-        print("📱 External display loading cached model from: \(actualModelPath)")
+        print("External display loading cached model from: \(actualModelPath)")
       } else {
-        print("❌ Model not downloaded yet: \(modelName)")
-        return  // Exit early if model is not downloaded
+        print("Model not downloaded yet: \(modelName)")
+        return  
       }
     } else {
-      print("📱 External display loading bundle model from: \(actualModelPath)")
+      print("External display loading bundle model from: \(actualModelPath)")
     }
 
     yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
       guard case .success = result else {
-        print("❌ Failed to load model on external display: \(actualModelPath)")
+        print("Failed to load model on external display: \(actualModelPath)")
         return
       }
 

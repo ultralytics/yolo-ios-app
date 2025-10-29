@@ -473,10 +473,7 @@ func drawSinglePersonKeypoints(
   confThreshold: Float,
   drawSkeleton: Bool
 ) {
-  //      guard keypoints.count == 17 else {
-  //        print("Keypoints array must have 51 elements.")
-  //        return
-  //      }
+
   let lineWidth = radius * 0.4
   _ = Float(imageViewSize.width / originalImageSize.width)
   _ = Float(imageViewSize.height / originalImageSize.height)

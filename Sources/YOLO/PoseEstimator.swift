@@ -21,13 +21,13 @@ import Vision
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
 public class PoseEstimator: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
-  
+
   /// Enable realistic skeleton visualization instead of regular pose drawing
   public var useRealisticSkeleton: Bool = false
-  
+
   /// Confidence threshold for skeleton bone visibility
   public var skeletonConfThreshold: Float = 0.25
-  
+
   /// Skeleton type to display (always articulated)
   public var skeletonType: SkeletonType = .articulated
 
@@ -266,7 +266,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
   }
 }
 
-
 /// Extension for realistic skeleton visualization
 extension PoseEstimator {
   /// Create a realistic skeleton visualization for static images
@@ -275,16 +274,16 @@ extension PoseEstimator {
     result: YOLOResult
   ) -> UIImage? {
     guard !result.keypointsList.isEmpty else { return nil }
-    
+
     // Convert keypoints format
     var keypointsList: [[(x: Float, y: Float)]] = []
     var confsList: [[Float]] = []
-    
+
     for keypoints in result.keypointsList {
       keypointsList.append(keypoints.xyn)
       confsList.append(keypoints.conf)
     }
-    
+
     // Create articulated skeleton scene
     let imageSize = CGSize(width: image.extent.width, height: image.extent.height)
     let articulatedMask = ArticulatedSkeletonMask()
@@ -295,23 +294,23 @@ extension PoseEstimator {
       sceneSize: imageSize,
       confThreshold: skeletonConfThreshold
     )
-    
+
     // Render scene to image
     let skView = SKView(frame: CGRect(origin: .zero, size: scene.size))
     skView.backgroundColor = .clear
     skView.allowsTransparency = true
     skView.presentScene(scene)
-    
+
     // Convert to UIImage
     UIGraphicsBeginImageContextWithOptions(scene.size, false, 0)
     skView.drawHierarchy(in: skView.bounds, afterScreenUpdates: true)
     let skeletonImage = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
-    
+
     // Combine with original image
     return combineImages(background: UIImage(ciImage: image), overlay: skeletonImage)
   }
-  
+
   /// Create realistic skeleton overlay on original image
   internal func createRealisticSkeletonOverlay(
     ciImage: CIImage,
@@ -320,9 +319,9 @@ extension PoseEstimator {
     boundingBoxes: [Box]
   ) -> UIImage? {
     guard !keypointsList.isEmpty else { return nil }
-    
+
     let imageSize = CGSize(width: ciImage.extent.width, height: ciImage.extent.height)
-    
+
     // Create articulated skeleton scene
     let articulatedMask = ArticulatedSkeletonMask()
     let scene = articulatedMask.createArticulatedSkeletonScene(
@@ -332,7 +331,7 @@ extension PoseEstimator {
       sceneSize: imageSize,
       confThreshold: skeletonConfThreshold
     )
-    
+
     // Render skeleton scene to UIImage
     let renderer = UIGraphicsImageRenderer(size: imageSize)
     let skeletonImage = renderer.image { context in
@@ -340,24 +339,24 @@ extension PoseEstimator {
       skView.backgroundColor = .clear
       skView.allowsTransparency = true
       skView.presentScene(scene)
-      
+
       // Give SpriteKit a moment to render
       RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.01))
-      
+
       skView.layer.render(in: context.cgContext)
     }
-    
+
     // Convert CIImage to UIImage
     let context = CIContext(options: nil)
     guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
       return skeletonImage
     }
     let backgroundImage = UIImage(cgImage: cgImage)
-    
+
     // Combine background and skeleton
     return combineImages(background: backgroundImage, overlay: skeletonImage)
   }
-  
+
   private func combineImages(background: UIImage?, overlay: UIImage?) -> UIImage? {
     return SkeletonUtilities.combineImages(background: background, overlay: overlay)
   }

@@ -37,12 +37,11 @@ extension ViewController {
         .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
   }
-  
- 
+
   /// Uses modern iOS 16+ API when available, falls back to UIScreen.screens for older versions
   var hasExternalDisplay: Bool {
     if #available(iOS 16.0, *) {
-     
+
       return UIApplication.shared.connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .contains { $0.screen != UIScreen.main }

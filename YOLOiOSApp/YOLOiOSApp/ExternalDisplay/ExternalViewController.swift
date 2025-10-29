@@ -291,13 +291,14 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
         print("External display loading cached model from: \(actualModelPath)")
       } else {
         print("Model not downloaded yet: \(modelName)")
-        return  
+        return
       }
     } else {
       print("External display loading bundle model from: \(actualModelPath)")
     }
 
-    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self, actualModelPath] result in
+    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) {
+      [weak self, actualModelPath] result in
       guard case .success = result else {
         print("Failed to load model on external display: \(actualModelPath)")
         return

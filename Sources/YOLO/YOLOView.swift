@@ -12,11 +12,9 @@
 //  and provides functionality for capturing photos with detection results overlaid.
 
 import AVFoundation
+import SpriteKit
 import UIKit
 import Vision
-
-import SpriteKit
-
 
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
@@ -72,7 +70,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)
     } else if task == .pose {
       self.removeAllSubLayers(parentLayer: poseLayer)
-      
+
       // Convert keypoints for skeleton mask
       var keypointsList = [[(x: Float, y: Float)]]()
       var confsList = [[Float]]()
@@ -81,15 +79,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         keypointsList.append(keypoint.xyn)
         confsList.append(keypoint.conf)
       }
-      
+
       // Create and display realistic skeleton on main thread
       DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
         guard let skeletonView = self.skeletonView else { return }
-        
+
         // Ensure skeleton view is properly configured
         skeletonView.frame = self.overlayLayer.frame
-        
+
         // Create articulated skeleton scene
         let articulatedMask = ArticulatedSkeletonMask()
         let scene = articulatedMask.createArticulatedSkeletonScene(
@@ -99,11 +97,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           sceneSize: skeletonView.frame.size,
           confThreshold: SkeletonUtilities.Constants.defaultConfThreshold
         )
-        
+
         // Present the scene
         skeletonView.presentScene(scene)
       }
-      
 
     } else if task == .obb {
       //            self.setupObbLayerIfNeeded()
@@ -121,12 +118,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
   public var onDetection: ((YOLOResult) -> Void)?
   private var videoCapture: VideoCapture
-  
+
   /// Public accessor for the current predictor
   public var currentPredictor: Predictor? {
     return videoCapture.predictor
   }
-  
+
   private var busy = false
   private var currentBuffer: CVPixelBuffer?
   var framesDone = 0

@@ -68,10 +68,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // Custom model selection button (created programmatically)
   var customModelButton: UIButton!
-  
-  // Skeleton toggle button (for pose models)
-  var skeletonToggleButton: UIButton!
-  private var currentSkeletonType: SkeletonType = .articulated  // Start with articulated to show custom images
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
@@ -159,7 +155,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setupModelSegmentedControl()
     setupCustomModelButton()
-    setupSkeletonToggleButton()
 
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
@@ -390,9 +385,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
                 // Apply skeleton settings immediately after model loads successfully
                 Task { @MainActor in
                   if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
-                    poseEstimator.useRealisticSkeleton = true
-                    poseEstimator.skeletonType = self.currentSkeletonType
-                    print("✅ [LOCAL] Applied skeleton settings after model load: type=\(self.currentSkeletonType)")
+                    self.configureSkeletonMode(for: poseEstimator)
                   }
                 }
                 self.finishLoadingModel(success: true, modelName: entry.displayName)
@@ -471,9 +464,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
             // Apply skeleton settings immediately after model loads successfully
             Task { @MainActor in
               if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
-                poseEstimator.useRealisticSkeleton = true
-                poseEstimator.skeletonType = self.currentSkeletonType
-                print("✅ [CACHED] Applied skeleton settings after model load: type=\(self.currentSkeletonType)")
+                self.configureSkeletonMode(for: poseEstimator)
               }
             }
             self.finishLoadingModel(success: true, modelName: displayName)
@@ -584,8 +575,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
         
         // Enable skeleton mode for pose models (with small delay to ensure predictor is set)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          self.updateSkeletonButtonVisibility()
-          print("🦴 Skeleton settings applied: isPose=\(self.currentTask == "Pose"), type=\(self.currentSkeletonType)")
+          if self.currentTask == "Pose", let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
+            self.configureSkeletonMode(for: poseEstimator)
+          }
         }
       }
     }
@@ -611,9 +603,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     currentTask = newTask
-    
-    // Show/hide skeleton button based on task
-    updateSkeletonButtonVisibility()
 
     // Notify external display of task change immediately (Optional external display feature)
     NotificationCenter.default.post(
@@ -624,21 +613,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     reloadModelEntriesAndLoadFirst(for: currentTask)
   }
   
-  private func updateSkeletonButtonVisibility() {
-    let isPoseTask = currentTask == "Pose"
-    skeletonToggleButton.isHidden = !isPoseTask
-    
-    // Enable skeleton mode for pose models
-    if isPoseTask {
-      if let poseEstimator = yoloView.currentPredictor as? PoseEstimator {
-        poseEstimator.useRealisticSkeleton = true
-        poseEstimator.skeletonType = currentSkeletonType
-        print("✅ Applied skeleton settings: useRealisticSkeleton=true, type=\(currentSkeletonType)")
-      } else {
-        print("❌ Failed to apply skeleton settings: currentPredictor is nil or not PoseEstimator")
-        print("   currentPredictor type: \(type(of: yoloView.currentPredictor))")
-      }
-    }
+  // MARK: - Skeleton Configuration
+  
+  /// Configure skeleton mode for the pose estimator (always uses articulated)
+  private func configureSkeletonMode(for poseEstimator: PoseEstimator) {
+    poseEstimator.useRealisticSkeleton = true
+    poseEstimator.skeletonType = .articulated
   }
 
   @objc func logoButton() {
@@ -685,73 +665,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ])
   }
   
-  private func setupSkeletonToggleButton() {
-    skeletonToggleButton = UIButton(type: .system)
-    skeletonToggleButton.setTitle("🦴 Parts", for: .normal)  // Start with articulated
-    skeletonToggleButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
-    skeletonToggleButton.setTitleColor(.white, for: .normal)
-    skeletonToggleButton.backgroundColor = UIColor.systemPurple.withAlphaComponent(0.8)
-    skeletonToggleButton.layer.cornerRadius = 25
-    skeletonToggleButton.layer.borderWidth = 2
-    skeletonToggleButton.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
-    skeletonToggleButton.addTarget(
-      self, action: #selector(skeletonToggleButtonTapped), for: .touchUpInside)
-    skeletonToggleButton.translatesAutoresizingMaskIntoConstraints = false
-    
-    // Initially hidden - only show for pose models
-    skeletonToggleButton.isHidden = true
-    
-    view.addSubview(skeletonToggleButton)
-    
-    // Position in center right
-    NSLayoutConstraint.activate([
-      skeletonToggleButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-      skeletonToggleButton.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-      skeletonToggleButton.widthAnchor.constraint(equalToConstant: 100),
-      skeletonToggleButton.heightAnchor.constraint(equalToConstant: 50)
-    ])
-  }
-
   // MARK: - Actions
   @objc func customModelButtonTapped() {
     selection.selectionChanged()
     // Placeholder action for custom model selection; integrate picker if needed
-  }
-  
-  @objc func skeletonToggleButtonTapped() {
-    selection.selectionChanged()
-    
-    // Cycle through skeleton types: Full → Articulated → Silly → Full
-    switch currentSkeletonType {
-    case .full:
-      currentSkeletonType = .articulated
-    case .articulated:
-      currentSkeletonType = .silly
-    case .silly:
-      currentSkeletonType = .full
-    }
-    
-    // Update button title with appropriate emoji and text
-    let emoji: String
-    let title: String
-    switch currentSkeletonType {
-    case .full:
-      emoji = "💀"
-      title = "Full"
-    case .articulated:
-      emoji = "🦴"
-      title = "Parts"
-    case .silly:
-      emoji = "🤪"
-      title = "Silly"
-    }
-    skeletonToggleButton.setTitle("\(emoji) \(title)", for: .normal)
-    
-    // Update YOLOView's pose estimator if it exists
-    if let poseEstimator = yoloView.currentPredictor as? PoseEstimator {
-      poseEstimator.skeletonType = currentSkeletonType
-      poseEstimator.useRealisticSkeleton = true
-    }
   }
 
   func updateModelSegmentedControlAppearance() {

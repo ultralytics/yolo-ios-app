@@ -28,8 +28,8 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
   /// Confidence threshold for skeleton bone visibility
   public var skeletonConfThreshold: Float = 0.25
   
-  /// Skeleton type to display (full or silly)
-  public var skeletonType: SkeletonType = .full
+  /// Skeleton type to display (always articulated)
+  public var skeletonType: SkeletonType = .articulated
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -285,32 +285,16 @@ extension PoseEstimator {
       confsList.append(keypoints.conf)
     }
     
-    // Create skeleton scene based on type
-    let scene: SKScene
+    // Create articulated skeleton scene
     let imageSize = CGSize(width: image.extent.width, height: image.extent.height)
-    
-    if self.skeletonType == .articulated {
-      // Use articulated skeleton with separate body parts
-      let articulatedMask = ArticulatedSkeletonMask()
-      scene = articulatedMask.createArticulatedSkeletonScene(
-        keypointsList: keypointsList,
-        confsList: confsList,
-        boundingBoxes: result.boxes,
-        sceneSize: imageSize,
-        confThreshold: skeletonConfThreshold
-      )
-    } else {
-      // Use full skeleton image
-      let skeletonMask = RealisticSkeletonMask()
-      skeletonMask.skeletonType = self.skeletonType
-      scene = skeletonMask.createRealisticSkeletonScene(
-        keypointsList: keypointsList,
-        confsList: confsList,
-        boundingBoxes: result.boxes,
-        sceneSize: imageSize,
-        confThreshold: skeletonConfThreshold
-      )
-    }
+    let articulatedMask = ArticulatedSkeletonMask()
+    let scene = articulatedMask.createArticulatedSkeletonScene(
+      keypointsList: keypointsList,
+      confsList: confsList,
+      boundingBoxes: result.boxes,
+      sceneSize: imageSize,
+      confThreshold: skeletonConfThreshold
+    )
     
     // Render scene to image
     let skView = SKView(frame: CGRect(origin: .zero, size: scene.size))
@@ -339,30 +323,15 @@ extension PoseEstimator {
     
     let imageSize = CGSize(width: ciImage.extent.width, height: ciImage.extent.height)
     
-    // Create skeleton scene based on type
-    let scene: SKScene
-    if self.skeletonType == .articulated {
-      // Use articulated skeleton with separate body parts
-      let articulatedMask = ArticulatedSkeletonMask()
-      scene = articulatedMask.createArticulatedSkeletonScene(
-        keypointsList: keypointsList,
-        confsList: confsList,
-        boundingBoxes: boundingBoxes,
-        sceneSize: imageSize,
-        confThreshold: skeletonConfThreshold
-      )
-    } else {
-      // Use full skeleton image
-      let skeletonMask = RealisticSkeletonMask()
-      skeletonMask.skeletonType = self.skeletonType
-      scene = skeletonMask.createRealisticSkeletonScene(
-        keypointsList: keypointsList,
-        confsList: confsList,
-        boundingBoxes: boundingBoxes,
-        sceneSize: imageSize,
-        confThreshold: skeletonConfThreshold
-      )
-    }
+    // Create articulated skeleton scene
+    let articulatedMask = ArticulatedSkeletonMask()
+    let scene = articulatedMask.createArticulatedSkeletonScene(
+      keypointsList: keypointsList,
+      confsList: confsList,
+      boundingBoxes: boundingBoxes,
+      sceneSize: imageSize,
+      confThreshold: skeletonConfThreshold
+    )
     
     // Render skeleton scene to UIImage
     let renderer = UIGraphicsImageRenderer(size: imageSize)
@@ -390,14 +359,6 @@ extension PoseEstimator {
   }
   
   private func combineImages(background: UIImage?, overlay: UIImage?) -> UIImage? {
-    guard let bg = background, let over = overlay else { return background }
-    
-    UIGraphicsBeginImageContextWithOptions(bg.size, false, 0)
-    bg.draw(at: .zero)
-    over.draw(at: .zero, blendMode: .normal, alpha: 1.0)
-    let combined = UIGraphicsGetImageFromCurrentImageContext()
-    UIGraphicsEndImageContext()
-    
-    return combined
+    return SkeletonUtilities.combineImages(background: background, overlay: overlay)
   }
 }

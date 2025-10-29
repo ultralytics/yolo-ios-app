@@ -90,38 +90,15 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         // Ensure skeleton view is properly configured
         skeletonView.frame = self.overlayLayer.frame
         
-        // Get skeleton type from PoseEstimator
-        var skeletonType: SkeletonType = .full
-        if let poseEstimator = self.videoCapture.predictor as? PoseEstimator {
-          skeletonType = poseEstimator.skeletonType
-        }
-        
-        // Create appropriate skeleton scene based on type
-        let scene: SKScene
-        if skeletonType == .articulated {
-          // Use articulated skeleton with separate body parts
-          print("🦴 Using ArticulatedSkeletonMask for real-time rendering")
-          let articulatedMask = ArticulatedSkeletonMask()
-          scene = articulatedMask.createArticulatedSkeletonScene(
-            keypointsList: keypointsList,
-            confsList: confsList,
-            boundingBoxes: result.boxes,
-            sceneSize: skeletonView.frame.size,
-            confThreshold: 0.25
-          )
-        } else {
-          // Use full or silly skeleton image
-          print("🦴 Using RealisticSkeletonMask with type: \(skeletonType)")
-          let skeletonMask = RealisticSkeletonMask()
-          skeletonMask.skeletonType = skeletonType
-          scene = skeletonMask.createRealisticSkeletonScene(
-            keypointsList: keypointsList,
-            confsList: confsList,
-            boundingBoxes: result.boxes,
-            sceneSize: skeletonView.frame.size,
-            confThreshold: 0.25
-          )
-        }
+        // Create articulated skeleton scene
+        let articulatedMask = ArticulatedSkeletonMask()
+        let scene = articulatedMask.createArticulatedSkeletonScene(
+          keypointsList: keypointsList,
+          confsList: confsList,
+          boundingBoxes: result.boxes,
+          sceneSize: skeletonView.frame.size,
+          confThreshold: SkeletonUtilities.Constants.defaultConfThreshold
+        )
         
         // Present the scene
         skeletonView.presentScene(scene)

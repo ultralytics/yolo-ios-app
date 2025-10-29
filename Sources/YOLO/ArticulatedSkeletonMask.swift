@@ -1,29 +1,35 @@
 // ArticulatedSkeletonMask.swift
 // Articulated skeleton visualization using separate body part images
 
+import Foundation
 import SpriteKit
+#if canImport(UIKit)
 import UIKit
-import CoreGraphics
+#endif
 
 /// Creates a realistic articulated human skeleton visualization using separate body part sprites
-public class ArticulatedSkeletonMask {
+public class ArticulatedSkeletonMask: SkeletonMask {
     
-    // Textures for body parts
-    private var headTexture: SKTexture?
-    private var bodyTexture: SKTexture?
-    private var pelvicTexture: SKTexture?
-    private var leftArmTexture: SKTexture?
-    private var rightArmTexture: SKTexture?
-    private var leftForearmTexture: SKTexture?
-    private var rightForearmTexture: SKTexture?
-    private var leftHandTexture: SKTexture?
-    private var rightHandTexture: SKTexture?
-    private var leftThighTexture: SKTexture?
-    private var rightThighTexture: SKTexture?
-    private var leftShinTexture: SKTexture?
-    private var rightShinTexture: SKTexture?
-    private var leftFootTexture: SKTexture?
-    private var rightFootTexture: SKTexture?
+    // MARK: - Body Part Textures
+    private struct BodyPartTextures {
+        var head: SKTexture?
+        var body: SKTexture?
+        var pelvic: SKTexture?
+        var leftArm: SKTexture?
+        var rightArm: SKTexture?
+        var leftForearm: SKTexture?
+        var rightForearm: SKTexture?
+        var leftHand: SKTexture?
+        var rightHand: SKTexture?
+        var leftThigh: SKTexture?
+        var rightThigh: SKTexture?
+        var leftShin: SKTexture?
+        var rightShin: SKTexture?
+        var leftFoot: SKTexture?
+        var rightFoot: SKTexture?
+    }
+    
+    private var textures = BodyPartTextures()
     
     public init() {
         loadBodyPartTextures()
@@ -31,38 +37,46 @@ public class ArticulatedSkeletonMask {
     
     /// Load all body part textures from Assets
     private func loadBodyPartTextures() {
-        headTexture = loadTexture(named: "Head")
-        bodyTexture = loadTexture(named: "Body")
-        pelvicTexture = loadTexture(named: "Pelvic-bone")
-        leftArmTexture = loadTexture(named: "Left-Arm")
-        rightArmTexture = loadTexture(named: "Right-Arm")
-        leftForearmTexture = loadTexture(named: "Left-Forearm")
-        rightForearmTexture = loadTexture(named: "Right-Forearm")
-        leftHandTexture = loadTexture(named: "Left-Hand")
-        rightHandTexture = loadTexture(named: "Right-Hand")
-        leftThighTexture = loadTexture(named: "Left-Thigh")
-        rightThighTexture = loadTexture(named: "Right-Thigh")
-        leftShinTexture = loadTexture(named: "Left-Shin")
-        rightShinTexture = loadTexture(named: "Right-Shin")
-        leftFootTexture = loadTexture(named: "Left-Foot")
-        rightFootTexture = loadTexture(named: "Right-Foot")
+        let textureNames = [
+            ("Head", \BodyPartTextures.head),
+            ("Body", \BodyPartTextures.body),
+            ("Pelvic-bone", \BodyPartTextures.pelvic),
+            ("Left-Arm", \BodyPartTextures.leftArm),
+            ("Right-Arm", \BodyPartTextures.rightArm),
+            ("Left-Forearm", \BodyPartTextures.leftForearm),
+            ("Right-Forearm", \BodyPartTextures.rightForearm),
+            ("Left-Hand", \BodyPartTextures.leftHand),
+            ("Right-Hand", \BodyPartTextures.rightHand),
+            ("Left-Thigh", \BodyPartTextures.leftThigh),
+            ("Right-Thigh", \BodyPartTextures.rightThigh),
+            ("Left-Shin", \BodyPartTextures.leftShin),
+            ("Right-Shin", \BodyPartTextures.rightShin),
+            ("Left-Foot", \BodyPartTextures.leftFoot),
+            ("Right-Foot", \BodyPartTextures.rightFoot)
+        ]
+        
+        for (name, keyPath) in textureNames {
+            textures[keyPath: keyPath] = SkeletonUtilities.loadTexture(named: name)
+        }
     }
     
-    /// Helper to load a texture with error handling
-    private func loadTexture(named name: String) -> SKTexture? {
-        // Try loading from main bundle first (for app assets)
-        if let image = UIImage(named: name, in: Bundle.main, compatibleWith: nil) {
-            print("✅ Loaded texture from main bundle: \(name) - size: \(image.size)")
-            return SKTexture(image: image)
-        }
-        // Fallback to default bundle
-        else if let image = UIImage(named: name) {
-            print("✅ Loaded texture from default: \(name) - size: \(image.size)")
-            return SKTexture(image: image)
-        } else {
-            print("❌ Failed to load texture: \(name) - checked main bundle and default")
-            return nil
-        }
+    // MARK: - SkeletonMask Protocol
+    
+    /// Create a skeleton scene conforming to the SkeletonMask protocol
+    public func createSkeletonScene(
+        keypointsList: [[(x: Float, y: Float)]],
+        confsList: [[Float]],
+        boundingBoxes: [Box],
+        sceneSize: CGSize,
+        confThreshold: Float
+    ) -> SKScene {
+        return createArticulatedSkeletonScene(
+            keypointsList: keypointsList,
+            confsList: confsList,
+            boundingBoxes: boundingBoxes,
+            sceneSize: sceneSize,
+            confThreshold: confThreshold
+        )
     }
     
     /// Create the articulated skeleton scene
@@ -73,34 +87,78 @@ public class ArticulatedSkeletonMask {
         sceneSize: CGSize,
         confThreshold: Float = 0.25
     ) -> SKScene {
-        print("🦴 Creating articulated skeleton scene for \(keypointsList.count) person(s)")
         let scene = SKScene(size: sceneSize)
         scene.backgroundColor = .clear
         scene.scaleMode = .aspectFill
         
         // Add atmospheric effects
-        addAtmosphericEffects(to: scene)
+        SkeletonUtilities.addVignetteEffect(to: scene)
         
         // Process each detected person
         for (personIndex, keypoints) in keypointsList.enumerated() {
             guard personIndex < confsList.count else { continue }
             
-            let confs = confsList[personIndex]
-            print("🦴 Processing person \(personIndex) with \(keypoints.count) keypoints")
-            
-            // Build articulated skeleton for this person
             addArticulatedSkeletonToScene(
                 scene: scene,
                 keypoints: keypoints,
-                confs: confs,
+                confs: confsList[personIndex],
                 personIndex: personIndex,
                 sceneSize: sceneSize,
                 confThreshold: confThreshold
             )
         }
         
-        print("🦴 Skeleton scene created with \(scene.children.count) child nodes")
         return scene
+    }
+    
+    // MARK: - Body Part Assembly
+    
+    /// Structure to hold extracted keypoint positions
+    private struct KeypointPositions {
+        let nose, leftShoulder, rightShoulder: CGPoint
+        let leftElbow, rightElbow, leftWrist, rightWrist: CGPoint
+        let leftHip, rightHip, leftKnee, rightKnee: CGPoint
+        let leftAnkle, rightAnkle: CGPoint
+        let shoulderCenter, hipCenter, torsoCenter: CGPoint
+        let torsoHeight, shoulderWidth, hipWidth: CGFloat
+    }
+    
+    /// Extract and calculate keypoint positions from raw keypoints
+    private func extractKeypointPositions(
+        from keypoints: [CGPoint]
+    ) -> KeypointPositions {
+        typealias K = SkeletonUtilities.KeypointIndex
+        
+        let nose = keypoints[K.nose.rawValue]
+        let leftShoulder = keypoints[K.leftShoulder.rawValue]
+        let rightShoulder = keypoints[K.rightShoulder.rawValue]
+        let leftElbow = keypoints[K.leftElbow.rawValue]
+        let rightElbow = keypoints[K.rightElbow.rawValue]
+        let leftWrist = keypoints[K.leftWrist.rawValue]
+        let rightWrist = keypoints[K.rightWrist.rawValue]
+        let leftHip = keypoints[K.leftHip.rawValue]
+        let rightHip = keypoints[K.rightHip.rawValue]
+        let leftKnee = keypoints[K.leftKnee.rawValue]
+        let rightKnee = keypoints[K.rightKnee.rawValue]
+        let leftAnkle = keypoints[K.leftAnkle.rawValue]
+        let rightAnkle = keypoints[K.rightAnkle.rawValue]
+        
+        let shoulderCenter = SkeletonUtilities.centerPoint(leftShoulder, rightShoulder)
+        let hipCenter = SkeletonUtilities.centerPoint(leftHip, rightHip)
+        let torsoCenter = SkeletonUtilities.centerPoint(shoulderCenter, hipCenter)
+        
+        let torsoHeight = SkeletonUtilities.distance(from: shoulderCenter, to: hipCenter)
+        let shoulderWidth = SkeletonUtilities.distance(from: leftShoulder, to: rightShoulder)
+        let hipWidth = SkeletonUtilities.distance(from: leftHip, to: rightHip)
+        
+        return KeypointPositions(
+            nose: nose, leftShoulder: leftShoulder, rightShoulder: rightShoulder,
+            leftElbow: leftElbow, rightElbow: rightElbow, leftWrist: leftWrist, rightWrist: rightWrist,
+            leftHip: leftHip, rightHip: rightHip, leftKnee: leftKnee, rightKnee: rightKnee,
+            leftAnkle: leftAnkle, rightAnkle: rightAnkle,
+            shoulderCenter: shoulderCenter, hipCenter: hipCenter, torsoCenter: torsoCenter,
+            torsoHeight: torsoHeight, shoulderWidth: shoulderWidth, hipWidth: hipWidth
+        )
     }
     
     /// Add an articulated skeleton for a detected person
@@ -112,321 +170,241 @@ public class ArticulatedSkeletonMask {
         sceneSize: CGSize,
         confThreshold: Float
     ) {
-        // YOLO Pose keypoint indices:
-        // 0=nose, 1=left_eye, 2=right_eye, 3=left_ear, 4=right_ear
-        // 5=left_shoulder, 6=right_shoulder
-        // 7=left_elbow, 8=right_elbow
-        // 9=left_wrist, 10=right_wrist
-        // 11=left_hip, 12=right_hip
-        // 13=left_knee, 14=right_knee
-        // 15=left_ankle, 16=right_ankle
-        
         guard keypoints.count >= 17 else { return }
         
-        // Convert normalized keypoints to scene coordinates (flip Y for SpriteKit)
-        let sceneKeypoints = keypoints.map { kp in
-            CGPoint(
-                x: CGFloat(kp.x) * sceneSize.width,
-                y: sceneSize.height - (CGFloat(kp.y) * sceneSize.height)
-            )
-        }
-        
-        // Extract key points
-        let nose = sceneKeypoints[0]
-        let leftShoulder = sceneKeypoints[5]
-        let rightShoulder = sceneKeypoints[6]
-        let leftElbow = sceneKeypoints[7]
-        let rightElbow = sceneKeypoints[8]
-        let leftWrist = sceneKeypoints[9]
-        let rightWrist = sceneKeypoints[10]
-        let leftHip = sceneKeypoints[11]
-        let rightHip = sceneKeypoints[12]
-        let leftKnee = sceneKeypoints[13]
-        let rightKnee = sceneKeypoints[14]
-        let leftAnkle = sceneKeypoints[15]
-        let rightAnkle = sceneKeypoints[16]
-        
-        // Calculate centers
-        let shoulderCenter = CGPoint(
-            x: (leftShoulder.x + rightShoulder.x) / 2,
-            y: (leftShoulder.y + rightShoulder.y) / 2
+        // Convert normalized keypoints to scene coordinates
+        let sceneKeypoints = SkeletonUtilities.convertToSceneCoordinates(
+            keypoints: keypoints,
+            sceneSize: sceneSize
         )
         
-        let hipCenter = CGPoint(
-            x: (leftHip.x + rightHip.x) / 2,
-            y: (leftHip.y + rightHip.y) / 2
-        )
-        
-        let torsoCenter = CGPoint(
-            x: (shoulderCenter.x + hipCenter.x) / 2,
-            y: (shoulderCenter.y + hipCenter.y) / 2
-        )
-        
-        // Calculate torso height for scaling
-        let torsoHeight = distance(from: shoulderCenter, to: hipCenter)
-        let shoulderWidth = distance(from: leftShoulder, to: rightShoulder)
+        // Extract keypoint positions
+        let positions = extractKeypointPositions(from: sceneKeypoints)
         
         // Create root container node for the entire skeleton
         let skeletonRoot = SKNode()
-        skeletonRoot.position = torsoCenter
+        skeletonRoot.position = positions.torsoCenter
         skeletonRoot.name = "skeleton_\(personIndex)"
         
-        // 1. BODY (center torso)
-        if let bodyTexture = bodyTexture, confs[5] >= confThreshold || confs[6] >= confThreshold {
+        // Add torso components
+        addTorsoComponents(to: skeletonRoot, positions: positions, confs: confs, confThreshold: confThreshold)
+        
+        // Add arms
+        addArmChain(to: skeletonRoot, positions: positions, confs: confs, confThreshold: confThreshold, isLeft: true)
+        addArmChain(to: skeletonRoot, positions: positions, confs: confs, confThreshold: confThreshold, isLeft: false)
+        
+        // Add legs
+        addLegChain(to: skeletonRoot, positions: positions, confs: confs, confThreshold: confThreshold, isLeft: true)
+        addLegChain(to: skeletonRoot, positions: positions, confs: confs, confThreshold: confThreshold, isLeft: false)
+        
+        // Wrap in X-ray effect and add to scene
+        let effectNode = SkeletonUtilities.createXRayEffectNode()
+        effectNode.addChild(skeletonRoot)
+        SkeletonUtilities.addPulsingAnimation(to: effectNode)
+        scene.addChild(effectNode)
+    }
+    
+    // MARK: - Body Part Creation Helpers
+    
+    /// Add torso components (body, head, pelvis)
+    private func addTorsoComponents(
+        to parent: SKNode,
+        positions: KeypointPositions,
+        confs: [Float],
+        confThreshold: Float
+    ) {
+        typealias K = SkeletonUtilities.KeypointIndex
+        typealias C = SkeletonUtilities.Constants
+        
+        // Body (center torso)
+        if let bodyTexture = textures.body,
+           confs[K.leftShoulder.rawValue] >= confThreshold || confs[K.rightShoulder.rawValue] >= confThreshold {
             let bodyNode = createBodyPart(
                 texture: bodyTexture,
-                position: .zero, // relative to root
-                scale: torsoHeight / bodyTexture.size().height * 1.2,
-                rotation: calculateAngle(from: shoulderCenter, to: hipCenter),
+                position: .zero,
+                scale: positions.torsoHeight / bodyTexture.size().height * C.bodyScale,
+                rotation: SkeletonUtilities.angle(from: positions.shoulderCenter, to: positions.hipCenter),
                 name: "body"
             )
-            skeletonRoot.addChild(bodyNode)
+            parent.addChild(bodyNode)
         }
         
-        // 2. HEAD
-        if let headTexture = headTexture, confs[0] >= confThreshold {
+        // Head
+        if let headTexture = textures.head, confs[K.nose.rawValue] >= confThreshold {
             let headOffset = CGPoint(
-                x: nose.x - torsoCenter.x,
-                y: nose.y - torsoCenter.y
+                x: positions.nose.x - positions.torsoCenter.x,
+                y: positions.nose.y - positions.torsoCenter.y
             )
             let headNode = createBodyPart(
                 texture: headTexture,
                 position: headOffset,
-                scale: shoulderWidth / headTexture.size().width * 0.8,
+                scale: positions.shoulderWidth / headTexture.size().width * C.headScale,
                 rotation: 0,
                 name: "head"
             )
-            skeletonRoot.addChild(headNode)
+            parent.addChild(headNode)
         }
         
-        // 3. PELVIC BONE
-        if let pelvicTexture = pelvicTexture, confs[11] >= confThreshold || confs[12] >= confThreshold {
+        // Pelvic bone
+        if let pelvicTexture = textures.pelvic,
+           confs[K.leftHip.rawValue] >= confThreshold || confs[K.rightHip.rawValue] >= confThreshold {
             let pelvicOffset = CGPoint(
-                x: hipCenter.x - torsoCenter.x,
-                y: hipCenter.y - torsoCenter.y
+                x: positions.hipCenter.x - positions.torsoCenter.x,
+                y: positions.hipCenter.y - positions.torsoCenter.y
             )
-            let hipWidth = distance(from: leftHip, to: rightHip)
             let pelvicNode = createBodyPart(
                 texture: pelvicTexture,
                 position: pelvicOffset,
-                scale: hipWidth / pelvicTexture.size().width * 1.2,
+                scale: positions.hipWidth / pelvicTexture.size().width * C.pelvicScale,
                 rotation: 0,
                 name: "pelvis"
             )
-            skeletonRoot.addChild(pelvicNode)
+            parent.addChild(pelvicNode)
         }
+    }
+    
+    /// Add arm chain (upper arm, forearm, hand)
+    private func addArmChain(
+        to parent: SKNode,
+        positions: KeypointPositions,
+        confs: [Float],
+        confThreshold: Float,
+        isLeft: Bool
+    ) {
+        typealias K = SkeletonUtilities.KeypointIndex
+        typealias C = SkeletonUtilities.Constants
         
-        // 4. LEFT ARM CHAIN
-        if confs[5] >= confThreshold {
-            // Upper arm
-            if let leftArmTexture = leftArmTexture, confs[7] >= confThreshold {
-                let upperArmLength = distance(from: leftShoulder, to: leftElbow)
-                let leftArmNode = createLimbNode(
-                    texture: leftArmTexture,
-                    startPoint: leftShoulder,
-                    endPoint: leftElbow,
-                    rootPosition: torsoCenter,
-                    limbLength: upperArmLength,
-                    name: "left_upper_arm"
+        let shoulderIdx = isLeft ? K.leftShoulder.rawValue : K.rightShoulder.rawValue
+        let elbowIdx = isLeft ? K.leftElbow.rawValue : K.rightElbow.rawValue
+        let wristIdx = isLeft ? K.leftWrist.rawValue : K.rightWrist.rawValue
+        
+        let shoulder = isLeft ? positions.leftShoulder : positions.rightShoulder
+        let elbow = isLeft ? positions.leftElbow : positions.rightElbow
+        let wrist = isLeft ? positions.leftWrist : positions.rightWrist
+        
+        let armTexture = isLeft ? textures.leftArm : textures.rightArm
+        let forearmTexture = isLeft ? textures.leftForearm : textures.rightForearm
+        let handTexture = isLeft ? textures.leftHand : textures.rightHand
+        
+        let prefix = isLeft ? "left" : "right"
+        
+        guard confs[shoulderIdx] >= confThreshold else { return }
+        
+        // Upper arm
+        if let armTexture = armTexture, confs[elbowIdx] >= confThreshold {
+            let upperArmLength = SkeletonUtilities.distance(from: shoulder, to: elbow)
+            let armNode = createLimbNode(
+                texture: armTexture,
+                startPoint: shoulder,
+                endPoint: elbow,
+                rootPosition: positions.torsoCenter,
+                limbLength: upperArmLength,
+                name: "\(prefix)_upper_arm"
+            )
+            parent.addChild(armNode)
+            
+            // Forearm
+            if let forearmTexture = forearmTexture, confs[wristIdx] >= confThreshold {
+                let forearmLength = SkeletonUtilities.distance(from: elbow, to: wrist)
+                let forearmNode = createLimbNode(
+                    texture: forearmTexture,
+                    startPoint: elbow,
+                    endPoint: wrist,
+                    rootPosition: positions.torsoCenter,
+                    limbLength: forearmLength,
+                    name: "\(prefix)_forearm"
                 )
-                skeletonRoot.addChild(leftArmNode)
+                parent.addChild(forearmNode)
                 
-                // Forearm
-                if let leftForearmTexture = leftForearmTexture, confs[9] >= confThreshold {
-                    let forearmLength = distance(from: leftElbow, to: leftWrist)
-                    let leftForearmNode = createLimbNode(
-                        texture: leftForearmTexture,
-                        startPoint: leftElbow,
-                        endPoint: leftWrist,
-                        rootPosition: torsoCenter,
-                        limbLength: forearmLength,
-                        name: "left_forearm"
+                // Hand
+                if let handTexture = handTexture {
+                    let handOffset = CGPoint(
+                        x: wrist.x - positions.torsoCenter.x,
+                        y: wrist.y - positions.torsoCenter.y
                     )
-                    skeletonRoot.addChild(leftForearmNode)
-                    
-                    // Hand
-                    if let leftHandTexture = leftHandTexture {
-                        let handOffset = CGPoint(
-                            x: leftWrist.x - torsoCenter.x,
-                            y: leftWrist.y - torsoCenter.y
-                        )
-                        let handNode = createBodyPart(
-                            texture: leftHandTexture,
-                            position: handOffset,
-                            scale: forearmLength / leftHandTexture.size().height * 0.5,
-                            rotation: calculateAngle(from: leftElbow, to: leftWrist),
-                            name: "left_hand"
-                        )
-                        skeletonRoot.addChild(handNode)
-                    }
+                    let handNode = createBodyPart(
+                        texture: handTexture,
+                        position: handOffset,
+                        scale: forearmLength / handTexture.size().height * C.handScale,
+                        rotation: SkeletonUtilities.angle(from: elbow, to: wrist),
+                        name: "\(prefix)_hand"
+                    )
+                    parent.addChild(handNode)
                 }
             }
         }
+    }
+    
+    /// Add leg chain (thigh, shin, foot)
+    private func addLegChain(
+        to parent: SKNode,
+        positions: KeypointPositions,
+        confs: [Float],
+        confThreshold: Float,
+        isLeft: Bool
+    ) {
+        typealias K = SkeletonUtilities.KeypointIndex
+        typealias C = SkeletonUtilities.Constants
         
-        // 5. RIGHT ARM CHAIN
-        if confs[6] >= confThreshold {
-            // Upper arm
-            if let rightArmTexture = rightArmTexture, confs[8] >= confThreshold {
-                let upperArmLength = distance(from: rightShoulder, to: rightElbow)
-                let rightArmNode = createLimbNode(
-                    texture: rightArmTexture,
-                    startPoint: rightShoulder,
-                    endPoint: rightElbow,
-                    rootPosition: torsoCenter,
-                    limbLength: upperArmLength,
-                    name: "right_upper_arm"
+        let hipIdx = isLeft ? K.leftHip.rawValue : K.rightHip.rawValue
+        let kneeIdx = isLeft ? K.leftKnee.rawValue : K.rightKnee.rawValue
+        let ankleIdx = isLeft ? K.leftAnkle.rawValue : K.rightAnkle.rawValue
+        
+        let hip = isLeft ? positions.leftHip : positions.rightHip
+        let knee = isLeft ? positions.leftKnee : positions.rightKnee
+        let ankle = isLeft ? positions.leftAnkle : positions.rightAnkle
+        
+        let thighTexture = isLeft ? textures.leftThigh : textures.rightThigh
+        let shinTexture = isLeft ? textures.leftShin : textures.rightShin
+        let footTexture = isLeft ? textures.leftFoot : textures.rightFoot
+        
+        let prefix = isLeft ? "left" : "right"
+        
+        guard confs[hipIdx] >= confThreshold else { return }
+        
+        // Thigh
+        if let thighTexture = thighTexture, confs[kneeIdx] >= confThreshold {
+            let thighLength = SkeletonUtilities.distance(from: hip, to: knee)
+            let thighNode = createLimbNode(
+                texture: thighTexture,
+                startPoint: hip,
+                endPoint: knee,
+                rootPosition: positions.torsoCenter,
+                limbLength: thighLength,
+                name: "\(prefix)_thigh"
+            )
+            parent.addChild(thighNode)
+            
+            // Shin
+            if let shinTexture = shinTexture, confs[ankleIdx] >= confThreshold {
+                let shinLength = SkeletonUtilities.distance(from: knee, to: ankle)
+                let shinNode = createLimbNode(
+                    texture: shinTexture,
+                    startPoint: knee,
+                    endPoint: ankle,
+                    rootPosition: positions.torsoCenter,
+                    limbLength: shinLength,
+                    name: "\(prefix)_shin"
                 )
-                skeletonRoot.addChild(rightArmNode)
+                parent.addChild(shinNode)
                 
-                // Forearm
-                if let rightForearmTexture = rightForearmTexture, confs[10] >= confThreshold {
-                    let forearmLength = distance(from: rightElbow, to: rightWrist)
-                    let rightForearmNode = createLimbNode(
-                        texture: rightForearmTexture,
-                        startPoint: rightElbow,
-                        endPoint: rightWrist,
-                        rootPosition: torsoCenter,
-                        limbLength: forearmLength,
-                        name: "right_forearm"
+                // Foot
+                if let footTexture = footTexture {
+                    let footOffset = CGPoint(
+                        x: ankle.x - positions.torsoCenter.x,
+                        y: ankle.y - positions.torsoCenter.y
                     )
-                    skeletonRoot.addChild(rightForearmNode)
-                    
-                    // Hand
-                    if let rightHandTexture = rightHandTexture {
-                        let handOffset = CGPoint(
-                            x: rightWrist.x - torsoCenter.x,
-                            y: rightWrist.y - torsoCenter.y
-                        )
-                        let handNode = createBodyPart(
-                            texture: rightHandTexture,
-                            position: handOffset,
-                            scale: forearmLength / rightHandTexture.size().height * 0.5,
-                            rotation: calculateAngle(from: rightElbow, to: rightWrist),
-                            name: "right_hand"
-                        )
-                        skeletonRoot.addChild(handNode)
-                    }
+                    let footNode = createBodyPart(
+                        texture: footTexture,
+                        position: footOffset,
+                        scale: shinLength / footTexture.size().height * C.footScale,
+                        rotation: SkeletonUtilities.angle(from: knee, to: ankle),
+                        name: "\(prefix)_foot"
+                    )
+                    parent.addChild(footNode)
                 }
             }
         }
-        
-        // 6. LEFT LEG CHAIN
-        if confs[11] >= confThreshold {
-            // Thigh
-            if let leftThighTexture = leftThighTexture, confs[13] >= confThreshold {
-                let thighLength = distance(from: leftHip, to: leftKnee)
-                let leftThighNode = createLimbNode(
-                    texture: leftThighTexture,
-                    startPoint: leftHip,
-                    endPoint: leftKnee,
-                    rootPosition: torsoCenter,
-                    limbLength: thighLength,
-                    name: "left_thigh"
-                )
-                skeletonRoot.addChild(leftThighNode)
-                
-                // Shin
-                if let leftShinTexture = leftShinTexture, confs[15] >= confThreshold {
-                    let shinLength = distance(from: leftKnee, to: leftAnkle)
-                    let leftShinNode = createLimbNode(
-                        texture: leftShinTexture,
-                        startPoint: leftKnee,
-                        endPoint: leftAnkle,
-                        rootPosition: torsoCenter,
-                        limbLength: shinLength,
-                        name: "left_shin"
-                    )
-                    skeletonRoot.addChild(leftShinNode)
-                    
-                    // Foot
-                    if let leftFootTexture = leftFootTexture {
-                        let footOffset = CGPoint(
-                            x: leftAnkle.x - torsoCenter.x,
-                            y: leftAnkle.y - torsoCenter.y
-                        )
-                        let footNode = createBodyPart(
-                            texture: leftFootTexture,
-                            position: footOffset,
-                            scale: shinLength / leftFootTexture.size().height * 0.5,
-                            rotation: calculateAngle(from: leftKnee, to: leftAnkle),
-                            name: "left_foot"
-                        )
-                        skeletonRoot.addChild(footNode)
-                    }
-                }
-            }
-        }
-        
-        // 7. RIGHT LEG CHAIN
-        if confs[12] >= confThreshold {
-            // Thigh
-            if let rightThighTexture = rightThighTexture, confs[14] >= confThreshold {
-                let thighLength = distance(from: rightHip, to: rightKnee)
-                let rightThighNode = createLimbNode(
-                    texture: rightThighTexture,
-                    startPoint: rightHip,
-                    endPoint: rightKnee,
-                    rootPosition: torsoCenter,
-                    limbLength: thighLength,
-                    name: "right_thigh"
-                )
-                skeletonRoot.addChild(rightThighNode)
-                
-                // Shin
-                if let rightShinTexture = rightShinTexture, confs[16] >= confThreshold {
-                    let shinLength = distance(from: rightKnee, to: rightAnkle)
-                    let rightShinNode = createLimbNode(
-                        texture: rightShinTexture,
-                        startPoint: rightKnee,
-                        endPoint: rightAnkle,
-                        rootPosition: torsoCenter,
-                        limbLength: shinLength,
-                        name: "right_shin"
-                    )
-                    skeletonRoot.addChild(rightShinNode)
-                    
-                    // Foot
-                    if let rightFootTexture = rightFootTexture {
-                        let footOffset = CGPoint(
-                            x: rightAnkle.x - torsoCenter.x,
-                            y: rightAnkle.y - torsoCenter.y
-                        )
-                        let footNode = createBodyPart(
-                            texture: rightFootTexture,
-                            position: footOffset,
-                            scale: shinLength / rightFootTexture.size().height * 0.5,
-                            rotation: calculateAngle(from: rightKnee, to: rightAnkle),
-                            name: "right_foot"
-                        )
-                        skeletonRoot.addChild(footNode)
-                    }
-                }
-            }
-        }
-        
-        // Add X-ray glow effect
-        let effectNode = SKEffectNode()
-        effectNode.shouldRasterize = true
-        
-        // Color tint for X-ray effect
-        let tintFilter = CIFilter(name: "CIColorMonochrome", parameters: [
-            "inputColor": CIColor(red: 0.9, green: 0.95, blue: 1.0),
-            "inputIntensity": 0.4
-        ])
-        effectNode.filter = tintFilter
-        
-        // Move skeleton to effect node
-        effectNode.addChild(skeletonRoot)
-        effectNode.alpha = 0.95
-        
-        // Add subtle pulsing animation
-        let fadeAction = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.85, duration: 1.5),
-            SKAction.fadeAlpha(to: 0.95, duration: 1.5)
-        ])
-        effectNode.run(SKAction.repeatForever(fadeAction))
-        
-        scene.addChild(effectNode)
     }
     
     /// Create a simple body part sprite node
@@ -464,45 +442,14 @@ public class ArticulatedSkeletonMask {
         node.position = midPoint
         
         // Scale to match limb length
-        let textureHeight = texture.size().height
-        let scale = limbLength / textureHeight
+        let scale = limbLength / texture.size().height
         node.setScale(scale)
         
         // Rotate to match limb angle
-        let angle = calculateAngle(from: startPoint, to: endPoint)
-        node.zRotation = angle
-        
+        node.zRotation = SkeletonUtilities.angle(from: startPoint, to: endPoint)
         node.name = name
-        return node
-    }
-    
-    /// Calculate angle between two points (for rotation)
-    private func calculateAngle(from start: CGPoint, to end: CGPoint) -> CGFloat {
-        let dx = end.x - start.x
-        let dy = end.y - start.y
-        // Subtract π/2 because sprites are oriented vertically by default
-        return atan2(dy, dx) - .pi / 2
-    }
-    
-    /// Calculate distance between two points
-    private func distance(from start: CGPoint, to end: CGPoint) -> CGFloat {
-        let dx = end.x - start.x
-        let dy = end.y - start.y
-        return sqrt(dx * dx + dy * dy)
-    }
-    
-    /// Add atmospheric effects for X-ray appearance
-    private func addAtmosphericEffects(to scene: SKScene) {
-        // Add subtle dark vignette
-        let vignette = SKShapeNode(rect: scene.frame)
-        vignette.fillColor = .clear
-        vignette.strokeColor = .black
-        vignette.lineWidth = 60
-        vignette.alpha = 0.2
-        vignette.zPosition = 100
-        vignette.blendMode = .multiply
         
-        scene.addChild(vignette)
+        return node
     }
 }
 

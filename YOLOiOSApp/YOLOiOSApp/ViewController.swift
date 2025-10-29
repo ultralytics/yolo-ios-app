@@ -128,7 +128,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     checkForExternalDisplays()
 
  
-    if UIScreen.screens.count > 1 {
+   if hasExternalDisplay {
       yoloView.isHidden = true
     }
 
@@ -148,7 +148,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       reloadModelEntriesAndLoadFirst(for: currentTask)
      
-      if UIScreen.screens.count > 1 {
+      if hasExternalDisplay {
         print("External display may be connected at startup - will be handled by notifications")
       }
     }
@@ -310,10 +310,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
 
-    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    let hasExtDisplay = hasExternalDisplay || SceneDelegate.hasExternalDisplay
 
 
-    if !hasExternalDisplay {
+    if !hasExtDisplay {
       yoloView.resetLayers()
       yoloView.setInferenceFlag(ok: false)
     }
@@ -347,9 +347,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
          
-          let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+          let hasExtDisplay = hasExternalDisplay || SceneDelegate.hasExternalDisplay
 
-          if hasExternalDisplay {
+          if hasExtDisplay {
             
             self.finishLoadingModel(success: true, modelName: entry.displayName)
           } else {
@@ -361,11 +361,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
                   if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
                     self.configureSkeletonMode(for: poseEstimator)
                   }
+                  self.finishLoadingModel(success: true, modelName: entry.displayName)
                 }
-                self.finishLoadingModel(success: true, modelName: entry.displayName)
               case .failure(let error):
                 print(error)
-                self.finishLoadingModel(success: false, modelName: entry.displayName)
+                Task { @MainActor in
+                  self.finishLoadingModel(success: false, modelName: entry.displayName)
+                }
               }
             }
           }
@@ -379,7 +381,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           key: key, yoloTask: yoloTask, displayName: entry.displayName)
       } else {
         guard let remoteURL = entry.remoteURL else {
-          self.finishLoadingModel(success: false, modelName: entry.displayName)
+          Task { @MainActor in
+            self.finishLoadingModel(success: false, modelName: entry.displayName)
+          }
           return
         }
 
@@ -399,7 +403,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
         ) { [weak self] mlModel, loadedKey in
           guard let self = self else { return }
           if mlModel == nil {
-            self.finishLoadingModel(success: false, modelName: entry.displayName)
+            Task { @MainActor in
+              self.finishLoadingModel(success: false, modelName: entry.displayName)
+            }
             return
           }
           self.loadCachedModelAndSetToYOLOView(
@@ -422,9 +428,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
       guard let self = self else { return }
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      let hasExtDisplay = hasExternalDisplay || SceneDelegate.hasExternalDisplay
 
-      if hasExternalDisplay {
+      if hasExtDisplay {
         self.finishLoadingModel(success: true, modelName: displayName)
       } else {
        
@@ -435,11 +441,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
               if yoloTask == .pose, let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
                 self.configureSkeletonMode(for: poseEstimator)
               }
+              self.finishLoadingModel(success: true, modelName: displayName)
             }
-            self.finishLoadingModel(success: true, modelName: displayName)
           case .failure(let error):
             print(error)
-            self.finishLoadingModel(success: false, modelName: displayName)
+            Task { @MainActor in
+              self.finishLoadingModel(success: false, modelName: displayName)
+            }
           }
         }
       }
@@ -452,26 +460,25 @@ class ViewController: UIViewController, YOLOViewDelegate {
     [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
   }
 
+  @MainActor
   private func finishLoadingModel(success: Bool, modelName: String) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      self.setLoadingState(false)
-      self.isLoadingModel = false
-      self.resetDownloadProgress()
+      setLoadingState(false)
+      isLoadingModel = false
+      resetDownloadProgress()
 
       if success {
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
         ModelSelectionManager.setupSegmentedControl(
-          self.modelSegmentedControl,
-          standardModels: self.standardModels,
+          modelSegmentedControl,
+          standardModels: standardModels,
           currentTask: yoloTask,
           preserveSelection: true
         )
 
         ModelSelectionManager.updateSegmentAppearance(
-          self.modelSegmentedControl,
-          standardModels: self.standardModels,
+          modelSegmentedControl,
+          standardModels: standardModels,
           currentTask: yoloTask
         )
       }
@@ -479,15 +486,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       if success {
        
-        self.currentModelName = processString(modelName)
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        currentModelName = processString(modelName)
+        let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
         var fullModelPath = ""
 
-        if let entry = self.currentLoadingEntry {
+        if let entry = currentLoadingEntry {
           if entry.isLocalBundle {
             
-            if let folderURL = self.tasks.first(where: { $0.name == self.currentTask })?.folder,
+            if let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
               let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
             {
               let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
@@ -517,32 +524,32 @@ class ViewController: UIViewController, YOLOViewDelegate {
         if !fullModelPath.isEmpty {
           ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
          
-          self.checkAndNotifyExternalDisplayIfReady()
+          checkAndNotifyExternalDisplayIfReady()
         } else {
           print("Could not determine model path for external display")
         }
       }
 
       // Check if external display is connected
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      let hasExtDisplay = hasExternalDisplay || SceneDelegate.hasExternalDisplay
 
       // Only set inference flag on YOLOView if no external display
-      if !hasExternalDisplay {
-        self.yoloView.setInferenceFlag(ok: success)
+      if !hasExtDisplay {
+        yoloView.setInferenceFlag(ok: success)
       }
 
       if success {
         // currentModelName is already set above in the notification section
-        self.labelName.text = processString(modelName)
+        labelName.text = processString(modelName)
         
         // Enable skeleton mode for pose models (with small delay to ensure predictor is set)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+          guard let self = self else { return }
           if self.currentTask == "Pose", let poseEstimator = self.yoloView.currentPredictor as? PoseEstimator {
             self.configureSkeletonMode(for: poseEstimator)
           }
         }
       }
-    }
   }
 
   @IBAction func vibrate(_ sender: Any) { selection.selectionChanged() }

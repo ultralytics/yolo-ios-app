@@ -190,7 +190,6 @@ struct ModelSelectionManager {
   ) {
     if #available(iOS 13.0, *) {
       if let title = control.titleForSegment(at: index) {
-        let attributes: [NSAttributedString.Key: Any] = [.foregroundColor: color]
         control.setTitle(title, forSegmentAt: index)
 
         if let image = control.imageForSegment(at: index) {

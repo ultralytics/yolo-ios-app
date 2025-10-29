@@ -23,7 +23,7 @@ extension ViewController {
 
   // Associated object key for tracking external display state
   private struct AssociatedKeys {
-    static var isExternalDisplayConnected = "isExternalDisplayConnected"
+    static var isExternalDisplayConnected: UInt8 = 0
   }
 
   private var isExternalDisplayConnected: Bool {
@@ -37,12 +37,26 @@ extension ViewController {
         .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
   }
+  
+ 
+  /// Uses modern iOS 16+ API when available, falls back to UIScreen.screens for older versions
+  var hasExternalDisplay: Bool {
+    if #available(iOS 16.0, *) {
+     
+      return UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .contains { $0.screen != UIScreen.main }
+    } else {
+      // Fallback for iOS 15 and earlier
+      return UIScreen.screens.count > 1
+    }
+  }
 
   func setupExternalDisplayNotifications() {
     print("Setting up external display notifications")
 
     // Check if external display is already connected at startup
-    if UIScreen.screens.count > 1 {
+    if hasExternalDisplay {
       print("External display already connected at startup - triggering connection handler")
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         self.handleExternalDisplayConnected(Notification(name: .externalDisplayConnected))
@@ -240,7 +254,7 @@ extension ViewController {
   // MARK: - Layout Adjustments for External Display
 
   func adjustLayoutForExternalDisplayIfNeeded() {
-    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = self.hasExternalDisplay || SceneDelegate.hasExternalDisplay
 
     guard hasExternalDisplay else { return }
 
@@ -284,7 +298,7 @@ extension ViewController {
   }
 
   func checkForExternalDisplays() {
-    let hasExternalDisplay = UIScreen.screens.count > 1
+    let hasExternalDisplay = self.hasExternalDisplay
 
     if hasExternalDisplay {
       _ = UIApplication.shared.connectedScenes

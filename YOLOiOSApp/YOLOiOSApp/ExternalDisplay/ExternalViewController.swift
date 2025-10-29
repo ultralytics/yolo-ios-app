@@ -297,7 +297,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       print("External display loading bundle model from: \(actualModelPath)")
     }
 
-    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self, actualModelPath] result in
       guard case .success = result else {
         print("Failed to load model on external display: \(actualModelPath)")
         return
@@ -305,9 +305,9 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 
       DispatchQueue.main.async {
         self?.updateModelNameLabel()
+        self?.yoloView?.setNeedsDisplay()
+        self?.yoloView?.layoutIfNeeded()
       }
-      self?.yoloView?.setNeedsDisplay()
-      self?.yoloView?.layoutIfNeeded()
     }
   }
 

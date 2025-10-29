@@ -10,7 +10,7 @@ import UIKit
 
 /// Skeleton type options
 public enum SkeletonType {
-    case articulated   // Articulated body parts skeleton (default and only option)
+    case articulated   
 }
 
 /// Protocol for skeleton visualization implementations

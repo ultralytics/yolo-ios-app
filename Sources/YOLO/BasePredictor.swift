@@ -331,7 +331,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("an not find input size")
+    print("Cannot find input size")
     return (0, 0)
   }
 }

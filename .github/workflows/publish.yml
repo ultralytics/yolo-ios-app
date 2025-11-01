@@ -45,7 +45,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
       - uses: astral-sh/setup-uv@v7
@@ -94,7 +94,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
       - uses: astral-sh/setup-uv@v7

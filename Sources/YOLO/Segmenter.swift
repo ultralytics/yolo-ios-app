@@ -68,7 +68,12 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let confidence = p.2
         let bestClass = p.1
         let label = self.labels[bestClass]
-        let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+       
+    
+        let xywh = transformLetterboxCoordinates(
+          normalizedRect: rect,
+          originalImageSize: self.inputSize,
+          modelInputSize: self.modelInputSize)
 
         let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
         let alpha = CGFloat(confidence) * alphaScale + alphaOffset
@@ -185,7 +190,12 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           let confidence = p.2
           let bestClass = p.1
           let label = labels[bestClass]
-          let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+        
+     
+          let xywh = transformLetterboxCoordinates(
+            normalizedRect: rect,
+            originalImageSize: inputSize,
+            modelInputSize: self.modelInputSize)
 
           let boxResult = Box(
             index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)

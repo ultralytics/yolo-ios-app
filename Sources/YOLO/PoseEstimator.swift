@@ -202,16 +202,19 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     let results: [(Box, Keypoints)] = zip(boxScorePairs, filteredFeatures).map {
       (pair, boxFeatures) in
       let (box, score) = pair
-      let Nx = box.origin.x / CGFloat(modelInputSize.width)
-      let Ny = box.origin.y / CGFloat(modelInputSize.height)
-      let Nw = box.size.width / CGFloat(modelInputSize.width)
-      let Nh = box.size.height / CGFloat(modelInputSize.height)
-      let ix = Nx * inputSize.width
-      let iy = Ny * inputSize.height
-      let iw = Nw * inputSize.width
-      let ih = Nh * inputSize.height
-      let normalizedBox = CGRect(x: Nx, y: Ny, width: Nw, height: Nh)
-      let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
+   
+      let normalizedBox = CGRect(
+        x: box.origin.x / CGFloat(modelInputSize.width),
+        y: box.origin.y / CGFloat(modelInputSize.height),
+        width: box.size.width / CGFloat(modelInputSize.width),
+        height: box.size.height / CGFloat(modelInputSize.height))
+      
+   
+      let imageSizeBox = transformLetterboxCoordinates(
+        normalizedRect: normalizedBox,
+        originalImageSize: inputSize,
+        modelInputSize: modelInputSize)
+      
       let boxResult = Box(
         index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
       let numKeypoints = boxFeatures.count / 3
@@ -220,17 +223,32 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       var xyArray = [(x: Float, y: Float)]()
       var confArray = [Float]()
 
+     
+      let modelWidth = Float(modelInputSize.width)
+      let modelHeight = Float(modelInputSize.height)
+      let imageWidth = Float(inputSize.width)
+      let imageHeight = Float(inputSize.height)
+      let scale = min(modelWidth / imageWidth, modelHeight / imageHeight)
+      let scaledWidth = imageWidth * scale
+      let scaledHeight = imageHeight * scale
+      let padX = (modelWidth - scaledWidth) / 2.0
+      let padY = (modelHeight - scaledHeight) / 2.0
+
       for i in 0..<numKeypoints {
         let kx = boxFeatures[3 * i]
         let ky = boxFeatures[3 * i + 1]
         let kc = boxFeatures[3 * i + 2]
 
-        let nX = kx / Float(modelInputSize.width)
-        let nY = ky / Float(modelInputSize.height)
+       
+        let nX = kx / modelWidth
+        let nY = ky / modelHeight
         xynArray.append((x: nX, y: nY))
 
-        let x = nX * Float(inputSize.width)
-        let y = nY * Float(inputSize.height)
+      
+        let modelX = nX * modelWidth
+        let modelY = nY * modelHeight
+        let x = (modelX - padX) / scale
+        let y = (modelY - padY) / scale
         xyArray.append((x: x, y: y))
 
         confArray.append(kc)

@@ -336,4 +336,111 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     print("Cannot find input size")
     return (0, 0)
   }
+
+  /// Transforms normalized coordinates from the letterboxed model input space back to original image coordinates.
+  ///
+  /// When using `.scaleFit`, Vision Framework letterboxes the image (scales to fit while preserving aspect ratio
+  /// and adds padding). This function transforms coordinates from the normalized model input space (0.0-1.0)
+  /// back to the original image pixel coordinates, accounting for the scale factor and padding offsets.
+  ///
+  /// This matches the behavior of the Ultralytics Python package's letterbox preprocessing.
+  ///
+  /// - Parameters:
+  ///   - normalizedRect: A CGRect with normalized coordinates (0.0-1.0) relative to the model input size.
+  ///   - originalImageSize: The size of the original input image in pixels.
+  ///   - modelInputSize: The size of the model input (width, height) in pixels.
+  /// - Returns: A CGRect in original image pixel coordinates.
+  func transformLetterboxCoordinates(
+    normalizedRect: CGRect,
+    originalImageSize: CGSize,
+    modelInputSize: (width: Int, height: Int)
+  ) -> CGRect {
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let imageWidth = originalImageSize.width
+    let imageHeight = originalImageSize.height
+
+
+    let scale = min(modelWidth / imageWidth, modelHeight / imageHeight)
+
+
+    let scaledWidth = imageWidth * scale
+    let scaledHeight = imageHeight * scale
+
+
+    let padX = (modelWidth - scaledWidth) / 2.0
+    let padY = (modelHeight - scaledHeight) / 2.0
+
+
+    let modelX = normalizedRect.origin.x * modelWidth
+    let modelY = normalizedRect.origin.y * modelHeight
+    let modelW = normalizedRect.width * modelWidth
+    let modelH = normalizedRect.height * modelHeight
+
+
+    let origX = (modelX - padX) / scale
+    let origY = (modelY - padY) / scale
+    let origW = modelW / scale
+    let origH = modelH / scale
+
+
+    let clampedX = max(0, min(origX, imageWidth))
+    let clampedY = max(0, min(origY, imageHeight))
+    let clampedW = max(0, min(origW, imageWidth - clampedX))
+    let clampedH = max(0, min(origH, imageHeight - clampedY))
+
+    return CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
+  }
+
+  /// Transforms an oriented bounding box from letterboxed model input space to original image coordinates.
+  ///
+  /// When using `.scaleFit`, Vision Framework letterboxes the image. This function transforms OBB
+  /// coordinates from normalized model input space (0.0-1.0) to normalized original image space (0.0-1.0),
+  /// accounting for the scale factor and padding offsets.
+  ///
+  /// - Parameters:
+  ///   - obb: An OBB with normalized coordinates (0.0-1.0) relative to the model input size.
+  ///   - originalImageSize: The size of the original input image in pixels.
+  ///   - modelInputSize: The size of the model input (width, height) in pixels.
+  /// - Returns: An OBB with normalized coordinates (0.0-1.0) relative to the original image size.
+  func transformLetterboxOBB(
+    obb: OBB,
+    originalImageSize: CGSize,
+    modelInputSize: (width: Int, height: Int)
+  ) -> OBB {
+    let modelWidth = Float(modelInputSize.width)
+    let modelHeight = Float(modelInputSize.height)
+    let imageWidth = Float(originalImageSize.width)
+    let imageHeight = Float(originalImageSize.height)
+
+
+    let scale = min(modelWidth / imageWidth, modelHeight / imageHeight)
+    let scaledWidth = imageWidth * scale
+    let scaledHeight = imageHeight * scale
+    let padX = (modelWidth - scaledWidth) / 2.0
+    let padY = (modelHeight - scaledHeight) / 2.0
+
+   
+    let modelCx = obb.cx * modelWidth
+    let modelCy = obb.cy * modelHeight
+
+   
+    let imageCx = (modelCx - padX) / scale
+    let imageCy = (modelCy - padY) / scale
+
+    
+    let modelW = obb.w * modelWidth
+    let modelH = obb.h * modelHeight
+    let imageW = modelW / scale
+    let imageH = modelH / scale
+
+    // Normalize to 0-1 relative to original image size
+    let normCx = imageCx / imageWidth
+    let normCy = imageCy / imageHeight
+    let normW = imageW / imageWidth
+    let normH = imageH / imageHeight
+
+ 
+    return OBB(cx: normCx, cy: normCy, w: normW, h: normH, angle: obb.angle)
+  }
 }

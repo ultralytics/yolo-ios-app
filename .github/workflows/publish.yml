@@ -13,17 +13,12 @@ on:
   workflow_dispatch:
     inputs:
       source_branch:
-        description: "Branch to publish"
+        description: "Branch to build from (releases only created from main)"
         required: true
         default: "main"
         type: string
-      release:
-        description: "Create new tag and release"
-        required: true
-        type: boolean
-        default: false
       testflight:
-        description: "Publish to TestFlight"
+        description: "Build and push to TestFlight"
         required: true
         type: boolean
         default: true
@@ -83,7 +78,7 @@ jobs:
 
   release:
     needs: check
-    if: needs.check.outputs.new_version == 'true' && (github.event_name == 'push' || inputs.release == true)
+    if: needs.check.outputs.new_version == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -116,7 +111,7 @@ jobs:
 
   testflight:
     needs: check
-    if: github.event_name == 'pull_request' || inputs.testflight == true
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.testflight == true)
     runs-on: macos-26
     permissions:
       contents: write

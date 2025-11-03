@@ -114,6 +114,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
+        // Fix for CoreML MLE5Engine issue on macOS 15
+        config.setValue(1, forKey: "experimentalMLE5EngineUsage")
 
         let mlModel: MLModel
         if isCompiled {
@@ -331,7 +333,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("an not find input size")
+    print("Cannot find input size")
     return (0, 0)
   }
 }

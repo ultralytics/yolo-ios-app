@@ -360,29 +360,23 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     let imageWidth = originalImageSize.width
     let imageHeight = originalImageSize.height
 
-
     let scale = min(modelWidth / imageWidth, modelHeight / imageHeight)
-
 
     let scaledWidth = imageWidth * scale
     let scaledHeight = imageHeight * scale
 
-
     let padX = (modelWidth - scaledWidth) / 2.0
     let padY = (modelHeight - scaledHeight) / 2.0
-
 
     let modelX = normalizedRect.origin.x * modelWidth
     let modelY = normalizedRect.origin.y * modelHeight
     let modelW = normalizedRect.width * modelWidth
     let modelH = normalizedRect.height * modelHeight
 
-
     let origX = (modelX - padX) / scale
     let origY = (modelY - padY) / scale
     let origW = modelW / scale
     let origH = modelH / scale
-
 
     let clampedX = max(0, min(origX, imageWidth))
     let clampedY = max(0, min(origY, imageHeight))
@@ -413,22 +407,18 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     let imageWidth = Float(originalImageSize.width)
     let imageHeight = Float(originalImageSize.height)
 
-
     let scale = min(modelWidth / imageWidth, modelHeight / imageHeight)
     let scaledWidth = imageWidth * scale
     let scaledHeight = imageHeight * scale
     let padX = (modelWidth - scaledWidth) / 2.0
     let padY = (modelHeight - scaledHeight) / 2.0
 
-   
     let modelCx = obb.cx * modelWidth
     let modelCy = obb.cy * modelHeight
 
-   
     let imageCx = (modelCx - padX) / scale
     let imageCy = (modelCy - padY) / scale
 
-    
     let modelW = obb.w * modelWidth
     let modelH = obb.h * modelHeight
     let imageW = modelW / scale
@@ -440,7 +430,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     let normW = imageW / imageWidth
     let normH = imageH / imageHeight
 
- 
     return OBB(cx: normCx, cy: normCy, w: normW, h: normH, angle: obb.angle)
   }
 }

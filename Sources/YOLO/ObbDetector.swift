@@ -33,14 +33,15 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
         var obbResults: [OBBResult] = []
         let limitedResults = nmsResults.prefix(self.numItemsThreshold)
         for result in limitedResults {
-        
+
           let transformedBox = transformLetterboxOBB(
             obb: result.box,
             originalImageSize: self.inputSize,
             modelInputSize: self.modelInputSize)
           let score = result.score
           let clsIdx = labels[result.cls]
-          let obbResult = OBBResult(box: transformedBox, confidence: score, cls: clsIdx, index: result.cls)
+          let obbResult = OBBResult(
+            box: transformedBox, confidence: score, cls: clsIdx, index: result.cls)
           obbResults.append(obbResult)
         }
 
@@ -89,14 +90,15 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
           var obbResults: [OBBResult] = []
           let limitedResults = nmsResults.prefix(self.numItemsThreshold)
           for result in limitedResults {
-           
+
             let transformedBox = transformLetterboxOBB(
               obb: result.box,
               originalImageSize: inputSize,
               modelInputSize: self.modelInputSize)
             let score = result.score
             let clsIdx = labels[result.cls]
-            let obbResult = OBBResult(box: transformedBox, confidence: score, cls: clsIdx, index: result.cls)
+            let obbResult = OBBResult(
+              box: transformedBox, confidence: score, cls: clsIdx, index: result.cls)
             obbResults.append(obbResult)
           }
           let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)

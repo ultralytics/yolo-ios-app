@@ -66,12 +66,11 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
       for i in 0..<min(results.count, self.numItemsThreshold) {
         let prediction = results[i]
-      
+
         let normalizedBox = CGRect(
           x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
           width: prediction.boundingBox.width, height: prediction.boundingBox.height)
-        
-     
+
         let imageRect = transformLetterboxCoordinates(
           normalizedRect: normalizedBox,
           originalImageSize: inputSize,
@@ -130,12 +129,11 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       if let results = request.results as? [VNRecognizedObjectObservation] {
         for i in 0..<min(results.count, self.numItemsThreshold) {
           let prediction = results[i]
-         
+
           let normalizedBox = CGRect(
             x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
             width: prediction.boundingBox.width, height: prediction.boundingBox.height)
-          
-        
+
           let imageRect = transformLetterboxCoordinates(
             normalizedRect: normalizedBox,
             originalImageSize: inputSize,

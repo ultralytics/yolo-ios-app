@@ -202,19 +202,18 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     let results: [(Box, Keypoints)] = zip(boxScorePairs, filteredFeatures).map {
       (pair, boxFeatures) in
       let (box, score) = pair
-   
+
       let normalizedBox = CGRect(
         x: box.origin.x / CGFloat(modelInputSize.width),
         y: box.origin.y / CGFloat(modelInputSize.height),
         width: box.size.width / CGFloat(modelInputSize.width),
         height: box.size.height / CGFloat(modelInputSize.height))
-      
-   
+
       let imageSizeBox = transformLetterboxCoordinates(
         normalizedRect: normalizedBox,
         originalImageSize: inputSize,
         modelInputSize: modelInputSize)
-      
+
       let boxResult = Box(
         index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
       let numKeypoints = boxFeatures.count / 3
@@ -223,7 +222,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       var xyArray = [(x: Float, y: Float)]()
       var confArray = [Float]()
 
-     
       let modelWidth = Float(modelInputSize.width)
       let modelHeight = Float(modelInputSize.height)
       let imageWidth = Float(inputSize.width)
@@ -239,12 +237,10 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
         let ky = boxFeatures[3 * i + 1]
         let kc = boxFeatures[3 * i + 2]
 
-       
         let nX = kx / modelWidth
         let nY = ky / modelHeight
         xynArray.append((x: nX, y: nY))
 
-      
         let modelX = nX * modelWidth
         let modelY = nY * modelHeight
         let x = (modelX - padX) / scale

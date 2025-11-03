@@ -68,8 +68,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let confidence = p.2
         let bestClass = p.1
         let label = self.labels[bestClass]
-       
-    
+
         let xywh = transformLetterboxCoordinates(
           normalizedRect: rect,
           originalImageSize: self.inputSize,
@@ -190,8 +189,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           let confidence = p.2
           let bestClass = p.1
           let label = labels[bestClass]
-        
-     
+
           let xywh = transformLetterboxCoordinates(
             normalizedRect: rect,
             originalImageSize: inputSize,

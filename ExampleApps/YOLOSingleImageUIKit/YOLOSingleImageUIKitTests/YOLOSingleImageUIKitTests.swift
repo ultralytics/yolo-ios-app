@@ -58,7 +58,8 @@ struct YOLOSingleImageUIKitTests {
 
     // Check if the function returns a valid image
     #expect(correctedImageDown != nil, "Corrected image should not be nil")
-    #expect(correctedImageDown.imageOrientation == .up, "Normalized image should have .up orientation")
+    #expect(
+      correctedImageDown.imageOrientation == .up, "Normalized image should have .up orientation")
 
     // Create image with orientation = .left (3)
     let imageLeft = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: .left)
@@ -66,11 +67,14 @@ struct YOLOSingleImageUIKitTests {
 
     // Check if the function returns a valid image
     #expect(correctedImageLeft != nil, "Corrected image should not be nil")
-    #expect(correctedImageLeft.imageOrientation == .up, "Normalized image should have .up orientation")
+    #expect(
+      correctedImageLeft.imageOrientation == .up, "Normalized image should have .up orientation")
     #expect(correctedImageLeft.size.width > 0, "Image width should be positive")
     #expect(correctedImageLeft.size.height > 0, "Image height should be positive")
-     
-    let orientations: [UIImage.Orientation] = [.up, .down, .left, .right, .upMirrored, .downMirrored, .leftMirrored, .rightMirrored]
+
+    let orientations: [UIImage.Orientation] = [
+      .up, .down, .left, .right, .upMirrored, .downMirrored, .leftMirrored, .rightMirrored,
+    ]
     for orientation in orientations {
       let testImage = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: orientation)
       let normalized = viewController.getCorrectOrientationUIImage(uiImage: testImage)

@@ -37,15 +37,15 @@ jobs:
       marketing_version: ${{ steps.check_version.outputs.marketing_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
       - run: uv pip install --system --no-cache ultralytics-actions
@@ -86,15 +86,15 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: false
       - run: uv pip install --system --no-cache ultralytics-actions
@@ -121,7 +121,7 @@ jobs:
       name: Release - TestFlight
       url: https://appstoreconnect.apple.com/apps
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -166,7 +166,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Extract PR Details
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -178,7 +178,7 @@ jobs:
           echo "PR_TITLE=${PR_TITLE}" >> "${GITHUB_ENV}"
       - name: Notify Success
         if: needs.release.result == 'success' && github.event_name == 'push'
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
@@ -186,7 +186,7 @@ jobs:
             text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
       - name: Notify Failure
         if: needs.release.result != 'success'
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}

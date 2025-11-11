@@ -73,22 +73,12 @@ struct ContentView: View {
 /// - Parameter uiImage: The input image that may have incorrect orientation metadata.
 /// - Returns: A new UIImage with the correct orientation for processing.
 func getCorrectOrientationUIImage(uiImage: UIImage) -> UIImage {
-  var newImage = UIImage()
-  let ciContext = CIContext()
-  switch uiImage.imageOrientation.rawValue {
-  case 1:
-    guard let orientedCIImage = CIImage(image: uiImage)?.oriented(CGImagePropertyOrientation.down),
-      let cgImage = ciContext.createCGImage(orientedCIImage, from: orientedCIImage.extent)
-    else { return uiImage }
+  guard uiImage.imageOrientation != .up else { return uiImage }
 
-    newImage = UIImage(cgImage: cgImage)
-  case 3:
-    guard let orientedCIImage = CIImage(image: uiImage)?.oriented(CGImagePropertyOrientation.right),
-      let cgImage = ciContext.createCGImage(orientedCIImage, from: orientedCIImage.extent)
-    else { return uiImage }
-    newImage = UIImage(cgImage: cgImage)
-  default:
-    newImage = uiImage
-  }
-  return newImage
+  UIGraphicsBeginImageContextWithOptions(uiImage.size, false, uiImage.scale)
+  uiImage.draw(in: CGRect(origin: .zero, size: uiImage.size))
+  let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+  UIGraphicsEndImageContext()
+
+  return normalizedImage ?? uiImage
 }

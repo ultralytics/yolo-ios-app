@@ -50,6 +50,7 @@ struct YOLOSingleImageUIKitTests {
     let correctedImage1 = viewController.getCorrectOrientationUIImage(uiImage: originalImage)
     #expect(correctedImage1.size.width == originalImage.size.width)
     #expect(correctedImage1.size.height == originalImage.size.height)
+    #expect(correctedImage1.imageOrientation == .up, "Normalized image should have .up orientation")
 
     // Create image with orientation = .down (1)
     let imageDown = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: .down)
@@ -57,6 +58,7 @@ struct YOLOSingleImageUIKitTests {
 
     // Check if the function returns a valid image
     #expect(correctedImageDown != nil, "Corrected image should not be nil")
+    #expect(correctedImageDown.imageOrientation == .up, "Normalized image should have .up orientation")
 
     // Create image with orientation = .left (3)
     let imageLeft = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: .left)
@@ -64,11 +66,18 @@ struct YOLOSingleImageUIKitTests {
 
     // Check if the function returns a valid image
     #expect(correctedImageLeft != nil, "Corrected image should not be nil")
-
-    // For left orientation specifically, we'll verify the image data is handled correctly
-    // by checking the image isn't nil since we can't reliably check orientation property changes
+    #expect(correctedImageLeft.imageOrientation == .up, "Normalized image should have .up orientation")
     #expect(correctedImageLeft.size.width > 0, "Image width should be positive")
     #expect(correctedImageLeft.size.height > 0, "Image height should be positive")
+     
+    let orientations: [UIImage.Orientation] = [.up, .down, .left, .right, .upMirrored, .downMirrored, .leftMirrored, .rightMirrored]
+    for orientation in orientations {
+      let testImage = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: orientation)
+      let normalized = viewController.getCorrectOrientationUIImage(uiImage: testImage)
+      #expect(normalized.imageOrientation == .up, "All orientations should normalize to .up")
+      #expect(normalized.size.width > 0, "Normalized image should have valid width")
+      #expect(normalized.size.height > 0, "Normalized image should have valid height")
+    }
   }
 
   /// Tests the basic view controller properties without accessing private methods.

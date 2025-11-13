@@ -152,8 +152,16 @@ public class YOLO: @unchecked Sendable {
     iou.map { setIouThreshold($0) }
   }
 
+  /// Performs inference on a UIImage, automatically normalizing image orientation.
+  ///
+  /// - Parameters:
+  ///   - uiImage: The input image. Orientation is automatically normalized if needed.
+  ///   - returnAnnotatedImage: Whether to include an annotated image in the result (default: true).
+  /// - Returns: A YOLOResult containing the inference results.
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
-    let ciImage = CIImage(image: uiImage)!
+    // Automatically normalize image orientation to ensure correct processing
+    let normalizedImage = normalizeImageOrientation(uiImage)
+    let ciImage = CIImage(image: normalizedImage)!
     let result = predictor.predictOnImage(image: ciImage)
     //        if returnAnnotatedImage {
     //            let annotatedImage = drawYOLODetections(on: ciImage, result: result)

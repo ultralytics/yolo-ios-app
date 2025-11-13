@@ -54,31 +54,12 @@ struct ContentView: View {
             let data = try? await newItem.loadTransferable(type: Data.self),
             let uiImage = UIImage(data: data)
           else { return }
-          let correctOrientationUIImage = getCorrectOrientationUIImage(uiImage: uiImage)
-          inputImage = correctOrientationUIImage
-
-          yoloResult = yolo(correctOrientationUIImage)
+          // Image orientation is automatically normalized by the YOLO package
+          inputImage = uiImage
+          yoloResult = yolo(uiImage)
         }
       }
     }
     .padding()
   }
-}
-
-/// Corrects the orientation of an image to ensure proper processing by the YOLO model.
-///
-/// Images from the photo library might have orientation metadata rather than correctly oriented pixels.
-/// This function ensures the image is properly oriented for processing by the YOLO model.
-///
-/// - Parameter uiImage: The input image that may have incorrect orientation metadata.
-/// - Returns: A new UIImage with the correct orientation for processing.
-func getCorrectOrientationUIImage(uiImage: UIImage) -> UIImage {
-  guard uiImage.imageOrientation != .up else { return uiImage }
-
-  UIGraphicsBeginImageContextWithOptions(uiImage.size, false, uiImage.scale)
-  uiImage.draw(in: CGRect(origin: .zero, size: uiImage.size))
-  let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
-  UIGraphicsEndImageContext()
-
-  return normalizedImage ?? uiImage
 }

@@ -60,9 +60,9 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
       result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
         if let image = image as? UIImage, let safeSelf = self {
-          let correctOrientImage = safeSelf.getCorrectOrientationUIImage(uiImage: image)
+          // Image orientation is automatically normalized by the YOLO package
           let date = Date()
-          let result = safeSelf.model(correctOrientImage)
+          let result = safeSelf.model(image)
           let time = Date().timeIntervalSince(date)
           print(result)
           DispatchQueue.main.async {
@@ -82,21 +82,6 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     let picker = PHPickerViewController(configuration: configuration)
     picker.delegate = self
     self.present(picker, animated: true)
-  }
-
-  /// Corrects the orientation of the image to ensure proper processing by the YOLO model.
-  ///
-  /// - Parameter uiImage: The input image that may have incorrect orientation metadata.
-  /// - Returns: A UIImage with the correct orientation for processing.
-  func getCorrectOrientationUIImage(uiImage: UIImage) -> UIImage {
-    guard uiImage.imageOrientation != .up else { return uiImage }
-
-    UIGraphicsBeginImageContextWithOptions(uiImage.size, false, uiImage.scale)
-    uiImage.draw(in: CGRect(origin: .zero, size: uiImage.size))
-    let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
-    UIGraphicsEndImageContext()
-
-    return normalizedImage ?? uiImage
   }
 
   /// Sets up the UI components including the image view and pick button.

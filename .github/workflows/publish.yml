@@ -7,18 +7,20 @@ name: Publish iOS App
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened]
-    branches: [main]
   workflow_dispatch:
     inputs:
       source_branch:
-        description: "Branch to build from (releases only created from main)"
+        description: "Branch to publish"
         required: true
         default: "main"
         type: string
+      release:
+        description: "Create new tag and release"
+        required: true
+        type: boolean
+        default: false
       testflight:
-        description: "Build and push to TestFlight"
+        description: "Publish to TestFlight"
         required: true
         type: boolean
         default: true
@@ -39,7 +41,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || inputs.source_branch || 'main' }}
+          ref: ${{ inputs.source_branch || 'main' }}
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
@@ -78,7 +80,7 @@ jobs:
 
   release:
     needs: check
-    if: needs.check.outputs.new_version == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: needs.check.outputs.new_version == 'true' && (github.event_name == 'push' || inputs.release == true)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -111,7 +113,7 @@ jobs:
 
   testflight:
     needs: check
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.testflight == true)
+    if: github.event_name == 'push' || inputs.testflight == true
     runs-on: macos-26
     permissions:
       contents: write
@@ -123,7 +125,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || inputs.source_branch || 'main' }}
+          ref: ${{ inputs.source_branch || 'main' }}
 
       - name: Setup Xcode
         run: |
@@ -137,8 +139,7 @@ jobs:
           git fetch origin
 
           # Create testflight branch from source
-          SOURCE_BRANCH="${{ github.event_name == 'pull_request' && github.head_ref || inputs.source_branch || 'main' }}"
-          git checkout -B testflight origin/$SOURCE_BRANCH
+          git checkout -B testflight origin/${{ inputs.source_branch || 'main' }}
 
           # Squash all commits into one
           FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
@@ -160,7 +161,7 @@ jobs:
 
   notify:
     needs: [check, release, testflight]
-    if: always() && github.actor != 'dependabot[bot]'
+    if: always() && needs.check.outputs.new_version == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -170,31 +171,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # For PR events, use the event data directly
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
-          else
-            # For push events, search for merged PRs
-            PR_JSON=$(gh pr list --search "${GITHUB_SHA}" --state merged --json number,title --jq '.[0]')
-            PR_NUMBER=$(echo "${PR_JSON}" | jq -r '.number')
-            PR_TITLE=$(echo "${PR_JSON}" | jq -r '.title' | sed 's/"/\\"/g')
-          fi
+          PR_JSON=$(gh pr list --search "${GITHUB_SHA}" --state merged --json number,title --jq '.[0]')
+          PR_NUMBER=$(echo "${PR_JSON}" | jq -r '.number')
+          PR_TITLE=$(echo "${PR_JSON}" | jq -r '.title' | sed 's/"/\\"/g')
           echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_ENV}"
           echo "PR_TITLE=${PR_TITLE}" >> "${GITHUB_ENV}"
       - name: Notify Success
-        if: (needs.release.result == 'success' && github.event_name == 'push') || (needs.testflight.result == 'success' && github.event_name == 'pull_request')
+        if: needs.release.result == 'success' && github.event_name == 'push'
         uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
           payload: |
-            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* ${{ github.event_name == 'push' && format('NEW `YOLO iOS {0}` release published 🎉', needs.check.outputs.current_tag) || 'TestFlight build triggered for PR 🚀' }}\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n${{ github.event_name == 'push' && format('*Release Notes:* https://github.com/{0}/releases/tag/{1}', github.repository, needs.check.outputs.current_tag) || '' }}\n"
+            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
       - name: Notify Failure
-        if: (needs.release.result != 'success' && github.event_name == 'push') || (needs.testflight.result != 'success' && github.event_name == 'pull_request')
+        if: needs.release.result != 'success'
         uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
           payload: |
-            text: "<!channel> GitHub Actions error for ${{ github.workflow }} ❌\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* ${{ github.event_name == 'push' && 'Release failed' || 'TestFlight build failed for PR' }}\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n"
+            text: "<!channel> GitHub Actions error for ${{ github.workflow }} ❌\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* ${{ github.event_name }}\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n"

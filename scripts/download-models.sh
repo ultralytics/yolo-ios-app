@@ -13,13 +13,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/../Tests/YOLOTests/Resources"
 APP_DIR="$SCRIPT_DIR/../YOLOiOSApp"
 
-# Model to directory mapping
+# Model to directory mapping - using YOLO26 models (newer, don't need NMS)
 MODELS=(
-  "yolo11n:DetectModels"
-  "yolo11n-seg:SegmentModels"
-  "yolo11n-cls:ClassifyModels"
-  "yolo11n-pose:PoseModels"
-  "yolo11n-obb:OBBModels"
+  "yolo26n:DetectModels"
+  "yolo26n-seg:SegmentModels"
+  "yolo26n-cls:ClassifyModels"
+  "yolo26n-pose:PoseModels"
+  "yolo26n-obb:OBBModels"
 )
 
 # Ensure directories exist

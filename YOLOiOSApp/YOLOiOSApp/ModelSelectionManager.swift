@@ -39,27 +39,87 @@ struct ModelSelectionManager {
     -> [ModelSize: ModelInfo]
   {
     var standardModels: [ModelSize: ModelInfo] = [:]
-
-    for model in models {
+    
+    // Sort models to prioritize: yolo26 > yolo11, and local > remote
+    let sortedModels = models.sorted { model1, model2 in
+      let name1 = (model1.name as NSString).deletingPathExtension.lowercased()
+      let name2 = (model2.name as NSString).deletingPathExtension.lowercased()
+      
+      // Extract version numbers (11 vs 26)
+      let version1 = extractVersionNumber(from: name1)
+      let version2 = extractVersionNumber(from: name2)
+      
+      // Extract size
+      let size1 = extractSizeFromModelName(name1)
+      let size2 = extractSizeFromModelName(name2)
+      
+      // If same size, prioritize yolo26 over yolo11
+      if size1 == size2 {
+        if version1 != version2 {
+          // Higher version number (26) comes first
+          return (version1 ?? 0) > (version2 ?? 0)
+        }
+        // If same version, prioritize local over remote
+        if model1.isLocal != model2.isLocal {
+          return model1.isLocal
+        }
+      }
+      
+      return false
+    }
+    
+    for model in sortedModels {
       let baseName = (model.name as NSString).deletingPathExtension.lowercased()
-
+      
       if baseName.hasPrefix("yolo") {
         let sizeChar = extractSizeFromModelName(baseName)
-
+        
         if let char = sizeChar,
           let size = ModelSize(rawValue: String(char))
         {
-          standardModels[size] = ModelInfo(
-            name: model.name,
-            url: model.url,
-            isLocal: model.isLocal,
-            size: size
-          )
+          // Only add if we don't have a model for this size yet, or if this is yolo26 and existing is yolo11
+          if let existing = standardModels[size] {
+            let existingName = (existing.name as NSString).deletingPathExtension.lowercased()
+            let existingVersion = extractVersionNumber(from: existingName)
+            let currentVersion = extractVersionNumber(from: baseName)
+            
+            // Replace yolo11 with yolo26 if available
+            if (existingVersion ?? 0) < (currentVersion ?? 0) {
+              standardModels[size] = ModelInfo(
+                name: model.name,
+                url: model.url,
+                isLocal: model.isLocal,
+                size: size
+              )
+            }
+          } else {
+            standardModels[size] = ModelInfo(
+              name: model.name,
+              url: model.url,
+              isLocal: model.isLocal,
+              size: size
+            )
+          }
         }
       }
     }
-
+    
     return standardModels
+  }
+  
+  private static func extractVersionNumber(from name: String) -> Int? {
+    // Extract version number from names like "yolo11n", "yolo26n", etc.
+    let pattern = "^yolo(\\d+)"
+    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+       let match = regex.firstMatch(in: name, options: [], range: NSRange(location: 0, length: name.count)),
+       match.numberOfRanges > 1
+    {
+      let versionRange = match.range(at: 1)
+      if let range = Range(versionRange, in: name) {
+        return Int(String(name[range]))
+      }
+    }
+    return nil
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {

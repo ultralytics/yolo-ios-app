@@ -20,10 +20,27 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   let tasks = [
     ("Detect", ""), ("Segment", "-seg"), ("Classify", "-cls"), ("Pose", "-pose"), ("OBB", "-obb"),
   ]
-  return tasks.reduce(into: [:]) { result, task in
-    result[task.0] = sizes.map { size in
-      let model = "yolo11\(size)\(task.1)"
-      return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
+  
+  // Combine yolo11 and yolo26 models
+  var result: [String: [(modelName: String, downloadURL: URL)]] = [:]
+  
+  for task in tasks {
+    var models: [(modelName: String, downloadURL: URL)] = []
+    
+    // Add yolo26 models first (prioritized - they're newer and don't need NMS)
+    for size in sizes {
+      let model = "yolo26\(size)\(task.1)"
+      models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
     }
+    
+    // Add yolo11 models (legacy support)
+    for size in sizes {
+      let model = "yolo11\(size)\(task.1)"
+      models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
+    }
+    
+    result[task.0] = models
   }
+  
+  return result
 }()

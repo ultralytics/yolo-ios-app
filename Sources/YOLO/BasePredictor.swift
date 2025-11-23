@@ -54,6 +54,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The required input dimensions for the model (width and height in pixels).
   var modelInputSize: (width: Int, height: Int) = (0, 0)
 
+  /// The model URL or name, used to detect model version (e.g., YOLO26 vs YOLO11)
+  var modelURL: URL?
+
   /// Timestamp for the start of inference (used for performance measurement).
   var t0 = 0.0  // inference start
 
@@ -161,6 +164,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
         // (3) Store model input size
         predictor.modelInputSize = predictor.getModelInputSize(for: mlModel)
+
+        // (3.5) Store model URL for version detection
+        predictor.modelURL = unwrappedModelURL
 
         // (4) Create VNCoreMLModel, VNCoreMLRequest, etc.
         let coreMLModel = try VNCoreMLModel(for: mlModel)

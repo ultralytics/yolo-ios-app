@@ -325,6 +325,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
       print("Model is already loading. Please wait.")
       return
     }
+    
+    // Cancel any in-progress downloads to prevent conflicts
+    ModelDownloadManager.shared.cancelCurrentDownload()
+    
     isLoadingModel = true
 
     // Check if external display is connected

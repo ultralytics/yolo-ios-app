@@ -27,11 +27,16 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   for task in tasks {
     var models: [(modelName: String, downloadURL: URL)] = []
     
+    // YOLO26 models are not available for download yet - they should be added locally
+    // to DetectModels/, SegmentModels/, etc. folders in the app bundle
+    // Once they're uploaded to assets, uncomment the following:
+    /*
     // Add yolo26 models first (prioritized - they're newer and don't need NMS)
     for size in sizes {
       let model = "yolo26\(size)\(task.1)"
       models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
     }
+    */
     
     // Add yolo11 models (legacy support)
     for size in sizes {

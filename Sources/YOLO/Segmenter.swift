@@ -21,6 +21,18 @@ import Vision
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 public class Segmenter: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
+  
+  /// Checks if the current model is a YOLO26 model
+  private var isYOLO26Model: Bool {
+    guard let url = modelURL else { return false }
+    let fullPath = url.path.lowercased()
+    let modelName = url.lastPathComponent.lowercased()
+    let baseName = modelName
+      .replacingOccurrences(of: ".mlmodelc", with: "")
+      .replacingOccurrences(of: ".mlpackage", with: "")
+      .replacingOccurrences(of: ".mlmodel", with: "")
+    return fullPath.contains("yolo26") || baseName.contains("yolo26")
+  }
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -245,9 +257,46 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     confidenceThreshold: Float,
     iouThreshold: Float
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
-
-    let numAnchors = feature.shape[2].intValue
-    let numFeatures = feature.shape[1].intValue
+    
+    let shape = feature.shape.map { $0.intValue }
+    print("🔍 Segmenter: Feature shape: \(shape), isYOLO26: \(isYOLO26Model)")
+    
+    // YOLO26 segmentation models output in post-NMS format: [batch, num_detections, features]
+    // where features = 6 (x1, y1, x2, y2, conf, class) + 32 (mask coefficients) = 38
+    // YOLO11 segmentation models output in anchor-based format: [batch, features, anchors]
+    // where features = 4 (box) + num_classes + 32 (mask coefficients)
+    
+    // Check if this is YOLO26 post-NMS format
+    if isYOLO26Model && shape.count == 3 && shape[2] >= 38 {
+      // shape[2] is num_features, should be >= 38 (6 box+conf+class + 32 mask coefficients)
+      // shape[1] is num_detections (typically 300 or similar)
+      print("✅ Segmenter: Detected YOLO26 post-NMS format [\(shape[0]), \(shape[1]), \(shape[2])]")
+      return postProcessYOLO26SegmentFormat(
+        feature: feature,
+        numDetections: shape[1],
+        numFeatures: shape[2],
+        confidenceThreshold: confidenceThreshold,
+        modelInputSize: self.modelInputSize
+      )
+    }
+    
+    // YOLO11 anchor-based format: [batch, features, anchors] or [features, anchors]
+    let numAnchors: Int
+    let numFeatures: Int
+    
+    if shape.count == 3 {
+      // Format: [batch, features, anchors]
+      numAnchors = shape[2]
+      numFeatures = shape[1]
+    } else if shape.count == 2 {
+      // Format: [features, anchors]
+      numAnchors = shape[1]
+      numFeatures = shape[0]
+    } else {
+      print("❌ Segmenter: Unexpected feature shape: \(shape)")
+      return []
+    }
+    
     let boxFeatureLength = 4
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
@@ -366,6 +415,86 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     }
 
     return selectedBoxesAndFeatures
+  }
+  
+  /// Post-processes YOLO26 segmentation model output in post-NMS format
+  /// Format: [batch, num_detections, 38] where 38 = 6 (x1, y1, x2, y2, conf, class) + 32 (mask coefficients)
+  private func postProcessYOLO26SegmentFormat(
+    feature: MLMultiArray,
+    numDetections: Int,
+    numFeatures: Int,
+    confidenceThreshold: Float,
+    modelInputSize: (width: Int, height: Int)
+  ) -> [(CGRect, Int, Float, MLMultiArray)] {
+    let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    var results: [(CGRect, Int, Float, MLMultiArray)] = []
+    results.reserveCapacity(min(numDetections, 100))
+    
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let maskConfidenceLength = 32
+    
+    print("🔍 Segmenter: Processing YOLO26 format - model input size: \(modelWidth)x\(modelHeight), numDetections: \(numDetections), numFeatures: \(numFeatures)")
+    
+    for i in 0..<numDetections {
+      let offset = i * numFeatures
+      
+      // YOLO26 format: [x1, y1, x2, y2, confidence, class, mask_coeff_0, ..., mask_coeff_31]
+      let x1 = CGFloat(featurePointer[offset])
+      let y1 = CGFloat(featurePointer[offset + 1])
+      let x2 = CGFloat(featurePointer[offset + 2])
+      let y2 = CGFloat(featurePointer[offset + 3])
+      var confidence = featurePointer[offset + 4]
+      let classIndex = Int(round(featurePointer[offset + 5]))
+      
+      // Normalize confidence: YOLO26 outputs in 0-1 range (already normalized)
+      // But check if it's in 0-100 range
+      if confidence > 1.0 && confidence <= 100.0 {
+        confidence = confidence / 100.0
+      } else if confidence > 100.0 {
+        // If > 100, might be logits - apply sigmoid
+        confidence = 1.0 / (1.0 + exp(-confidence))
+      }
+      
+      // Skip if confidence is below threshold
+      if confidence < confidenceThreshold {
+        continue
+      }
+      
+      // YOLO26 outputs boxes in pixel coordinates (model input space)
+      // Keep them in pixel coordinates to match YOLO11 format
+      // They will be normalized later in processObservations/predictOnImage
+      let boxX = x1
+      let boxY = y1
+      let boxW = x2 - x1
+      let boxH = y2 - y1
+      
+      // Clamp to valid model input space
+      let clampedX = max(0.0, min(CGFloat(modelWidth), boxX))
+      let clampedY = max(0.0, min(CGFloat(modelHeight), boxY))
+      let clampedW = max(0.0, min(CGFloat(modelWidth) - clampedX, boxW))
+      let clampedH = max(0.0, min(CGFloat(modelHeight) - clampedY, boxH))
+      
+      let box = CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
+      
+      // Extract mask coefficients (32 values starting at offset + 6)
+      guard let maskProbs = try? MLMultiArray(
+        shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
+      else {
+        continue
+      }
+      
+      let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
+      for j in 0..<maskConfidenceLength {
+        maskProbsData[j] = featurePointer[offset + 6 + j]
+      }
+      
+      let result = (box, classIndex, confidence, maskProbs)
+      results.append(result)
+    }
+    
+    print("✅ Segmenter: YOLO26 format processed - found \(results.count) detections above threshold")
+    return results
   }
 
   func checkShapeDimensions(of multiArray: MLMultiArray) -> Int {

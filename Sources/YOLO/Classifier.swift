@@ -166,8 +166,6 @@ public class Classifier: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        _ = [[String: Any]]()
-
         // Get the MLMultiArray from the observation
         let multiArray = observation.first?.featureValue.multiArrayValue
 

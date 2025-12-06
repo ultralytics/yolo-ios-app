@@ -1203,6 +1203,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
   }
+   
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+    videoCapture.stop()
+  }
 }
 
 // MARK: - Helper Methods for Layer Copying

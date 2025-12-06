@@ -44,7 +44,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let out1 = results[1].featureValue.multiArrayValue
       else { return }
       let out0dim = checkShapeDimensions(of: out0)
-      _ = checkShapeDimensions(of: out1)
+     
       if out0dim == 4 {
         masks = out0
         pred = out1
@@ -164,7 +164,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         }
 
         let out0dim = checkShapeDimensions(of: out0)
-        _ = checkShapeDimensions(of: out1)
+       
         if out0dim == 4 {
           masks = out0
           pred = out1

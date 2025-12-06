@@ -55,11 +55,11 @@ public class VideoCapture: NSObject, @unchecked Sendable {
     captureSession.startRunning()
   }
   let captureSession = AVCaptureSession()
-  var videoInput: AVCaptureDeviceInput? = nil
+  var videoInput: AVCaptureDeviceInput?
   let videoOutput = AVCaptureVideoDataOutput()
   var photoOutput = AVCapturePhotoOutput()
   let cameraQueue = DispatchQueue(label: "camera-queue")
-  var lastCapturedPhoto: UIImage? = nil
+  var lastCapturedPhoto: UIImage?
   var inferenceOK = true
   var longSide: CGFloat = 3
   var shortSide: CGFloat = 4
@@ -230,7 +230,7 @@ public class VideoCapture: NSObject, @unchecked Sendable {
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
       // so in most cases Vision needs to rotate it for the model to work as expected.
-      _ = CGImagePropertyOrientation.up
+     
       //            switch UIDevice.current.orientation {
       //            case .portrait:
       //                imageOrientation = .up
@@ -264,6 +264,14 @@ public class VideoCapture: NSObject, @unchecked Sendable {
     }
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
   }
+  
+  deinit {
+    captureSession.stopRunning()
+    videoOutput.setSampleBufferDelegate(nil, queue: nil)
+    if captureSession.isRunning {
+      captureSession.stopRunning()
+    }
+  }
 }
 
 extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
@@ -277,7 +285,6 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
 }
 
 extension VideoCapture: AVCapturePhotoCaptureDelegate {
-  @available(iOS 11.0, *)
   public func photoOutput(
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {

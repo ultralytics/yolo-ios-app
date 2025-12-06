@@ -35,12 +35,13 @@ struct ModelSelectionManager {
     }
   }()
 
-  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)])
-    -> [ModelSize: ModelInfo]
-  {
+  static func categorizeModels(
+    from models: [(name: String, url: URL?, isLocal: Bool)],
+    preferYOLO26: Bool = true
+  ) -> [ModelSize: ModelInfo] {
     var standardModels: [ModelSize: ModelInfo] = [:]
     
-    // Sort models to prioritize: yolo26 > yolo11, and local > remote
+    // Sort models to prioritize based on preferYOLO26 flag, and local > remote
     let sortedModels = models.sorted { model1, model2 in
       let name1 = (model1.name as NSString).deletingPathExtension.lowercased()
       let name2 = (model2.name as NSString).deletingPathExtension.lowercased()
@@ -53,11 +54,16 @@ struct ModelSelectionManager {
       let size1 = extractSizeFromModelName(name1)
       let size2 = extractSizeFromModelName(name2)
       
-      // If same size, prioritize yolo26 over yolo11
+      // If same size, prioritize based on preferYOLO26 flag
       if size1 == size2 {
         if version1 != version2 {
-          // Higher version number (26) comes first
-          return (version1 ?? 0) > (version2 ?? 0)
+          if preferYOLO26 {
+            // Higher version number (26) comes first
+            return (version1 ?? 0) > (version2 ?? 0)
+          } else {
+            // Lower version number (11) comes first
+            return (version1 ?? 0) < (version2 ?? 0)
+          }
         }
         // If same version, prioritize local over remote
         if model1.isLocal != model2.isLocal {
@@ -77,14 +83,17 @@ struct ModelSelectionManager {
         if let char = sizeChar,
           let size = ModelSize(rawValue: String(char))
         {
-          // Only add if we don't have a model for this size yet, or if this is yolo26 and existing is yolo11
+          let currentVersion = extractVersionNumber(from: baseName)
+          let targetVersion = preferYOLO26 ? 26 : 11
+          
+          // Only add if we don't have a model for this size yet, or if this matches the preferred version
           if let existing = standardModels[size] {
             let existingName = (existing.name as NSString).deletingPathExtension.lowercased()
             let existingVersion = extractVersionNumber(from: existingName)
-            let currentVersion = extractVersionNumber(from: baseName)
             
-            // Replace yolo11 with yolo26 if available
-            if (existingVersion ?? 0) < (currentVersion ?? 0) {
+            // Replace if current model matches preferred version better
+            if (currentVersion == targetVersion && existingVersion != targetVersion) ||
+               (currentVersion == targetVersion && existingVersion == targetVersion && model.isLocal && !existing.isLocal) {
               standardModels[size] = ModelInfo(
                 name: model.name,
                 url: model.url,
@@ -93,12 +102,15 @@ struct ModelSelectionManager {
               )
             }
           } else {
-            standardModels[size] = ModelInfo(
-              name: model.name,
-              url: model.url,
-              isLocal: model.isLocal,
-              size: size
-            )
+            // Add if it matches the preferred version, or if no preferred version exists
+            if currentVersion == targetVersion {
+              standardModels[size] = ModelInfo(
+                name: model.name,
+                url: model.url,
+                isLocal: model.isLocal,
+                size: size
+              )
+            }
           }
         }
       }

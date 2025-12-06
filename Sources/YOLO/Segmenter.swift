@@ -259,7 +259,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
     
     let shape = feature.shape.map { $0.intValue }
-    print("🔍 Segmenter: Feature shape: \(shape), isYOLO26: \(isYOLO26Model)")
     
     // YOLO26 segmentation models output in post-NMS format: [batch, num_detections, features]
     // where features = 6 (x1, y1, x2, y2, conf, class) + 32 (mask coefficients) = 38
@@ -270,7 +269,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     if isYOLO26Model && shape.count == 3 && shape[2] >= 38 {
       // shape[2] is num_features, should be >= 38 (6 box+conf+class + 32 mask coefficients)
       // shape[1] is num_detections (typically 300 or similar)
-      print("✅ Segmenter: Detected YOLO26 post-NMS format [\(shape[0]), \(shape[1]), \(shape[2])]")
       return postProcessYOLO26SegmentFormat(
         feature: feature,
         numDetections: shape[1],
@@ -293,7 +291,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
       numAnchors = shape[1]
       numFeatures = shape[0]
     } else {
-      print("❌ Segmenter: Unexpected feature shape: \(shape)")
+      print("Segmenter: Unexpected feature shape: \(shape)")
       return []
     }
     
@@ -434,7 +432,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     let modelHeight = CGFloat(modelInputSize.height)
     let maskConfidenceLength = 32
     
-    print("🔍 Segmenter: Processing YOLO26 format - model input size: \(modelWidth)x\(modelHeight), numDetections: \(numDetections), numFeatures: \(numFeatures)")
     
     for i in 0..<numDetections {
       let offset = i * numFeatures
@@ -493,7 +490,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
       results.append(result)
     }
     
-    print("✅ Segmenter: YOLO26 format processed - found \(results.count) detections above threshold")
     return results
   }
 

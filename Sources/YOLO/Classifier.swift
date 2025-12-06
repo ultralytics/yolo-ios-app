@@ -89,11 +89,6 @@ public class Classifier: BasePredictor, @unchecked Sendable {
           }
 
           let sortedMap = indexedMap.sorted { $0.value > $1.value }
-          
-          if isYOLO26Model && !valuesArray.isEmpty {
-            let sampleValues = valuesArray.prefix(5)
-            print("🔍 Classifier: YOLO26 model detected - sample probabilities: \(sampleValues.map { String(format: "%.4f", $0) })")
-          }
 
         // top1
         if let (topIndex, topScore) = sortedMap.first {
@@ -211,11 +206,6 @@ public class Classifier: BasePredictor, @unchecked Sendable {
           }
 
           let sortedMap = indexedMap.sorted { $0.value > $1.value }
-          
-          if isYOLO26Model && !valuesArray.isEmpty {
-            let sampleValues = valuesArray.prefix(5)
-            print("🔍 Classifier: YOLO26 model detected - sample probabilities: \(sampleValues.map { String(format: "%.4f", $0) })")
-          }
 
           // top1
           if let (topIndex, topScore) = sortedMap.first {

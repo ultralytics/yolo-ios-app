@@ -68,6 +68,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // Custom model selection button (created programmatically)
   var customModelButton: UIButton!
+  
+  // Model version toggle button (YOLO11 ↔ YOLO26)
+  var modelVersionToggleButton: UIButton!
+  private var modelVersionToggleButtonConstraints: [NSLayoutConstraint] = []
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
@@ -120,14 +124,26 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   var currentTask: String = ""
   var currentModelName: String = ""
+  
+  // Model version state: true for YOLO26, false for YOLO11
+  private var isYOLO26: Bool = true {
+    didSet {
+      // Sync with YOLOView (only if it's initialized)
+      if yoloView != nil {
+        yoloView.isYOLO26 = isYOLO26
+      }
+      // Reload models with new version preference (only if currentTask is set)
+      if !currentTask.isEmpty {
+        reloadModelEntriesAndLoadFirst(for: currentTask)
+      }
+    }
+  }
 
   private var isLoadingModel = false
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // Debug: Check model folders
-    debugCheckModelFolders()
 
     // MARK: External Display Setup (Optional)
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
@@ -146,6 +162,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
       yoloView.isHidden = true
     }
 
+    // Setup model version toggle notification
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleModelVersionChange(_:)),
+      name: NSNotification.Name("YOLOModelVersionDidChange"),
+      object: nil
+    )
+    
+    // Sync initial state with YOLOView (after yoloView is initialized)
+    // Delay to ensure yoloView is ready
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+      self.isYOLO26 = self.yoloView.isYOLO26
+    }
+    
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
@@ -193,6 +224,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     {
       labelVersion.text = "v\(version) (\(build))"
     }
+    
+    // Setup model version toggle button
+    setupModelVersionToggleButton()
 
     // Setup progress views
     [downloadProgressView, downloadProgressLabel].forEach {
@@ -267,7 +301,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
     let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
-    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples)
+    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples, preferYOLO26: isYOLO26)
 
     let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
     ModelSelectionManager.setupSegmentedControl(
@@ -343,12 +377,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
 
-    print("Start loading model: \(entry.displayName)")
-    print("  - displayName: \(entry.displayName)")
-    print("  - identifier: \(entry.identifier)")
-    print("  - isLocalBundle: \(entry.isLocalBundle)")
-    print("  - task: \(task)")
-    print("  - hasExternalDisplay: \(hasExternalDisplay)")
 
     // Store current entry for external display notification
     currentLoadingEntry = entry
@@ -518,13 +546,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
             {
               let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
               fullModelPath = modelURL.path
-              print("📦 External display local model path: \(fullModelPath)")
             }
           } else {
             // For remote/downloaded models, we need to pass the identifier only
             // The external display will handle loading from cache
             fullModelPath = entry.identifier
-            print("☁️ External display will load cached model: \(fullModelPath)")
 
             // Verify the cached model exists locally first
             let documentsDirectory = FileManager.default.urls(
@@ -535,7 +561,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
               .appendingPathExtension("mlmodelc")
 
             if !FileManager.default.fileExists(atPath: localModelURL.path) {
-              print("❌ Cached model not found at: \(localModelURL.path)")
+              print("Cached model not found at: \(localModelURL.path)")
               return
             }
           }
@@ -544,12 +570,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
         // Only notify if we have a valid path
         if !fullModelPath.isEmpty {
           ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
-          print("✅ Model loaded successfully and notified to external display: \(modelName)")
 
           // Also check if external display is waiting for initial model
           self.checkAndNotifyExternalDisplayIfReady()
         } else {
-          print("❌ Could not determine model path for external display")
+          print("Could not determine model path for external display")
         }
       }
 
@@ -603,6 +628,97 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if let link = URL(string: Constants.logoURL) {
       UIApplication.shared.open(link)
     }
+  }
+  
+  @objc private func handleModelVersionChange(_ notification: Notification) {
+    guard let userInfo = notification.userInfo,
+          let newIsYOLO26 = userInfo["isYOLO26"] as? Bool else {
+      return
+    }
+    isYOLO26 = newIsYOLO26
+    selection.selectionChanged()
+  }
+  
+  /// Setup model version selection button (shows menu to select YOLO11 or YOLO26)
+  private func setupModelVersionToggleButton() {
+    modelVersionToggleButton = UIButton(type: .system)
+    let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium, scale: .default)
+    modelVersionToggleButton.setImage(UIImage(systemName: "chevron.down", withConfiguration: config), for: .normal)
+    modelVersionToggleButton.tintColor = .white
+    // Match the transparent/greyish style of the model segmented control
+    modelVersionToggleButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
+    modelVersionToggleButton.layer.cornerRadius = 12
+    modelVersionToggleButton.layer.borderWidth = 1
+    modelVersionToggleButton.layer.borderColor = UIColor.systemGray.cgColor
+    modelVersionToggleButton.addTarget(self, action: #selector(modelVersionButtonTapped), for: .touchUpInside)
+    modelVersionToggleButton.translatesAutoresizingMaskIntoConstraints = false
+    modelVersionToggleButton.isHidden = false
+    modelVersionToggleButton.alpha = 1.0
+    view.addSubview(modelVersionToggleButton)
+    view.bringSubviewToFront(modelVersionToggleButton)
+    
+    // Position button next to labelName - use viewDidLayoutSubviews to set constraints after layout
+    DispatchQueue.main.async { [weak self] in
+      self?.updateModelVersionToggleButtonPosition()
+    }
+  }
+  
+  /// Update toggle button position relative to labelName (next to it, not at trailing edge)
+  private func updateModelVersionToggleButtonPosition() {
+    guard let labelName = labelName, let button = modelVersionToggleButton else { return }
+    
+    // Only set constraints if they haven't been set yet
+    if modelVersionToggleButtonConstraints.isEmpty {
+      modelVersionToggleButtonConstraints = [
+        button.leadingAnchor.constraint(equalTo: labelName.trailingAnchor, constant: 8),
+        button.centerYAnchor.constraint(equalTo: labelName.centerYAnchor),
+        button.widthAnchor.constraint(equalToConstant: 24),
+        button.heightAnchor.constraint(equalToConstant: 24)
+      ]
+      NSLayoutConstraint.activate(modelVersionToggleButtonConstraints)
+    }
+  }
+  
+  /// Handle model version button tap - show menu to select YOLO11 or YOLO26
+  @objc private func modelVersionButtonTapped() {
+    selection.selectionChanged()
+    
+    let alert = UIAlertController(title: "Select Model Version", message: nil, preferredStyle: .actionSheet)
+    
+    // YOLO26 option
+    let yolo26Action = UIAlertAction(title: "YOLO26", style: .default) { [weak self] _ in
+      guard let self = self else { return }
+      if !self.isYOLO26 {
+        self.isYOLO26 = true
+      }
+    }
+    if isYOLO26 {
+      yolo26Action.setValue(true, forKey: "checked")
+    }
+    alert.addAction(yolo26Action)
+    
+    // YOLO11 option
+    let yolo11Action = UIAlertAction(title: "YOLO11", style: .default) { [weak self] _ in
+      guard let self = self else { return }
+      if self.isYOLO26 {
+        self.isYOLO26 = false
+      }
+    }
+    if !isYOLO26 {
+      yolo11Action.setValue(true, forKey: "checked")
+    }
+    alert.addAction(yolo11Action)
+    
+    // Cancel option
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    
+    // For iPad
+    if let popover = alert.popoverPresentationController {
+      popover.sourceView = modelVersionToggleButton
+      popover.sourceRect = modelVersionToggleButton.bounds
+    }
+    
+    present(alert, animated: true)
   }
 
   private func setupModelSegmentedControl() {
@@ -680,6 +796,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     adjustLayoutForExternalDisplayIfNeeded()
+    // Set button position constraints after layout (only once)
+    updateModelVersionToggleButtonPosition()
   }
 
   @objc func shareButtonTapped() {
@@ -711,7 +829,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       ]
     )
 
-    print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
   }
 
   deinit {
@@ -719,28 +836,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func debugCheckModelFolders() {
-    print("\n🔍 DEBUG: Checking model folders...")
-    let folders = ["DetectModels", "SegmentModels", "ClassifyModels", "PoseModels", "OBBModels"]
-
-    for folder in folders {
-      if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {
-        print("✅ \(folder) found at: \(folderURL.path)")
-
-        do {
-          let files = try FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: nil)
-          let models = files.filter {
-            $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage"
-          }
-          print("   📦 Models: \(models.map { $0.lastPathComponent })")
-        } catch {
-          print("   ❌ Error reading folder: \(error)")
-        }
-      } else {
-        print("❌ \(folder) NOT FOUND in bundle")
-      }
-    }
-    print("\n")
+    // Debug function removed for production code
   }
 
 }

@@ -31,7 +31,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// Works for all YOLO26 sizes: yolo26n, yolo26s, yolo26m, yolo26l, yolo26x
   private var isYOLO26Model: Bool {
     guard let url = modelURL else {
-      print("⚠️ ObjectDetector: No model URL available for YOLO26 detection")
       return false
     }
     
@@ -48,14 +47,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     
     let isYOLO26 = fullPath.contains("yolo26") || baseName.contains("yolo26")
     
-    if isYOLO26 {
-      // Extract model size for logging
-      let sizeMatch = baseName.range(of: "yolo26([nsmxl])", options: .regularExpression)
-      let size = sizeMatch != nil ? String(baseName[sizeMatch!].dropFirst(5)) : "unknown"
-      print("✅ ObjectDetector: Detected YOLO26\(size) model - skipping NMS")
-    } else {
-      print("ℹ️ ObjectDetector: Model appears to be YOLO11 or older - will apply NMS")
-    }
     
     return isYOLO26
   }
@@ -95,19 +86,15 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///   - error: Any error that occurred during the Vision request.
   override func processObservations(for request: VNRequest, error: Error?) {
     if let error = error {
-      print("❌ ObjectDetector error: \(error.localizedDescription)")
+      print("ObjectDetector error: \(error.localizedDescription)")
       return
     }
     
     guard let results = request.results else {
-      print("⚠️ ObjectDetector: No results from Vision request")
       return
     }
     
-    print("🔍 ObjectDetector: Received \(results.count) results, type: \(type(of: results.first))")
-    
     if let results = results as? [VNRecognizedObjectObservation] {
-      print("✅ ObjectDetector: Found \(results.count) recognized object observations")
       var boxes = [Box]()
 
       for i in 0..<min(results.count, self.numItemsThreshold) {
@@ -141,20 +128,12 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
 
       self.currentOnResultsListener?.on(result: result)
-      print("📦 ObjectDetector: Created result with \(boxes.count) boxes")
     } else if let featureResults = results as? [VNCoreMLFeatureValueObservation] {
-      print("✅ ObjectDetector: Handling model without built-in NMS (VNCoreMLFeatureValueObservation)")
-      print("🔍 ObjectDetector: Model URL: \(modelURL?.path ?? "unknown")")
-      print("🔍 ObjectDetector: Is YOLO26: \(isYOLO26Model)")
       // Handle models without built-in NMS - need manual post-processing
       guard let prediction = featureResults.first?.featureValue.multiArrayValue else {
-        print("❌ ObjectDetector: No MLMultiArray in feature results")
+        print("ObjectDetector: No MLMultiArray in feature results")
         return
       }
-      
-      // Log raw prediction shape for debugging
-      let rawShape = prediction.shape.map { $0.intValue }
-      print("🔍 ObjectDetector: Raw prediction shape: \(rawShape)")
       
       // Post-process raw predictions
       let detectedObjects = postProcessDetection(
@@ -162,16 +141,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         confidenceThreshold: Float(self.confidenceThreshold),
         iouThreshold: Float(self.iouThreshold)
       )
-      
-      print("🔍 ObjectDetector: Post-processed \(detectedObjects.count) detections")
-      if !detectedObjects.isEmpty {
-        let sample = detectedObjects.prefix(3)
-        for (idx, det) in sample.enumerated() {
-          let (box, classIdx, conf) = det
-          let className = (classIdx < labels.count) ? labels[classIdx] : "unknown"
-          print("  Detection \(idx): \(className) conf=\(conf) box=(\(box.minX), \(box.minY), \(box.width), \(box.height))")
-        }
-      }
       
       // Convert to Box format
       var boxes: [Box] = []
@@ -193,11 +162,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         )
         let label = (classIndex < labels.count) ? labels[classIndex] : "unknown"
         let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
-        
-        // Debug: log the conversion
-        if boxes.count < 2 {
-          print("🔍 ObjectDetector: Converting box - normalized: \(rect), image coords: \(xywh), inputSize: \(inputWidth)x\(inputHeight)")
-        }
         
         let boxResult = Box(
           index: classIndex,
@@ -226,9 +190,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       
       self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
       self.currentOnResultsListener?.on(result: result)
-      print("📦 ObjectDetector: Created result with \(boxes.count) boxes from raw predictions")
     } else {
-      print("⚠️ ObjectDetector: Results are not VNRecognizedObjectObservation. Type: \(type(of: results.first))")
     }
   }
   
@@ -240,8 +202,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
   ) -> [(CGRect, Int, Float)] {
     let shape = feature.shape.map { $0.intValue }
     
-    print("🔍 ObjectDetector: Feature shape: \(shape), isYOLO26: \(isYOLO26Model)")
-    
     // YOLO26 models might output in a different format:
     // - [1, num_detections, 6] or [num_detections, 6] where each row is [x, y, w, h, confidence, class] (post-NMS format)
     // - [batch, num_anchors, num_classes + 4] (anchor-based format like YOLO11)
@@ -249,7 +209,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     
     // Check if this looks like YOLO26 post-NMS format: [1, num_detections, 6] or [num_detections, 6]
     if isYOLO26Model && shape.count >= 2 && shape.last == 6 {
-      print("✅ ObjectDetector: Detected YOLO26 post-NMS format \(shape)")
       return postProcessYOLO26Format(feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
     }
     
@@ -267,7 +226,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       numAnchors = shape[0]
       numFeatures = shape[1]
     } else {
-      print("❌ ObjectDetector: Unexpected feature shape: \(shape)")
+      print("ObjectDetector: Unexpected feature shape: \(shape)")
       return []
     }
     
@@ -275,7 +234,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     let numClasses = numFeatures - boxFeatureLength
     
     guard numClasses > 0 else {
-      print("❌ ObjectDetector: Invalid number of classes: \(numClasses)")
+      print("ObjectDetector: Invalid number of classes: \(numClasses)")
       return []
     }
     
@@ -303,13 +262,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     let maxSample = sampleScores.max() ?? 0
     let minSample = sampleScores.min() ?? 0
     let needsNormalization = maxSample > 10.0 || minSample < -10.0  // Likely logits if outside 0-1 range
-    
-    if isYOLO26Model {
-      print("🔍 ObjectDetector: YOLO26 model detected - sample scores range: [\(minSample), \(maxSample)]")
-      if needsNormalization {
-        print("⚠️ ObjectDetector: Scores appear to be logits - applying sigmoid normalization")
-      }
-    }
     
     for i in 0..<numAnchors {
       // Get box coordinates (normalized to model input size)
@@ -372,12 +324,9 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     // YOLO26 models don't need NMS - they output final detections without NMS
     if isYOLO26Model {
       // For YOLO26, just sort by confidence and return (no NMS needed)
-      print("🚫 ObjectDetector: Skipping NMS for YOLO26 model - returning \(detections.count) detections")
       detections.sort { $0.2 > $1.2 }
       return detections
     }
-    
-    print("🔧 ObjectDetector: Applying NMS for YOLO11/older model - \(detections.count) detections before NMS")
     
     // For YOLO11 and older models, apply NMS per class
     var classBuckets: [Int: [(CGRect, Int, Float)]] = [:]
@@ -422,7 +371,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     } else if shape.count == 2 {
       numDetections = shape[0]  // [num_detections, 6]
     } else {
-      print("❌ ObjectDetector: Invalid YOLO26 format, expected [1, num_detections, 6] or [num_detections, 6], got \(shape)")
+      print("ObjectDetector: Invalid YOLO26 format, expected [1, num_detections, 6] or [num_detections, 6], got \(shape)")
       return []
     }
     
@@ -439,24 +388,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     
     let modelWidth = CGFloat(self.modelInputSize.width)
     let modelHeight = CGFloat(self.modelInputSize.height)
-    
-    print("🔍 ObjectDetector: Processing YOLO26 format - model input size: \(modelWidth)x\(modelHeight), numDetections: \(numDetections)")
-    
-    // Sample first few detections to understand the coordinate format
-    if numDetections > 0 {
-      print("🔍 ObjectDetector: Confidence threshold: \(confidenceThreshold)")
-      // Check first 10 detections for confidence distribution
-      var maxConf: Float = 0
-      var confidences: [Float] = []
-      for i in 0..<min(10, numDetections) {
-        let off = i * stride
-        let conf = featurePointer[off + 4]
-        confidences.append(conf)
-        if conf > maxConf { maxConf = conf }
-      }
-      print("🔍 ObjectDetector: First 10 confidences: \(confidences.map { String(format: "%.4f", $0) })")
-      print("🔍 ObjectDetector: Max confidence in first 10: \(maxConf)")
-    }
     
     for i in 0..<numDetections {
       // For [1, 300, 6] format, data is stored as: [batch][detection][feature]
@@ -510,12 +441,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       
       let box = CGRect(x: boxX, y: boxY, width: boxW, height: boxH)
       
-      // Log first few detections for debugging
-      if i < 3 {
-        let className = classIndex < labels.count ? labels[classIndex] : "unknown"
-        print("  Detection \(i): class=\(classIndex) '\(className)' conf=\(confidence) raw=(x1:\(x1), y1:\(y1), x2:\(x2), y2:\(y2)) normalized box=(\(boxX), \(boxY), \(boxW), \(boxH))")
-      }
-      
       // Validate: box should be reasonable size and within bounds
       let isValidBox = boxW > 0.01 && boxH > 0.01 && boxW <= 1.0 && boxH <= 1.0
       let hasValidConfidence = confidence > confidenceThreshold && confidence <= 1.0
@@ -523,24 +448,12 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       
       if isValidBox && hasValidConfidence && hasValidClass {
         detections.append((box, classIndex, confidence))
-      } else if i < 5 {
-        // Log why detections are being filtered (only first few to avoid spam)
-        if !isValidBox {
-          print("  ⚠️ Detection \(i) filtered: invalid box size (w:\(boxW), h:\(boxH))")
-        }
-        if !hasValidConfidence {
-          print("  ⚠️ Detection \(i) filtered: confidence \(confidence) below threshold \(confidenceThreshold)")
-        }
-        if !hasValidClass {
-          print("  ⚠️ Detection \(i) filtered: invalid class index \(classIndex) (max: \(labels.count-1))")
-        }
       }
     }
     
     // Sort by confidence (descending)
     detections.sort { $0.2 > $1.2 }
     
-    print("✅ ObjectDetector: Processed \(detections.count) valid detections from YOLO26 format (out of \(numDetections) total)")
     return detections
   }
 

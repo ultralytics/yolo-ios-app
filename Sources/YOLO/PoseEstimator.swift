@@ -135,7 +135,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     -> [(box: Box, keypoints: Keypoints)]
   {
     let shape = prediction.shape.map { $0.intValue }
-    print("🔍 PoseEstimator: Feature shape: \(shape), isYOLO26: \(isYOLO26Model)")
     
     // YOLO26 pose models output in post-NMS format: [batch, num_detections, features]
     // where features = 4 (box: x, y, w, h) + 1 (class_idx) + 1 (confidence) + num_keypoints * 3 (x, y, conf)
@@ -146,7 +145,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     if isYOLO26Model && shape.count == 3 && shape[2] > 6 {
       // shape[2] is num_features, should be > 6 (4 box + 1 class + 1 conf + at least 1 keypoint * 3)
       // shape[1] is num_detections (typically 300 or similar)
-      print("✅ PoseEstimator: Detected YOLO26 post-NMS format [\(shape[0]), \(shape[1]), \(shape[2])]")
       return postProcessYOLO26PoseFormat(
         feature: prediction,
         numDetections: shape[1],
@@ -298,23 +296,11 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     // 6 = 4 (box) + 1 (class) + 1 (confidence)
     let numKeypoints = (numFeatures - 6) / 3
     
-    print("🔍 PoseEstimator: Processing \(numDetections) detections with \(numKeypoints) keypoints each")
-    
     var detections: [(CGRect, Float, [Float])] = [] // (box, confidence, keypoints)
     detections.reserveCapacity(min(numDetections, 100))
     
     let modelWidth = CGFloat(modelInputSize.width)
     let modelHeight = CGFloat(modelInputSize.height)
-    
-    // Sample first detection to understand format
-    if numDetections > 0 {
-      let sampleOffset = 0 * stride
-      print("🔍 PoseEstimator: Sample detection raw values:")
-      print("  [0-3]: x1=\(featurePointer[sampleOffset]) y1=\(featurePointer[sampleOffset+1]) x2=\(featurePointer[sampleOffset+2]) y2=\(featurePointer[sampleOffset+3])")
-      print("  [4]: confidence=\(featurePointer[sampleOffset+4])")
-      print("  [5]: class_idx=\(featurePointer[sampleOffset+5]) (as int: \(Int(round(featurePointer[sampleOffset+5]))))")
-      print("  Model input size: \(modelWidth)x\(modelHeight)")
-    }
     
     for i in 0..<numDetections {
       let offset = i * stride
@@ -340,16 +326,8 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
         confidence = 1.0 / (1.0 + exp(-confidence))  // sigmoid
       }
       
-      // Debug first few detections
-      if i < 5 {
-        print("🔍 PoseEstimator: Detection \(i) - raw_conf:\(rawConfidence) normalized_conf:\(String(format: "%.3f", confidence)) threshold:\(confidenceThreshold) class_idx:\(classIndex)")
-      }
-      
       // Apply confidence threshold
       guard confidence > confidenceThreshold else {
-        if i < 5 {
-          print("❌ PoseEstimator: Detection \(i) filtered - confidence \(String(format: "%.3f", confidence)) <= threshold \(confidenceThreshold)")
-        }
         continue
       }
       
@@ -367,15 +345,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       
       // Skip invalid boxes
       guard clampedW > 0.01 && clampedH > 0.01 else {
-        if i < 5 {
-          print("❌ PoseEstimator: Detection \(i) filtered - box too small: w=\(String(format: "%.4f", clampedW)) h=\(String(format: "%.4f", clampedH))")
-        }
         continue
-      }
-      
-      // Debug first few valid detections
-      if i < 5 {
-        print("✅ PoseEstimator: Detection \(i) - raw_conf:\(rawConfidence) normalized_conf:\(String(format: "%.3f", confidence)) class:\(classIndex) box:(\(String(format: "%.4f", clampedX)), \(String(format: "%.4f", clampedY)), \(String(format: "%.4f", clampedW)), \(String(format: "%.4f", clampedH)))")
       }
       
       let boundingBox = CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
@@ -397,7 +367,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       detections.append((boundingBox, confidence, keypointFeatures))
     }
     
-    print("✅ PoseEstimator: Processed \(detections.count) valid detections from \(numDetections) total")
     
     // Apply NMS (group by class first, then apply NMS per class)
     var classBuckets: [Int: [(CGRect, Float, [Float])]] = [:]

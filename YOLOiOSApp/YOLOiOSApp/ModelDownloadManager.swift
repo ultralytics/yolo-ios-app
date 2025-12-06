@@ -229,7 +229,6 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           userInfo: [NSLocalizedDescriptionKey: "Downloaded file is empty or invalid"])
       }
       
-      print("📦 ModelDownloadManager: Downloaded file size: \(fileSize) bytes for key: \(key)")
       
       let zipURL = destinationURL
       if fileExists(at: zipURL) {
@@ -241,9 +240,8 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       // Verify ZIP file is valid before attempting extraction
       do {
         _ = try Archive(url: zipURL, accessMode: .read)
-        print("✅ ModelDownloadManager: ZIP file is valid")
       } catch {
-        print("❌ ModelDownloadManager: ZIP file is corrupted: \(error)")
+        print("ModelDownloadManager: ZIP file is corrupted: \(error)")
         try? FileManager.default.removeItem(at: zipURL)
         throw NSError(
           domain: "ModelDownload", code: 3,
@@ -296,7 +294,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         self.completeTask(downloadTask, model: model, key: key)
       }
     } catch {
-      print("❌ ModelDownloadManager: Download processing failed for key '\(key)': \(error)")
+      print("ModelDownloadManager: Download processing failed for key '\(key)': \(error)")
       // Clean up any partial files
       let zipURL = downloadTasks[downloadTask]?.url ?? destinationURL
       try? FileManager.default.removeItem(at: zipURL)
@@ -338,7 +336,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     guard let downloadTask = task as? URLSessionDownloadTask,
           let key = downloadTasks[downloadTask]?.key else { return }
     
-    print("❌ ModelDownloadManager: Download failed for key '\(key)': \(error.localizedDescription)")
+    print("ModelDownloadManager: Download failed for key '\(key)': \(error.localizedDescription)")
     
     // Clean up partial download
     if let destinationURL = downloadTasks[downloadTask]?.url {

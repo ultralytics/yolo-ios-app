@@ -826,10 +826,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ModelDownloadManager.shared.progressHandler = nil
   }
 
-  private func debugCheckModelFolders() {
-    // Debug function removed for production code
-  }
-
 }
 
 // MARK: - YOLOViewDelegate

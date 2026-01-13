@@ -8,7 +8,6 @@ extension Notification.Name {
   static let externalDisplayDisconnected = Notification.Name("ExternalDisplayDisconnected")
   static let externalDisplayReady = Notification.Name("ExternalDisplayReady")
   static let modelDidChange = Notification.Name("ModelDidChange")
-  static let shareCameraSession = Notification.Name("ShareCameraSession")
   static let yoloResultsAvailable = Notification.Name("YOLOResultsAvailable")
   static let thresholdDidChange = Notification.Name("ThresholdDidChange")
   static let taskDidChange = Notification.Name("TaskDidChange")

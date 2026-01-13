@@ -415,7 +415,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     confidenceThreshold: Float,
     modelInputSize: (width: Int, height: Int)
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
-   
+
     guard modelInputSize.width > 0 && modelInputSize.height > 0 else { return [] }
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)

@@ -25,7 +25,7 @@ let package = Package(
       name: "YOLO",
       dependencies: ["ZIPFoundation"],
       exclude: [
-        "README.md",
+        "README.md"
       ]
     ),
     .testTarget(
@@ -45,7 +45,7 @@ let package = Package(
         "ClassifierTests.backup",
       ],
       resources: [
-        .process("Resources/README.md"),
+        .process("Resources/README.md")
       ]
     ),
   ]

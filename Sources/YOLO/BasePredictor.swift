@@ -12,9 +12,9 @@
 //  (detection, segmentation, classification, etc.) inherit from this base class and override
 //  the prediction-specific methods.
 
-import Foundation
 import CoreGraphics
 import CoreImage
+import Foundation
 import QuartzCore
 import Vision
 
@@ -350,11 +350,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Normalizes YOLO26 scores that may be logits or 0-100 values.
   func normalizeYOLO26Score(_ value: Float) -> Float {
     if abs(value) > 10.0 {
-      return 1.0 / (1.0 + exp(-value)) 
+      return 1.0 / (1.0 + exp(-value))
     } else if value > 1.0 && value <= 100.0 {
-      return value / 100.0 
+      return value / 100.0
     }
-    return value  
+    return value
   }
 
   /// Overload for Double scores.

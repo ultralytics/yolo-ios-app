@@ -53,15 +53,17 @@ public func normalizeImageOrientation(_ uiImage: UIImage) -> UIImage {
 
   let colorSpace = cgImage.colorSpace ?? CGColorSpaceCreateDeviceRGB()
 
-  guard let context = CGContext(
-    data: nil,
-    width: Int(contextSize.width),
-    height: Int(contextSize.height),
-    bitsPerComponent: cgImage.bitsPerComponent,
-    bytesPerRow: 0,
-    space: colorSpace,
-    bitmapInfo: cgImage.bitmapInfo.rawValue
-  ) else {
+  guard
+    let context = CGContext(
+      data: nil,
+      width: Int(contextSize.width),
+      height: Int(contextSize.height),
+      bitsPerComponent: cgImage.bitsPerComponent,
+      bytesPerRow: 0,
+      space: colorSpace,
+      bitmapInfo: cgImage.bitmapInfo.rawValue
+    )
+  else {
     return uiImage
   }
 

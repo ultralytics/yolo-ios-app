@@ -29,27 +29,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Checks if the current model is a YOLO26 model (which doesn't need NMS)
   /// Works for all YOLO26 sizes: yolo26n, yolo26s, yolo26m, yolo26l, yolo26x
-  private var isYOLO26Model: Bool {
-    guard let url = modelURL else {
-      return false
-    }
-
-    // Check the full path and last path component for "yolo26"
-    // This will match all YOLO26 sizes: yolo26n, yolo26s, yolo26m, yolo26l, yolo26x
-    let fullPath = url.path.lowercased()
-    let modelName = url.lastPathComponent.lowercased()
-
-    // Remove file extensions to get base name
-    let baseName =
-      modelName
-      .replacingOccurrences(of: ".mlmodelc", with: "")
-      .replacingOccurrences(of: ".mlpackage", with: "")
-      .replacingOccurrences(of: ".mlmodel", with: "")
-
-    let isYOLO26 = fullPath.contains("yolo26") || baseName.contains("yolo26")
-
-    return isYOLO26
-  }
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
 
   /// Sets the confidence threshold and updates the model's feature provider.
   ///
@@ -144,8 +124,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
       // Convert to Box format
       var boxes: [Box] = []
-      let modelWidth = CGFloat(self.modelInputSize.width)
-      let modelHeight = CGFloat(self.modelInputSize.height)
       let inputWidth = Int(inputSize.width)
       let inputHeight = Int(inputSize.height)
 
@@ -190,7 +168,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
       self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
       self.currentOnResultsListener?.on(result: result)
-    } else {
     }
   }
 
@@ -213,17 +190,25 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
     }
 
-    // YOLO detection output format: [batch, num_anchors, num_classes + 4] or [num_anchors, num_classes + 4]
-    // Or sometimes: [1, num_anchors, num_classes + 4]
+    // YOLO detection output format: [batch, num_anchors, num_classes + 4] (anchor-first)
+    // or [batch, num_features, num_anchors] (feature-first, e.g., 1x84x8400).
     var numAnchors: Int
     var numFeatures: Int
+    enum FeatureLayout { case anchorFirst, featureFirst }
+    let layout: FeatureLayout
 
     if shape.count == 3 {
-      // Format: [batch, num_anchors, features]
-      numAnchors = shape[1]
-      numFeatures = shape[2]
+      if shape[1] > shape[2] {
+        layout = .anchorFirst
+        numAnchors = shape[1]
+        numFeatures = shape[2]
+      } else {
+        layout = .featureFirst
+        numFeatures = shape[1]
+        numAnchors = shape[2]
+      }
     } else if shape.count == 2 {
-      // Format: [num_anchors, features]
+      layout = .anchorFirst
       numAnchors = shape[0]
       numFeatures = shape[1]
     } else {
@@ -241,6 +226,15 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
 
+    func value(featureIndex: Int, anchorIndex: Int) -> Float {
+      switch layout {
+      case .anchorFirst:
+        return featurePointer[anchorIndex * numFeatures + featureIndex]
+      case .featureFirst:
+        return featurePointer[featureIndex * numAnchors + anchorIndex]
+      }
+    }
+
     // Extract detections
     var detections: [(CGRect, Int, Float)] = []
     detections.reserveCapacity(min(numAnchors / 10, 100))  // Estimate capacity
@@ -250,30 +244,15 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       return 1.0 / (1.0 + exp(-x))
     }
 
-    // Sample a few values to detect if scores need normalization
-    var sampleScores: [Float] = []
-    let sampleCount = min(10, numAnchors)
-    for i in 0..<sampleCount {
-      let offset = i * numFeatures
-      for c in 0..<min(3, numClasses) {
-        let score = featurePointer[offset + boxFeatureLength + c]
-        sampleScores.append(score)
-      }
-    }
-    let maxSample = sampleScores.max() ?? 0
-    let minSample = sampleScores.min() ?? 0
-    let needsNormalization = maxSample > 10.0 || minSample < -10.0  // Likely logits if outside 0-1 range
-
     for i in 0..<numAnchors {
       // Get box coordinates (normalized to model input size)
       // For [batch, anchors, features]: offset = batch_idx * anchors * features + anchor_idx * features
       // For [anchors, features]: offset = anchor_idx * features
       // Typically batch=1, so: offset = i * numFeatures
-      let offset = i * numFeatures
-      let cx = CGFloat(featurePointer[offset])
-      let cy = CGFloat(featurePointer[offset + 1])
-      let w = CGFloat(featurePointer[offset + 2])
-      let h = CGFloat(featurePointer[offset + 3])
+      let cx = CGFloat(value(featureIndex: 0, anchorIndex: i))
+      let cy = CGFloat(value(featureIndex: 1, anchorIndex: i))
+      let w = CGFloat(value(featureIndex: 2, anchorIndex: i))
+      let h = CGFloat(value(featureIndex: 3, anchorIndex: i))
 
       // Convert center format to minX, minY format
       let boxX = cx - w / 2
@@ -284,24 +263,10 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       var bestScore: Float = 0
       var bestClass: Int = 0
       for c in 0..<numClasses {
-        var score = featurePointer[offset + boxFeatureLength + c]
-
-        // For YOLO26 models, normalize scores appropriately
+        var score = value(featureIndex: boxFeatureLength + c, anchorIndex: i)
         if isYOLO26Model {
-          // YOLO26 might output in different formats:
-          // 1. Logits (very large positive/negative) - apply sigmoid
-          // 2. 0-100 range - normalize to 0-1
-          // 3. Already 0-1 - use as-is
-          if abs(score) > 10.0 {
-            // Likely logits, apply sigmoid
-            score = sigmoid(score)
-          } else if score > 1.0 && score <= 100.0 {
-            // Likely 0-100 range, normalize to 0-1
-            score = score / 100.0
-          }
-          // If already in 0-1 range, use as-is
+          score = normalizeYOLO26Score(score)
         }
-
         if score > bestScore {
           bestScore = score
           bestClass = c
@@ -309,12 +274,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
 
       // Normalize score to 0-1 range if needed (for threshold comparison)
-      var normalizedScore = bestScore
-      if bestScore > 1.0 && bestScore <= 100.0 {
-        normalizedScore = bestScore / 100.0
-      } else if abs(bestScore) > 10.0 {
-        normalizedScore = sigmoid(bestScore)
-      }
+      let normalizedScore = isYOLO26Model ? normalizeYOLO26Score(bestScore) : bestScore
 
       // Apply confidence threshold (using normalized score)
       if normalizedScore > confidenceThreshold && normalizedScore <= 1.0 {

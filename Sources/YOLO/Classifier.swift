@@ -20,17 +20,7 @@ import Vision
 public class Classifier: BasePredictor, @unchecked Sendable {
 
   /// Checks if the current model is a YOLO26 model
-  private var isYOLO26Model: Bool {
-    guard let url = modelURL else { return false }
-    let fullPath = url.path.lowercased()
-    let modelName = url.lastPathComponent.lowercased()
-    let baseName =
-      modelName
-      .replacingOccurrences(of: ".mlmodelc", with: "")
-      .replacingOccurrences(of: ".mlpackage", with: "")
-      .replacingOccurrences(of: ".mlmodel", with: "")
-    return fullPath.contains("yolo26") || baseName.contains("yolo26")
-  }
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
 
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
@@ -59,28 +49,9 @@ public class Classifier: BasePredictor, @unchecked Sendable {
         // Initialize an array to store the classes
         var valuesArray = [Double]()
 
-        // Helper function to normalize confidence scores for YOLO26
-        func normalizeConfidence(_ value: Double) -> Double {
-          if isYOLO26Model {
-            // YOLO26 might output in different formats:
-            // 1. Logits (very large positive/negative) - apply sigmoid
-            // 2. 0-100 range - normalize to 0-1
-            // 3. Already 0-1 - use as-is
-            if abs(value) > 10.0 {
-              // Likely logits, apply sigmoid
-              return 1.0 / (1.0 + exp(-value))
-            } else if value > 1.0 && value <= 100.0 {
-              // Likely 0-100 range, normalize to 0-1
-              return value / 100.0
-            }
-          }
-          // If already in 0-1 range or not YOLO26, use as-is
-          return value
-        }
-
         for i in 0..<multiArray.count {
           let rawValue = multiArray[i].doubleValue
-          let normalizedValue = normalizeConfidence(rawValue)
+          let normalizedValue = isYOLO26Model ? normalizeYOLO26Score(rawValue) : rawValue
           valuesArray.append(normalizedValue)
         }
 
@@ -174,28 +145,9 @@ public class Classifier: BasePredictor, @unchecked Sendable {
           // Initialize an array to store the classes
           var valuesArray = [Double]()
 
-          // Helper function to normalize confidence scores for YOLO26
-          func normalizeConfidence(_ value: Double) -> Double {
-            if isYOLO26Model {
-              // YOLO26 might output in different formats:
-              // 1. Logits (very large positive/negative) - apply sigmoid
-              // 2. 0-100 range - normalize to 0-1
-              // 3. Already 0-1 - use as-is
-              if abs(value) > 10.0 {
-                // Likely logits, apply sigmoid
-                return 1.0 / (1.0 + exp(-value))
-              } else if value > 1.0 && value <= 100.0 {
-                // Likely 0-100 range, normalize to 0-1
-                return value / 100.0
-              }
-            }
-            // If already in 0-1 range or not YOLO26, use as-is
-            return value
-          }
-
           for i in 0..<multiArray.count {
             let rawValue = multiArray[i].doubleValue
-            let normalizedValue = normalizeConfidence(rawValue)
+            let normalizedValue = isYOLO26Model ? normalizeYOLO26Score(rawValue) : rawValue
             valuesArray.append(normalizedValue)
           }
 

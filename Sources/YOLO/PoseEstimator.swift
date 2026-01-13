@@ -22,17 +22,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
   /// Checks if the current model is a YOLO26 model
-  private var isYOLO26Model: Bool {
-    guard let url = modelURL else { return false }
-    let fullPath = url.path.lowercased()
-    let modelName = url.lastPathComponent.lowercased()
-    let baseName =
-      modelName
-      .replacingOccurrences(of: ".mlmodelc", with: "")
-      .replacingOccurrences(of: ".mlpackage", with: "")
-      .replacingOccurrences(of: ".mlmodel", with: "")
-    return fullPath.contains("yolo26") || baseName.contains("yolo26")
-  }
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -306,8 +296,8 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     for i in 0..<numDetections {
       let offset = i * stride
 
-      // YOLO26 format: [x1, y1, x2, y2, confidence, class_idx, keypoints...]
-      // Corner format (not center format) - all in pixel space
+      // YOLO26 post-NMS format: [x1, y1, x2, y2, confidence, class_idx, keypoints...]
+      // corner coords in pixel space, confidence at index 4, class index at 5
       let x1 = CGFloat(featurePointer[offset])
       let y1 = CGFloat(featurePointer[offset + 1])
       let x2 = CGFloat(featurePointer[offset + 2])

@@ -13,7 +13,9 @@
 //  the prediction-specific methods.
 
 import Foundation
-import UIKit
+import CoreGraphics
+import CoreImage
+import QuartzCore
 import Vision
 
 /// Base class for all YOLO model predictors, handling common model loading and inference logic.
@@ -341,5 +343,40 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
     print("Cannot find input size")
     return (0, 0)
+  }
+
+  // MARK: - YOLO26 Score Normalization Helpers
+
+  /// Normalizes YOLO26 scores that may be logits or 0-100 values.
+  func normalizeYOLO26Score(_ value: Float) -> Float {
+    if abs(value) > 10.0 {
+      return 1.0 / (1.0 + exp(-value)) 
+    } else if value > 1.0 && value <= 100.0 {
+      return value / 100.0 
+    }
+    return value  
+  }
+
+  /// Overload for Double scores.
+  func normalizeYOLO26Score(_ value: Double) -> Double {
+    if abs(value) > 10.0 {
+      return 1.0 / (1.0 + exp(-value))
+    } else if value > 1.0 && value <= 100.0 {
+      return value / 100.0
+    }
+    return value
+  }
+
+  /// Detects if the current model path looks like a YOLO26 variant.
+  func isYOLO26Model(from url: URL?) -> Bool {
+    guard let url = url else { return false }
+    let fullPath = url.path.lowercased()
+    let modelName = url.lastPathComponent.lowercased()
+    let baseName =
+      modelName
+      .replacingOccurrences(of: ".mlmodelc", with: "")
+      .replacingOccurrences(of: ".mlpackage", with: "")
+      .replacingOccurrences(of: ".mlmodel", with: "")
+    return fullPath.contains("yolo26") || baseName.contains("yolo26")
   }
 }

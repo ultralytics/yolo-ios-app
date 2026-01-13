@@ -125,11 +125,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var switchCameraButton = UIButton()
   public var shareButton = UIButton()
   public var toolbar = UIView()
-  public var modelVersionToggleButton = UIButton()
-
-  // Model version state: true for YOLO26, false for YOLO11
-  // Note: The toggle button is now handled in ViewController
-  public var isYOLO26: Bool = true
   let selection = UISelectionFeedbackGenerator()
   private var overlayLayer = CALayer()
   private var maskLayer: CALayer?

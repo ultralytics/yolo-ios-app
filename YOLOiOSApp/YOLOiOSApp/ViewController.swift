@@ -128,10 +128,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // Model version state: true for YOLO26, false for YOLO11
   private var isYOLO26: Bool = true {
     didSet {
-      // Sync with YOLOView (only if it's initialized)
-      if yoloView != nil {
-        yoloView.isYOLO26 = isYOLO26
-      }
+      guard isYOLO26 != oldValue else { return }
       // Reload models with new version preference (only if currentTask is set)
       if !currentTask.isEmpty {
         reloadModelEntriesAndLoadFirst(for: currentTask)
@@ -164,11 +161,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Sync initial state with YOLOView (after yoloView is initialized)
     // Delay to ensure yoloView is ready
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      self.isYOLO26 = self.yoloView.isYOLO26
-    }
-
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in

@@ -23,17 +23,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
   /// Checks if the current model is a YOLO26 model
-  private var isYOLO26Model: Bool {
-    guard let url = modelURL else { return false }
-    let fullPath = url.path.lowercased()
-    let modelName = url.lastPathComponent.lowercased()
-    let baseName =
-      modelName
-      .replacingOccurrences(of: ".mlmodelc", with: "")
-      .replacingOccurrences(of: ".mlpackage", with: "")
-      .replacingOccurrences(of: ".mlmodel", with: "")
-    return fullPath.contains("yolo26") || baseName.contains("yolo26")
-  }
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {

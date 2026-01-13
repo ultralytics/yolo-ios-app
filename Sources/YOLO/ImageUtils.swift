@@ -19,11 +19,64 @@ import UIKit
 /// - Returns: A `UIImage` with `.up` orientation. Returns the original image if already normalized.
 public func normalizeImageOrientation(_ uiImage: UIImage) -> UIImage {
   guard uiImage.imageOrientation != .up else { return uiImage }
+  guard let cgImage = uiImage.cgImage else { return uiImage }
 
-  UIGraphicsBeginImageContextWithOptions(uiImage.size, false, uiImage.scale)
-  uiImage.draw(in: CGRect(origin: .zero, size: uiImage.size))
-  let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
-  UIGraphicsEndImageContext()
+  let width = CGFloat(cgImage.width)
+  let height = CGFloat(cgImage.height)
 
-  return normalizedImage ?? uiImage
+  var transform = CGAffineTransform.identity
+  var contextSize = CGSize(width: width, height: height)
+
+  // Rotation
+  switch uiImage.imageOrientation {
+  case .down, .downMirrored:
+    transform = transform.translatedBy(x: width, y: height).rotated(by: .pi)
+  case .left, .leftMirrored:
+    transform = transform.translatedBy(x: width, y: 0).rotated(by: .pi / 2)
+    contextSize = CGSize(width: height, height: width)
+  case .right, .rightMirrored:
+    transform = transform.translatedBy(x: 0, y: height).rotated(by: -.pi / 2)
+    contextSize = CGSize(width: height, height: width)
+  default:
+    break
+  }
+
+  // Mirroring
+  switch uiImage.imageOrientation {
+  case .upMirrored, .downMirrored:
+    transform = transform.translatedBy(x: width, y: 0).scaledBy(x: -1, y: 1)
+  case .leftMirrored, .rightMirrored:
+    transform = transform.translatedBy(x: height, y: 0).scaledBy(x: -1, y: 1)
+  default:
+    break
+  }
+
+  let colorSpace = cgImage.colorSpace ?? CGColorSpaceCreateDeviceRGB()
+
+  guard let context = CGContext(
+    data: nil,
+    width: Int(contextSize.width),
+    height: Int(contextSize.height),
+    bitsPerComponent: cgImage.bitsPerComponent,
+    bytesPerRow: 0,
+    space: colorSpace,
+    bitmapInfo: cgImage.bitmapInfo.rawValue
+  ) else {
+    return uiImage
+  }
+
+  context.concatenate(transform)
+
+  let drawRect: CGRect
+  switch uiImage.imageOrientation {
+  case .left, .leftMirrored, .right, .rightMirrored:
+    drawRect = CGRect(x: 0, y: 0, width: height, height: width)
+  default:
+    drawRect = CGRect(x: 0, y: 0, width: width, height: height)
+  }
+
+  context.draw(cgImage, in: drawRect)
+
+  guard let normalizedCGImage = context.makeImage() else { return uiImage }
+  return UIImage(cgImage: normalizedCGImage, scale: uiImage.scale, orientation: .up)
 }

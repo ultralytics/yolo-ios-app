@@ -163,14 +163,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       yoloView.isHidden = true
     }
 
-    // Setup model version toggle notification
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleModelVersionChange(_:)),
-      name: NSNotification.Name("YOLOModelVersionDidChange"),
-      object: nil
-    )
-    
     // Sync initial state with YOLOView (after yoloView is initialized)
     // Delay to ensure yoloView is ready
     DispatchQueue.main.async { [weak self] in
@@ -637,15 +629,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if let link = URL(string: Constants.logoURL) {
       UIApplication.shared.open(link)
     }
-  }
-  
-  @objc private func handleModelVersionChange(_ notification: Notification) {
-    guard let userInfo = notification.userInfo,
-          let newIsYOLO26 = userInfo["isYOLO26"] as? Bool else {
-      return
-    }
-    isYOLO26 = newIsYOLO26
-    selection.selectionChanged()
   }
   
   /// Setup model version selection button (shows menu to select YOLO11 or YOLO26)

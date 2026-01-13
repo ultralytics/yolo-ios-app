@@ -230,7 +230,7 @@ public class VideoCapture: NSObject, @unchecked Sendable {
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
       // so in most cases Vision needs to rotate it for the model to work as expected.
-     
+
       //            switch UIDevice.current.orientation {
       //            case .portrait:
       //                imageOrientation = .up
@@ -264,7 +264,7 @@ public class VideoCapture: NSObject, @unchecked Sendable {
     }
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
   }
-  
+
   deinit {
     captureSession.stopRunning()
     videoOutput.setSampleBufferDelegate(nil, queue: nil)

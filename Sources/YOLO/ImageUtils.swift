@@ -27,4 +27,3 @@ public func normalizeImageOrientation(_ uiImage: UIImage) -> UIImage {
 
   return normalizedImage ?? uiImage
 }
-

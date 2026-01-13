@@ -126,7 +126,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var shareButton = UIButton()
   public var toolbar = UIView()
   public var modelVersionToggleButton = UIButton()
-  
+
   // Model version state: true for YOLO26, false for YOLO11
   // Note: The toggle button is now handled in ViewController
   public var isYOLO26: Bool = true
@@ -837,7 +837,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
-  
+
   // Model version toggle button is now handled in ViewController
 
   /// Configure a slider with common settings
@@ -1155,7 +1155,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
 
     self.videoCapture.captureSession.beginConfiguration()
-    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput else {
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
+    else {
       self.videoCapture.captureSession.commitConfiguration()
       return
     }
@@ -1203,7 +1204,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
   }
-   
+
   deinit {
     NotificationCenter.default.removeObserver(self)
     videoCapture.stop()
@@ -1306,10 +1307,11 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       print("error occurred : \(error.localizedDescription)")
     }
     if let dataImage = photo.fileDataRepresentation(),
-       let dataProvider = CGDataProvider(data: dataImage as CFData),
-       let cgImageRef = CGImage(
-         jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
-         intent: .defaultIntent) {
+      let dataProvider = CGDataProvider(data: dataImage as CFData),
+      let cgImageRef = CGImage(
+        jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
+        intent: .defaultIntent)
+    {
       Task { @MainActor [weak self] in
         guard let self = self else { return }
 

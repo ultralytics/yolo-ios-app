@@ -75,7 +75,8 @@ class ImageUtilsTests: XCTestCase {
     // Since we can't easily test the full YOLO pipeline without a model, we test the normalization
     // function that YOLO uses internally
     let normalized = normalizeImageOrientation(rotatedImage)
-    XCTAssertEqual(normalized.imageOrientation, .up, "YOLO should normalize orientation automatically")
+    XCTAssertEqual(
+      normalized.imageOrientation, .up, "YOLO should normalize orientation automatically")
 
     // Verify that converting to CIImage works correctly with normalized image
     let ciImage = CIImage(image: normalized)
@@ -102,4 +103,3 @@ class ImageUtilsTests: XCTestCase {
     XCTAssertEqual(normalized.imageOrientation, .up)
   }
 }
-

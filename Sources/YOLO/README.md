@@ -87,12 +87,9 @@ Start by importing the package in your Swift files:
 import YOLO
 ```
 
-
-
 #### Automatic Image Orientation Handling
 
 The YOLO package automatically normalizes image orientation when processing `UIImage` inputs. Images from the photo library or files with EXIF orientation data are normalized automatically—no manual correction needed.
-
 
 ### YOLO Class (Inference)
 
@@ -258,7 +255,6 @@ class CameraViewController: UIViewController {
 ```
 
 With just a few lines of code, you can integrate real-time, YOLO-based inference into your application's camera feed. For more advanced use cases, explore the customization options available for these components.
-
 
 ## ⚙️ How to Obtain YOLO Core ML Models
 

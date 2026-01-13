@@ -20,13 +20,14 @@ import Vision
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
 public class PoseEstimator: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
-  
+
   /// Checks if the current model is a YOLO26 model
   private var isYOLO26Model: Bool {
     guard let url = modelURL else { return false }
     let fullPath = url.path.lowercased()
     let modelName = url.lastPathComponent.lowercased()
-    let baseName = modelName
+    let baseName =
+      modelName
       .replacingOccurrences(of: ".mlmodelc", with: "")
       .replacingOccurrences(of: ".mlpackage", with: "")
       .replacingOccurrences(of: ".mlmodel", with: "")
@@ -135,12 +136,12 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
     -> [(box: Box, keypoints: Keypoints)]
   {
     let shape = prediction.shape.map { $0.intValue }
-    
+
     // YOLO26 pose models output in post-NMS format: [batch, num_detections, features]
     // where features = 4 (box: x, y, w, h) + 1 (class_idx) + 1 (confidence) + num_keypoints * 3 (x, y, conf)
     // YOLO11 pose models output in anchor-based format: [batch, features, anchors]
     // where features = 4 (box) + 1 (conf) + num_keypoints * 3
-    
+
     // Check if this is YOLO26 post-NMS format
     if isYOLO26Model && shape.count == 3 && shape[2] > 6 {
       // shape[2] is num_features, should be > 6 (4 box + 1 class + 1 conf + at least 1 keypoint * 3)
@@ -155,7 +156,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
         inputSize: self.inputSize
       )
     }
-    
+
     // YOLO11 anchor-based format: [batch, features, anchors]
     let numAnchors = shape.count >= 3 ? shape[2] : shape[1]
     let featureCount = shape.count >= 3 ? (shape[1] - 5) : (shape[0] - 5)
@@ -277,7 +278,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
 
     return results
   }
-  
+
   /// Post-processes YOLO26 pose model output in post-NMS format
   /// Format: [batch, num_detections, features] where features = [x, y, w, h, class_idx, confidence, kx0, ky0, kc0, kx1, ky1, kc1, ...]
   nonisolated func postProcessYOLO26PoseFormat(
@@ -291,32 +292,32 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
   ) -> [(box: Box, keypoints: Keypoints)] {
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let stride = numFeatures
-    
+
     // Calculate number of keypoints: (numFeatures - 6) / 3
     // 6 = 4 (box) + 1 (class) + 1 (confidence)
     let numKeypoints = (numFeatures - 6) / 3
-    
-    var detections: [(CGRect, Float, [Float])] = [] // (box, confidence, keypoints)
+
+    var detections: [(CGRect, Float, [Float])] = []  // (box, confidence, keypoints)
     detections.reserveCapacity(min(numDetections, 100))
-    
+
     let modelWidth = CGFloat(modelInputSize.width)
     let modelHeight = CGFloat(modelInputSize.height)
-    
+
     for i in 0..<numDetections {
       let offset = i * stride
-      
+
       // YOLO26 format: [x1, y1, x2, y2, confidence, class_idx, keypoints...]
       // Corner format (not center format) - all in pixel space
       let x1 = CGFloat(featurePointer[offset])
       let y1 = CGFloat(featurePointer[offset + 1])
       let x2 = CGFloat(featurePointer[offset + 2])
       let y2 = CGFloat(featurePointer[offset + 3])
-      
+
       // Extract confidence first (index 4), then class index (index 5)
       let rawConfidence = featurePointer[offset + 4]
       let classIndex = Int(round(featurePointer[offset + 5]))
       var confidence = rawConfidence
-      
+
       // Normalize confidence if needed
       if confidence == 0.0 {
         // Keep as 0.0 - will be filtered by threshold
@@ -325,49 +326,48 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       } else if confidence > 100.0 {
         confidence = 1.0 / (1.0 + exp(-confidence))  // sigmoid
       }
-      
+
       // Apply confidence threshold
       guard confidence > confidenceThreshold else {
         continue
       }
-      
+
       // Convert corner coordinates [x1, y1, x2, y2] from pixel space to normalized 0-1
       let boxX = x1 / modelWidth
       let boxY = y1 / modelHeight
       let boxW = (x2 - x1) / modelWidth
       let boxH = (y2 - y1) / modelHeight
-      
+
       // Clamp to valid 0-1 range
       let clampedX = max(0.0, min(1.0, boxX))
       let clampedY = max(0.0, min(1.0, boxY))
       let clampedW = max(0.0, min(1.0 - clampedX, boxW))
       let clampedH = max(0.0, min(1.0 - clampedY, boxH))
-      
+
       // Skip invalid boxes
       guard clampedW > 0.01 && clampedH > 0.01 else {
         continue
       }
-      
+
       let boundingBox = CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
-      
+
       // Extract keypoints: [kx0, ky0, kc0, kx1, ky1, kc1, ...]
       var keypointFeatures: [Float] = []
       keypointFeatures.reserveCapacity(numKeypoints * 3)
-      
+
       // Keypoints start at index 6 (after box[4] + confidence[1] + class[1])
       for k in 0..<numKeypoints {
-        let kx = featurePointer[offset + 6 + k * 3]      // x coordinate (pixel space)
+        let kx = featurePointer[offset + 6 + k * 3]  // x coordinate (pixel space)
         let ky = featurePointer[offset + 6 + k * 3 + 1]  // y coordinate (pixel space)
         let kc = featurePointer[offset + 6 + k * 3 + 2]  // confidence
         keypointFeatures.append(kx)
         keypointFeatures.append(ky)
         keypointFeatures.append(kc)
       }
-      
+
       detections.append((boundingBox, confidence, keypointFeatures))
     }
-    
-    
+
     // Apply NMS (group by class first, then apply NMS per class)
     var classBuckets: [Int: [(CGRect, Float, [Float])]] = [:]
     for detection in detections {
@@ -378,7 +378,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       }
       classBuckets[classIndex]?.append(detection)
     }
-    
+
     var selectedDetections: [(CGRect, Float, [Float])] = []
     for (_, classDetections) in classBuckets {
       let boxesOnly = classDetections.map { $0.0 }
@@ -392,7 +392,7 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
         selectedDetections.append(classDetections[idx])
       }
     }
-    
+
     // Convert to result format
     let results: [(Box, Keypoints)] = selectedDetections.map { (box, score, keypointFeatures) in
       let Nx = box.origin.x
@@ -407,33 +407,33 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
       let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
       let boxResult = Box(
         index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
-      
+
       var xynArray = [(x: Float, y: Float)]()
       var xyArray = [(x: Float, y: Float)]()
       var confArray = [Float]()
-      
+
       for i in 0..<numKeypoints {
         let kx = keypointFeatures[i * 3]
         let ky = keypointFeatures[i * 3 + 1]
         let kc = keypointFeatures[i * 3 + 2]
-        
+
         // Normalize keypoint coordinates from pixel space to 0-1
         let nX = kx / Float(modelWidth)
         let nY = ky / Float(modelHeight)
         xynArray.append((x: nX, y: nY))
-        
+
         // Convert to image space
         let x = nX * Float(inputSize.width)
         let y = nY * Float(inputSize.height)
         xyArray.append((x: x, y: y))
-        
+
         confArray.append(kc)
       }
-      
+
       let keypoints = Keypoints(xyn: xynArray, xy: xyArray, conf: confArray)
       return (boxResult, keypoints)
     }
-    
+
     return results
   }
 }

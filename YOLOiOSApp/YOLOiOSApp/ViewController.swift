@@ -68,7 +68,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // Custom model selection button (created programmatically)
   var customModelButton: UIButton!
-  
+
   // Model version toggle button (YOLO11 ↔ YOLO26)
   var modelVersionToggleButton: UIButton!
   private var modelVersionToggleButtonConstraints: [NSLayoutConstraint] = []
@@ -124,7 +124,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   var currentTask: String = ""
   var currentModelName: String = ""
-  
+
   // Model version state: true for YOLO26, false for YOLO11
   private var isYOLO26: Bool = true {
     didSet {
@@ -144,7 +144,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
 
     // MARK: External Display Setup (Optional)
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
@@ -169,7 +168,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       guard let self = self else { return }
       self.isYOLO26 = self.yoloView.isYOLO26
     }
-    
+
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
@@ -217,7 +216,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     {
       labelVersion.text = "v\(version) (\(build))"
     }
-    
+
     // Setup model version toggle button
     setupModelVersionToggleButton()
 
@@ -294,7 +293,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
     let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
-    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples, preferYOLO26: isYOLO26)
+    standardModels = ModelSelectionManager.categorizeModels(
+      from: modelTuples, preferYOLO26: isYOLO26)
 
     let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
     ModelSelectionManager.setupSegmentedControl(
@@ -352,10 +352,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
       print("Model is already loading. Please wait.")
       return
     }
-    
+
     // Cancel any in-progress downloads to prevent conflicts
     ModelDownloadManager.shared.cancelCurrentDownload()
-    
+
     isLoadingModel = true
 
     // Check if external display is connected
@@ -369,7 +369,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
-
 
     // Store current entry for external display notification
     currentLoadingEntry = entry
@@ -630,14 +629,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UIApplication.shared.open(link)
     }
   }
-  
+
   /// Setup model version selection button (shows menu to select YOLO11 or YOLO26)
   private func setupModelVersionToggleButton() {
     modelVersionToggleButton = UIButton(type: .system)
     let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium, scale: .default)
-    modelVersionToggleButton.setImage(UIImage(systemName: "chevron.down", withConfiguration: config), for: .normal)
+    modelVersionToggleButton.setImage(
+      UIImage(systemName: "chevron.down", withConfiguration: config), for: .normal)
     modelVersionToggleButton.tintColor = .white
-    // Match the transparent/greyish style of the model segmented control
+    // Match the transparent/grayish style of the model segmented control
     modelVersionToggleButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
     modelVersionToggleButton.layer.cornerRadius = 12
     modelVersionToggleButton.layer.borderWidth = 1
@@ -649,29 +649,29 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.addSubview(modelVersionToggleButton)
     view.bringSubviewToFront(modelVersionToggleButton)
     updateModelVersionMenu()
-    
+
     // Position button next to labelName - use viewDidLayoutSubviews to set constraints after layout
     DispatchQueue.main.async { [weak self] in
       self?.updateModelVersionToggleButtonPosition()
     }
   }
-  
+
   /// Update toggle button position relative to labelName (next to it, not at trailing edge)
   private func updateModelVersionToggleButtonPosition() {
     guard let labelName = labelName, let button = modelVersionToggleButton else { return }
-    
+
     // Only set constraints if they haven't been set yet
     if modelVersionToggleButtonConstraints.isEmpty {
       modelVersionToggleButtonConstraints = [
         button.leadingAnchor.constraint(equalTo: labelName.trailingAnchor, constant: 8),
         button.centerYAnchor.constraint(equalTo: labelName.centerYAnchor),
         button.widthAnchor.constraint(equalToConstant: 24),
-        button.heightAnchor.constraint(equalToConstant: 24)
+        button.heightAnchor.constraint(equalToConstant: 24),
       ]
       NSLayoutConstraint.activate(modelVersionToggleButtonConstraints)
     }
   }
-  
+
   /// Build and assign the model version selection menu (YOLO11 or YOLO26)
   private func updateModelVersionMenu() {
     guard modelVersionToggleButton != nil else { return }
@@ -808,10 +808,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     )
 
   }
- 
+
   private func hasExternalDisplayConnected() -> Bool {
     if #available(iOS 16.0, *) {
-     
+
       let externalScenes = UIApplication.shared.openSessions
         .compactMap { $0.scene as? UIWindowScene }
         .filter { $0.screen != UIScreen.main }
@@ -820,7 +820,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       return UIScreen.screens.count > 1
     }
   }
-  
+
   deinit {
     NotificationCenter.default.removeObserver(self)
     ModelDownloadManager.shared.progressHandler = nil

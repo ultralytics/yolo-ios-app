@@ -24,7 +24,8 @@ public class Classifier: BasePredictor, @unchecked Sendable {
     guard let url = modelURL else { return false }
     let fullPath = url.path.lowercased()
     let modelName = url.lastPathComponent.lowercased()
-    let baseName = modelName
+    let baseName =
+      modelName
       .replacingOccurrences(of: ".mlmodelc", with: "")
       .replacingOccurrences(of: ".mlpackage", with: "")
       .replacingOccurrences(of: ".mlmodel", with: "")
@@ -54,41 +55,41 @@ public class Classifier: BasePredictor, @unchecked Sendable {
       // Get the MLMultiArray from the observation
       let multiArray = observation.first?.featureValue.multiArrayValue
 
-        if let multiArray = multiArray {
-          // Initialize an array to store the classes
-          var valuesArray = [Double]()
-          
-          // Helper function to normalize confidence scores for YOLO26
-          func normalizeConfidence(_ value: Double) -> Double {
-            if isYOLO26Model {
-              // YOLO26 might output in different formats:
-              // 1. Logits (very large positive/negative) - apply sigmoid
-              // 2. 0-100 range - normalize to 0-1
-              // 3. Already 0-1 - use as-is
-              if abs(value) > 10.0 {
-                // Likely logits, apply sigmoid
-                return 1.0 / (1.0 + exp(-value))
-              } else if value > 1.0 && value <= 100.0 {
-                // Likely 0-100 range, normalize to 0-1
-                return value / 100.0
-              }
+      if let multiArray = multiArray {
+        // Initialize an array to store the classes
+        var valuesArray = [Double]()
+
+        // Helper function to normalize confidence scores for YOLO26
+        func normalizeConfidence(_ value: Double) -> Double {
+          if isYOLO26Model {
+            // YOLO26 might output in different formats:
+            // 1. Logits (very large positive/negative) - apply sigmoid
+            // 2. 0-100 range - normalize to 0-1
+            // 3. Already 0-1 - use as-is
+            if abs(value) > 10.0 {
+              // Likely logits, apply sigmoid
+              return 1.0 / (1.0 + exp(-value))
+            } else if value > 1.0 && value <= 100.0 {
+              // Likely 0-100 range, normalize to 0-1
+              return value / 100.0
             }
-            // If already in 0-1 range or not YOLO26, use as-is
-            return value
           }
-          
-          for i in 0..<multiArray.count {
-            let rawValue = multiArray[i].doubleValue
-            let normalizedValue = normalizeConfidence(rawValue)
-            valuesArray.append(normalizedValue)
-          }
+          // If already in 0-1 range or not YOLO26, use as-is
+          return value
+        }
 
-          var indexedMap = [Int: Double]()
-          for (index, value) in valuesArray.enumerated() {
-            indexedMap[index] = value
-          }
+        for i in 0..<multiArray.count {
+          let rawValue = multiArray[i].doubleValue
+          let normalizedValue = normalizeConfidence(rawValue)
+          valuesArray.append(normalizedValue)
+        }
 
-          let sortedMap = indexedMap.sorted { $0.value > $1.value }
+        var indexedMap = [Int: Double]()
+        for (index, value) in valuesArray.enumerated() {
+          indexedMap[index] = value
+        }
+
+        let sortedMap = indexedMap.sorted { $0.value > $1.value }
 
         // top1
         if let (topIndex, topScore) = sortedMap.first {
@@ -172,7 +173,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
         if let multiArray = multiArray {
           // Initialize an array to store the classes
           var valuesArray = [Double]()
-          
+
           // Helper function to normalize confidence scores for YOLO26
           func normalizeConfidence(_ value: Double) -> Double {
             if isYOLO26Model {
@@ -191,7 +192,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
             // If already in 0-1 range or not YOLO26, use as-is
             return value
           }
-          
+
           for i in 0..<multiArray.count {
             let rawValue = multiArray[i].doubleValue
             let normalizedValue = normalizeConfidence(rawValue)

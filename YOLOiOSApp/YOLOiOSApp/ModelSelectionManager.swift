@@ -90,13 +90,14 @@ struct ModelSelectionManager {
 
     return standardModels
   }
-  
+
   private static func extractVersionNumber(from name: String) -> Int? {
     // Extract version number from names like "yolo11n", "yolo26n", etc.
     let pattern = "^yolo(\\d+)"
     if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-       let match = regex.firstMatch(in: name, options: [], range: NSRange(location: 0, length: name.count)),
-       match.numberOfRanges > 1
+      let match = regex.firstMatch(
+        in: name, options: [], range: NSRange(location: 0, length: name.count)),
+      match.numberOfRanges > 1
     {
       let versionRange = match.range(at: 1)
       if let range = Range(versionRange, in: name) {

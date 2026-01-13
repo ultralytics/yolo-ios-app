@@ -20,13 +20,13 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   let tasks = [
     ("Detect", ""), ("Segment", "-seg"), ("Classify", "-cls"), ("Pose", "-pose"), ("OBB", "-obb"),
   ]
-  
+
   // Combine yolo11 and yolo26 models
   var result: [String: [(modelName: String, downloadURL: URL)]] = [:]
-  
+
   for task in tasks {
     var models: [(modelName: String, downloadURL: URL)] = []
-    
+
     // YOLO26 models are not available for download yet - they should be added locally
     // to DetectModels/, SegmentModels/, etc. folders in the app bundle
     // Once they're uploaded to assets, uncomment the following:
@@ -37,15 +37,15 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
       models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
     }
     */
-    
+
     // Add yolo11 models (legacy support)
     for size in sizes {
       let model = "yolo11\(size)\(task.1)"
       models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
     }
-    
+
     result[task.0] = models
   }
-  
+
   return result
 }()

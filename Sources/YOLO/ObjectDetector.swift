@@ -33,21 +33,21 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     guard let url = modelURL else {
       return false
     }
-    
+
     // Check the full path and last path component for "yolo26"
     // This will match all YOLO26 sizes: yolo26n, yolo26s, yolo26m, yolo26l, yolo26x
     let fullPath = url.path.lowercased()
     let modelName = url.lastPathComponent.lowercased()
-    
+
     // Remove file extensions to get base name
-    let baseName = modelName
+    let baseName =
+      modelName
       .replacingOccurrences(of: ".mlmodelc", with: "")
       .replacingOccurrences(of: ".mlpackage", with: "")
       .replacingOccurrences(of: ".mlmodel", with: "")
-    
+
     let isYOLO26 = fullPath.contains("yolo26") || baseName.contains("yolo26")
-    
-    
+
     return isYOLO26
   }
 
@@ -89,11 +89,11 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       print("ObjectDetector error: \(error.localizedDescription)")
       return
     }
-    
+
     guard let results = request.results else {
       return
     }
-    
+
     if let results = results as? [VNRecognizedObjectObservation] {
       var boxes = [Box]()
 
@@ -134,21 +134,21 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         print("ObjectDetector: No MLMultiArray in feature results")
         return
       }
-      
+
       // Post-process raw predictions
       let detectedObjects = postProcessDetection(
         feature: prediction,
         confidenceThreshold: Float(self.confidenceThreshold),
         iouThreshold: Float(self.iouThreshold)
       )
-      
+
       // Convert to Box format
       var boxes: [Box] = []
       let modelWidth = CGFloat(self.modelInputSize.width)
       let modelHeight = CGFloat(self.modelInputSize.height)
       let inputWidth = Int(inputSize.width)
       let inputHeight = Int(inputSize.height)
-      
+
       let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
       for detection in limitedObjects {
         let (box, classIndex, confidence) = detection
@@ -162,7 +162,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         )
         let label = (classIndex < labels.count) ? labels[classIndex] : "unknown"
         let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
-        
+
         let boxResult = Box(
           index: classIndex,
           cls: label,
@@ -172,14 +172,14 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         )
         boxes.append(boxResult)
       }
-      
+
       // Measure FPS
       if self.t1 < 10.0 {
         self.t2 = self.t1 * 0.05 + self.t2 * 0.95
       }
       self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95
       self.t3 = CACurrentMediaTime()
-      
+
       let result = YOLOResult(
         orig_shape: inputSize,
         boxes: boxes,
@@ -187,13 +187,13 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         fps: 1 / self.t4,
         names: labels
       )
-      
+
       self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
       self.currentOnResultsListener?.on(result: result)
     } else {
     }
   }
-  
+
   /// Post-processes raw model output for detection models without built-in NMS
   private func postProcessDetection(
     feature: MLMultiArray,
@@ -201,22 +201,23 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     iouThreshold: Float
   ) -> [(CGRect, Int, Float)] {
     let shape = feature.shape.map { $0.intValue }
-    
+
     // YOLO26 models might output in a different format:
     // - [1, num_detections, 6] or [num_detections, 6] where each row is [x, y, w, h, confidence, class] (post-NMS format)
     // - [batch, num_anchors, num_classes + 4] (anchor-based format like YOLO11)
     // - [num_anchors, num_classes + 4] (anchor-based format)
-    
+
     // Check if this looks like YOLO26 post-NMS format: [1, num_detections, 6] or [num_detections, 6]
     if isYOLO26Model && shape.count >= 2 && shape.last == 6 {
-      return postProcessYOLO26Format(feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
+      return postProcessYOLO26Format(
+        feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
     }
-    
+
     // YOLO detection output format: [batch, num_anchors, num_classes + 4] or [num_anchors, num_classes + 4]
     // Or sometimes: [1, num_anchors, num_classes + 4]
     var numAnchors: Int
     var numFeatures: Int
-    
+
     if shape.count == 3 {
       // Format: [batch, num_anchors, features]
       numAnchors = shape[1]
@@ -229,26 +230,26 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       print("ObjectDetector: Unexpected feature shape: \(shape)")
       return []
     }
-    
+
     let boxFeatureLength = 4  // x, y, w, h
     let numClasses = numFeatures - boxFeatureLength
-    
+
     guard numClasses > 0 else {
       print("ObjectDetector: Invalid number of classes: \(numClasses)")
       return []
     }
-    
+
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
-    
+
     // Extract detections
     var detections: [(CGRect, Int, Float)] = []
     detections.reserveCapacity(min(numAnchors / 10, 100))  // Estimate capacity
-    
+
     // Helper function to apply sigmoid for YOLO26 (normalize logits to 0-1 range)
     func sigmoid(_ x: Float) -> Float {
       return 1.0 / (1.0 + exp(-x))
     }
-    
+
     // Sample a few values to detect if scores need normalization
     var sampleScores: [Float] = []
     let sampleCount = min(10, numAnchors)
@@ -262,7 +263,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     let maxSample = sampleScores.max() ?? 0
     let minSample = sampleScores.min() ?? 0
     let needsNormalization = maxSample > 10.0 || minSample < -10.0  // Likely logits if outside 0-1 range
-    
+
     for i in 0..<numAnchors {
       // Get box coordinates (normalized to model input size)
       // For [batch, anchors, features]: offset = batch_idx * anchors * features + anchor_idx * features
@@ -273,18 +274,18 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       let cy = CGFloat(featurePointer[offset + 1])
       let w = CGFloat(featurePointer[offset + 2])
       let h = CGFloat(featurePointer[offset + 3])
-      
+
       // Convert center format to minX, minY format
       let boxX = cx - w / 2
       let boxY = cy - h / 2
       let box = CGRect(x: boxX, y: boxY, width: w, height: h)
-      
+
       // Find best class
       var bestScore: Float = 0
       var bestClass: Int = 0
       for c in 0..<numClasses {
         var score = featurePointer[offset + boxFeatureLength + c]
-        
+
         // For YOLO26 models, normalize scores appropriately
         if isYOLO26Model {
           // YOLO26 might output in different formats:
@@ -300,13 +301,13 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
           }
           // If already in 0-1 range, use as-is
         }
-        
+
         if score > bestScore {
           bestScore = score
           bestClass = c
         }
       }
-      
+
       // Normalize score to 0-1 range if needed (for threshold comparison)
       var normalizedScore = bestScore
       if bestScore > 1.0 && bestScore <= 100.0 {
@@ -314,20 +315,20 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       } else if abs(bestScore) > 10.0 {
         normalizedScore = sigmoid(bestScore)
       }
-      
+
       // Apply confidence threshold (using normalized score)
       if normalizedScore > confidenceThreshold && normalizedScore <= 1.0 {
         detections.append((box, bestClass, normalizedScore))
       }
     }
-    
+
     // YOLO26 models don't need NMS - they output final detections without NMS
     if isYOLO26Model {
       // For YOLO26, just sort by confidence and return (no NMS needed)
       detections.sort { $0.2 > $1.2 }
       return detections
     }
-    
+
     // For YOLO11 and older models, apply NMS per class
     var classBuckets: [Int: [(CGRect, Int, Float)]] = [:]
     for detection in detections {
@@ -337,7 +338,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
       classBuckets[classIndex]?.append(detection)
     }
-    
+
     var selectedDetections: [(CGRect, Int, Float)] = []
     for (_, classDetections) in classBuckets {
       let boxesOnly = classDetections.map { $0.0 }
@@ -351,13 +352,13 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         selectedDetections.append(classDetections[idx])
       }
     }
-    
+
     // Sort by confidence (descending)
     selectedDetections.sort { $0.2 > $1.2 }
-    
+
     return selectedDetections
   }
-  
+
   /// Post-processes YOLO26 format: [1, num_detections, 6] or [num_detections, 6] where each row is [x, y, w, h, confidence, class]
   private func postProcessYOLO26Format(
     feature: MLMultiArray,
@@ -371,13 +372,15 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     } else if shape.count == 2 {
       numDetections = shape[0]  // [num_detections, 6]
     } else {
-      print("ObjectDetector: Invalid YOLO26 format, expected [1, num_detections, 6] or [num_detections, 6], got \(shape)")
+      print(
+        "ObjectDetector: Invalid YOLO26 format, expected [1, num_detections, 6] or [num_detections, 6], got \(shape)"
+      )
       return []
     }
-    
+
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     var detections: [(CGRect, Int, Float)] = []
-    
+
     // Calculate stride based on shape
     let stride: Int
     if shape.count == 3 {
@@ -385,15 +388,15 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     } else {
       stride = shape[1]  // [detections, features]
     }
-    
+
     let modelWidth = CGFloat(self.modelInputSize.width)
     let modelHeight = CGFloat(self.modelInputSize.height)
-    
+
     for i in 0..<numDetections {
       // For [1, 300, 6] format, data is stored as: [batch][detection][feature]
       // MLMultiArray uses row-major order, so offset = i * 6 for detection i
       let offset = i * stride
-      
+
       // YOLO26 format: Based on Ultralytics export, YOLO26 outputs [x1, y1, x2, y2, confidence, class]
       // in pixel coordinates (corner format, not center format)
       let x1 = CGFloat(featurePointer[offset])
@@ -402,7 +405,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       let y2 = CGFloat(featurePointer[offset + 3])
       var confidence = featurePointer[offset + 4]
       let classIndex = Int(round(featurePointer[offset + 5]))
-      
+
       // Normalize confidence: YOLO26 outputs in 0-1 range (already normalized)
       // But check if it's in 0-100 range
       if confidence > 1.0 && confidence <= 100.0 {
@@ -412,13 +415,13 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         confidence = 1.0 / (1.0 + exp(-confidence))
       }
       // If already 0-1, use as-is
-      
+
       // Convert corner coordinates [x1, y1, x2, y2] from pixel space to normalized 0-1
       var boxX: CGFloat = 0
       var boxY: CGFloat = 0
       var boxW: CGFloat = 0
       var boxH: CGFloat = 0
-      
+
       if modelWidth > 0 && modelHeight > 0 {
         // Normalize from pixel coordinates to 0-1 range
         boxX = x1 / modelWidth
@@ -432,28 +435,28 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
         boxW = x2 - x1
         boxH = y2 - y1
       }
-      
+
       // Clamp to valid 0-1 range
       boxX = max(0.0, min(1.0, boxX))
       boxY = max(0.0, min(1.0, boxY))
       boxW = max(0.0, min(1.0 - boxX, boxW))
       boxH = max(0.0, min(1.0 - boxY, boxH))
-      
+
       let box = CGRect(x: boxX, y: boxY, width: boxW, height: boxH)
-      
+
       // Validate: box should be reasonable size and within bounds
       let isValidBox = boxW > 0.01 && boxH > 0.01 && boxW <= 1.0 && boxH <= 1.0
       let hasValidConfidence = confidence > confidenceThreshold && confidence <= 1.0
       let hasValidClass = classIndex >= 0 && classIndex < labels.count
-      
+
       if isValidBox && hasValidConfidence && hasValidClass {
         detections.append((box, classIndex, confidence))
       }
     }
-    
+
     // Sort by confidence (descending)
     detections.sort { $0.2 > $1.2 }
-    
+
     return detections
   }
 
@@ -510,4 +513,3 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     return result
   }
 }
-

@@ -37,7 +37,7 @@ extension ViewController {
         .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
   }
-  
+
   private func hasExternalDisplayConnected() -> Bool {
     if #available(iOS 16.0, *) {
       let externalScenes = UIApplication.shared.openSessions

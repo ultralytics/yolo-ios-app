@@ -239,11 +239,6 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     var detections: [(CGRect, Int, Float)] = []
     detections.reserveCapacity(min(numAnchors / 10, 100))  // Estimate capacity
 
-    // Helper function to apply sigmoid for YOLO26 (normalize logits to 0-1 range)
-    func sigmoid(_ x: Float) -> Float {
-      return 1.0 / (1.0 + exp(-x))
-    }
-
     for i in 0..<numAnchors {
       // Get box coordinates (normalized to model input size)
       // For [batch, anchors, features]: offset = batch_idx * anchors * features + anchor_idx * features

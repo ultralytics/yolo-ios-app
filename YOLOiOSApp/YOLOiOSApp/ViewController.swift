@@ -136,6 +136,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if !currentTask.isEmpty {
         reloadModelEntriesAndLoadFirst(for: currentTask)
       }
+      updateModelVersionMenu()
     }
   }
 
@@ -658,12 +659,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelVersionToggleButton.layer.cornerRadius = 12
     modelVersionToggleButton.layer.borderWidth = 1
     modelVersionToggleButton.layer.borderColor = UIColor.systemGray.cgColor
-    modelVersionToggleButton.addTarget(self, action: #selector(modelVersionButtonTapped), for: .touchUpInside)
     modelVersionToggleButton.translatesAutoresizingMaskIntoConstraints = false
     modelVersionToggleButton.isHidden = false
     modelVersionToggleButton.alpha = 1.0
+    modelVersionToggleButton.showsMenuAsPrimaryAction = true
     view.addSubview(modelVersionToggleButton)
     view.bringSubviewToFront(modelVersionToggleButton)
+    updateModelVersionMenu()
     
     // Position button next to labelName - use viewDidLayoutSubviews to set constraints after layout
     DispatchQueue.main.async { [weak self] in
@@ -687,46 +689,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
   
-  /// Handle model version button tap - show menu to select YOLO11 or YOLO26
-  @objc private func modelVersionButtonTapped() {
-    selection.selectionChanged()
-    
-    let alert = UIAlertController(title: "Select Model Version", message: nil, preferredStyle: .actionSheet)
-    
-    // YOLO26 option
-    let yolo26Action = UIAlertAction(title: "YOLO26", style: .default) { [weak self] _ in
-      guard let self = self else { return }
-      if !self.isYOLO26 {
-        self.isYOLO26 = true
-      }
+  /// Build and assign the model version selection menu (YOLO11 or YOLO26)
+  private func updateModelVersionMenu() {
+    guard modelVersionToggleButton != nil else { return }
+
+    let yolo26Action = UIAction(
+      title: "YOLO26",
+      state: isYOLO26 ? .on : .off
+    ) { [weak self] _ in
+      self?.selection.selectionChanged()
+      self?.isYOLO26 = true
     }
-    if isYOLO26 {
-      yolo26Action.setValue(true, forKey: "checked")
+
+    let yolo11Action = UIAction(
+      title: "YOLO11",
+      state: isYOLO26 ? .off : .on
+    ) { [weak self] _ in
+      self?.selection.selectionChanged()
+      self?.isYOLO26 = false
     }
-    alert.addAction(yolo26Action)
-    
-    // YOLO11 option
-    let yolo11Action = UIAlertAction(title: "YOLO11", style: .default) { [weak self] _ in
-      guard let self = self else { return }
-      if self.isYOLO26 {
-        self.isYOLO26 = false
-      }
-    }
-    if !isYOLO26 {
-      yolo11Action.setValue(true, forKey: "checked")
-    }
-    alert.addAction(yolo11Action)
-    
-    // Cancel option
-    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    
-    // For iPad
-    if let popover = alert.popoverPresentationController {
-      popover.sourceView = modelVersionToggleButton
-      popover.sourceRect = modelVersionToggleButton.bounds
-    }
-    
-    present(alert, animated: true)
+
+    modelVersionToggleButton.menu = UIMenu(
+      title: "Select Model Version",
+      options: [.singleSelection],
+      children: [yolo26Action, yolo11Action]
+    )
   }
 
   private func setupModelSegmentedControl() {

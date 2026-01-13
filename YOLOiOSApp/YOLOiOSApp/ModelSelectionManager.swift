@@ -40,82 +40,54 @@ struct ModelSelectionManager {
     preferYOLO26: Bool = true
   ) -> [ModelSize: ModelInfo] {
     var standardModels: [ModelSize: ModelInfo] = [:]
-    
-    // Sort models to prioritize based on preferYOLO26 flag, and local > remote
-    let sortedModels = models.sorted { model1, model2 in
-      let name1 = (model1.name as NSString).deletingPathExtension.lowercased()
-      let name2 = (model2.name as NSString).deletingPathExtension.lowercased()
-      
-      // Extract version numbers (11 vs 26)
-      let version1 = extractVersionNumber(from: name1)
-      let version2 = extractVersionNumber(from: name2)
-      
-      // Extract size
-      let size1 = extractSizeFromModelName(name1)
-      let size2 = extractSizeFromModelName(name2)
-      
-      // If same size, prioritize based on preferYOLO26 flag
-      if size1 == size2 {
-        if version1 != version2 {
-          if preferYOLO26 {
-            // Higher version number (26) comes first
-            return (version1 ?? 0) > (version2 ?? 0)
-          } else {
-            // Lower version number (11) comes first
-            return (version1 ?? 0) < (version2 ?? 0)
-          }
-        }
-        // If same version, prioritize local over remote
-        if model1.isLocal != model2.isLocal {
-          return model1.isLocal
-        }
-      }
-      
-      return false
-    }
-    
-    for model in sortedModels {
+    let targetVersion = preferYOLO26 ? 26 : 11
+
+    for model in models {
       let baseName = (model.name as NSString).deletingPathExtension.lowercased()
-      
-      if baseName.hasPrefix("yolo") {
-        let sizeChar = extractSizeFromModelName(baseName)
-        
-        if let char = sizeChar,
-          let size = ModelSize(rawValue: String(char))
-        {
-          let currentVersion = extractVersionNumber(from: baseName)
-          let targetVersion = preferYOLO26 ? 26 : 11
-          
-          // Only add if we don't have a model for this size yet, or if this matches the preferred version
-          if let existing = standardModels[size] {
-            let existingName = (existing.name as NSString).deletingPathExtension.lowercased()
-            let existingVersion = extractVersionNumber(from: existingName)
-            
-            // Replace if current model matches preferred version better
-            if (currentVersion == targetVersion && existingVersion != targetVersion) ||
-               (currentVersion == targetVersion && existingVersion == targetVersion && model.isLocal && !existing.isLocal) {
-              standardModels[size] = ModelInfo(
-                name: model.name,
-                url: model.url,
-                isLocal: model.isLocal,
-                size: size
-              )
-            }
-          } else {
-            // Add if it matches the preferred version, or if no preferred version exists
-            if currentVersion == targetVersion {
-              standardModels[size] = ModelInfo(
-                name: model.name,
-                url: model.url,
-                isLocal: model.isLocal,
-                size: size
-              )
-            }
-          }
+      guard baseName.hasPrefix("yolo") else { continue }
+
+      guard
+        let sizeChar = extractSizeFromModelName(baseName),
+        let size = ModelSize(rawValue: String(sizeChar))
+      else { continue }
+
+      let currentVersion = extractVersionNumber(from: baseName)
+
+      func isBetterCandidate(new: ModelInfo, current: ModelInfo?) -> Bool {
+        guard let current = current else { return true }
+        let currentName = (current.name as NSString).deletingPathExtension.lowercased()
+        let existingVersion = extractVersionNumber(from: currentName)
+
+        let newMatchesTarget = currentVersion == targetVersion
+        let existingMatchesTarget = existingVersion == targetVersion
+
+        if newMatchesTarget != existingMatchesTarget {
+          return newMatchesTarget
         }
+
+        if new.isLocal != current.isLocal {
+          return new.isLocal
+        }
+
+        if let newVer = currentVersion, let existingVer = existingVersion, newVer != existingVer {
+          return newVer > existingVer
+        }
+
+        return false
+      }
+
+      let info = ModelInfo(
+        name: model.name,
+        url: model.url,
+        isLocal: model.isLocal,
+        size: size
+      )
+
+      if isBetterCandidate(new: info, current: standardModels[size]) {
+        standardModels[size] = info
       }
     }
-    
+
     return standardModels
   }
   

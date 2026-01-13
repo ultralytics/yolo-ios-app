@@ -23,12 +23,29 @@ let package = Package(
     // Targets can depend on other targets in this package and products from dependencies.
     .target(
       name: "YOLO",
-      dependencies: ["ZIPFoundation"]),
+      dependencies: ["ZIPFoundation"],
+      exclude: [
+        "README.md",
+      ]
+    ),
     .testTarget(
       name: "YOLOTests",
       dependencies: ["YOLO"],
+      exclude: [
+        "Resources.local",
+        "VideoCaptureTests.backup",
+        "ObjectDetectorTests.backup",
+        "YOLOViewTests.backup",
+        "SegmenterTests.backup",
+        "YOLOCameraTests.backup",
+        "BoundingBoxViewTests.backup",
+        "NonMaxSuppressionTests.backup",
+        "OBBDetectorTests.backup",
+        "YOLOErrorHandlingTests.backup",
+        "ClassifierTests.backup",
+      ],
       resources: [
-        .process("Resources")
+        .process("Resources/README.md"),
       ]
     ),
   ]

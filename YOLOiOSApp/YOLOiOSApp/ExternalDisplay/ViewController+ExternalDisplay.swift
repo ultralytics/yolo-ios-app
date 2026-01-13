@@ -40,8 +40,8 @@ extension ViewController {
 
   func hasExternalDisplayConnected() -> Bool {
     if #available(iOS 16.0, *) {
-      let externalScenes = UIApplication.shared.openSessions
-        .compactMap { $0.scene as? UIWindowScene }
+      let externalScenes = UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
         .filter { $0.screen != UIScreen.main }
       return !externalScenes.isEmpty
     } else {

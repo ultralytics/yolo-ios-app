@@ -415,6 +415,9 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     confidenceThreshold: Float,
     modelInputSize: (width: Int, height: Int)
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
+   
+    guard modelInputSize.width > 0 && modelInputSize.height > 0 else { return [] }
+
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     var results: [(CGRect, Int, Float, MLMultiArray)] = []
     results.reserveCapacity(min(numDetections, 100))
@@ -422,6 +425,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     let modelWidth = CGFloat(modelInputSize.width)
     let modelHeight = CGFloat(modelInputSize.height)
     let maskConfidenceLength = 32
+    var maskBuffer = [Float](repeating: 0, count: maskConfidenceLength)
 
     for i in 0..<numDetections {
       let offset = i * numFeatures
@@ -464,17 +468,21 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
 
       let box = CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
 
-      // Extract mask coefficients (32 values starting at offset + 6)
+      // Extract mask coefficients (32 values starting at offset + 6) into a reusable buffer,
+      // then materialize an MLMultiArray only for retained detections.
+      for j in 0..<maskConfidenceLength {
+        maskBuffer[j] = featurePointer[offset + 6 + j]
+      }
       guard
         let maskProbs = try? MLMultiArray(
           shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
       else {
         continue
       }
-
       let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
-      for j in 0..<maskConfidenceLength {
-        maskProbsData[j] = featurePointer[offset + 6 + j]
+      maskBuffer.withUnsafeBufferPointer { ptr in
+        guard let base = ptr.baseAddress else { return }
+        maskProbsData.assign(from: base, count: maskConfidenceLength)
       }
 
       let result = (box, classIndex, confidence, maskProbs)

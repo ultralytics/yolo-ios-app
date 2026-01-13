@@ -161,7 +161,9 @@ public class YOLO: @unchecked Sendable {
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
     // Automatically normalize image orientation to ensure correct processing
     let normalizedImage = normalizeImageOrientation(uiImage)
-    let ciImage = CIImage(image: normalizedImage)!
+    guard let ciImage = CIImage(image: normalizedImage) else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
     let result = predictor.predictOnImage(image: ciImage)
     //        if returnAnnotatedImage {
     //            let annotatedImage = drawYOLODetections(on: ciImage, result: result)

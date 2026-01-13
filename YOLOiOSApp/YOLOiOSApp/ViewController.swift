@@ -809,18 +809,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   }
 
-  private func hasExternalDisplayConnected() -> Bool {
-    if #available(iOS 16.0, *) {
-
-      let externalScenes = UIApplication.shared.openSessions
-        .compactMap { $0.scene as? UIWindowScene }
-        .filter { $0.screen != UIScreen.main }
-      return !externalScenes.isEmpty
-    } else {
-      return UIScreen.screens.count > 1
-    }
-  }
-
   deinit {
     NotificationCenter.default.removeObserver(self)
     ModelDownloadManager.shared.progressHandler = nil

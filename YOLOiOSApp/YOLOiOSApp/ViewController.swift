@@ -72,6 +72,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // Model version toggle button (YOLO11 ↔ YOLO26)
   var modelVersionToggleButton: UIButton!
   private var modelVersionToggleButtonConstraints: [NSLayoutConstraint] = []
+  // YOLO26 info badge (w/o NMS)
+  private var yolo26InfoButton: UIButton!
+  private var yolo26InfoButtonConstraints: [NSLayoutConstraint] = []
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
@@ -134,6 +137,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         reloadModelEntriesAndLoadFirst(for: currentTask)
       }
       updateModelVersionMenu()
+      updateYOLO26InfoButtonVisibility()
     }
   }
 
@@ -211,6 +215,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Setup model version toggle button
     setupModelVersionToggleButton()
+    setupYOLO26InfoButton()
 
     // Setup progress views
     [downloadProgressView, downloadProgressLabel].forEach {
@@ -648,6 +653,30 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
+  /// Setup YOLO26 info badge shown when YOLO26 is active
+  private func setupYOLO26InfoButton() {
+    yolo26InfoButton = UIButton(type: .system)
+    yolo26InfoButton.setTitle("w/o nms", for: .normal)
+    yolo26InfoButton.titleLabel?.font = .systemFont(ofSize: 11, weight: .semibold)
+    yolo26InfoButton.setTitleColor(.white, for: .normal)
+    yolo26InfoButton.backgroundColor = .systemOrange.withAlphaComponent(0.2)
+    yolo26InfoButton.layer.cornerRadius = 10
+    yolo26InfoButton.layer.borderWidth = 1
+    yolo26InfoButton.layer.borderColor = UIColor.systemOrange.cgColor
+    yolo26InfoButton.contentEdgeInsets = UIEdgeInsets(top: 3, left: 8, bottom: 3, right: 8)
+    yolo26InfoButton.addTarget(
+      self, action: #selector(yolo26InfoButtonTapped), for: .touchUpInside)
+    yolo26InfoButton.translatesAutoresizingMaskIntoConstraints = false
+    yolo26InfoButton.isHidden = true
+    view.addSubview(yolo26InfoButton)
+    view.bringSubviewToFront(yolo26InfoButton)
+
+    DispatchQueue.main.async { [weak self] in
+      self?.updateYOLO26InfoButtonPosition()
+      self?.updateYOLO26InfoButtonVisibility()
+    }
+  }
+
   /// Update toggle button position relative to labelName (next to it, not at trailing edge)
   private func updateModelVersionToggleButtonPosition() {
     guard let labelName = labelName, let button = modelVersionToggleButton else { return }
@@ -661,6 +690,23 @@ class ViewController: UIViewController, YOLOViewDelegate {
         button.heightAnchor.constraint(equalToConstant: 24),
       ]
       NSLayoutConstraint.activate(modelVersionToggleButtonConstraints)
+    }
+  }
+
+  /// Update YOLO26 info badge position to sit after the version toggle
+  private func updateYOLO26InfoButtonPosition() {
+    guard let infoButton = yolo26InfoButton,
+      let versionButton = modelVersionToggleButton,
+      let labelName = labelName
+    else { return }
+
+    if yolo26InfoButtonConstraints.isEmpty {
+      yolo26InfoButtonConstraints = [
+        infoButton.leadingAnchor.constraint(equalTo: versionButton.trailingAnchor, constant: 8),
+        infoButton.centerYAnchor.constraint(equalTo: labelName.centerYAnchor),
+        infoButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
+      ]
+      NSLayoutConstraint.activate(yolo26InfoButtonConstraints)
     }
   }
 
@@ -689,6 +735,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
       options: [.singleSelection],
       children: [yolo26Action, yolo11Action]
     )
+  }
+
+  /// Show or hide the YOLO26 info badge based on selection
+  private func updateYOLO26InfoButtonVisibility() {
+    guard yolo26InfoButton != nil else { return }
+    yolo26InfoButton.isHidden = !isYOLO26
+  }
+
+  @objc private func yolo26InfoButtonTapped() {
+    let alert = UIAlertController(
+      title: "YOLO26",
+      message: "YOLO26 models output post-processed detections and do not require NMS.",
+      preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    present(alert, animated: true)
   }
 
   private func setupModelSegmentedControl() {
@@ -768,6 +829,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     adjustLayoutForExternalDisplayIfNeeded()
     // Set button position constraints after layout (only once)
     updateModelVersionToggleButtonPosition()
+    updateYOLO26InfoButtonPosition()
   }
 
   @objc func shareButtonTapped() {

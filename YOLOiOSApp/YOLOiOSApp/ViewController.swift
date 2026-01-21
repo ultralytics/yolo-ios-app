@@ -140,6 +140,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       updateYOLO26InfoButtonVisibility()
     }
   }
+  // Whether to force NMS for YOLO26 models (non-e2e / anchor-format)
+  private var forceYOLO26NMS = false
 
   private var isLoadingModel = false
 
@@ -741,15 +743,27 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func updateYOLO26InfoButtonVisibility() {
     guard yolo26InfoButton != nil else { return }
     yolo26InfoButton.isHidden = !isYOLO26
+    updateYOLO26InfoButtonAppearance()
   }
 
   @objc private func yolo26InfoButtonTapped() {
-    let alert = UIAlertController(
-      title: "YOLO26",
-      message: "YOLO26 models output post-processed detections and do not require NMS.",
-      preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
-    present(alert, animated: true)
+    selection.selectionChanged()
+    forceYOLO26NMS.toggle()
+    print("ViewController debug: YOLO26 NMS toggled -> \(forceYOLO26NMS)")
+    updateYOLO26InfoButtonAppearance()
+    if !currentTask.isEmpty {
+      reloadModelEntriesAndLoadFirst(for: currentTask)
+    }
+  }
+
+  private func updateYOLO26InfoButtonAppearance() {
+    guard let button = yolo26InfoButton else { return }
+    let isNMS = forceYOLO26NMS
+    let title = isNMS ? "nms" : "w/o nms"
+    button.setTitle(title, for: .normal)
+    let color: UIColor = isNMS ? .systemBlue : .systemOrange
+    button.backgroundColor = color.withAlphaComponent(0.2)
+    button.layer.borderColor = color.cgColor
   }
 
   private func setupModelSegmentedControl() {

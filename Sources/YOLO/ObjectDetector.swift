@@ -185,7 +185,8 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
     // - [num_anchors, num_classes + 4] (anchor-based format)
 
     // Check if this looks like YOLO26 post-NMS format: [1, num_detections, 6] or [num_detections, 6]
-    if isYOLO26Model && shape.count >= 2 && shape.last == 6 {
+    let isYOLO26PostNMS = isYOLO26Model && shape.count >= 2 && shape.last == 6
+    if isYOLO26PostNMS {
       return postProcessYOLO26Format(
         feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
     }
@@ -216,8 +217,11 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       return []
     }
 
-    let boxFeatureLength = 4  // x, y, w, h
-    let numClasses = numFeatures - boxFeatureLength
+    let boxFeatureLength = 4  // cx, cy, w, h (anchor format)
+    let hasObjectness = numFeatures > 5
+    let classStartIndex = hasObjectness ? 5 : boxFeatureLength
+    let numClasses = max(0, numFeatures - classStartIndex)
+    let isYOLO26Anchor = isYOLO26Model && !isYOLO26PostNMS
 
     guard numClasses > 0 else {
       print("ObjectDetector: Invalid number of classes: \(numClasses)")
@@ -235,12 +239,31 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
     }
 
+    @inline(__always) func sigmoid(_ x: Float) -> Float {
+      return 1.0 / (1.0 + exp(-x))
+    }
+
+    func clampBox(_ box: CGRect) -> CGRect {
+      let clampedW = max(0.0, min(1.0, box.width))
+      let clampedH = max(0.0, min(1.0, box.height))
+      return CGRect(
+        x: max(0.0, min(1.0 - clampedW, box.minX)),
+        y: max(0.0, min(1.0 - clampedH, box.minY)),
+        width: clampedW,
+        height: clampedH)
+    }
+
+    func isReasonable(_ box: CGRect) -> Bool {
+      return box.width > 0.001 && box.height > 0.001 && box.width <= 1.2 && box.height <= 1.2
+        && box.minX >= -0.2 && box.minY >= -0.2 && box.maxX <= 1.2 && box.maxY <= 1.2
+    }
+
     // Extract detections
     var detections: [(CGRect, Int, Float)] = []
     detections.reserveCapacity(min(numAnchors / 10, 100))  // Estimate capacity
 
     for i in 0..<numAnchors {
-      // Get box coordinates (normalized to model input size)
+      // Get box coordinates (anchor format; assumed normalized)
       // For [batch, anchors, features]: offset = batch_idx * anchors * features + anchor_idx * features
       // For [anchors, features]: offset = anchor_idx * features
       // Typically batch=1, so: offset = i * numFeatures
@@ -249,27 +272,30 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       let w = CGFloat(value(featureIndex: 2, anchorIndex: i))
       let h = CGFloat(value(featureIndex: 3, anchorIndex: i))
 
-      // Convert center format to minX, minY format
+      // Convert center format to minX, minY format and clamp to 0-1
       let boxX = cx - w / 2
       let boxY = cy - h / 2
-      let box = CGRect(x: boxX, y: boxY, width: w, height: h)
+      var box = CGRect(x: boxX, y: boxY, width: w, height: h)
+      box = clampBox(box)
+      if !isReasonable(box) { continue }
 
       // Find best class
       var bestScore: Float = 0
       var bestClass: Int = 0
+      let objectness: Float = hasObjectness ? sigmoid(value(featureIndex: 4, anchorIndex: i)) : 1.0
       for c in 0..<numClasses {
-        var score = value(featureIndex: boxFeatureLength + c, anchorIndex: i)
-        if isYOLO26Model {
-          score = normalizeYOLO26Score(score)
-        }
-        if score > bestScore {
-          bestScore = score
+        var score = value(featureIndex: classStartIndex + c, anchorIndex: i)
+        // Anchor-format YOLO (both YOLO11 and YOLO26 non-e2e) treats class/objectness as logits
+        score = sigmoid(score)
+        let combined = score * objectness
+        if combined > bestScore {
+          bestScore = combined
           bestClass = c
         }
       }
 
       // Normalize score to 0-1 range if needed (for threshold comparison)
-      let normalizedScore = isYOLO26Model ? normalizeYOLO26Score(bestScore) : bestScore
+      let normalizedScore = isYOLO26Anchor ? bestScore : (isYOLO26Model ? normalizeYOLO26Score(bestScore) : bestScore)
 
       // Apply confidence threshold (using normalized score)
       if normalizedScore > confidenceThreshold && normalizedScore <= 1.0 {
@@ -277,14 +303,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
     }
 
-    // YOLO26 models don't need NMS - they output final detections without NMS
-    if isYOLO26Model {
-      // For YOLO26, just sort by confidence and return (no NMS needed)
-      detections.sort { $0.2 > $1.2 }
-      return detections
-    }
-
-    // For YOLO11 and older models, apply NMS per class
+    // For anchor-format models (YOLO11 and YOLO26 non-e2e), apply NMS per class
     var classBuckets: [Int: [(CGRect, Int, Float)]] = [:]
     for detection in detections {
       let classIndex = detection.1

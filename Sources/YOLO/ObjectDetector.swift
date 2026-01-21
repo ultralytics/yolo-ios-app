@@ -295,7 +295,8 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
 
       // Normalize score to 0-1 range if needed (for threshold comparison)
-      let normalizedScore = isYOLO26Anchor ? bestScore : (isYOLO26Model ? normalizeYOLO26Score(bestScore) : bestScore)
+      let normalizedScore =
+        isYOLO26Anchor ? bestScore : (isYOLO26Model ? normalizeYOLO26Score(bestScore) : bestScore)
 
       // Apply confidence threshold (using normalized score)
       if normalizedScore > confidenceThreshold && normalizedScore <= 1.0 {

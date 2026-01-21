@@ -749,6 +749,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @objc private func yolo26InfoButtonTapped() {
     selection.selectionChanged()
     forceYOLO26NMS.toggle()
+
+    // Classification never needs NMS; show friendly banner and revert toggle.
+    if currentTask == "Classify" && forceYOLO26NMS {
+      forceYOLO26NMS = false
+      let alert = UIAlertController(
+        title: "NMS not needed",
+        message:
+          "Classification models do not need NMS. This option applies only to Detect/Segment/OBB/Pose.",
+        preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      present(alert, animated: true)
+      updateYOLO26InfoButtonAppearance()
+      return
+    }
+
     print("ViewController debug: YOLO26 NMS toggled -> \(forceYOLO26NMS)")
     updateYOLO26InfoButtonAppearance()
     if !currentTask.isEmpty {

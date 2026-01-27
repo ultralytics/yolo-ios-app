@@ -6,6 +6,7 @@ import PackageDescription
 
 let package = Package(
   name: "YOLO",
+  // Core Swift package for running YOLO11 and YOLO26 CoreML models on Apple platforms.
   platforms: [
     .iOS(.v16)
   ],

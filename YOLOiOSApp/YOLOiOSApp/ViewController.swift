@@ -69,6 +69,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // Custom model selection button (created programmatically)
   var customModelButton: UIButton!
 
+  // Model version toggle button (YOLO11 ↔ YOLO26)
+  var modelVersionToggleButton: UIButton!
+  private var modelVersionToggleButtonConstraints: [NSLayoutConstraint] = []
+  // YOLO26 info badge (w/o NMS)
+  private var yolo26InfoButton: UIButton!
+  private var yolo26InfoButtonConstraints: [NSLayoutConstraint] = []
+
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
 
@@ -121,13 +128,25 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var currentTask: String = ""
   var currentModelName: String = ""
 
+  // Model version state: true for YOLO26, false for YOLO11
+  private var isYOLO26: Bool = true {
+    didSet {
+      guard isYOLO26 != oldValue else { return }
+      // Reload models with new version preference (only if currentTask is set)
+      if !currentTask.isEmpty {
+        reloadModelEntriesAndLoadFirst(for: currentTask)
+      }
+      updateModelVersionMenu()
+      updateYOLO26InfoButtonVisibility()
+    }
+  }
+  // Whether to force NMS for YOLO26 models (non-e2e / anchor-format)
+  private var forceYOLO26NMS = false
+
   private var isLoadingModel = false
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
-    // Debug: Check model folders
-    debugCheckModelFolders()
 
     // MARK: External Display Setup (Optional)
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
@@ -141,11 +160,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     checkForExternalDisplays()
 
     // If external display is already connected, ensure YOLOView doesn't interfere
-    if UIScreen.screens.count > 1 {
+    if hasExternalDisplayConnected() {
       print("External display already connected at startup - deferring camera init")
       yoloView.isHidden = true
     }
 
+    // Sync initial state with YOLOView (after yoloView is initialized)
+    // Delay to ensure yoloView is ready
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
@@ -164,7 +185,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       reloadModelEntriesAndLoadFirst(for: currentTask)
 
       // Check for external display after initial setup
-      if UIScreen.screens.count > 1 {
+      if hasExternalDisplayConnected() {
         print("External display may be connected at startup - will be handled by notifications")
       }
     }
@@ -193,6 +214,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     {
       labelVersion.text = "v\(version) (\(build))"
     }
+
+    // Setup model version toggle button
+    setupModelVersionToggleButton()
+    setupYOLO26InfoButton()
 
     // Setup progress views
     [downloadProgressView, downloadProgressLabel].forEach {
@@ -267,7 +292,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
     let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
-    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples)
+    standardModels = ModelSelectionManager.categorizeModels(
+      from: modelTuples, preferYOLO26: isYOLO26)
 
     let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
     ModelSelectionManager.setupSegmentedControl(
@@ -325,10 +351,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
       print("Model is already loading. Please wait.")
       return
     }
+
+    // Cancel any in-progress downloads to prevent conflicts
+    ModelDownloadManager.shared.cancelCurrentDownload()
+
     isLoadingModel = true
 
     // Check if external display is connected
-    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = hasExternalDisplayConnected() || SceneDelegate.hasExternalDisplay
 
     // Only reset YOLOView if no external display is connected
     if !hasExternalDisplay {
@@ -338,13 +368,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
-
-    print("Start loading model: \(entry.displayName)")
-    print("  - displayName: \(entry.displayName)")
-    print("  - identifier: \(entry.identifier)")
-    print("  - isLocalBundle: \(entry.isLocalBundle)")
-    print("  - task: \(task)")
-    print("  - hasExternalDisplay: \(hasExternalDisplay)")
 
     // Store current entry for external display notification
     currentLoadingEntry = entry
@@ -358,20 +381,20 @@ class ViewController: UIViewController, YOLOViewDelegate {
         guard let folderURL = self.tasks.first(where: { $0.name == task })?.folder,
           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
         else {
-          DispatchQueue.main.async { [weak self] in
+          Task { @MainActor [weak self] in
             self?.finishLoadingModel(success: false, modelName: entry.displayName)
           }
           return
         }
 
         let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
           guard let self = self else { return }
           self.downloadProgressLabel.isHidden = false
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
           // Check if external display is connected
-          let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+          let hasExternalDisplay = hasExternalDisplayConnected() || SceneDelegate.hasExternalDisplay
 
           if hasExternalDisplay {
             // External display is connected - skip YOLOView loading, just notify external display
@@ -380,12 +403,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
           } else {
             // Normal model loading on main YOLOView
             self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
-              switch result {
-              case .success():
-                self.finishLoadingModel(success: true, modelName: entry.displayName)
-              case .failure(let error):
-                print(error)
-                self.finishLoadingModel(success: false, modelName: entry.displayName)
+              Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                switch result {
+                case .success():
+                  self.finishLoadingModel(success: true, modelName: entry.displayName)
+                case .failure(let error):
+                  print(error)
+                  self.finishLoadingModel(success: false, modelName: entry.displayName)
+                }
               }
             }
           }
@@ -399,7 +425,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           key: key, yoloTask: yoloTask, displayName: entry.displayName)
       } else {
         guard let remoteURL = entry.remoteURL else {
-          self.finishLoadingModel(success: false, modelName: entry.displayName)
+          Task { @MainActor [weak self] in
+            self?.finishLoadingModel(success: false, modelName: entry.displayName)
+          }
           return
         }
 
@@ -419,7 +447,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
         ) { [weak self] mlModel, loadedKey in
           guard let self = self else { return }
           if mlModel == nil {
-            self.finishLoadingModel(success: false, modelName: entry.displayName)
+            Task { @MainActor [weak self] in
+              self?.finishLoadingModel(success: false, modelName: entry.displayName)
+            }
             return
           }
           self.loadCachedModelAndSetToYOLOView(
@@ -438,13 +468,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
       "mlmodelc")
 
-    DispatchQueue.main.async { [weak self] in
+    Task { @MainActor [weak self] in
       guard let self = self else { return }
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
       // Check if external display is connected
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = hasExternalDisplayConnected() || SceneDelegate.hasExternalDisplay
 
       if hasExternalDisplay {
         // External display is connected - skip YOLOView loading, just notify external display
@@ -453,12 +483,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
       } else {
         // Normal model loading on main YOLOView
         self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
-          switch result {
-          case .success():
-            self.finishLoadingModel(success: true, modelName: displayName)
-          case .failure(let error):
-            print(error)
-            self.finishLoadingModel(success: false, modelName: displayName)
+          Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            switch result {
+            case .success():
+              self.finishLoadingModel(success: true, modelName: displayName)
+            case .failure(let error):
+              print(error)
+              self.finishLoadingModel(success: false, modelName: displayName)
+            }
           }
         }
       }
@@ -471,96 +504,91 @@ class ViewController: UIViewController, YOLOViewDelegate {
     [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
   }
 
+  @MainActor
   private func finishLoadingModel(success: Bool, modelName: String) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      self.setLoadingState(false)
-      self.isLoadingModel = false
-      self.resetDownloadProgress()
+    setLoadingState(false)
+    isLoadingModel = false
+    resetDownloadProgress()
 
-      if success {
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+    if success {
+      let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
-        ModelSelectionManager.setupSegmentedControl(
-          self.modelSegmentedControl,
-          standardModels: self.standardModels,
-          currentTask: yoloTask,
-          preserveSelection: true
-        )
+      ModelSelectionManager.setupSegmentedControl(
+        modelSegmentedControl,
+        standardModels: standardModels,
+        currentTask: yoloTask,
+        preserveSelection: true
+      )
 
-        ModelSelectionManager.updateSegmentAppearance(
-          self.modelSegmentedControl,
-          standardModels: self.standardModels,
-          currentTask: yoloTask
-        )
-      }
+      ModelSelectionManager.updateSegmentAppearance(
+        modelSegmentedControl,
+        standardModels: standardModels,
+        currentTask: yoloTask
+      )
+    }
 
-      // Notify external display of model change (Optional feature)
-      if success {
-        // Update currentModelName
-        self.currentModelName = processString(modelName)
+    // Notify external display of model change (Optional feature)
+    if success {
+      // Update currentModelName
+      currentModelName = processString(modelName)
 
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+      let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
-        // Determine the correct model path for external display
-        var fullModelPath = ""
+      // Determine the correct model path for external display
+      var fullModelPath = ""
 
-        // Use the stored entry from loadModel
-        if let entry = self.currentLoadingEntry {
-          if entry.isLocalBundle {
-            // For local bundle models
-            if let folderURL = self.tasks.first(where: { $0.name == self.currentTask })?.folder,
-              let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-            {
-              let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
-              fullModelPath = modelURL.path
-              print("📦 External display local model path: \(fullModelPath)")
-            }
-          } else {
-            // For remote/downloaded models, we need to pass the identifier only
-            // The external display will handle loading from cache
-            fullModelPath = entry.identifier
-            print("☁️ External display will load cached model: \(fullModelPath)")
+      // Use the stored entry from loadModel
+      if let entry = currentLoadingEntry {
+        if entry.isLocalBundle {
+          // For local bundle models
+          if let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+            let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
+          {
+            let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+            fullModelPath = modelURL.path
+          }
+        } else {
+          // For remote/downloaded models, we need to pass the identifier only
+          // The external display will handle loading from cache
+          fullModelPath = entry.identifier
 
-            // Verify the cached model exists locally first
-            let documentsDirectory = FileManager.default.urls(
-              for: .documentDirectory, in: .userDomainMask)[0]
-            let localModelURL =
-              documentsDirectory
-              .appendingPathComponent(entry.identifier)
-              .appendingPathExtension("mlmodelc")
+          // Verify the cached model exists locally first
+          let documentsDirectory = FileManager.default.urls(
+            for: .documentDirectory, in: .userDomainMask)[0]
+          let localModelURL =
+            documentsDirectory
+            .appendingPathComponent(entry.identifier)
+            .appendingPathExtension("mlmodelc")
 
-            if !FileManager.default.fileExists(atPath: localModelURL.path) {
-              print("❌ Cached model not found at: \(localModelURL.path)")
-              return
-            }
+          if !FileManager.default.fileExists(atPath: localModelURL.path) {
+            print("Cached model not found at: \(localModelURL.path)")
+            return
           }
         }
-
-        // Only notify if we have a valid path
-        if !fullModelPath.isEmpty {
-          ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
-          print("✅ Model loaded successfully and notified to external display: \(modelName)")
-
-          // Also check if external display is waiting for initial model
-          self.checkAndNotifyExternalDisplayIfReady()
-        } else {
-          print("❌ Could not determine model path for external display")
-        }
       }
 
-      // Check if external display is connected
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      // Only notify if we have a valid path
+      if !fullModelPath.isEmpty {
+        ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
 
-      // Only set inference flag on YOLOView if no external display
-      if !hasExternalDisplay {
-        self.yoloView.setInferenceFlag(ok: success)
+        // Also check if external display is waiting for initial model
+        checkAndNotifyExternalDisplayIfReady()
+      } else {
+        print("Could not determine model path for external display")
       }
+    }
 
-      if success {
-        // currentModelName is already set above in the notification section
-        self.labelName.text = processString(modelName)
-      }
+    // Check if external display is connected
+    let hasExternalDisplay = hasExternalDisplayConnected() || SceneDelegate.hasExternalDisplay
+
+    // Only set inference flag on YOLOView if no external display
+    if !hasExternalDisplay {
+      yoloView.setInferenceFlag(ok: success)
+    }
+
+    if success {
+      // currentModelName is already set above in the notification section
+      labelName.text = processString(modelName)
     }
   }
 
@@ -599,6 +627,158 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if let link = URL(string: Constants.logoURL) {
       UIApplication.shared.open(link)
     }
+  }
+
+  /// Setup model version selection button (shows menu to select YOLO11 or YOLO26)
+  private func setupModelVersionToggleButton() {
+    modelVersionToggleButton = UIButton(type: .system)
+    let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .medium, scale: .default)
+    modelVersionToggleButton.setImage(
+      UIImage(systemName: "chevron.down", withConfiguration: config), for: .normal)
+    modelVersionToggleButton.tintColor = .white
+    // Match the transparent/grayish style of the model segmented control
+    modelVersionToggleButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
+    modelVersionToggleButton.layer.cornerRadius = 12
+    modelVersionToggleButton.layer.borderWidth = 1
+    modelVersionToggleButton.layer.borderColor = UIColor.systemGray.cgColor
+    modelVersionToggleButton.translatesAutoresizingMaskIntoConstraints = false
+    modelVersionToggleButton.isHidden = false
+    modelVersionToggleButton.alpha = 1.0
+    modelVersionToggleButton.showsMenuAsPrimaryAction = true
+    view.addSubview(modelVersionToggleButton)
+    view.bringSubviewToFront(modelVersionToggleButton)
+    updateModelVersionMenu()
+
+    // Position button next to labelName - use viewDidLayoutSubviews to set constraints after layout
+    DispatchQueue.main.async { [weak self] in
+      self?.updateModelVersionToggleButtonPosition()
+    }
+  }
+
+  /// Setup YOLO26 info badge shown when YOLO26 is active
+  private func setupYOLO26InfoButton() {
+    yolo26InfoButton = UIButton(type: .system)
+    yolo26InfoButton.setTitle("w/o nms", for: .normal)
+    yolo26InfoButton.titleLabel?.font = .systemFont(ofSize: 11, weight: .semibold)
+    yolo26InfoButton.setTitleColor(.white, for: .normal)
+    yolo26InfoButton.backgroundColor = .systemOrange.withAlphaComponent(0.2)
+    yolo26InfoButton.layer.cornerRadius = 10
+    yolo26InfoButton.layer.borderWidth = 1
+    yolo26InfoButton.layer.borderColor = UIColor.systemOrange.cgColor
+    yolo26InfoButton.contentEdgeInsets = UIEdgeInsets(top: 3, left: 8, bottom: 3, right: 8)
+    yolo26InfoButton.addTarget(
+      self, action: #selector(yolo26InfoButtonTapped), for: .touchUpInside)
+    yolo26InfoButton.translatesAutoresizingMaskIntoConstraints = false
+    yolo26InfoButton.isHidden = true
+    view.addSubview(yolo26InfoButton)
+    view.bringSubviewToFront(yolo26InfoButton)
+
+    DispatchQueue.main.async { [weak self] in
+      self?.updateYOLO26InfoButtonPosition()
+      self?.updateYOLO26InfoButtonVisibility()
+    }
+  }
+
+  /// Update toggle button position relative to labelName (next to it, not at trailing edge)
+  private func updateModelVersionToggleButtonPosition() {
+    guard let labelName = labelName, let button = modelVersionToggleButton else { return }
+
+    // Only set constraints if they haven't been set yet
+    if modelVersionToggleButtonConstraints.isEmpty {
+      modelVersionToggleButtonConstraints = [
+        button.leadingAnchor.constraint(equalTo: labelName.trailingAnchor, constant: 8),
+        button.centerYAnchor.constraint(equalTo: labelName.centerYAnchor),
+        button.widthAnchor.constraint(equalToConstant: 24),
+        button.heightAnchor.constraint(equalToConstant: 24),
+      ]
+      NSLayoutConstraint.activate(modelVersionToggleButtonConstraints)
+    }
+  }
+
+  /// Update YOLO26 info badge position to sit after the version toggle
+  private func updateYOLO26InfoButtonPosition() {
+    guard let infoButton = yolo26InfoButton,
+      let versionButton = modelVersionToggleButton,
+      let labelName = labelName
+    else { return }
+
+    if yolo26InfoButtonConstraints.isEmpty {
+      yolo26InfoButtonConstraints = [
+        infoButton.leadingAnchor.constraint(equalTo: versionButton.trailingAnchor, constant: 8),
+        infoButton.centerYAnchor.constraint(equalTo: labelName.centerYAnchor),
+        infoButton.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -16),
+      ]
+      NSLayoutConstraint.activate(yolo26InfoButtonConstraints)
+    }
+  }
+
+  /// Build and assign the model version selection menu (YOLO11 or YOLO26)
+  private func updateModelVersionMenu() {
+    guard modelVersionToggleButton != nil else { return }
+
+    let yolo26Action = UIAction(
+      title: "YOLO26",
+      state: isYOLO26 ? .on : .off
+    ) { [weak self] _ in
+      self?.selection.selectionChanged()
+      self?.isYOLO26 = true
+    }
+
+    let yolo11Action = UIAction(
+      title: "YOLO11",
+      state: isYOLO26 ? .off : .on
+    ) { [weak self] _ in
+      self?.selection.selectionChanged()
+      self?.isYOLO26 = false
+    }
+
+    modelVersionToggleButton.menu = UIMenu(
+      title: "Select Model Version",
+      options: [.singleSelection],
+      children: [yolo26Action, yolo11Action]
+    )
+  }
+
+  /// Show or hide the YOLO26 info badge based on selection
+  private func updateYOLO26InfoButtonVisibility() {
+    guard yolo26InfoButton != nil else { return }
+    yolo26InfoButton.isHidden = !isYOLO26
+    updateYOLO26InfoButtonAppearance()
+  }
+
+  @objc private func yolo26InfoButtonTapped() {
+    selection.selectionChanged()
+    forceYOLO26NMS.toggle()
+
+    // Classification never needs NMS; show friendly banner and revert toggle.
+    if currentTask == "Classify" && forceYOLO26NMS {
+      forceYOLO26NMS = false
+      let alert = UIAlertController(
+        title: "NMS not needed",
+        message:
+          "Classification models do not need NMS. This option applies only to Detect/Segment/OBB/Pose.",
+        preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "OK", style: .default))
+      present(alert, animated: true)
+      updateYOLO26InfoButtonAppearance()
+      return
+    }
+
+    print("ViewController debug: YOLO26 NMS toggled -> \(forceYOLO26NMS)")
+    updateYOLO26InfoButtonAppearance()
+    if !currentTask.isEmpty {
+      reloadModelEntriesAndLoadFirst(for: currentTask)
+    }
+  }
+
+  private func updateYOLO26InfoButtonAppearance() {
+    guard let button = yolo26InfoButton else { return }
+    let isNMS = forceYOLO26NMS
+    let title = isNMS ? "nms" : "w/o nms"
+    button.setTitle(title, for: .normal)
+    let color: UIColor = isNMS ? .systemBlue : .systemOrange
+    button.backgroundColor = color.withAlphaComponent(0.2)
+    button.layer.borderColor = color.cgColor
   }
 
   private func setupModelSegmentedControl() {
@@ -676,6 +856,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     adjustLayoutForExternalDisplayIfNeeded()
+    // Set button position constraints after layout (only once)
+    updateModelVersionToggleButtonPosition()
+    updateYOLO26InfoButtonPosition()
   }
 
   @objc func shareButtonTapped() {
@@ -707,36 +890,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
       ]
     )
 
-    print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
   }
 
   deinit {
     NotificationCenter.default.removeObserver(self)
-  }
-
-  private func debugCheckModelFolders() {
-    print("\n🔍 DEBUG: Checking model folders...")
-    let folders = ["DetectModels", "SegmentModels", "ClassifyModels", "PoseModels", "OBBModels"]
-
-    for folder in folders {
-      if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {
-        print("✅ \(folder) found at: \(folderURL.path)")
-
-        do {
-          let files = try FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: nil)
-          let models = files.filter {
-            $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage"
-          }
-          print("   📦 Models: \(models.map { $0.lastPathComponent })")
-        } catch {
-          print("   ❌ Error reading folder: \(error)")
-        }
-      } else {
-        print("❌ \(folder) NOT FOUND in bundle")
-      }
-    }
-    print("\n")
+    ModelDownloadManager.shared.progressHandler = nil
   }
 
 }

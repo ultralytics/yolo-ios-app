@@ -38,7 +38,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     //      view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentPhPicker)))
     // Initialize YOLO model with a segmentation task
     // You can change the model or task type to use detection, classification, etc.
-    model = YOLO("yolo11n", task: .detect) { [self] result in
+    model = YOLO("yolo26n", task: .detect) { [self] result in
       switch result {
       case .success(_):
         print("predictor initialized")
@@ -60,9 +60,9 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
       result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
         if let image = image as? UIImage, let safeSelf = self {
-          let correctOrientImage = safeSelf.getCorrectOrientationUIImage(uiImage: image)
+          // Image orientation is automatically normalized by the YOLO package
           let date = Date()
-          let result = safeSelf.model(correctOrientImage)
+          let result = safeSelf.model(image)
           let time = Date().timeIntervalSince(date)
           print(result)
           DispatchQueue.main.async {
@@ -82,33 +82,6 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     let picker = PHPickerViewController(configuration: configuration)
     picker.delegate = self
     self.present(picker, animated: true)
-  }
-
-  /// Corrects the orientation of the image to ensure proper processing by the YOLO model.
-  ///
-  /// - Parameter uiImage: The input image that may have incorrect orientation metadata.
-  /// - Returns: A UIImage with the correct orientation for processing.
-  func getCorrectOrientationUIImage(uiImage: UIImage) -> UIImage {
-    var newImage = UIImage()
-    let ciContext = CIContext()
-    switch uiImage.imageOrientation.rawValue {
-    case 1:
-      guard
-        let orientedCIImage = CIImage(image: uiImage)?.oriented(CGImagePropertyOrientation.down),
-        let cgImage = ciContext.createCGImage(orientedCIImage, from: orientedCIImage.extent)
-      else { return uiImage }
-
-      newImage = UIImage(cgImage: cgImage)
-    case 3:
-      guard
-        let orientedCIImage = CIImage(image: uiImage)?.oriented(CGImagePropertyOrientation.right),
-        let cgImage = ciContext.createCGImage(orientedCIImage, from: orientedCIImage.extent)
-      else { return uiImage }
-      newImage = UIImage(cgImage: cgImage)
-    default:
-      newImage = uiImage
-    }
-    return newImage
   }
 
   /// Sets up the UI components including the image view and pick button.

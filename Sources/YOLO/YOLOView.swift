@@ -232,7 +232,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     guard let unwrappedModelURL = modelURL else {
       let error = PredictorError.modelFileNotFound
-      fatalError(error.localizedDescription)
+      activityIndicator.stopAnimating()
+      completion?(.failure(error))
+      return
     }
 
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
@@ -831,6 +833,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
 
+  // Model version toggle button is now handled in ViewController
+
   /// Configure a slider with common settings
   private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
     slider.minimumValue = min
@@ -1146,9 +1150,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
 
     self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    guard let currentPosition = currentInput?.device.position else { return }
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
+    else {
+      self.videoCapture.captureSession.commitConfiguration()
+      return
+    }
+    self.videoCapture.captureSession.removeInput(currentInput)
+    let currentPosition = currentInput.device.position
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
@@ -1190,6 +1198,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+    videoCapture.stop()
   }
 }
 
@@ -1288,12 +1301,12 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
     if let error = error {
       print("error occurred : \(error.localizedDescription)")
     }
-    if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
+    if let dataImage = photo.fileDataRepresentation(),
+      let dataProvider = CGDataProvider(data: dataImage as CFData),
+      let cgImageRef = CGImage(
+        jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-
+    {
       Task { @MainActor [weak self] in
         guard let self = self else { return }
 
@@ -1376,8 +1389,6 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
         photoCaptureCompletion?(img)
         photoCaptureCompletion = nil
       }
-    } else {
-      print("AVCapturePhotoCaptureDelegate Error")
     }
   }
 }

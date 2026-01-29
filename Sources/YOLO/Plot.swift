@@ -224,7 +224,7 @@ func generateCombinedMaskImage(
   let scaleY = Float(maskHeight) / Float(inputHeight)
 
   // 8) Whether to keep individual probability maps
-  var probabilityMasks: [[[Float]]]? = nil
+  var probabilityMasks: [[[Float]]]?
   if returnIndividualMasks {
     probabilityMasks = Array(
       repeating: Array(
@@ -251,8 +251,8 @@ func generateCombinedMaskImage(
     let startIdx = originalIndex * HW
 
     // Get class color
-    let _colorIndex = classID % ultralyticsColors.count
-    guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
+    let colorIndex = classID % ultralyticsColors.count
+    guard let color = ultralyticsColors[colorIndex].toRGBComponents() else {
       continue
     }
     let r = UInt8(color.red)
@@ -478,8 +478,6 @@ func drawSinglePersonKeypoints(
   //        return
   //      }
   let lineWidth = radius * 0.4
-  _ = Float(imageViewSize.width / originalImageSize.width)
-  _ = Float(imageViewSize.height / originalImageSize.height)
 
   // Dynamic keypoint count support
   let numKeypoints = keypoints.count
@@ -1002,14 +1000,14 @@ public func drawYOLOSegmentationWithBoxes(
     let baseRect = CGRect(origin: .zero, size: renderedSize)
 
     // Scale mask if necessary when it has different dimensions from the original image
-    _ =
+    let maskRect =
       maskImage.width != Int(width) || maskImage.height != Int(height)
       ? baseRect
       : CGRect(
         x: 0, y: 0, width: CGFloat(maskImage.width), height: CGFloat(maskImage.height))
 
     // Draw mask image with the correct orientation
-    drawContext.draw(maskImage, in: baseRect)
+    drawContext.draw(maskImage, in: maskRect)
     drawContext.restoreGState()
   }
 

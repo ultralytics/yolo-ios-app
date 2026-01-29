@@ -26,7 +26,7 @@ jobs:
           chmod +x scripts/download-models.sh && scripts/download-models.sh
 
       - name: Install dependencies
-        run: xcodebuild -resolvePackageDependencies
+        run: xcodebuild -resolvePackageDependencies -project YOLOiOSApp/YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
 
       - name: Create test .env file
         run: |
@@ -40,7 +40,8 @@ jobs:
           DESTINATION=${DESTINATION:-name=iPhone 14}
 
           xcodebuild \
-            -scheme YOLO \
+            -project YOLOiOSApp/YOLOiOSApp.xcodeproj \
+            -scheme YOLOiOSApp \
             -sdk iphonesimulator \
             -derivedDataPath Build/ \
             -destination "platform=iOS Simulator,$DESTINATION" \

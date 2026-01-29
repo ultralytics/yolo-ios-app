@@ -35,9 +35,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
-      // Notify delegate of performance metrics
-
+      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)
       self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
     }
   }
@@ -81,7 +79,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
         on: poseLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
     } else if task == .obb {
-      //            self.setupObbLayerIfNeeded()
       guard let obbLayer = self.obbLayer else { return }
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
@@ -98,12 +95,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   private var videoCapture: VideoCapture
   private var busy = false
   private var currentBuffer: CVPixelBuffer?
-  var framesDone = 0
-  var t0 = 0.0  // inference start
-  var t1 = 0.0  // inference dt
-  var t2 = 0.0  // inference dt smoothed
-  var t3 = CACurrentMediaTime()  // FPS start
-  var t4 = 0.0  // FPS dt smoothed
   var task = YOLOTask.detect
   var colors: [String: UIColor] = [:]
   var modelName: String = ""
@@ -833,9 +824,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
 
-  // Model version toggle button is now handled in ViewController
-
-  /// Configure a slider with common settings
   private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
     slider.minimumValue = min
     slider.maximumValue = max
@@ -859,8 +847,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
-
-    // Apply consistent toolbar styling
     applyToolbarStyling(isLandscape: isLandscape)
 
     if isLandscape {
@@ -872,12 +858,10 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.videoCapture.previewLayer?.frame = self.bounds
   }
 
-  /// Apply consistent toolbar and button styling
   private func applyToolbarStyling(isLandscape: Bool) {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    let buttonColor: UIColor = isLandscape ? .white : .white
     [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
-      button.tintColor = buttonColor
+      button.tintColor = .white
     }
   }
 
@@ -1039,8 +1023,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
     videoCapture.updateVideoOrientation(orientation: orientation)
-
-    //      frameSizeCaptured = false
   }
 
   @objc public func sliderChanged(_ sender: Any) {

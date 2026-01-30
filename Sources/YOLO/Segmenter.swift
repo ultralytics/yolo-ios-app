@@ -70,7 +70,8 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           width: box.width / modelWidth, height: box.height / modelHeight)
         let confidence = p.2
         let bestClass = p.1
-        let label = (bestClass >= 0 && bestClass < self.labels.count) ? self.labels[bestClass] : "unknown"
+        let label =
+          (bestClass >= 0 && bestClass < self.labels.count) ? self.labels[bestClass] : "unknown"
         let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
         let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)

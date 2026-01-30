@@ -90,14 +90,19 @@ let skeleton = [
   [5, 7],
 ]
 
-func withFlippedImageContext(ciImage: CIImage, scale: CGFloat = 1.0, _ body: (CGContext, Int, Int) -> Void) -> UIImage? {
+func withFlippedImageContext(
+  ciImage: CIImage, scale: CGFloat = 1.0, _ body: (CGContext, Int, Int) -> Void
+) -> UIImage? {
   let ctx = CIContext(options: nil)
   guard let cgImage = ctx.createCGImage(ciImage, from: ciImage.extent) else { return nil }
   let w = cgImage.width
   let h = cgImage.height
   let size = CGSize(width: w, height: h)
   UIGraphicsBeginImageContextWithOptions(size, false, scale)
-  guard let drawContext = UIGraphicsGetCurrentContext() else { UIGraphicsEndImageContext(); return nil }
+  guard let drawContext = UIGraphicsGetCurrentContext() else {
+    UIGraphicsEndImageContext()
+    return nil
+  }
   drawContext.saveGState()
   drawContext.translateBy(x: 0, y: CGFloat(h))
   drawContext.scaleBy(x: 1, y: -1)
@@ -113,7 +118,9 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
   withFlippedImageContext(ciImage: ciImage) { ctx, w, h in
     let lineWidth = CGFloat(max(w, h)) / 200
     let fontSize = CGFloat(max(w, h)) / 50
-    drawBoxesWithLabels(context: ctx, boxes: result.boxes, lineWidth: lineWidth, fontSize: fontSize, cornerRadiusForBox: { _ in 0 })
+    drawBoxesWithLabels(
+      context: ctx, boxes: result.boxes, lineWidth: lineWidth, fontSize: fontSize,
+      cornerRadiusForBox: { _ in 0 })
   } ?? UIImage()
 }
 
@@ -266,7 +273,8 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
       .foregroundColor: UIColor.white,
     ]
     for (i, candidate) in top5.enumerated() {
-      let colorIndex = result.names.firstIndex(of: candidate).map { $0 % ultralyticsColors.count } ?? 0
+      let colorIndex =
+        result.names.firstIndex(of: candidate).map { $0 % ultralyticsColors.count } ?? 0
       let color = ultralyticsColors[colorIndex]
       ctx.setStrokeColor(color.cgColor)
       ctx.setLineWidth(lineWidth)
@@ -282,7 +290,10 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
       )
       ctx.setFillColor(color.cgColor)
       ctx.fill(labelRect)
-      labelText.draw(at: CGPoint(x: labelRect.origin.x + 5, y: labelRect.origin.y + (labelHeight - textSize.height) / 2), withAttributes: attrs)
+      labelText.draw(
+        at: CGPoint(
+          x: labelRect.origin.x + 5, y: labelRect.origin.y + (labelHeight - textSize.height) / 2),
+        withAttributes: attrs)
     }
   } ?? UIImage(ciImage: ciImage)
 }
@@ -666,7 +677,8 @@ func drawBoxesWithLabels(
     let textSize = labelText.size(withAttributes: attrs)
     let labelWidth = textSize.width + 10
     let labelHeight = textSize.height + 4
-    var labelRect = CGRect(x: rect.minX, y: rect.minY - labelHeight, width: labelWidth, height: labelHeight)
+    var labelRect = CGRect(
+      x: rect.minX, y: rect.minY - labelHeight, width: labelWidth, height: labelHeight)
     if labelRect.minY < 0 { labelRect.origin.y = rect.minY }
     context.setFillColor(color.cgColor)
     if r <= 0 {
@@ -675,7 +687,10 @@ func drawBoxesWithLabels(
       context.addPath(UIBezierPath(roundedRect: labelRect, cornerRadius: r).cgPath)
       context.fillPath()
     }
-    labelText.draw(at: CGPoint(x: labelRect.origin.x + 5, y: labelRect.origin.y + (labelHeight - textSize.height) / 2), withAttributes: attrs)
+    labelText.draw(
+      at: CGPoint(
+        x: labelRect.origin.x + 5, y: labelRect.origin.y + (labelHeight - textSize.height) / 2),
+      withAttributes: attrs)
   }
 }
 
@@ -692,7 +707,9 @@ public func drawYOLOPoseWithBoxes(
     let size = CGSize(width: w, height: h)
     let lineWidth = CGFloat(max(w, h)) / 200
     let fontSize = CGFloat(max(w, h)) / 50
-    drawBoxesWithLabels(context: ctx, boxes: boundingBoxes, lineWidth: lineWidth, fontSize: fontSize) { box in
+    drawBoxesWithLabels(
+      context: ctx, boxes: boundingBoxes, lineWidth: lineWidth, fontSize: fontSize
+    ) { box in
       max(min(box.xywh.width, box.xywh.height) * 0.05, 2.0)
     }
     let poseLayer = CALayer()
@@ -726,7 +743,8 @@ public func drawYOLOSegmentationWithBoxes(
       ctx.translateBy(x: 0, y: CGFloat(h))
       ctx.scaleBy(x: 1, y: -1)
       let baseRect = CGRect(origin: .zero, size: size)
-      let maskRect = maskImage.width != w || maskImage.height != h
+      let maskRect =
+        maskImage.width != w || maskImage.height != h
         ? baseRect
         : CGRect(x: 0, y: 0, width: CGFloat(maskImage.width), height: CGFloat(maskImage.height))
       ctx.draw(maskImage, in: maskRect)
@@ -734,7 +752,8 @@ public func drawYOLOSegmentationWithBoxes(
     }
     let lineWidth = CGFloat(max(w, h)) / 200
     let fontSize = CGFloat(max(w, h)) / 50
-    drawBoxesWithLabels(context: ctx, boxes: boxes, lineWidth: lineWidth, fontSize: fontSize) { box in
+    drawBoxesWithLabels(context: ctx, boxes: boxes, lineWidth: lineWidth, fontSize: fontSize) {
+      box in
       max(min(box.xywh.width, box.xywh.height) * 0.05, 2.0)
     }
   }

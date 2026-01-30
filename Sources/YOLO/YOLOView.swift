@@ -860,20 +860,32 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let padX = isLandscape ? width * 0.1 : CGFloat(20)
     let spacing: CGFloat = isLandscape ? 3 : 10
     if isLandscape {
-      labelFPS.frame = CGRect(x: 0, y: center.y - height * 0.24 - subLabelHeight, width: width, height: subLabelHeight)
+      labelFPS.frame = CGRect(
+        x: 0, y: center.y - height * 0.24 - subLabelHeight, width: width, height: subLabelHeight)
       let startY = height - 80 - (sliderHeight + spacing) * 6
-      labelSliderNumItems.frame = CGRect(x: padX, y: startY, width: sliderWidth, height: sliderHeight)
+      labelSliderNumItems.frame = CGRect(
+        x: padX, y: startY, width: sliderWidth, height: sliderHeight)
     } else {
-      labelFPS.frame = CGRect(x: 0, y: labelName.frame.maxY + 15, width: width, height: subLabelHeight)
-      labelSliderNumItems.frame = CGRect(x: padX, y: center.y + height * 0.16, width: sliderWidth, height: sliderHeight)
+      labelFPS.frame = CGRect(
+        x: 0, y: labelName.frame.maxY + 15, width: width, height: subLabelHeight)
+      labelSliderNumItems.frame = CGRect(
+        x: padX, y: center.y + height * 0.16, width: sliderWidth, height: sliderHeight)
     }
-    sliderNumItems.frame = CGRect(x: padX, y: labelSliderNumItems.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
-    labelSliderConf.frame = CGRect(x: padX, y: sliderNumItems.frame.maxY + spacing, width: sliderWidth * 1.5, height: sliderHeight)
-    sliderConf.frame = CGRect(x: padX, y: labelSliderConf.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
-    labelSliderIoU.frame = CGRect(x: padX, y: sliderConf.frame.maxY + spacing, width: sliderWidth * 1.5, height: sliderHeight)
-    sliderIoU.frame = CGRect(x: padX, y: labelSliderIoU.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
+    sliderNumItems.frame = CGRect(
+      x: padX, y: labelSliderNumItems.frame.maxY + spacing, width: sliderWidth, height: sliderHeight
+    )
+    labelSliderConf.frame = CGRect(
+      x: padX, y: sliderNumItems.frame.maxY + spacing, width: sliderWidth * 1.5,
+      height: sliderHeight)
+    sliderConf.frame = CGRect(
+      x: padX, y: labelSliderConf.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
+    labelSliderIoU.frame = CGRect(
+      x: padX, y: sliderConf.frame.maxY + spacing, width: sliderWidth * 1.5, height: sliderHeight)
+    sliderIoU.frame = CGRect(
+      x: padX, y: labelSliderIoU.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
     let zoomW = width * 0.2
-    labelZoom.frame = CGRect(x: center.x - zoomW / 2, y: bounds.maxY - 120, width: zoomW, height: height * 0.03)
+    labelZoom.frame = CGRect(
+      x: center.x - zoomW / 2, y: bounds.maxY - 120, width: zoomW, height: height * 0.03)
     layoutToolbarButtons(width: width, height: height)
   }
 

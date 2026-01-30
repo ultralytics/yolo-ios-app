@@ -658,7 +658,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func setupYOLO26InfoButton() {
     yolo26InfoButton = UIButton(type: .system)
     var config = UIButton.Configuration.plain()
-    config.attributedTitle = AttributedString("w/o nms", attributes: AttributeContainer([.font: UIFont.systemFont(ofSize: 11, weight: .semibold)]))
+    config.attributedTitle = AttributedString(
+      "w/o nms",
+      attributes: AttributeContainer([.font: UIFont.systemFont(ofSize: 11, weight: .semibold)]))
     config.baseForegroundColor = .white
     config.background.backgroundColor = .systemOrange.withAlphaComponent(0.2)
     config.background.cornerRadius = 10

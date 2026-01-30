@@ -228,14 +228,14 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       return []
     }
 
-    let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    let valueAt = feature.makeFloatReader()
 
     func value(featureIndex: Int, anchorIndex: Int) -> Float {
       switch layout {
       case .anchorFirst:
-        return featurePointer[anchorIndex * numFeatures + featureIndex]
+        return valueAt(anchorIndex * numFeatures + featureIndex)
       case .featureFirst:
-        return featurePointer[featureIndex * numAnchors + anchorIndex]
+        return valueAt(featureIndex * numAnchors + anchorIndex)
       }
     }
 
@@ -353,7 +353,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       return []
     }
 
-    let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    let valueAt = feature.makeFloatReader()
     var detections: [(CGRect, Int, Float)] = []
 
     // Calculate stride based on shape
@@ -374,12 +374,12 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
       // YOLO26 format: Based on Ultralytics export, YOLO26 outputs [x1, y1, x2, y2, confidence, class]
       // in pixel coordinates (corner format, not center format)
-      let x1 = CGFloat(featurePointer[offset])
-      let y1 = CGFloat(featurePointer[offset + 1])
-      let x2 = CGFloat(featurePointer[offset + 2])
-      let y2 = CGFloat(featurePointer[offset + 3])
-      var confidence = featurePointer[offset + 4]
-      let classIndex = Int(round(featurePointer[offset + 5]))
+      let x1 = CGFloat(valueAt(offset))
+      let y1 = CGFloat(valueAt(offset + 1))
+      let x2 = CGFloat(valueAt(offset + 2))
+      let y2 = CGFloat(valueAt(offset + 3))
+      var confidence = valueAt(offset + 4)
+      let classIndex = Int(round(valueAt(offset + 5)))
 
       // Normalize confidence: YOLO26 outputs in 0-1 range (already normalized)
       // But check if it's in 0-100 range

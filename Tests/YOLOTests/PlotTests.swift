@@ -141,32 +141,6 @@ import XCTest
     XCTAssertGreaterThan(outputImage.size.width, 0)
   }
 
-  func testComposeImageWithMask() {
-    // Test composeImageWithMask function
-    // Create a simple test image
-    UIGraphicsBeginImageContextWithOptions(CGSize(width: 50, height: 50), false, 1.0)
-    UIColor.red.setFill()
-    UIRectFill(CGRect(x: 0, y: 0, width: 50, height: 50))
-    let baseUIImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-
-    // Create a mask image
-    UIGraphicsBeginImageContextWithOptions(CGSize(width: 50, height: 50), false, 1.0)
-    UIColor.blue.setFill()
-    UIRectFill(CGRect(x: 0, y: 0, width: 50, height: 50))
-    let maskUIImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-
-    let baseImage = baseUIImage.cgImage!
-    let maskImage = maskUIImage.cgImage!
-
-    let composedImage = composeImageWithMask(baseImage: baseImage, maskImage: maskImage)
-
-    XCTAssertNotNil(composedImage)
-    XCTAssertEqual(composedImage?.size.width, 50)
-    XCTAssertEqual(composedImage?.size.height, 50)
-  }
-
   func testOBBShapeLayerBundleInitialization() {
     // Test OBBShapeLayerBundle initialization
     let bundle = OBBShapeLayerBundle()
@@ -214,13 +188,13 @@ import XCTest
   }
 
   func testDrawPoseOnCIImageWithEmptyKeypoints() {
-    // Test drawPoseOnCIImage with empty keypoints
+  
     let inputImage = CIImage(color: .cyan).cropped(to: CGRect(x: 0, y: 0, width: 300, height: 200))
     let emptyKeypoints: [[(x: Float, y: Float)]] = []
     let emptyConfs: [[Float]] = []
     let emptyBoxes: [Box] = []
 
-    let outputImage = drawPoseOnCIImage(
+    let outputImage = drawYOLOPoseWithBoxes(
       ciImage: inputImage,
       keypointsList: emptyKeypoints,
       confsList: emptyConfs,

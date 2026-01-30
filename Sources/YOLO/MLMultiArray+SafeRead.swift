@@ -1,4 +1,5 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
 //
 // Safe reading of MLMultiArray without assuming Float32. Core ML models may output
 // Float32 or Double; assumingMemoryBound(to: Float.self) on Double data misinterprets

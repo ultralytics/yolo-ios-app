@@ -35,15 +35,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func onInferenceTime(speed: Double, fps: Double) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
-      // Notify delegate of performance metrics
-
+      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)
       self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
     }
   }
 
   public func onPredict(result: YOLOResult) {
-    // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
     showBoxes(predictions: result)
@@ -81,14 +78,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
         on: poseLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
     } else if task == .obb {
-      //            self.setupObbLayerIfNeeded()
       guard let obbLayer = self.obbLayer else { return }
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
         obbDetections: obbDetections,
         on: obbLayer,
         imageViewSize: self.overlayLayer.frame.size,
-        originalImageSize: result.orig_shape,  // Example
+        originalImageSize: result.orig_shape,
         lineWidth: 3
       )
     }
@@ -98,16 +94,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   private var videoCapture: VideoCapture
   private var busy = false
   private var currentBuffer: CVPixelBuffer?
-  var framesDone = 0
-  var t0 = 0.0  // inference start
-  var t1 = 0.0  // inference dt
-  var t2 = 0.0  // inference dt smoothed
-  var t3 = CACurrentMediaTime()  // FPS start
-  var t4 = 0.0  // FPS dt smoothed
   var task = YOLOTask.detect
-  var colors: [String: UIColor] = [:]
   var modelName: String = ""
-  var classes: [String] = []
   let maxBoundingBoxViews = 100
   var boundingBoxViews = [BoundingBoxView]()
   public var sliderNumItems = UISlider()
@@ -191,7 +179,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     task: YOLOTask,
     completion: (@Sendable (Result<Void, Error>) -> Void)? = nil
   ) {
-    // If modelPathOrName is empty, it means no model was provided yet
     if modelPathOrName.isEmpty {
       self.activityIndicator.stopAnimating()
       completion?(.failure(PredictorError.modelFileNotFound))
@@ -232,12 +219,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     guard let unwrappedModelURL = modelURL else {
       let error = PredictorError.modelFileNotFound
-      fatalError(error.localizedDescription)
+      activityIndicator.stopAnimating()
+      completion?(.failure(error))
+      return
     }
 
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
 
-    // Common success handling for all tasks
     let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
       Task { @MainActor in
         guard let self = self else { return }
@@ -248,7 +236,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       }
     }
 
-    // Common failure handling for all tasks
     let handleFailure: @Sendable (Error) -> Void = { [weak self] error in
       Task { @MainActor in
         guard let self = self else { return }
@@ -720,14 +707,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let labelText = " \(top1) \(confidencePercent)% "
 
     let textLayer = CATextLayer()
-    textLayer.contentsScale = UIScreen.main.scale  // Retina display support
+    textLayer.contentsScale = UIScreen.main.scale
     textLayer.alignmentMode = .left
-
-    // Check if this is likely an external display and scale font accordingly
     let viewBounds = self.bounds
     let maxDimension = max(viewBounds.width, viewBounds.height)
     let fontSize: CGFloat
-
     if maxDimension > 1000 {
       fontSize = max(36, viewBounds.height * 0.04)
     } else {
@@ -831,7 +815,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
 
-  /// Configure a slider with common settings
   private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
     slider.minimumValue = min
     slider.maximumValue = max
@@ -855,148 +838,57 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
+    applyToolbarStyling()
 
-    // Apply consistent toolbar styling
-    applyToolbarStyling(isLandscape: isLandscape)
-
-    if isLandscape {
-      layoutLandscape()
-    } else {
-      layoutPortrait()
-    }
-
+    layoutSubviewsContent(isLandscape: isLandscape)
     self.videoCapture.previewLayer?.frame = self.bounds
   }
 
-  /// Apply consistent toolbar and button styling
-  private func applyToolbarStyling(isLandscape: Bool) {
+  private func applyToolbarStyling() {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    let buttonColor: UIColor = isLandscape ? .white : .white
-    [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
-      button.tintColor = buttonColor
+    [playButton, pauseButton, switchCameraButton, shareButton].forEach { $0.tintColor = .white }
+  }
+
+  private func layoutSubviewsContent(isLandscape: Bool) {
+    let width = bounds.width
+    let height = bounds.height
+    let titleLabelHeight = height * 0.1
+    labelName.frame = CGRect(x: 0, y: 0, width: width, height: titleLabelHeight)
+    let subLabelHeight = height * 0.04
+    let sliderWidth = isLandscape ? width * 0.2 : width * 0.46
+    let sliderHeight = isLandscape ? height * 0.06 : height * 0.02
+    let padX = isLandscape ? width * 0.1 : CGFloat(20)
+    let spacing: CGFloat = isLandscape ? 3 : 10
+    if isLandscape {
+      labelFPS.frame = CGRect(
+        x: 0, y: center.y - height * 0.24 - subLabelHeight, width: width, height: subLabelHeight)
+      let startY = height - 80 - (sliderHeight + spacing) * 6
+      labelSliderNumItems.frame = CGRect(
+        x: padX, y: startY, width: sliderWidth, height: sliderHeight)
+    } else {
+      labelFPS.frame = CGRect(
+        x: 0, y: labelName.frame.maxY + 15, width: width, height: subLabelHeight)
+      labelSliderNumItems.frame = CGRect(
+        x: padX, y: center.y + height * 0.16, width: sliderWidth, height: sliderHeight)
     }
-  }
-
-  /// Layout views for landscape orientation
-  private func layoutLandscape() {
-    let width = bounds.width
-    let height = bounds.height
-    let topMargin: CGFloat = 0
-    let titleLabelHeight: CGFloat = height * 0.1
-
-    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-
-    let subLabelHeight: CGFloat = height * 0.04
-    labelFPS.frame = CGRect(
-      x: 0, y: center.y - height * 0.24 - subLabelHeight,
-      width: width, height: subLabelHeight
-    )
-
-    let sliderWidth: CGFloat = width * 0.2
-    let sliderHeight: CGFloat = height * 0.06
-
-    let bottomMargin: CGFloat = 80
-    let totalSliderHeight = (sliderHeight + 3) * 6
-    let startY = height - bottomMargin - totalSliderHeight
-
-    labelSliderNumItems.frame = CGRect(
-      x: width * 0.1, y: startY,
-      width: sliderWidth, height: sliderHeight
-    )
-
     sliderNumItems.frame = CGRect(
-      x: width * 0.1, y: labelSliderNumItems.frame.maxY + 3,
-      width: sliderWidth, height: sliderHeight
+      x: padX, y: labelSliderNumItems.frame.maxY + spacing, width: sliderWidth, height: sliderHeight
     )
-
     labelSliderConf.frame = CGRect(
-      x: width * 0.1, y: sliderNumItems.frame.maxY + 3,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
+      x: padX, y: sliderNumItems.frame.maxY + spacing, width: sliderWidth * 1.5,
+      height: sliderHeight)
     sliderConf.frame = CGRect(
-      x: width * 0.1, y: labelSliderConf.frame.maxY + 3,
-      width: sliderWidth, height: sliderHeight
-    )
-
+      x: padX, y: labelSliderConf.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
     labelSliderIoU.frame = CGRect(
-      x: width * 0.1, y: sliderConf.frame.maxY + 3,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
+      x: padX, y: sliderConf.frame.maxY + spacing, width: sliderWidth * 1.5, height: sliderHeight)
     sliderIoU.frame = CGRect(
-      x: width * 0.1, y: labelSliderIoU.frame.maxY + 3,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    let zoomLabelWidth: CGFloat = width * 0.2
+      x: padX, y: labelSliderIoU.frame.maxY + spacing, width: sliderWidth, height: sliderHeight)
+    let zoomW = width * 0.2
     labelZoom.frame = CGRect(
-      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
-      width: zoomLabelWidth, height: height * 0.03
-    )
-
+      x: center.x - zoomW / 2, y: bounds.maxY - 120, width: zoomW, height: height * 0.03)
     layoutToolbarButtons(width: width, height: height)
   }
 
-  /// Layout views for portrait orientation
-  private func layoutPortrait() {
-    let width = bounds.width
-    let height = bounds.height
-    let topMargin: CGFloat = 0
-    let titleLabelHeight: CGFloat = height * 0.1
-
-    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-
-    let subLabelHeight: CGFloat = height * 0.04
-    labelFPS.frame = CGRect(
-      x: 0, y: labelName.frame.maxY + 15,
-      width: width, height: subLabelHeight
-    )
-
-    let sliderWidth: CGFloat = width * 0.46
-    let sliderHeight: CGFloat = height * 0.02
-    let leftPadding: CGFloat = 20
-
-    labelSliderNumItems.frame = CGRect(
-      x: leftPadding, y: center.y + height * 0.16,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    sliderNumItems.frame = CGRect(
-      x: leftPadding, y: labelSliderNumItems.frame.maxY + 10,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    labelSliderConf.frame = CGRect(
-      x: leftPadding, y: sliderNumItems.frame.maxY + 10,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderConf.frame = CGRect(
-      x: leftPadding, y: labelSliderConf.frame.maxY + 10,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    labelSliderIoU.frame = CGRect(
-      x: leftPadding, y: sliderConf.frame.maxY + 10,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderIoU.frame = CGRect(
-      x: leftPadding, y: labelSliderIoU.frame.maxY + 10,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    let zoomLabelWidth: CGFloat = width * 0.2
-    labelZoom.frame = CGRect(
-      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
-      width: zoomLabelWidth, height: height * 0.03
-    )
-
-    layoutToolbarButtons(width: width, height: height)
-  }
-
-  /// Layout toolbar buttons (shared between orientations)
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75
@@ -1035,8 +927,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
     videoCapture.updateVideoOrientation(orientation: orientation)
-
-    //      frameSizeCaptured = false
   }
 
   @objc public func sliderChanged(_ sender: Any) {
@@ -1146,9 +1036,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
 
     self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    guard let currentPosition = currentInput?.device.position else { return }
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
+    else {
+      self.videoCapture.captureSession.commitConfiguration()
+      return
+    }
+    self.videoCapture.captureSession.removeInput(currentInput)
+    let currentPosition = currentInput.device.position
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
@@ -1190,6 +1084,11 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+    videoCapture.stop()
   }
 }
 
@@ -1288,12 +1187,12 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
     if let error = error {
       print("error occurred : \(error.localizedDescription)")
     }
-    if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
+    if let dataImage = photo.fileDataRepresentation(),
+      let dataProvider = CGDataProvider(data: dataImage as CFData),
+      let cgImageRef = CGImage(
+        jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
         intent: .defaultIntent)
-
+    {
       Task { @MainActor [weak self] in
         guard let self = self else { return }
 
@@ -1376,37 +1275,6 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
         photoCaptureCompletion?(img)
         photoCaptureCompletion = nil
       }
-    } else {
-      print("AVCapturePhotoCaptureDelegate Error")
     }
   }
-}
-
-public func processString(_ input: String) -> String {
-  var output = input.replacingOccurrences(
-    of: "yolo",
-    with: "YOLO",
-    options: .caseInsensitive,
-    range: nil
-  )
-
-  output = output.replacingOccurrences(
-    of: "obb",
-    with: "OBB",
-    options: .caseInsensitive,
-    range: nil
-  )
-
-  guard !output.isEmpty else {
-    return output
-  }
-
-  let first = output[output.startIndex]
-  let firstUppercased = String(first).uppercased()
-
-  if String(first) != firstUppercased {
-    output = firstUppercased + output.dropFirst()
-  }
-
-  return output
 }

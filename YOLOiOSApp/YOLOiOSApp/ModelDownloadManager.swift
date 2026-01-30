@@ -221,12 +221,34 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     else { return }
 
     do {
+      // Verify the downloaded file exists and has content
+      let fileAttributes = try FileManager.default.attributesOfItem(atPath: location.path)
+      guard let fileSize = fileAttributes[.size] as? Int64, fileSize > 0 else {
+        throw NSError(
+          domain: "ModelDownload", code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Downloaded file is empty or invalid"])
+      }
+
       let zipURL = destinationURL
       if fileExists(at: zipURL) {
         try FileManager.default.removeItem(at: zipURL)
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
       downloadTasks.removeValue(forKey: downloadTask)
+
+      // Verify ZIP file is valid before attempting extraction
+      do {
+        _ = try Archive(url: zipURL, accessMode: .read)
+      } catch {
+        print("ModelDownloadManager: ZIP file is corrupted: \(error)")
+        try? FileManager.default.removeItem(at: zipURL)
+        throw NSError(
+          domain: "ModelDownload", code: 3,
+          userInfo: [
+            NSLocalizedDescriptionKey:
+              "Downloaded ZIP file is corrupted: \(error.localizedDescription)"
+          ])
+      }
 
       // Extract to model-specific temporary directory to avoid conflicts
       let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
@@ -274,7 +296,12 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         self.completeTask(downloadTask, model: model, key: key)
       }
     } catch {
-      print("Download processing failed: \(error)")
+      print("ModelDownloadManager: Download processing failed for key '\(key)': \(error)")
+      // Clean up any partial files
+      let zipURL = downloadTasks[downloadTask]?.url ?? destinationURL
+      try? FileManager.default.removeItem(at: zipURL)
+      let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
+      try? FileManager.default.removeItem(at: tempExtractionURL)
       completeTask(downloadTask, model: nil, key: key)
     }
   }
@@ -302,6 +329,25 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
   ) {
     let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
     DispatchQueue.main.async { self.progressHandler?(progress) }
+  }
+
+  func urlSession(
+    _ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?
+  ) {
+    guard let error = error else { return }
+    guard let downloadTask = task as? URLSessionDownloadTask,
+      let key = downloadTasks[downloadTask]?.key
+    else { return }
+
+    print("ModelDownloadManager: Download failed for key '\(key)': \(error.localizedDescription)")
+
+    // Clean up partial download
+    if let destinationURL = downloadTasks[downloadTask]?.url {
+      try? FileManager.default.removeItem(at: destinationURL)
+    }
+
+    downloadTasks.removeValue(forKey: downloadTask)
+    completeTask(downloadTask, model: nil, key: key)
   }
 }
 

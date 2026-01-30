@@ -15,15 +15,37 @@ import Foundation
 
 /// A dictionary mapping task names to available remote models with their download URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = {
-  let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
+  let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.8.0"
   let sizes = ["n", "s", "m", "l", "x"]
   let tasks = [
     ("Detect", ""), ("Segment", "-seg"), ("Classify", "-cls"), ("Pose", "-pose"), ("OBB", "-obb"),
   ]
-  return tasks.reduce(into: [:]) { result, task in
-    result[task.0] = sizes.map { size in
-      let model = "yolo11\(size)\(task.1)"
-      return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
+
+  // Combine yolo11 and yolo26 models
+  var result: [String: [(modelName: String, downloadURL: URL)]] = [:]
+
+  for task in tasks {
+    var models: [(modelName: String, downloadURL: URL)] = []
+
+    // YOLO26 models are not available for download yet - they should be added locally
+    // to DetectModels/, SegmentModels/, etc. folders in the app bundle
+    // Once they're uploaded to assets, uncomment the following:
+    /*
+    // Add yolo26 models first (prioritized - they're newer and don't need NMS)
+    for size in sizes {
+      let model = "yolo26\(size)\(task.1)"
+      models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
     }
+    */
+
+    // Add yolo11 models (legacy support)
+    for size in sizes {
+      let model = "yolo11\(size)\(task.1)"
+      models.append((model, URL(string: "\(base)/\(model).mlpackage.zip")!))
+    }
+
+    result[task.0] = models
   }
+
+  return result
 }()

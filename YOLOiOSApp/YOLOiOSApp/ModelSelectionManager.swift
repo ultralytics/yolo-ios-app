@@ -35,31 +35,76 @@ struct ModelSelectionManager {
     }
   }()
 
-  static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)])
-    -> [ModelSize: ModelInfo]
-  {
+  static func categorizeModels(
+    from models: [(name: String, url: URL?, isLocal: Bool)],
+    preferYOLO26: Bool = true
+  ) -> [ModelSize: ModelInfo] {
     var standardModels: [ModelSize: ModelInfo] = [:]
+    let targetVersion = preferYOLO26 ? 26 : 11
 
     for model in models {
       let baseName = (model.name as NSString).deletingPathExtension.lowercased()
+      guard baseName.hasPrefix("yolo") else { continue }
 
-      if baseName.hasPrefix("yolo") {
-        let sizeChar = extractSizeFromModelName(baseName)
+      guard
+        let sizeChar = extractSizeFromModelName(baseName),
+        let size = ModelSize(rawValue: String(sizeChar))
+      else { continue }
 
-        if let char = sizeChar,
-          let size = ModelSize(rawValue: String(char))
-        {
-          standardModels[size] = ModelInfo(
-            name: model.name,
-            url: model.url,
-            isLocal: model.isLocal,
-            size: size
-          )
+      let currentVersion = extractVersionNumber(from: baseName)
+
+      func isBetterCandidate(new: ModelInfo, current: ModelInfo?) -> Bool {
+        guard let current = current else { return true }
+        let currentName = (current.name as NSString).deletingPathExtension.lowercased()
+        let existingVersion = extractVersionNumber(from: currentName)
+
+        let newMatchesTarget = currentVersion == targetVersion
+        let existingMatchesTarget = existingVersion == targetVersion
+
+        if newMatchesTarget != existingMatchesTarget {
+          return newMatchesTarget
         }
+
+        if new.isLocal != current.isLocal {
+          return new.isLocal
+        }
+
+        if let newVer = currentVersion, let existingVer = existingVersion, newVer != existingVer {
+          return newVer > existingVer
+        }
+
+        return false
+      }
+
+      let info = ModelInfo(
+        name: model.name,
+        url: model.url,
+        isLocal: model.isLocal,
+        size: size
+      )
+
+      if isBetterCandidate(new: info, current: standardModels[size]) {
+        standardModels[size] = info
       }
     }
 
     return standardModels
+  }
+
+  private static func extractVersionNumber(from name: String) -> Int? {
+    // Extract version number from names like "yolo11n", "yolo26n", etc.
+    let pattern = "^yolo(\\d+)"
+    if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+      let match = regex.firstMatch(
+        in: name, options: [], range: NSRange(location: 0, length: name.count)),
+      match.numberOfRanges > 1
+    {
+      let versionRange = match.range(at: 1)
+      if let range = Range(versionRange, in: name) {
+        return Int(String(name[range]))
+      }
+    }
+    return nil
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {
@@ -190,7 +235,6 @@ struct ModelSelectionManager {
   ) {
     if #available(iOS 13.0, *) {
       if let title = control.titleForSegment(at: index) {
-        let attributes: [NSAttributedString.Key: Any] = [.foregroundColor: color]
         control.setTitle(title, forSegmentAt: index)
 
         if let image = control.imageForSegment(at: index) {

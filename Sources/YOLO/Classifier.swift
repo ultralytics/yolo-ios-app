@@ -19,6 +19,9 @@ import Vision
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
 public class Classifier: BasePredictor, @unchecked Sendable {
 
+  /// Checks if the current model is a YOLO26 model
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
+
   override func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
     detector?.featureProvider = ThresholdProvider(
@@ -45,9 +48,11 @@ public class Classifier: BasePredictor, @unchecked Sendable {
       if let multiArray = multiArray {
         // Initialize an array to store the classes
         var valuesArray = [Double]()
+
         for i in 0..<multiArray.count {
-          let value = multiArray[i].doubleValue
-          valuesArray.append(value)
+          let rawValue = multiArray[i].doubleValue
+          let normalizedValue = isYOLO26Model ? normalizeYOLO26Score(rawValue) : rawValue
+          valuesArray.append(normalizedValue)
         }
 
         var indexedMap = [Int: Double]()
@@ -133,17 +138,17 @@ public class Classifier: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        _ = [[String: Any]]()
-
         // Get the MLMultiArray from the observation
         let multiArray = observation.first?.featureValue.multiArrayValue
 
         if let multiArray = multiArray {
           // Initialize an array to store the classes
           var valuesArray = [Double]()
+
           for i in 0..<multiArray.count {
-            let value = multiArray[i].doubleValue
-            valuesArray.append(value)
+            let rawValue = multiArray[i].doubleValue
+            let normalizedValue = isYOLO26Model ? normalizeYOLO26Score(rawValue) : rawValue
+            valuesArray.append(normalizedValue)
           }
 
           var indexedMap = [Int: Double]()

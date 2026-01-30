@@ -22,6 +22,9 @@ import Vision
 public class Segmenter: BasePredictor, @unchecked Sendable {
   var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
+  /// Checks if the current model is a YOLO26 model
+  private var isYOLO26Model: Bool { isYOLO26Model(from: modelURL) }
+
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
       //            DispatchQueue.main.async { [self] in
@@ -32,7 +35,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let out1 = results[1].featureValue.multiArrayValue
       else { return }
       let out0dim = checkShapeDimensions(of: out0)
-      _ = checkShapeDimensions(of: out1)
+
       if out0dim == 4 {
         masks = out0
         pred = out1
@@ -67,7 +70,8 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           width: box.width / modelWidth, height: box.height / modelHeight)
         let confidence = p.2
         let bestClass = p.1
-        let label = self.labels[bestClass]
+        let label =
+          (bestClass >= 0 && bestClass < self.labels.count) ? self.labels[bestClass] : "unknown"
         let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
         let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
@@ -152,7 +156,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         }
 
         let out0dim = checkShapeDimensions(of: out0)
-        _ = checkShapeDimensions(of: out1)
+
         if out0dim == 4 {
           masks = out0
           pred = out1
@@ -184,7 +188,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
             width: box.width / modelWidth, height: box.height / modelHeight)
           let confidence = p.2
           let bestClass = p.1
-          let label = labels[bestClass]
+          let label = (bestClass >= 0 && bestClass < labels.count) ? labels[bestClass] : "unknown"
           let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
           let boxResult = Box(
@@ -246,8 +250,41 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     iouThreshold: Float
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
 
-    let numAnchors = feature.shape[2].intValue
-    let numFeatures = feature.shape[1].intValue
+    let shape = feature.shape.map { $0.intValue }
+
+    // YOLO26 segmentation with post-NMS export: one dimension is exactly 38 (6 box+conf+class + 32 mask coeffs).
+    // Layout: [batch, num_detections, 38] or [batch, 38, num_detections]. If neither dim is 38, use anchor path below (e.g. [1, 116, 8400]).
+    if isYOLO26Model && shape.count == 3 && (shape[1] == 38 || shape[2] == 38) {
+      let detectionFirst = shape[1] > shape[2]
+      let numDetections = detectionFirst ? shape[1] : shape[2]
+      let numFeatures = detectionFirst ? shape[2] : shape[1]
+      return postProcessYOLO26SegmentFormat(
+        feature: feature,
+        numDetections: numDetections,
+        numFeatures: numFeatures,
+        detectionFirst: detectionFirst,
+        confidenceThreshold: confidenceThreshold,
+        modelInputSize: self.modelInputSize
+      )
+    }
+
+    // YOLO11 anchor-based format: [batch, features, anchors] or [features, anchors]
+    let numAnchors: Int
+    let numFeatures: Int
+
+    if shape.count == 3 {
+      // Format: [batch, features, anchors]
+      numAnchors = shape[2]
+      numFeatures = shape[1]
+    } else if shape.count == 2 {
+      // Format: [features, anchors]
+      numAnchors = shape[1]
+      numFeatures = shape[0]
+    } else {
+      print("Segmenter: Unexpected feature shape: \(shape)")
+      return []
+    }
+
     let boxFeatureLength = 4
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
@@ -366,6 +403,95 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     }
 
     return selectedBoxesAndFeatures
+  }
+
+  /// Post-processes YOLO26 segmentation model output in post-NMS format
+  /// Layout: detectionFirst ? [batch, num_detections, 38] : [batch, 38, num_detections]
+  /// 38 = 6 (x1, y1, x2, y2, conf, class) + 32 (mask coefficients)
+  private func postProcessYOLO26SegmentFormat(
+    feature: MLMultiArray,
+    numDetections: Int,
+    numFeatures: Int,
+    detectionFirst: Bool,
+    confidenceThreshold: Float,
+    modelInputSize: (width: Int, height: Int)
+  ) -> [(CGRect, Int, Float, MLMultiArray)] {
+
+    guard modelInputSize.width > 0 && modelInputSize.height > 0 else { return [] }
+
+    let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    var results: [(CGRect, Int, Float, MLMultiArray)] = []
+    results.reserveCapacity(min(numDetections, 100))
+
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let maskConfidenceLength = 32
+    var maskBuffer = [Float](repeating: 0, count: maskConfidenceLength)
+
+    func value(detection: Int, featureIndex: Int) -> Float {
+      if detectionFirst {
+        return featurePointer[detection * numFeatures + featureIndex]
+      } else {
+        return featurePointer[featureIndex * numDetections + detection]
+      }
+    }
+
+    for i in 0..<numDetections {
+      let x1 = CGFloat(value(detection: i, featureIndex: 0))
+      let y1 = CGFloat(value(detection: i, featureIndex: 1))
+      let x2 = CGFloat(value(detection: i, featureIndex: 2))
+      let y2 = CGFloat(value(detection: i, featureIndex: 3))
+      var confidence = value(detection: i, featureIndex: 4)
+      let rawClass = Int(round(value(detection: i, featureIndex: 5)))
+      let classIndex: Int
+      if rawClass >= 0 && rawClass < self.labels.count {
+        classIndex = rawClass
+      } else {
+        classIndex = self.labels.isEmpty ? 0 : min(max(0, rawClass), self.labels.count - 1)
+      }
+
+      if confidence > 1.0 && confidence <= 100.0 {
+        confidence = confidence / 100.0
+      } else if confidence > 100.0 {
+        confidence = 1.0 / (1.0 + exp(-confidence))
+      }
+
+      if confidence < confidenceThreshold {
+        continue
+      }
+
+      let boxX = x1
+      let boxY = y1
+      let boxW = x2 - x1
+      let boxH = y2 - y1
+
+      let clampedX = max(0.0, min(CGFloat(modelWidth), boxX))
+      let clampedY = max(0.0, min(CGFloat(modelHeight), boxY))
+      let clampedW = max(0.0, min(CGFloat(modelWidth) - clampedX, boxW))
+      let clampedH = max(0.0, min(CGFloat(modelHeight) - clampedY, boxH))
+
+      let box = CGRect(x: clampedX, y: clampedY, width: clampedW, height: clampedH)
+
+      for j in 0..<maskConfidenceLength {
+        maskBuffer[j] = value(detection: i, featureIndex: 6 + j)
+      }
+      guard
+        let maskProbs = try? MLMultiArray(
+          shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
+      else {
+        continue
+      }
+      let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
+      maskBuffer.withUnsafeBufferPointer { ptr in
+        guard let base = ptr.baseAddress else { return }
+        maskProbsData.assign(from: base, count: maskConfidenceLength)
+      }
+
+      let result = (box, classIndex, confidence, maskProbs)
+      results.append(result)
+    }
+
+    return results
   }
 
   func checkShapeDimensions(of multiArray: MLMultiArray) -> Int {

@@ -35,7 +35,7 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
         for result in limitedResults {
           let box = result.box
           let score = result.score
-          let clsIdx = labels[result.cls]
+          let clsIdx = result.cls < labels.count ? labels[result.cls] : "unknown"
           let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
           obbResults.append(obbResult)
         }
@@ -87,7 +87,7 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
           for result in limitedResults {
             let box = result.box
             let score = result.score
-            let clsIdx = labels[result.cls]
+            let clsIdx = result.cls < labels.count ? labels[result.cls] : "unknown"
             let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
             obbResults.append(obbResult)
           }

@@ -655,17 +655,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  /// Setup YOLO26 info badge shown when YOLO26 is active
   private func setupYOLO26InfoButton() {
     yolo26InfoButton = UIButton(type: .system)
-    yolo26InfoButton.setTitle("w/o nms", for: .normal)
-    yolo26InfoButton.titleLabel?.font = .systemFont(ofSize: 11, weight: .semibold)
-    yolo26InfoButton.setTitleColor(.white, for: .normal)
-    yolo26InfoButton.backgroundColor = .systemOrange.withAlphaComponent(0.2)
-    yolo26InfoButton.layer.cornerRadius = 10
-    yolo26InfoButton.layer.borderWidth = 1
-    yolo26InfoButton.layer.borderColor = UIColor.systemOrange.cgColor
-    yolo26InfoButton.contentEdgeInsets = UIEdgeInsets(top: 3, left: 8, bottom: 3, right: 8)
+    var config = UIButton.Configuration.plain()
+    config.attributedTitle = AttributedString("w/o nms", attributes: AttributeContainer([.font: UIFont.systemFont(ofSize: 11, weight: .semibold)]))
+    config.baseForegroundColor = .white
+    config.background.backgroundColor = .systemOrange.withAlphaComponent(0.2)
+    config.background.cornerRadius = 10
+    config.background.strokeColor = .systemOrange
+    config.background.strokeWidth = 1
+    config.contentInsets = NSDirectionalEdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8)
+    yolo26InfoButton.configuration = config
     yolo26InfoButton.addTarget(
       self, action: #selector(yolo26InfoButtonTapped), for: .touchUpInside)
     yolo26InfoButton.translatesAutoresizingMaskIntoConstraints = false

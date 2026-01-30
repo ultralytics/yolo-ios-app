@@ -243,3 +243,13 @@ public class YOLO: @unchecked Sendable {
     return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 }
+
+public func processString(_ input: String) -> String {
+  var output = input.replacingOccurrences(of: "yolo", with: "YOLO", options: .caseInsensitive, range: nil)
+  output = output.replacingOccurrences(of: "obb", with: "OBB", options: .caseInsensitive, range: nil)
+  guard !output.isEmpty else { return output }
+  let first = output[output.startIndex]
+  let firstUppercased = String(first).uppercased()
+  if String(first) != firstUppercased { output = firstUppercased + output.dropFirst() }
+  return output
+}

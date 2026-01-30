@@ -188,7 +188,7 @@ import XCTest
   }
 
   func testDrawPoseOnCIImageWithEmptyKeypoints() {
-  
+
     let inputImage = CIImage(color: .cyan).cropped(to: CGRect(x: 0, y: 0, width: 300, height: 200))
     let emptyKeypoints: [[(x: Float, y: Float)]] = []
     let emptyConfs: [[Float]] = []

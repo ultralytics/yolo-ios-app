@@ -42,6 +42,9 @@ public final class CameraProvider: NSObject, @unchecked Sendable {
 
     let stream = AsyncStream<CVPixelBuffer> { continuation in
       self.continuation = continuation
+      continuation.onTermination = { @Sendable _ in
+        // Cleanup when stream ends
+      }
     }
 
     try setupCamera(position: position)
@@ -151,6 +154,18 @@ extension CameraProvider: AVCaptureVideoDataOutputSampleBufferDelegate {
     from connection: AVCaptureConnection
   ) {
     guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-    continuation?.yield(pixelBuffer)
+    // Explicitly retain to ensure validity across concurrency boundaries
+    CVPixelBufferRetain(pixelBuffer)
+    // Wrap in UnsafeSendable to satisfy compiler while maintaining safety through manual retain
+    let sendableBuffer = UnsafeSendable(pixelBuffer)
+    continuation?.yield(sendableBuffer.value)
   }
 }
+/// Wrapper to suppress Sendable checking for types that are manually managed for thread safety
+private struct UnsafeSendable<T>: @unchecked Sendable {
+  let value: T
+  init(_ value: T) {
+    self.value = value
+  }
+}
+

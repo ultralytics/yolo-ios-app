@@ -3,13 +3,12 @@
 import CoreML
 import XCTest
 
-@testable import YOLO
+@testable import YOLOCore
 
-/// Minimal tests for ThresholdProvider
+/// Tests for ThresholdProvider
 class ThresholdProviderTests: XCTestCase {
 
   func testDefaultInitialization() {
-    // Test ThresholdProvider with default values
     let provider = ThresholdProvider()
 
     XCTAssertEqual(provider.featureNames.count, 2)
@@ -26,7 +25,6 @@ class ThresholdProviderTests: XCTestCase {
   }
 
   func testCustomInitialization() {
-    // Test ThresholdProvider with custom values
     let provider = ThresholdProvider(iouThreshold: 0.7, confidenceThreshold: 0.8)
 
     let iouValue = provider.featureValue(for: "iouThreshold")
@@ -37,15 +35,12 @@ class ThresholdProviderTests: XCTestCase {
   }
 
   func testInvalidFeatureName() {
-    // Test behavior with invalid feature name
     let provider = ThresholdProvider()
     let value = provider.featureValue(for: "invalidFeature")
-
     XCTAssertNil(value)
   }
 
   func testFeatureNames() {
-    // Test featureNames property
     let provider = ThresholdProvider()
     let names = provider.featureNames
 

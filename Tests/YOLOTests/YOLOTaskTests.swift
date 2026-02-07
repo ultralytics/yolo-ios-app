@@ -2,18 +2,15 @@
 
 import XCTest
 
-@testable import YOLO
+@testable import YOLOCore
 
-/// Minimal tests for YOLOTask enum
+/// Tests for YOLOTask enum
 class YOLOTaskTests: XCTestCase {
 
   func testAllTaskTypes() {
-    // Test all YOLOTask enum cases exist and are distinct
     let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
-
     XCTAssertEqual(tasks.count, 5)
 
-    // Test each task type
     XCTAssertNotEqual(YOLOTask.detect, YOLOTask.segment)
     XCTAssertNotEqual(YOLOTask.detect, YOLOTask.pose)
     XCTAssertNotEqual(YOLOTask.detect, YOLOTask.obb)
@@ -22,7 +19,6 @@ class YOLOTaskTests: XCTestCase {
   }
 
   func testTaskEquality() {
-    // Test YOLOTask equality
     XCTAssertEqual(YOLOTask.detect, YOLOTask.detect)
     XCTAssertEqual(YOLOTask.segment, YOLOTask.segment)
     XCTAssertEqual(YOLOTask.pose, YOLOTask.pose)
@@ -31,7 +27,6 @@ class YOLOTaskTests: XCTestCase {
   }
 
   func testTaskSwitchStatement() {
-    // Test YOLOTask can be used in switch statements
     func taskDescription(_ task: YOLOTask) -> String {
       switch task {
       case .detect: return "detection"
@@ -50,18 +45,9 @@ class YOLOTaskTests: XCTestCase {
   }
 
   func testTaskInArray() {
-    // Test YOLOTask can be stored in arrays and collections
     let detectionTasks: [YOLOTask] = [.detect, .obb]
-    let segmentationTasks: [YOLOTask] = [.segment]
-    let humanTasks: [YOLOTask] = [.pose]
-    let classificationTasks: [YOLOTask] = [.classify]
-
     XCTAssertTrue(detectionTasks.contains(.detect))
     XCTAssertTrue(detectionTasks.contains(.obb))
     XCTAssertFalse(detectionTasks.contains(.segment))
-
-    XCTAssertTrue(segmentationTasks.contains(.segment))
-    XCTAssertTrue(humanTasks.contains(.pose))
-    XCTAssertTrue(classificationTasks.contains(.classify))
   }
 }

@@ -1,16 +1,14 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import CoreGraphics
-import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import YOLOCore
 
-/// Minimal tests for YOLOResult data structures
+/// Tests for YOLOResult data structures
 class YOLOResultTests: XCTestCase {
 
   func testBoxCreation() {
-    // Test Box struct initialization and properties
     let box = Box(
       index: 5,
       cls: "person",
@@ -27,7 +25,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testYOLOResultCreation() {
-    // Test YOLOResult struct initialization
     let boxes = [Box(index: 0, cls: "cat", conf: 0.9, xywh: CGRect(), xywhn: CGRect())]
     let result = YOLOResult(
       orig_shape: CGSize(width: 640, height: 480),
@@ -44,7 +41,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testProbsCreation() {
-    // Test Probs struct for classification results
     var probs = Probs(
       top1: "dog",
       top5: ["dog", "cat", "bird", "fish", "mouse"],
@@ -62,7 +58,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testMasksCreation() {
-    // Test Masks struct for segmentation results
     let maskData: [[[Float]]] = [[[0.1, 0.9], [0.8, 0.2]]]
     let masks = Masks(masks: maskData, combinedMask: nil)
 
@@ -72,7 +67,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testKeypointsCreation() {
-    // Test Keypoints struct for pose estimation
     let keypoints = Keypoints(
       xyn: [(0.5, 0.3), (0.6, 0.4)],
       xy: [(320, 240), (384, 288)],
@@ -85,7 +79,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testOBBCreation() {
-    // Test OBB struct for oriented bounding boxes
     let obb = OBB(cx: 100, cy: 50, w: 80, h: 40, angle: 0.5)
 
     XCTAssertEqual(obb.cx, 100, accuracy: 0.001)
@@ -94,7 +87,6 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testOBBToPolygon() {
-    // Test OBB conversion to polygon points
     let obb = OBB(cx: 0, cy: 0, w: 4, h: 2, angle: 0)
     let polygon = obb.toPolygon()
 
@@ -104,15 +96,15 @@ class YOLOResultTests: XCTestCase {
   }
 
   func testOBBArea() {
-    // Test OBB area calculation
     let obb = OBB(cx: 0, cy: 0, w: 10, h: 5, angle: 1.0)
     XCTAssertEqual(obb.area, 50, accuracy: 0.001)
   }
 
   func testOBBResultCreation() {
-    // Test OBBResult struct
-    let obb = OBB(cx: 50, cy: 25, w: 30, h: 20, angle: 0.3)
-    var obbResult = OBBResult(box: obb, confidence: 0.8, cls: "car", index: 2)
+    var obbResult = OBBResult(
+      box: OBB(cx: 50, cy: 25, w: 30, h: 20, angle: 0.3),
+      confidence: 0.8, cls: "car", index: 2
+    )
 
     XCTAssertEqual(obbResult.confidence, 0.8, accuracy: 0.001)
     XCTAssertEqual(obbResult.cls, "car")
@@ -120,5 +112,17 @@ class YOLOResultTests: XCTestCase {
 
     obbResult.confidence = 0.9
     XCTAssertEqual(obbResult.confidence, 0.9, accuracy: 0.001)
+  }
+
+  func testYOLOResultSendable() {
+    // Verify YOLOResult and all subtypes are Sendable (compile-time check)
+    let result = YOLOResult(
+      orig_shape: CGSize(width: 640, height: 480),
+      boxes: [Box(index: 0, cls: "test", conf: 0.5, xywh: CGRect(), xywhn: CGRect())],
+      names: ["test"]
+    )
+    let _: any Sendable = result
+    let _: any Sendable = result.boxes[0]
+    XCTAssertTrue(true)
   }
 }

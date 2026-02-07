@@ -1,35 +1,24 @@
-// swift-tools-version: 5.10
-// WARNING: <=5.10 requires for GitHub Actions CI
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
   name: "YOLO",
-  platforms: [
-    .iOS(.v16)
-  ],
+  platforms: [.iOS(.v16)],
   products: [
-    // Products define the executables and libraries a package produces, making them visible to other packages.
-    .library(
-      name: "YOLO",
-      targets: ["YOLO"])
+    .library(name: "YOLOCore", targets: ["YOLOCore"]),
+    .library(name: "YOLOUI", targets: ["YOLOUI"]),
   ],
   dependencies: [
     .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19")
   ],
   targets: [
-    // Targets are the basic building blocks of a package, defining a module or a test suite.
-    // Targets can depend on other targets in this package and products from dependencies.
-    .target(
-      name: "YOLO",
-      dependencies: ["ZIPFoundation"]),
+    .target(name: "YOLOCore", dependencies: ["ZIPFoundation"]),
+    .target(name: "YOLOUI", dependencies: ["YOLOCore"]),
     .testTarget(
       name: "YOLOTests",
-      dependencies: ["YOLO"],
-      resources: [
-        .process("Resources")
-      ]
+      dependencies: ["YOLOCore", "YOLOUI"],
+      resources: [.process("Resources")]
     ),
   ]
 )

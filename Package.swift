@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
   name: "YOLO",
-  platforms: [.iOS(.v16)],
+  platforms: [.iOS(.v17)],
   products: [
     .library(name: "YOLOCore", targets: ["YOLOCore"]),
     .library(name: "YOLOUI", targets: ["YOLOUI"]),

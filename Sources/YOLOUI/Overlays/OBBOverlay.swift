@@ -37,10 +37,9 @@ public struct OBBOverlay: View {
 
         // Draw label at first corner
         let label = String(format: "%@ %.0f%%", result.cls, result.confidence * 100)
-        let text = Text(label)
-          .font(.system(size: 12, weight: .semibold))
-          .foregroundStyle(.white)
-        let resolvedText = context.resolve(text)
+        var resolvedText = context.resolve(
+          Text(label).font(.system(size: 12, weight: .semibold)))
+        resolvedText.shading = .color(.white)
         let textSize = resolvedText.measure(in: CGSize(width: 300, height: 30))
 
         // Position label above top-left corner

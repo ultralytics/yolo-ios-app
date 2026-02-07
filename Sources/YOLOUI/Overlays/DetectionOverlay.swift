@@ -27,29 +27,59 @@ let ultralyticsColors: [Color] = [
   Color(red: 162 / 255, green: 255 / 255, blue: 11 / 255),
 ]
 
+/// Maps normalized coordinates (0–1, relative to camera frame) to view coordinates,
+/// matching `AVCaptureVideoPreviewLayer.resizeAspectFill` behavior.
+struct AspectFillTransform {
+  let scaleX: CGFloat
+  let scaleY: CGFloat
+  let offsetX: CGFloat
+  let offsetY: CGFloat
+
+  init(frameSize: CGSize, viewSize: CGSize) {
+    let scale = max(viewSize.width / frameSize.width, viewSize.height / frameSize.height)
+    let displayW = frameSize.width * scale
+    let displayH = frameSize.height * scale
+    self.scaleX = displayW
+    self.scaleY = displayH
+    self.offsetX = (displayW - viewSize.width) / 2
+    self.offsetY = (displayH - viewSize.height) / 2
+  }
+
+  func point(nx: CGFloat, ny: CGFloat) -> CGPoint {
+    CGPoint(x: nx * scaleX - offsetX, y: ny * scaleY - offsetY)
+  }
+
+  func rect(_ nr: CGRect) -> CGRect {
+    CGRect(
+      x: nr.minX * scaleX - offsetX,
+      y: nr.minY * scaleY - offsetY,
+      width: nr.width * scaleX,
+      height: nr.height * scaleY)
+  }
+}
+
 /// SwiftUI Canvas overlay for bounding box detection results.
 public struct DetectionOverlay: View {
   public let boxes: [Box]
+  public let frameSize: CGSize
   public let viewSize: CGSize
 
-  public init(boxes: [Box], viewSize: CGSize) {
+  public init(boxes: [Box], frameSize: CGSize, viewSize: CGSize) {
     self.boxes = boxes
+    self.frameSize = frameSize
     self.viewSize = viewSize
   }
 
   public var body: some View {
     Canvas { context, size in
+      let transform = AspectFillTransform(frameSize: frameSize, viewSize: size)
+
       for box in boxes {
         let color = ultralyticsColors[box.index % ultralyticsColors.count]
         let alpha = Double(max(0, min(1, (box.conf - 0.2) / 0.8 * 0.9)))
 
-        // Convert normalized coordinates to view coordinates
-        let rect = CGRect(
-          x: CGFloat(box.xywhn.minX) * size.width,
-          y: CGFloat(box.xywhn.minY) * size.height,
-          width: CGFloat(box.xywhn.width) * size.width,
-          height: CGFloat(box.xywhn.height) * size.height
-        )
+        // Convert normalized coordinates to view coordinates with aspect-fill mapping
+        let rect = transform.rect(box.xywhn)
 
         // Draw box
         let path = RoundedRectangle(cornerRadius: 4).path(in: rect)

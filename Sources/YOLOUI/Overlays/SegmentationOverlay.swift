@@ -7,11 +7,13 @@ import YOLOCore
 public struct SegmentationOverlay: View {
   public let boxes: [Box]
   public let masks: Masks?
+  public let frameSize: CGSize
   public let viewSize: CGSize
 
-  public init(boxes: [Box], masks: Masks?, viewSize: CGSize) {
+  public init(boxes: [Box], masks: Masks?, frameSize: CGSize, viewSize: CGSize) {
     self.boxes = boxes
     self.masks = masks
+    self.frameSize = frameSize
     self.viewSize = viewSize
   }
 
@@ -27,7 +29,7 @@ public struct SegmentationOverlay: View {
       }
 
       // Draw bounding boxes on top
-      DetectionOverlay(boxes: boxes, viewSize: viewSize)
+      DetectionOverlay(boxes: boxes, frameSize: frameSize, viewSize: viewSize)
     }
   }
 }

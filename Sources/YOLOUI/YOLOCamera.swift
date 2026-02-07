@@ -57,12 +57,13 @@ public struct YOLOCamera: View {
           CameraPreview(session: session.cameraProvider.captureSession)
             .ignoresSafeArea()
 
-          // Overlay
+          // Overlay — must ignore safe area to match CameraPreview's full-screen bounds
           if let result = latestResult {
             if let onResult {
               onResult(result)
             } else {
               overlayForTask(result: result, size: geometry.size)
+                .ignoresSafeArea()
             }
           }
         }
@@ -98,15 +99,19 @@ public struct YOLOCamera: View {
 
   @ViewBuilder
   private func overlayForTask(result: YOLOResult, size: CGSize) -> some View {
+    let frameSize = result.orig_shape
     switch task {
     case .detect:
-      DetectionOverlay(boxes: result.boxes, viewSize: size)
+      DetectionOverlay(boxes: result.boxes, frameSize: frameSize, viewSize: size)
     case .segment:
-      SegmentationOverlay(boxes: result.boxes, masks: result.masks, viewSize: size)
+      SegmentationOverlay(
+        boxes: result.boxes, masks: result.masks, frameSize: frameSize, viewSize: size)
     case .pose:
-      PoseOverlay(boxes: result.boxes, keypointsList: result.keypointsList, viewSize: size)
+      PoseOverlay(
+        boxes: result.boxes, keypointsList: result.keypointsList, frameSize: frameSize,
+        viewSize: size)
     case .obb:
-      OBBOverlay(obbResults: result.obb, viewSize: size)
+      OBBOverlay(obbResults: result.obb, frameSize: frameSize, viewSize: size)
     case .classify:
       ClassificationBanner(probs: result.probs)
     }

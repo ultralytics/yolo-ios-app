@@ -6,22 +6,26 @@ import YOLOCore
 /// SwiftUI Canvas overlay for oriented bounding box results.
 public struct OBBOverlay: View {
   public let obbResults: [OBBResult]
+  public let frameSize: CGSize
   public let viewSize: CGSize
 
-  public init(obbResults: [OBBResult], viewSize: CGSize) {
+  public init(obbResults: [OBBResult], frameSize: CGSize, viewSize: CGSize) {
     self.obbResults = obbResults
+    self.frameSize = frameSize
     self.viewSize = viewSize
   }
 
   public var body: some View {
     Canvas { context, size in
+      let transform = AspectFillTransform(frameSize: frameSize, viewSize: size)
+
       for result in obbResults {
         let color = ultralyticsColors[result.index % ultralyticsColors.count]
         let alpha = Double(max(0, min(1, (result.confidence - 0.2) / 0.8 * 0.9)))
 
-        // Get polygon corners and scale to view
+        // Get polygon corners and map to view with aspect-fill transform
         let polygon = result.box.toPolygon().map { pt in
-          CGPoint(x: pt.x * size.width, y: pt.y * size.height)
+          transform.point(nx: pt.x, ny: pt.y)
         }
 
         guard polygon.count == 4 else { continue }

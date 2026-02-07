@@ -33,21 +33,25 @@ private let posePalette: [(Int, Int, Int)] = [
 public struct PoseOverlay: View {
   public let boxes: [Box]
   public let keypointsList: [Keypoints]
+  public let frameSize: CGSize
   public let viewSize: CGSize
 
-  public init(boxes: [Box], keypointsList: [Keypoints], viewSize: CGSize) {
+  public init(boxes: [Box], keypointsList: [Keypoints], frameSize: CGSize, viewSize: CGSize) {
     self.boxes = boxes
     self.keypointsList = keypointsList
+    self.frameSize = frameSize
     self.viewSize = viewSize
   }
 
   public var body: some View {
     ZStack {
       // Draw bounding boxes
-      DetectionOverlay(boxes: boxes, viewSize: viewSize)
+      DetectionOverlay(boxes: boxes, frameSize: frameSize, viewSize: viewSize)
 
       // Draw skeletons
       Canvas { context, size in
+        let transform = AspectFillTransform(frameSize: frameSize, viewSize: size)
+
         for keypoints in keypointsList {
           // Draw limbs
           for (i, bone) in skeleton.enumerated() {
@@ -55,14 +59,10 @@ public struct PoseOverlay: View {
             guard from < keypoints.xyn.count, to < keypoints.xyn.count else { continue }
             guard keypoints.conf[from] > 0.25, keypoints.conf[to] > 0.25 else { continue }
 
-            let p1 = CGPoint(
-              x: CGFloat(keypoints.xyn[from].x) * size.width,
-              y: CGFloat(keypoints.xyn[from].y) * size.height
-            )
-            let p2 = CGPoint(
-              x: CGFloat(keypoints.xyn[to].x) * size.width,
-              y: CGFloat(keypoints.xyn[to].y) * size.height
-            )
+            let p1 = transform.point(
+              nx: CGFloat(keypoints.xyn[from].x), ny: CGFloat(keypoints.xyn[from].y))
+            let p2 = transform.point(
+              nx: CGFloat(keypoints.xyn[to].x), ny: CGFloat(keypoints.xyn[to].y))
 
             let colorIdx = limbColorIndices[i % limbColorIndices.count]
             let (r, g, b) = posePalette[colorIdx % posePalette.count]
@@ -79,10 +79,7 @@ public struct PoseOverlay: View {
           for (i, kpt) in keypoints.xyn.enumerated() {
             guard i < keypoints.conf.count, keypoints.conf[i] > 0.25 else { continue }
 
-            let center = CGPoint(
-              x: CGFloat(kpt.x) * size.width,
-              y: CGFloat(kpt.y) * size.height
-            )
+            let center = transform.point(nx: CGFloat(kpt.x), ny: CGFloat(kpt.y))
 
             let colorIdx = kptColorIndices[i % kptColorIndices.count]
             let (r, g, b) = posePalette[colorIdx % posePalette.count]

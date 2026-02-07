@@ -6,8 +6,8 @@ Usage:
     pip install ultralytics
     python scripts/export-models.py
 
-Exports YOLO26 nano models for all 5 tasks (detect, segment, classify, pose, obb)
-to CoreML .mlpackage format and copies them into the app's Models/ directories.
+Exports all YOLO26 models (5 sizes x 5 tasks = 25 models) to CoreML .mlpackage
+format and copies them into the app's Models/ directories.
 """
 
 import shutil
@@ -19,34 +19,37 @@ from ultralytics import YOLO
 ROOT = Path(__file__).resolve().parent.parent
 APP_MODELS = ROOT / "YOLOiOSApp" / "Models"
 
-# YOLO26 nano models for all 5 tasks
-MODELS = {
-    "yolo26n.pt": "Detect",
-    "yolo26n-cls.pt": "Classify",
-    "yolo26n-seg.pt": "Segment",
-    "yolo26n-pose.pt": "Pose",
-    "yolo26n-obb.pt": "OBB",
+# All YOLO26 sizes and tasks
+SIZES = ["n", "s", "m", "l", "x"]
+TASKS = {
+    "": "Detect",
+    "-cls": "Classify",
+    "-seg": "Segment",
+    "-pose": "Pose",
+    "-obb": "OBB",
 }
 
 
 def main():
-    for model_name, task_dir in MODELS.items():
-        print(f"\nExporting {model_name} to CoreML...")
-        model = YOLO(model_name)
-        exported = model.export(format="coreml", int8=True, nms=False)
+    for size in SIZES:
+        for suffix, task_dir in TASKS.items():
+            model_name = f"yolo26{size}{suffix}.pt"
+            print(f"\nExporting {model_name} to CoreML...")
+            model = YOLO(model_name)
+            exported = model.export(format="coreml", int8=True, nms=False)
 
-        # Copy exported .mlpackage to app Models directory
-        src = Path(exported)
-        dst = APP_MODELS / task_dir / src.name
-        dst.parent.mkdir(parents=True, exist_ok=True)
+            # Copy exported .mlpackage to app Models directory
+            src = Path(exported)
+            dst = APP_MODELS / task_dir / src.name
+            dst.parent.mkdir(parents=True, exist_ok=True)
 
-        if dst.exists():
-            shutil.rmtree(dst)
+            if dst.exists():
+                shutil.rmtree(dst)
 
-        shutil.copytree(src, dst)
-        print(f"  Copied to {dst.relative_to(ROOT)}")
+            shutil.copytree(src, dst)
+            print(f"  Copied to {dst.relative_to(ROOT)}")
 
-    print("\nAll YOLO26 models exported and copied successfully!")
+    print("\nAll 25 YOLO26 models exported and copied successfully!")
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ format and copies them into the app's Models/ directories.
 """
 
 import shutil
+import zipfile
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -49,7 +50,14 @@ def main():
             shutil.copytree(src, dst)
             print(f"  Copied to {dst.relative_to(ROOT)}")
 
-    print("\nAll 25 YOLO26 models exported and copied successfully!")
+            # Create zip for GitHub release upload
+            zip_path = src.with_suffix(".mlpackage.zip")
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for file in src.rglob("*"):
+                    zf.write(file, file.relative_to(src.parent))
+            print(f"  Zipped to {zip_path.name}")
+
+    print("\nAll 25 YOLO26 models exported, copied, and zipped successfully!")
 
 
 if __name__ == "__main__":

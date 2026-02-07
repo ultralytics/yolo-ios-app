@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		633BC6FB22EDE73D00821BCA /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 633BC6FA22EDE73D00821BCA /* Settings.bundle */; };
 		636EFCB921E62E3900DE43BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 636EFCB821E62E3900DE43BC /* Assets.xcassets */; };
-		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		63CF371F2514455300E2DEA1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6323C44D22186177008AE681 /* LaunchScreen.storyboard */; };
+		63CF37212514455300E2DEA1 /* ultralytics_yolo_logotype.png in Resources */ = {isa = PBXBuildFile; fileRef = 6323C45122186177008AE681 /* ultralytics_yolo_logotype.png */; };
 		73220ED32D373C2E00A94B92 /* YOLOUI in Frameworks */ = {isa = PBXBuildFile; productRef = 73220ED22D373C2E00A94B92 /* YOLOUI */; };
 		734B44482D42F7CF00D2CA6A /* Models in Resources */ = {isa = PBXBuildFile; fileRef = 734B44432D42F7CF00D2CA6A /* Models */; };
 		BB0000012E3F000000000001 /* YOLOiOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0000012E3F000000000011 /* YOLOiOSApp.swift */; };
@@ -104,7 +104,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1010;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2620;
 				ORGANIZATIONNAME = Ultralytics;
 				TargetAttributes = {
 					7BCB411621C3096100BFC4D0 = {
@@ -220,8 +220,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -241,6 +243,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -283,8 +286,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -297,6 +302,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
@@ -310,7 +316,6 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -338,7 +343,6 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0;
-				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				INFOPLIST_FILE = YOLOiOSApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ultralytics YOLO";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";

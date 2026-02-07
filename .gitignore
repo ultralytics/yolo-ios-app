@@ -1,6 +1,8 @@
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
 CLAUDE.md
 CLAUDE.md.backup
+PLAN.md
+PROMPT.md
 trae_config.yaml
 trae_config.yml
 *.env

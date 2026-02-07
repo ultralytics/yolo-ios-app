@@ -116,27 +116,27 @@ The `YOLO` Swift Package started as a YOLO11 detection-only demo and grew into a
 
 ### Current files (`Sources/YOLO/` — 19 files)
 
-| File | Lines | Role |
-|------|-------|------|
-| `YOLO.swift` | 235 | Public API — model loading + single-image inference |
-| `YOLOView.swift` | 1413 | God-view — camera, UI, rendering, ALL tasks |
-| `YOLOCamera.swift` | 83 | `UIViewRepresentable` wrapper around `YOLOView` |
-| `BasePredictor.swift` | 339 | CoreML model loading + inference |
-| `Predictor.swift` | 92 | Protocol definitions |
-| `ObjectDetector.swift` | — | Detection post-processing |
-| `Classifier.swift` | — | Classification post-processing |
-| `Segmenter.swift` | — | Segmentation post-processing |
-| `PoseEstimator.swift` | — | Pose estimation post-processing |
-| `ObbDetector.swift` | — | OBB post-processing |
-| `YOLOResult.swift` | 253 | Result data structures |
-| `YOLOTask.swift` | 52 | Task enum |
-| `VideoCapture.swift` | 307 | AVFoundation camera pipeline |
-| `BoundingBoxView.swift` | — | UIKit box rendering |
-| `Plot.swift` | — | Pose skeleton + OBB drawing |
-| `NonMaxSuppression.swift` | — | NMS algorithm |
-| `ThresholdProvider.swift` | — | CoreML feature provider |
-| `YOLOModelDownloader.swift` | — | Remote model download |
-| `YOLOModelCache.swift` | — | Model caching |
+| File                        | Lines | Role                                                |
+| --------------------------- | ----- | --------------------------------------------------- |
+| `YOLO.swift`                | 235   | Public API — model loading + single-image inference |
+| `YOLOView.swift`            | 1413  | God-view — camera, UI, rendering, ALL tasks         |
+| `YOLOCamera.swift`          | 83    | `UIViewRepresentable` wrapper around `YOLOView`     |
+| `BasePredictor.swift`       | 339   | CoreML model loading + inference                    |
+| `Predictor.swift`           | 92    | Protocol definitions                                |
+| `ObjectDetector.swift`      | —     | Detection post-processing                           |
+| `Classifier.swift`          | —     | Classification post-processing                      |
+| `Segmenter.swift`           | —     | Segmentation post-processing                        |
+| `PoseEstimator.swift`       | —     | Pose estimation post-processing                     |
+| `ObbDetector.swift`         | —     | OBB post-processing                                 |
+| `YOLOResult.swift`          | 253   | Result data structures                              |
+| `YOLOTask.swift`            | 52    | Task enum                                           |
+| `VideoCapture.swift`        | 307   | AVFoundation camera pipeline                        |
+| `BoundingBoxView.swift`     | —     | UIKit box rendering                                 |
+| `Plot.swift`                | —     | Pose skeleton + OBB drawing                         |
+| `NonMaxSuppression.swift`   | —     | NMS algorithm                                       |
+| `ThresholdProvider.swift`   | —     | CoreML feature provider                             |
+| `YOLOModelDownloader.swift` | —     | Remote model download                               |
+| `YOLOModelCache.swift`      | —     | Model caching                                       |
 
 ### Problems
 
@@ -151,18 +151,18 @@ The `YOLO` Swift Package started as a YOLO11 detection-only demo and grew into a
 
 ## Technical Decisions (from 2026 best practices research)
 
-| Decision | Rationale |
-|----------|-----------|
-| **swift-tools-version: 6.0** | Strict concurrency enforced by default. No `swiftSettings` needed. |
-| **Swift 6.2 `@concurrent`** for inference | New attribute for background work. Model loading and prediction must not block MainActor. |
-| **`@MainActor` default isolation** | Swift 6.2 "Approachable Concurrency". All UI code runs on main actor by default. |
-| **CoreML async prediction API** | `await model.prediction(input:)` — thread-safe, cancellable, supports concurrent ANE predictions. Replaces `VNImageRequestHandler.perform()` + `DispatchQueue`. |
-| **`AsyncStream<YOLOResult>`** for real-time | Established 2025/2026 pattern for AVFoundation → Swift concurrency bridge. |
-| **`UIViewRepresentable` only for camera preview** | No native SwiftUI camera API exists. This is the one unavoidable UIKit bridge. |
-| **IOSurface-backed pixel buffers** | Avoids memory copies on Apple Silicon unified memory (ANE ↔ CPU ↔ GPU). |
-| **YOLO26 NMS-free as default** | End-to-end model, no post-processing NMS. Confidence threshold only. 43% faster CPU inference. |
-| **Keep NMS for legacy models** | Auto-detect via model metadata. YOLO11 models still work. |
-| **W8A8 INT8 quantization docs** | Significant ANE latency gains on A17 Pro / M4. Document as recommended export option. |
+| Decision                                          | Rationale                                                                                                                                                       |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **swift-tools-version: 6.0**                      | Strict concurrency enforced by default. No `swiftSettings` needed.                                                                                              |
+| **Swift 6.2 `@concurrent`** for inference         | New attribute for background work. Model loading and prediction must not block MainActor.                                                                       |
+| **`@MainActor` default isolation**                | Swift 6.2 "Approachable Concurrency". All UI code runs on main actor by default.                                                                                |
+| **CoreML async prediction API**                   | `await model.prediction(input:)` — thread-safe, cancellable, supports concurrent ANE predictions. Replaces `VNImageRequestHandler.perform()` + `DispatchQueue`. |
+| **`AsyncStream<YOLOResult>`** for real-time       | Established 2025/2026 pattern for AVFoundation → Swift concurrency bridge.                                                                                      |
+| **`UIViewRepresentable` only for camera preview** | No native SwiftUI camera API exists. This is the one unavoidable UIKit bridge.                                                                                  |
+| **IOSurface-backed pixel buffers**                | Avoids memory copies on Apple Silicon unified memory (ANE ↔ CPU ↔ GPU).                                                                                       |
+| **YOLO26 NMS-free as default**                    | End-to-end model, no post-processing NMS. Confidence threshold only. 43% faster CPU inference.                                                                  |
+| **Keep NMS for legacy models**                    | Auto-detect via model metadata. YOLO11 models still work.                                                                                                       |
+| **W8A8 INT8 quantization docs**                   | Significant ANE latency gains on A17 Pro / M4. Document as recommended export option.                                                                           |
 
 ---
 
@@ -301,20 +301,20 @@ for await result in session.results { ... }
 
 Separate inference from UI. This is the critical path — everything depends on it.
 
-| Step | Action | Files |
-|------|--------|-------|
-| 1.1 | Create `Sources/YOLOCore/` directory structure | New dirs |
-| 1.2 | Move predictors (`Predictor.swift`, `BasePredictor`, `ObjectDetector`, `Classifier`, `Segmenter`, `PoseEstimator`, `ObbDetector`, `NonMaxSuppression`, `ThresholdProvider`) to `YOLOCore/Predictors/` — replace `ResultsListener`/`InferenceTimeListener` callback protocols with `AsyncStream` (they become dead code) | Move + edit |
-| 1.3 | Move `YOLOResult.swift`, `YOLOTask.swift` to `YOLOCore/` | Move |
-| 1.4 | Replace `UIImage` with `CGImage` in `YOLOResult`. Keep `UIImage` `callAsFunction` overload in `YOLO.swift` (iOS-only package, acceptable) | Edit |
-| 1.5 | Move `YOLOModelDownloader.swift`, `YOLOModelCache.swift` to `YOLOCore/ModelLoading/` | Move |
-| 1.6 | Rewrite `VideoCapture.swift` → `YOLOCore/Camera/CameraProvider.swift`: strip UI delegates, output `AsyncStream<CVPixelBuffer>`, use IOSurface-backed buffers | Rewrite |
-| 1.7 | Rewrite `YOLO.swift` init: `async/await` instead of completion callbacks | Rewrite |
-| 1.8 | Rewrite `BasePredictor.create()`: `async` instead of `DispatchQueue` + callback. Use CoreML async prediction API. | Rewrite |
-| 1.9 | Create `YOLOConfiguration.swift` — extract threshold logic from `YOLO` + `BasePredictor` into one place | New |
-| 1.10 | Remove all `@unchecked Sendable` — make result types properly `Sendable` (they're value types) | Edit |
-| 1.11 | Update `Package.swift` with `YOLOCore` target | Edit |
-| 1.12 | **Delete** `Sources/YOLO/` entirely — all old copies of moved files, plus `YOLOView.swift`, `YOLOCamera.swift`, `BoundingBoxView.swift`, `Plot.swift` | Delete |
+| Step | Action                                                                                                                                                                                                                                                                                                                  | Files       |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| 1.1  | Create `Sources/YOLOCore/` directory structure                                                                                                                                                                                                                                                                          | New dirs    |
+| 1.2  | Move predictors (`Predictor.swift`, `BasePredictor`, `ObjectDetector`, `Classifier`, `Segmenter`, `PoseEstimator`, `ObbDetector`, `NonMaxSuppression`, `ThresholdProvider`) to `YOLOCore/Predictors/` — replace `ResultsListener`/`InferenceTimeListener` callback protocols with `AsyncStream` (they become dead code) | Move + edit |
+| 1.3  | Move `YOLOResult.swift`, `YOLOTask.swift` to `YOLOCore/`                                                                                                                                                                                                                                                                | Move        |
+| 1.4  | Replace `UIImage` with `CGImage` in `YOLOResult`. Keep `UIImage` `callAsFunction` overload in `YOLO.swift` (iOS-only package, acceptable)                                                                                                                                                                               | Edit        |
+| 1.5  | Move `YOLOModelDownloader.swift`, `YOLOModelCache.swift` to `YOLOCore/ModelLoading/`                                                                                                                                                                                                                                    | Move        |
+| 1.6  | Rewrite `VideoCapture.swift` → `YOLOCore/Camera/CameraProvider.swift`: strip UI delegates, output `AsyncStream<CVPixelBuffer>`, use IOSurface-backed buffers                                                                                                                                                            | Rewrite     |
+| 1.7  | Rewrite `YOLO.swift` init: `async/await` instead of completion callbacks                                                                                                                                                                                                                                                | Rewrite     |
+| 1.8  | Rewrite `BasePredictor.create()`: `async` instead of `DispatchQueue` + callback. Use CoreML async prediction API.                                                                                                                                                                                                       | Rewrite     |
+| 1.9  | Create `YOLOConfiguration.swift` — extract threshold logic from `YOLO` + `BasePredictor` into one place                                                                                                                                                                                                                 | New         |
+| 1.10 | Remove all `@unchecked Sendable` — make result types properly `Sendable` (they're value types)                                                                                                                                                                                                                          | Edit        |
+| 1.11 | Update `Package.swift` with `YOLOCore` target                                                                                                                                                                                                                                                                           | Edit        |
+| 1.12 | **Delete** `Sources/YOLO/` entirely — all old copies of moved files, plus `YOLOView.swift`, `YOLOCamera.swift`, `BoundingBoxView.swift`, `Plot.swift`                                                                                                                                                                   | Delete      |
 
 **Principle check:** Steps 1.2-1.6 are moves, not copies. Old files MUST be deleted (step 1.12). The entire `Sources/YOLO/` directory is replaced by `Sources/YOLOCore/` — no umbrella module, no UIKit views. Step 1.9 extracts threshold logic — the duplicate logic in `YOLO.swift` and `BasePredictor` must be removed.
 
@@ -322,72 +322,72 @@ Separate inference from UI. This is the critical path — everything depends on 
 
 Do this alongside Phase 1 since it simplifies post-processing.
 
-| Step | Action |
-|------|--------|
-| 2.1 | Add model metadata detection in `BasePredictor`: read `creatorDefinedKey` to determine NMS-free (YOLO26) vs. NMS-required (YOLO11) |
-| 2.2 | Update `ObjectDetector`: confidence threshold only for NMS-free models, skip NMS entirely |
-| 2.3 | Update `Segmenter`, `PoseEstimator`, `ObbDetector` similarly |
-| 2.4 | Keep `NonMaxSuppression.swift` for YOLO11 backwards compat |
-| 2.5 | `YOLOConfiguration.iouThreshold` — only applies when model requires NMS |
+| Step | Action                                                                                                                             |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1  | Add model metadata detection in `BasePredictor`: read `creatorDefinedKey` to determine NMS-free (YOLO26) vs. NMS-required (YOLO11) |
+| 2.2  | Update `ObjectDetector`: confidence threshold only for NMS-free models, skip NMS entirely                                          |
+| 2.3  | Update `Segmenter`, `PoseEstimator`, `ObbDetector` similarly                                                                       |
+| 2.4  | Keep `NonMaxSuppression.swift` for YOLO11 backwards compat                                                                         |
+| 2.5  | `YOLOConfiguration.iouThreshold` — only applies when model requires NMS                                                            |
 
 **Principle check:** Don't add new NMS detection code if existing metadata parsing already handles it. Check `BasePredictor`'s existing `creatorDefinedKey` parsing first.
 
 ### Phase 3: Create `YOLOSession` (real-time streaming) — `engine-impl`
 
-| Step | Action |
-|------|--------|
-| 3.1 | Create `YOLOSession.swift` in `YOLOCore/` — wraps `CameraProvider` + predictor |
-| 3.2 | Expose `results` as `AsyncStream<YOLOResult>` |
-| 3.3 | `pause()`, `resume()`, `stop()` lifecycle |
-| 3.4 | `configuration` property (mutable thresholds) |
-| 3.5 | `latestResult` for SwiftUI `@Observable` binding |
-| 3.6 | Camera permissions: throw descriptive errors |
-| 3.7 | Mark inference with `@concurrent` (Swift 6.2) to run off MainActor |
+| Step | Action                                                                         |
+| ---- | ------------------------------------------------------------------------------ |
+| 3.1  | Create `YOLOSession.swift` in `YOLOCore/` — wraps `CameraProvider` + predictor |
+| 3.2  | Expose `results` as `AsyncStream<YOLOResult>`                                  |
+| 3.3  | `pause()`, `resume()`, `stop()` lifecycle                                      |
+| 3.4  | `configuration` property (mutable thresholds)                                  |
+| 3.5  | `latestResult` for SwiftUI `@Observable` binding                               |
+| 3.6  | Camera permissions: throw descriptive errors                                   |
+| 3.7  | Mark inference with `@concurrent` (Swift 6.2) to run off MainActor             |
 
 ### Phase 4: Create `YOLOUI` (SwiftUI views) — `ui-impl`
 
 Blocked by Phase 1. Only start after `YOLOCore` compiles.
 
-| Step | Action |
-|------|--------|
-| 4.1 | Create `Sources/YOLOUI/` |
-| 4.2 | `CameraPreview.swift` — `UIViewRepresentable` for `AVCaptureVideoPreviewLayer` only (~30 lines, no inference) |
-| 4.3 | `DetectionOverlay.swift` — SwiftUI `Canvas` bounding boxes from `[Box]` |
-| 4.4 | `SegmentationOverlay.swift` — SwiftUI `Canvas` masks |
-| 4.5 | `PoseOverlay.swift` — SwiftUI `Canvas` skeletons |
-| 4.6 | `OBBOverlay.swift` — SwiftUI `Canvas` rotated boxes |
-| 4.7 | `ClassificationBanner.swift` — SwiftUI label |
-| 4.8 | `YOLOCamera.swift` — composes CameraPreview + YOLOSession + auto-overlay by task |
-| 4.9 | `ThresholdControls.swift` — optional sliders bound to `YOLOConfiguration` |
-| 4.10 | Update `Package.swift` with `YOLOUI` target |
+| Step | Action                                                                                                        |
+| ---- | ------------------------------------------------------------------------------------------------------------- |
+| 4.1  | Create `Sources/YOLOUI/`                                                                                      |
+| 4.2  | `CameraPreview.swift` — `UIViewRepresentable` for `AVCaptureVideoPreviewLayer` only (~30 lines, no inference) |
+| 4.3  | `DetectionOverlay.swift` — SwiftUI `Canvas` bounding boxes from `[Box]`                                       |
+| 4.4  | `SegmentationOverlay.swift` — SwiftUI `Canvas` masks                                                          |
+| 4.5  | `PoseOverlay.swift` — SwiftUI `Canvas` skeletons                                                              |
+| 4.6  | `OBBOverlay.swift` — SwiftUI `Canvas` rotated boxes                                                           |
+| 4.7  | `ClassificationBanner.swift` — SwiftUI label                                                                  |
+| 4.8  | `YOLOCamera.swift` — composes CameraPreview + YOLOSession + auto-overlay by task                              |
+| 4.9  | `ThresholdControls.swift` — optional sliders bound to `YOLOConfiguration`                                     |
+| 4.10 | Update `Package.swift` with `YOLOUI` target                                                                   |
 
 **Principle check:** Each overlay must be minimal. Don't build a generic "overlay framework" — 5 simple views, one per task. If two overlays share box-drawing logic, extract the minimum shared code, don't create an abstraction layer.
 
 ### Phase 5: Consolidate example apps — `ui-impl`
 
-| Step | Action |
-|------|--------|
-| 5.1 | Create `ExampleApps/YOLOExample/` SwiftUI app |
-| 5.2 | `CameraView.swift` — real-time with task picker (all 5 tasks) |
-| 5.3 | `PhotoView.swift` — single-image from photo library |
-| 5.4 | Bundle `yolo26n.mlmodelc` (detection) as default model |
-| 5.5 | **Delete** `ExampleApps/YOLORealTimeSwiftUI/`, `YOLORealTimeUIKit/`, `YOLOSingleImageSwiftUI/`, `YOLOSingleImageUIKit/` entirely |
+| Step | Action                                                                                                                           |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 5.1  | Create `ExampleApps/YOLOExample/` SwiftUI app                                                                                    |
+| 5.2  | `CameraView.swift` — real-time with task picker (all 5 tasks)                                                                    |
+| 5.3  | `PhotoView.swift` — single-image from photo library                                                                              |
+| 5.4  | Bundle `yolo26n.mlmodelc` (detection) as default model                                                                           |
+| 5.5  | **Delete** `ExampleApps/YOLORealTimeSwiftUI/`, `YOLORealTimeUIKit/`, `YOLOSingleImageSwiftUI/`, `YOLOSingleImageUIKit/` entirely |
 
 **Principle check:** Step 5.5 is non-negotiable. 4 old apps deleted, 1 new app created. Net -3 app targets.
 
 ### Phase 6: Model drop-in + App Store app (SwiftUI rewrite) — `ui-impl`
 
-| Step | Action |
-|------|--------|
-| 6.1 | **Rewrite `YOLOiOSApp` in SwiftUI** — replace all UIKit views with SwiftUI equivalents using YOLOUI components |
-| 6.2 | Standardize `YOLOiOSApp/Models/{Detect,Classify,Segment,Pose,OBB}Models/` directory structure |
-| 6.3 | Auto-discovery: scan model directories at launch, populate picker dynamically (delete hardcoded model lists) |
-| 6.4 | Support `.mlmodelc` (pre-compiled) and `.mlpackage` (runtime-compiled) |
-| 6.5 | Bundle YOLO26 nano models for all 5 tasks as defaults |
-| 6.6 | Model validation on load — clear errors for task/model mismatches |
-| 6.7 | Model hot-swap at runtime without restarting camera session |
-| 6.8 | Ensure App Store compliance: signing, entitlements, privacy manifests |
-| 6.9 | Document drop-in workflow: `ultralytics` Python export → drag into Xcode → build and run |
+| Step | Action                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------------------------------- |
+| 6.1  | **Rewrite `YOLOiOSApp` in SwiftUI** — replace all UIKit views with SwiftUI equivalents using YOLOUI components |
+| 6.2  | Standardize `YOLOiOSApp/Models/{Detect,Classify,Segment,Pose,OBB}Models/` directory structure                  |
+| 6.3  | Auto-discovery: scan model directories at launch, populate picker dynamically (delete hardcoded model lists)   |
+| 6.4  | Support `.mlmodelc` (pre-compiled) and `.mlpackage` (runtime-compiled)                                         |
+| 6.5  | Bundle YOLO26 nano models for all 5 tasks as defaults                                                          |
+| 6.6  | Model validation on load — clear errors for task/model mismatches                                              |
+| 6.7  | Model hot-swap at runtime without restarting camera session                                                    |
+| 6.8  | Ensure App Store compliance: signing, entitlements, privacy manifests                                          |
+| 6.9  | Document drop-in workflow: `ultralytics` Python export → drag into Xcode → build and run                       |
 
 **Principle check:** Step 6.1 is key — no UIKit views in the final app. Old UIKit files (`YOLOView.swift`, `BoundingBoxView.swift`, `Plot.swift`) are already deleted in Phase 1 step 1.12.
 
@@ -395,15 +395,15 @@ Blocked by Phase 1. Only start after `YOLOCore` compiles.
 
 This runs continuously, not as a separate phase.
 
-| Check | Action |
-|-------|--------|
-| Zero `@unchecked Sendable` | All result types are value types → naturally Sendable |
-| Zero `DispatchQueue.main.async` | Use `@MainActor` |
-| Zero completion handler callbacks | Use `async/await` |
-| `@concurrent` on inference paths | Model loading, prediction, post-processing |
-| CoreML async prediction API | `await model.prediction()` everywhere |
-| No UIKit views anywhere | SwiftUI only. UIViewRepresentable only for AVCaptureVideoPreviewLayer |
-| No UIKit imports in `YOLOCore` | Except `AVFoundation` for camera |
+| Check                             | Action                                                                |
+| --------------------------------- | --------------------------------------------------------------------- |
+| Zero `@unchecked Sendable`        | All result types are value types → naturally Sendable                 |
+| Zero `DispatchQueue.main.async`   | Use `@MainActor`                                                      |
+| Zero completion handler callbacks | Use `async/await`                                                     |
+| `@concurrent` on inference paths  | Model loading, prediction, post-processing                            |
+| CoreML async prediction API       | `await model.prediction()` everywhere                                 |
+| No UIKit views anywhere           | SwiftUI only. UIViewRepresentable only for AVCaptureVideoPreviewLayer |
+| No UIKit imports in `YOLOCore`    | Except `AVFoundation` for camera                                      |
 
 ---
 
@@ -433,28 +433,28 @@ This runs continuously, not as a separate phase.
 
 ## Default bundled models
 
-| Task | Model | File | NMS |
-|------|-------|------|-----|
-| Detect | YOLO26 nano | `yolo26n.mlmodelc` | No (NMS-free) |
-| Classify | YOLO26 nano | `yolo26n-cls.mlmodelc` | N/A |
-| Segment | YOLO26 nano | `yolo26n-seg.mlmodelc` | No (NMS-free) |
-| Pose | YOLO26 nano | `yolo26n-pose.mlmodelc` | No (NMS-free) |
-| OBB | YOLO26 nano | `yolo26n-obb.mlmodelc` | No (NMS-free) |
+| Task     | Model       | File                    | NMS           |
+| -------- | ----------- | ----------------------- | ------------- |
+| Detect   | YOLO26 nano | `yolo26n.mlmodelc`      | No (NMS-free) |
+| Classify | YOLO26 nano | `yolo26n-cls.mlmodelc`  | N/A           |
+| Segment  | YOLO26 nano | `yolo26n-seg.mlmodelc`  | No (NMS-free) |
+| Pose     | YOLO26 nano | `yolo26n-pose.mlmodelc` | No (NMS-free) |
+| OBB      | YOLO26 nano | `yolo26n-obb.mlmodelc`  | No (NMS-free) |
 
 Users drop in `s`, `m`, `l`, `x` variants. Auto-discovered by model picker.
 
 ## Migration
 
-| Current | New | Breaking? |
-|---------|-----|-----------|
-| `import YOLO` | `import YOLOCore` or `import YOLOUI` | Yes (rename) |
-| `YOLO("m", task:) { cb }` | `try await YOLO("m", task:)` | Yes |
-| `model(image)` | Same | No |
-| `YOLOCamera(modelPathOrName:)` | `YOLOCamera(model:)` | Rename |
-| `YOLOView` | **Deleted** — use `YOLOCamera` (SwiftUI) or `YOLOSession` (headless) | Yes |
-| `YOLOResult.annotatedImage: UIImage?` | `.annotatedImage: CGImage?` | Yes |
-| YOLO11 models | Auto-detected, NMS applied | No |
-| YOLO26 models | Default, confidence threshold only | No |
+| Current                               | New                                                                  | Breaking?    |
+| ------------------------------------- | -------------------------------------------------------------------- | ------------ |
+| `import YOLO`                         | `import YOLOCore` or `import YOLOUI`                                 | Yes (rename) |
+| `YOLO("m", task:) { cb }`             | `try await YOLO("m", task:)`                                         | Yes          |
+| `model(image)`                        | Same                                                                 | No           |
+| `YOLOCamera(modelPathOrName:)`        | `YOLOCamera(model:)`                                                 | Rename       |
+| `YOLOView`                            | **Deleted** — use `YOLOCamera` (SwiftUI) or `YOLOSession` (headless) | Yes          |
+| `YOLOResult.annotatedImage: UIImage?` | `.annotatedImage: CGImage?`                                          | Yes          |
+| YOLO11 models                         | Auto-detected, NMS applied                                           | No           |
+| YOLO26 models                         | Default, confidence threshold only                                   | No           |
 
 This is a major version bump. Clean breaks are better than deprecated shims that accumulate forever.
 

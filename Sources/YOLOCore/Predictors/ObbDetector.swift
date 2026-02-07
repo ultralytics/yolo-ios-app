@@ -1,4 +1,4 @@
-// Ultralytics AGPL-3.0 License - https://ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import Accelerate
 import CoreML
@@ -80,7 +80,10 @@ public class ObbDetector: BasePredictor {
       var bestClass: Int = 0
       for c in 0..<numClasses {
         let sc = pointerWrapper.pointer[(4 + c) * numAnchors + i]
-        if sc > bestScore { bestScore = sc; bestClass = c }
+        if sc > bestScore {
+          bestScore = sc
+          bestClass = c
+        }
       }
 
       let angle = pointerWrapper.pointer[(4 + numClasses) * numAnchors + i]
@@ -91,7 +94,8 @@ public class ObbDetector: BasePredictor {
       }
     }
 
-    let detections = Array(UnsafeBufferPointer(start: detectionsPtr, count: numAnchors)).compactMap {
+    let detections = Array(UnsafeBufferPointer(start: detectionsPtr, count: numAnchors)).compactMap
+    {
       $0
     }
 

@@ -1,4 +1,4 @@
-// Ultralytics AGPL-3.0 License - https://ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import Accelerate
 import CoreML
@@ -40,9 +40,11 @@ public class Segmenter: BasePredictor {
     let pred: MLMultiArray
     let masks: MLMultiArray
     if checkShapeDimensions(of: out0) == 4 {
-      masks = out0; pred = out1
+      masks = out0
+      pred = out1
     } else {
-      masks = out1; pred = out0
+      masks = out1
+      pred = out0
     }
 
     let detectedObjects = postProcessSegment(
@@ -224,7 +226,8 @@ public class Segmenter: BasePredictor {
     let scaleY = Float(maskHeight) / Float(inputHeight)
 
     var probabilityMasks = Array(
-      repeating: Array(repeating: Array(repeating: Float(0.0), count: maskWidth), count: maskHeight),
+      repeating: Array(
+        repeating: Array(repeating: Float(0.0), count: maskWidth), count: maskHeight),
       count: N)
 
     for (originalIndex, box, classID, _) in sortedObjects {

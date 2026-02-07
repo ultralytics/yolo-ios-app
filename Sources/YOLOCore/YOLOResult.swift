@@ -1,4 +1,4 @@
-// Ultralytics AGPL-3.0 License - https://ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import CoreGraphics
 import Foundation
@@ -198,8 +198,10 @@ public struct OBB: Sendable {
   /// Axis-aligned bounding box around this rotated box.
   public func toAABB() -> CGRect {
     let poly = toPolygon()
-    var minX = CGFloat.infinity, maxX = -CGFloat.infinity
-    var minY = CGFloat.infinity, maxY = -CGFloat.infinity
+    var minX = CGFloat.infinity
+    var maxX = -CGFloat.infinity
+    var minY = CGFloat.infinity
+    var maxY = -CGFloat.infinity
     for p in poly {
       if p.x < minX { minX = p.x }
       if p.x > maxX { maxX = p.x }

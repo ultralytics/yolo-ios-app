@@ -1,5 +1,4 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-
 """
 Export all YOLO26 models to CoreML format for the iOS app.
 
@@ -10,8 +9,8 @@ Usage:
 Exports YOLO26 nano models for all 5 tasks (detect, segment, classify, pose, obb)
 to CoreML .mlpackage format and copies them into the app's Models/ directories.
 """
-import shutil
 
+import shutil
 from pathlib import Path
 
 from ultralytics import YOLO

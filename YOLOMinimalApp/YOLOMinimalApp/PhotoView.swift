@@ -1,4 +1,4 @@
-// Ultralytics AGPL-3.0 License - https://ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import PhotosUI
 import SwiftUI
@@ -17,7 +17,8 @@ struct PhotoView: View {
           .resizable()
           .scaledToFit()
       } else {
-        ContentUnavailableView("No Image", systemImage: "photo", description: Text("Pick a photo to analyze"))
+        ContentUnavailableView(
+          "No Image", systemImage: "photo", description: Text("Pick a photo to analyze"))
       }
 
       PhotosPicker(selection: $selectedItem, matching: .images) {

@@ -108,7 +108,7 @@ This repository includes comprehensive [unit tests](https://en.wikipedia.org/wik
 Tests require CoreML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
 
 1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files (e.g., `YOLOv11Tests.swift`).
-2.  Download the required models from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own using tools like [Ultralytics HUB](https://www.ultralytics.com/hub).
+2.  Download the required models from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
 3.  Convert the models to CoreML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
 4.  Add the exported `.mlpackage` files to your [Xcode](https://developer.apple.com/xcode/) project, ensuring they are included in the test targets.
 5.  Run the tests using Xcode's Test Navigator (Cmd+U).

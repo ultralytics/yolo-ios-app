@@ -75,7 +75,7 @@ To run the full test suite, including tests that perform actual model inference:
 2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
 3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 
-This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics HUB](https://docs.ultralytics.com/hub/).
+This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics Platform](https://docs.ultralytics.com/hub/).
 
 ## 🤝 Contributing
 

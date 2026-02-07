@@ -67,7 +67,7 @@ export_and_zip_yolo_models()
 
 #### Method 2: Use Ultralytics Pre-Exported Models (If Available)
 
-Check the [Ultralytics YOLO11 model page](https://docs.ultralytics.com/models/yolo11/) or the [Ultralytics HUB Models section](https://docs.ultralytics.com/hub/models/) for potentially available pre-exported Core ML models. Note that direct downloads of `.mlpackage` files might not always be provided, making Method 1 the more reliable approach.
+Check the [Ultralytics YOLO11 model page](https://docs.ultralytics.com/models/yolo11/) or the [Ultralytics Platform Models section](https://docs.ultralytics.com/hub/models/) for potentially available pre-exported Core ML models. Note that direct downloads of `.mlpackage` files might not always be provided, making Method 1 the more reliable approach.
 
 ### 4. Place the Model Files
 

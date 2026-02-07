@@ -57,11 +57,10 @@ public struct DetectionOverlay: View {
 
         // Draw label
         let label = String(format: "%@ %.0f%%", box.cls, box.conf * 100)
-        let text = Text(label)
-          .font(.system(size: 12, weight: .semibold))
-          .foregroundStyle(.white)
-        let resolvedText = context.resolve(text)
-        let textSize = resolvedText.measure(in: CGSize(width: 300, height: 30))
+        var text = context.resolve(
+          Text(label).font(.system(size: 12, weight: .semibold)))
+        text.shading = .color(.white)
+        let textSize = text.measure(in: CGSize(width: 300, height: 30))
 
         let labelRect = CGRect(
           x: rect.minX,
@@ -74,7 +73,7 @@ public struct DetectionOverlay: View {
           with: .color(color.opacity(alpha))
         )
         context.draw(
-          resolvedText,
+          text,
           at: CGPoint(x: labelRect.minX + 4, y: labelRect.minY + 1),
           anchor: .topLeading
         )

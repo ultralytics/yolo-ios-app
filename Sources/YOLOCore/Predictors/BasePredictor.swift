@@ -61,7 +61,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     if isCompiled {
       mlModel = try MLModel(contentsOf: modelURL, configuration: config)
     } else {
-      let compiledUrl = try MLModel.compileModel(at: modelURL)
+      let compiledUrl = try await MLModel.compileModel(at: modelURL)
       mlModel = try MLModel(contentsOf: compiledUrl, configuration: config)
     }
 

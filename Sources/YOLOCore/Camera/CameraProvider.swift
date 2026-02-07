@@ -154,9 +154,6 @@ extension CameraProvider: AVCaptureVideoDataOutputSampleBufferDelegate {
     from connection: AVCaptureConnection
   ) {
     guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-    // Explicitly retain to ensure validity across concurrency boundaries
-    CVPixelBufferRetain(pixelBuffer)
-    // Wrap in UnsafeSendable to satisfy compiler while maintaining safety through manual retain
     let sendableBuffer = UnsafeSendable(pixelBuffer)
     continuation?.yield(sendableBuffer.value)
   }

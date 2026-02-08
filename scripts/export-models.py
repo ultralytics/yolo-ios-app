@@ -32,6 +32,7 @@ TASKS = {
 
 
 def main():
+    """Export YOLO26 models to CoreML format and prepare zips for release."""
     for size in SIZES:
         for suffix, task_dir in TASKS.items():
             model_name = f"yolo26{size}{suffix}.pt"

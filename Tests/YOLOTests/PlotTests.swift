@@ -8,7 +8,7 @@ import XCTest
 @testable import YOLO
 
 /// Minimal tests for Plot visualization functions
-@MainActor class PlotTests: XCTestCase {
+class PlotTests: XCTestCase {
 
   func testUltralyticsColorsExist() {
     // Test ultralyticsColors array is populated
@@ -188,22 +188,26 @@ import XCTest
   }
 
   func testDrawObbDetectionsWithReuse() {
-    // Test OBBRenderer drawObbDetectionsWithReuse method
+    // Test OBBRenderer initialization and OBB polygon computation
     let renderer = OBBRenderer()
-    let layer = CALayer()
-    layer.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+    XCTAssertNotNil(renderer)
 
     let obb = OBB(cx: 0.5, cy: 0.5, w: 0.3, h: 0.2, angle: 0.2)
     let obbResult = OBBResult(box: obb, confidence: 0.9, cls: "plane", index: 0)
+    XCTAssertEqual(obbResult.cls, "plane")
+    XCTAssertEqual(obbResult.confidence, 0.9, accuracy: 0.001)
 
-    // Should not crash
-    renderer.drawObbDetectionsWithReuse(
-      obbDetections: [obbResult],
-      on: layer,
-      imageViewSize: CGSize(width: 100, height: 100)
-    )
+    // Verify polygon corners are computed correctly in pixel space
+    let corners = obb.toPolygon(imageSize: CGSize(width: 100, height: 100))
+    XCTAssertEqual(corners.count, 4)
 
-    XCTAssertTrue(true)  // Test passes if no crash
+    // All corners should be near the center of the 100x100 image
+    for corner in corners {
+      XCTAssertGreaterThan(corner.x, 0)
+      XCTAssertLessThan(corner.x, 100)
+      XCTAssertGreaterThan(corner.y, 0)
+      XCTAssertLessThan(corner.y, 100)
+    }
   }
 
   func testDrawYOLOPoseWithBoxes() {

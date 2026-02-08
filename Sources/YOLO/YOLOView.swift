@@ -130,6 +130,14 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var capturedImage: UIImage?
   private var photoCaptureCompletion: ((UIImage?) -> Void)?
 
+  /// Pending camera position to apply after async camera setup completes.
+  public var pendingCameraPosition: AVCaptureDevice.Position?
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+    videoCapture.stop()
+  }
+
   public init(
     frame: CGRect,
     modelPathOrName: String,
@@ -330,6 +338,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
             self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
             // Once everything is set up, we can start capturing live video.
             self.videoCapture.start()
+
+            // Apply deferred camera position if set (e.g., front camera from SwiftUI)
+            if let pending = self.pendingCameraPosition, pending != .back {
+              self.pendingCameraPosition = nil
+              self.switchCameraTapped()
+            }
 
             self.busy = false
           }
@@ -1029,8 +1043,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
     videoCapture.updateVideoOrientation(orientation: orientation)
-
-    //      frameSizeCaptured = false
+    videoCapture.frameSizeCaptured = false
   }
 
   @objc public func sliderChanged(_ sender: Any) {
@@ -1151,10 +1164,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
     guard let newCameraDevice = bestCaptureDevice(position: nextCameraPosition) else {
+      self.videoCapture.captureSession.commitConfiguration()
       return
     }
 
     guard let videoInput1 = try? AVCaptureDeviceInput(device: newCameraDevice) else {
+      self.videoCapture.captureSession.commitConfiguration()
       return
     }
 
@@ -1170,6 +1185,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     case .landscapeLeft:
       orientation = .landscapeRight
     default:
+      self.videoCapture.captureSession.commitConfiguration()
       return
     }
     self.videoCapture.updateVideoOrientation(orientation: orientation)

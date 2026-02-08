@@ -270,6 +270,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
+    let iou = requiresNMS ? iouThreshold : 1.0
+    detector?.featureProvider = ThresholdProvider(
+      iouThreshold: iou, confidenceThreshold: confidenceThreshold)
   }
 
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
@@ -282,6 +285,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   func setIouThreshold(iou: Double) {
     iouThreshold = iou
+    let effectiveIou = requiresNMS ? iouThreshold : 1.0
+    detector?.featureProvider = ThresholdProvider(
+      iouThreshold: effectiveIou, confidenceThreshold: confidenceThreshold)
   }
 
   /// The maximum number of detections to return in results (default: 30).

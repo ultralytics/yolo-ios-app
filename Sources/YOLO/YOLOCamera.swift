@@ -75,7 +75,7 @@ struct YOLOViewRepresentable: UIViewRepresentable {
     assert(!modelPath.isEmpty, "Either modelPathOrName or modelURL must be provided")
     let view = YOLOView(frame: .zero, modelPathOrName: modelPath, task: task)
     if cameraPosition == .front {
-      view.switchCameraTapped()
+      view.pendingCameraPosition = .front
     }
     return view
   }

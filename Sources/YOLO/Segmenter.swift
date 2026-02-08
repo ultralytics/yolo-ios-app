@@ -86,10 +86,11 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
       let capturedT4 = self.t4
       let capturedLabels = self.labels
 
+      let capturedDetectedObjects = Array(limitedObjects)
       DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
           let processedMasks = generateCombinedMaskImage(
-            detectedObjects: detectedObjects,
+            detectedObjects: capturedDetectedObjects,
             protos: capturedMasks,
             inputWidth: capturedModelInputSize.width,
             inputHeight: capturedModelInputSize.height,
@@ -291,10 +292,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
 
-    // Pre-allocate reusable arrays outside the loop
-    let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
-    defer { classProbs.deallocate() }
-
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
       let x = pointerWrapper.pointer[j]
       let y = pointerWrapper.pointer[numAnchors + j]
@@ -443,18 +440,3 @@ final class FloatPointerWrapper: @unchecked Sendable {
   }
 }
 
-final class ResultsWrapper: @unchecked Sendable {
-  private var results: [(CGRect, Int, Float, MLMultiArray)] = []
-
-  func reserveCapacity(_ capacity: Int) {
-    results.reserveCapacity(capacity)
-  }
-
-  func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
-    results.append(result)
-  }
-
-  func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
-    return results
-  }
-}

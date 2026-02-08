@@ -39,11 +39,13 @@ public class YOLOModelDownloader: NSObject {
     }
   }
 
+  private let lock = NSLock()
   private var downloadTask: URLSessionDownloadTask?
   private var progressHandler: ProgressHandler?
   private var completionHandler: CompletionHandler?
   private var currentTask: YOLOTask?
   private var originalURL: URL?
+  private var isDownloading = false
 
   private lazy var session: URLSession = {
     URLSession(configuration: .default, delegate: self, delegateQueue: nil)
@@ -54,18 +56,33 @@ public class YOLOModelDownloader: NSObject {
     from url: URL, task: YOLOTask? = nil, progress: ProgressHandler? = nil,
     completion: @escaping CompletionHandler
   ) {
-    self.progressHandler = progress
-    self.completionHandler = completion
-    self.currentTask = task
-    self.originalURL = url
-
-    // Check cache first
+    // Check cache first (before acquiring lock)
     if let cachedPath = YOLOModelCache.shared.getCachedModelPath(url: url, task: task) {
       completion(.success(cachedPath))
       return
     }
 
-    // No cache found, Start download
+    lock.lock()
+    guard !isDownloading else {
+      lock.unlock()
+      completion(.failure(DownloadError.downloadFailed(
+        NSError(domain: "YOLOModelDownloader", code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "A download is already in progress"]))))
+      return
+    }
+    isDownloading = true
+    self.progressHandler = progress
+    self.completionHandler = { [weak self] result in
+      self?.lock.lock()
+      self?.isDownloading = false
+      self?.lock.unlock()
+      completion(result)
+    }
+    self.currentTask = task
+    self.originalURL = url
+    lock.unlock()
+
+    // Start download
     downloadTask = session.downloadTask(with: url)
     downloadTask?.resume()
   }

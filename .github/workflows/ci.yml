@@ -1,0 +1,112 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: []
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Xcode Version
+        run: xcodebuild -version
+
+      - name: Download YOLO models
+        run: |
+          # Make download script executable and download YOLO models
+          chmod +x scripts/download-models.sh && scripts/download-models.sh
+
+      - name: Install dependencies
+        run: xcodebuild -resolvePackageDependencies
+
+      - name: Create test .env file
+        run: |
+          echo "API_URL=https://test-api.ultralytics.com
+          FIREBASE_API_KEY=test-key" > .env
+
+      - name: Build and Test
+        run: |
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
+          DESTINATION=${DESTINATION:-name=iPhone 14}
+
+          xcodebuild \
+            -scheme YOLO \
+            -sdk iphonesimulator \
+            -derivedDataPath Build/ \
+            -destination "platform=iOS Simulator,$DESTINATION" \
+            -enableCodeCoverage YES \
+            clean build test
+
+      - name: Generate Code Coverage Report
+        run: |
+          PROFDATA_PATH=$(find Build/Build/ProfileData -name "Coverage.profdata" -type f | head -1)
+          BINARY_PATH=""
+
+          # Prioritize XCTest bundle executable for library/framework coverage
+          XCTEST_BUNDLE_PATH=$(find Build/Build/Products -path "*Debug-iphonesimulator/*.xctest" -type d | head -1)
+
+          if [ -n "$XCTEST_BUNDLE_PATH" ]; then
+            TEST_BUNDLE_NAME=$(basename "$XCTEST_BUNDLE_PATH" .xctest)
+            CANDIDATE_PATH="$XCTEST_BUNDLE_PATH/$TEST_BUNDLE_NAME"
+            if [ -f "$CANDIDATE_PATH" ]; then
+              BINARY_PATH="$CANDIDATE_PATH"
+              echo "Using XCTest executable for coverage: $BINARY_PATH"
+            fi
+          fi
+
+          # Fallback: If no XCTest executable, try to find an .app bundle executable
+          if [ -z "$BINARY_PATH" ]; then
+            echo "No .xctest executable found. Looking for an .app bundle."
+            APP_BUNDLE_PATH=$(find Build/Build/Products -path "*Debug-iphonesimulator/*.app" -not -path "*.xctest/*" -type d | head -1)
+            if [ -n "$APP_BUNDLE_PATH" ]; then
+              APP_NAME=$(basename "$APP_BUNDLE_PATH" .app)
+              # Try executable with the same name as the .app bundle or the scheme name "YOLO"
+              if [ -f "$APP_BUNDLE_PATH/$APP_NAME" ]; then
+                BINARY_PATH="$APP_BUNDLE_PATH/$APP_NAME"
+                echo "Using .app executable (derived name) for coverage: $BINARY_PATH"
+              elif [ -f "$APP_BUNDLE_PATH/YOLO" ]; then
+                BINARY_PATH="$APP_BUNDLE_PATH/YOLO"
+                echo "Using .app executable (YOLO name) for coverage: $BINARY_PATH"
+              fi
+            fi
+          fi
+
+          if [ -n "$BINARY_PATH" ] && [ -f "$BINARY_PATH" ] && [ -n "$PROFDATA_PATH" ] && [ -f "$PROFDATA_PATH" ]; then
+            echo "Generating lcov report with Binary: $BINARY_PATH and Profile Data: $PROFDATA_PATH"
+            xcrun llvm-cov export \
+              -format="lcov" \
+              -instr-profile "$PROFDATA_PATH" \
+              "$BINARY_PATH" > info.lcov
+            
+            if [ -s info.lcov ]; then
+                echo "Coverage report generated successfully: info.lcov"
+            else
+                echo "WARNING: info.lcov was generated but is empty."
+                touch info.lcov # Ensure file exists for Codecov step
+            fi
+          else
+            echo "Could not generate coverage report - required binary or profdata file missing or invalid."
+            echo "Binary Path: $BINARY_PATH"
+            echo "Profdata Path: $PROFDATA_PATH"
+            touch info.lcov # Create empty info.lcov for Codecov
+            echo "Empty info.lcov created as a fallback."
+          fi
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./info.lcov
+          slug: ultralytics/yolo-ios-app
+          fail_ci_if_error: false

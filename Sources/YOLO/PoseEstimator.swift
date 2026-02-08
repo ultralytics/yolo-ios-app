@@ -1,0 +1,332 @@
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+//  This file is part of the Ultralytics YOLO Package, implementing human pose estimation functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The PoseEstimator class extends the BasePredictor to provide human pose and keypoint detection.
+//  It processes model outputs to identify human subjects and their body keypoints (joints such as
+//  eyes, shoulders, elbows, wrists, hips, knees, ankles, etc.). The class converts the model's raw
+//  output into structured data representing each detected person's bounding box and associated
+//  keypoints with their confidence scores. This implementation supports both real-time processing
+//  for camera feeds and single image analysis, producing visualizable results that can be overlaid
+//  on the source image to show the detected pose skeleton.
+
+import Accelerate
+import CoreML
+import Foundation
+import UIKit
+import Vision
+
+/// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
+public class PoseEstimator: BasePredictor, @unchecked Sendable {
+
+  override func processObservations(for request: VNRequest, error: Error?) {
+    if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+
+      if let prediction = results.first?.featureValue.multiArrayValue {
+
+        let preds = PostProcessPose(
+          prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
+          iouThreshold: Float(self.iouThreshold))
+        var keypointsList = [Keypoints]()
+        var boxes = [Box]()
+
+        let limitedPreds = preds.prefix(self.numItemsThreshold)
+        for person in limitedPreds {
+          boxes.append(person.box)
+          keypointsList.append(person.keypoints)
+        }
+        self.updateTime()
+        let result = YOLOResult(
+          orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
+          annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
+        self.currentOnResultsListener?.on(result: result)
+      }
+    }
+  }
+
+  private func updateTime() {
+    if self.t1 < 10.0 {  // valid dt
+      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
+    }
+    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
+    self.t3 = CACurrentMediaTime()
+
+    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
+
+  }
+
+  public override func predictOnImage(image: CIImage) -> YOLOResult {
+    let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
+    guard let request = visionRequest else {
+      let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+      return emptyResult
+    }
+
+    let imageWidth = image.extent.width
+    let imageHeight = image.extent.height
+    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    let result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
+
+    do {
+      try requestHandler.perform([request])
+
+      if let results = request.results as? [VNCoreMLFeatureValueObservation] {
+
+        if let prediction = results.first?.featureValue.multiArrayValue {
+
+          let preds = PostProcessPose(
+            prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
+            iouThreshold: Float(self.iouThreshold))
+          var keypointsList = [Keypoints]()
+          var boxes = [Box]()
+          var keypointsForImage = [[(x: Float, y: Float)]]()
+          var confsList: [[Float]] = []
+
+          let limitedPreds = preds.prefix(self.numItemsThreshold)
+          for person in limitedPreds {
+            boxes.append(person.box)
+            keypointsList.append(person.keypoints)
+            keypointsForImage.append(person.keypoints.xyn)
+            confsList.append(person.keypoints.conf)
+          }
+
+          // 新しい統合描画関数を使用
+          let annotatedImage = drawYOLOPoseWithBoxes(
+            ciImage: image,
+            keypointsList: keypointsForImage,
+            confsList: confsList,
+            boundingBoxes: boxes
+          )
+
+          updateTime()
+          let result = YOLOResult(
+            orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
+            keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
+            fps: 1 / self.t4, names: labels)
+          return result
+        }
+      }
+    } catch {
+      print(error)
+    }
+    return result
+  }
+
+  func PostProcessPose(
+    prediction: MLMultiArray,
+    confidenceThreshold: Float,
+    iouThreshold: Float
+  )
+    -> [(box: Box, keypoints: Keypoints)]
+  {
+    let shape = prediction.shape.map { $0.intValue }
+    guard shape.count == 3 else { return [] }
+
+    // YOLO26 end2end pose: [1, max_det, 6+51] where shape[2] < shape[1]
+    // Traditional pose: [1, 56, num_anchors] where shape[2] > shape[1]
+    if shape[2] < shape[1] {
+      return postProcessEnd2EndPose(
+        prediction: prediction, shape: shape, confidenceThreshold: confidenceThreshold)
+    }
+
+    let numAnchors = shape[2]
+    let featureCount = shape[1] - 5
+
+    var boxes = [CGRect]()
+    var scores = [Float]()
+    var features = [[Float]]()
+
+    // Wrapper for thread-safe collections
+    final class CollectionsWrapper: @unchecked Sendable {
+      private let lock = NSLock()
+      private var boxes: [CGRect] = []
+      private var scores: [Float] = []
+      private var features: [[Float]] = []
+
+      func append(box: CGRect, score: Float, feature: [Float]) {
+        lock.lock()
+        boxes.append(box)
+        scores.append(score)
+        features.append(feature)
+        lock.unlock()
+      }
+
+      func getCollections() -> (boxes: [CGRect], scores: [Float], features: [[Float]]) {
+        return (boxes, scores, features)
+      }
+    }
+
+    // Wrapper to make pointer Sendable
+    struct PointerWrapper: @unchecked Sendable {
+      let pointer: UnsafeMutablePointer<Float>
+    }
+
+    let featurePointer = UnsafeMutablePointer<Float>(OpaquePointer(prediction.dataPointer))
+    let pointerWrapper = PointerWrapper(pointer: featurePointer)
+    let collectionsWrapper = CollectionsWrapper()
+
+    DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
+      let confIndex = 4 * numAnchors + j
+      let confidence = pointerWrapper.pointer[confIndex]
+
+      if confidence > confidenceThreshold {
+        let x = pointerWrapper.pointer[j]
+        let y = pointerWrapper.pointer[numAnchors + j]
+        let width = pointerWrapper.pointer[2 * numAnchors + j]
+        let height = pointerWrapper.pointer[3 * numAnchors + j]
+
+        let boxWidth = CGFloat(width)
+        let boxHeight = CGFloat(height)
+        let boxX = CGFloat(x - width / 2.0)
+        let boxY = CGFloat(y - height / 2.0)
+        let boundingBox = CGRect(
+          x: boxX, y: boxY,
+          width: boxWidth, height: boxHeight)
+
+        var boxFeatures = [Float](repeating: 0, count: featureCount)
+        for k in 0..<featureCount {
+          let key = (5 + k) * numAnchors + j
+          boxFeatures[k] = pointerWrapper.pointer[key]
+        }
+
+        collectionsWrapper.append(box: boundingBox, score: confidence, feature: boxFeatures)
+      }
+    }
+
+    // Get collections from wrapper
+    let collections = collectionsWrapper.getCollections()
+    boxes = collections.boxes
+    scores = collections.scores
+    features = collections.features
+
+    let selectedIndices = nonMaxSuppression(boxes: boxes, scores: scores, threshold: iouThreshold)
+
+    let filteredBoxes = selectedIndices.map { boxes[$0] }
+    let filteredScores = selectedIndices.map { scores[$0] }
+    let filteredFeatures = selectedIndices.map { features[$0] }
+
+    let boxScorePairs = zip(filteredBoxes, filteredScores)
+    let results: [(Box, Keypoints)] = zip(boxScorePairs, filteredFeatures).map {
+      (pair, boxFeatures) in
+      let (box, score) = pair
+      let Nx = box.origin.x / CGFloat(modelInputSize.width)
+      let Ny = box.origin.y / CGFloat(modelInputSize.height)
+      let Nw = box.size.width / CGFloat(modelInputSize.width)
+      let Nh = box.size.height / CGFloat(modelInputSize.height)
+      let ix = Nx * inputSize.width
+      let iy = Ny * inputSize.height
+      let iw = Nw * inputSize.width
+      let ih = Nh * inputSize.height
+      let normalizedBox = CGRect(x: Nx, y: Ny, width: Nw, height: Nh)
+      let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
+      let boxResult = Box(
+        index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
+      let numKeypoints = boxFeatures.count / 3
+
+      var xynArray = [(x: Float, y: Float)]()
+      var xyArray = [(x: Float, y: Float)]()
+      var confArray = [Float]()
+
+      for i in 0..<numKeypoints {
+        let kx = boxFeatures[3 * i]
+        let ky = boxFeatures[3 * i + 1]
+        let kc = boxFeatures[3 * i + 2]
+
+        let nX = kx / Float(modelInputSize.width)
+        let nY = ky / Float(modelInputSize.height)
+        xynArray.append((x: nX, y: nY))
+
+        let x = nX * Float(inputSize.width)
+        let y = nY * Float(inputSize.height)
+        xyArray.append((x: x, y: y))
+
+        confArray.append(kc)
+      }
+
+      let keypoints = Keypoints(xyn: xynArray, xy: xyArray, conf: confArray)
+      return (boxResult, keypoints)
+    }
+
+    return results
+  }
+
+  /// Processes YOLO26 end2end pose output: [1, max_det, 6+51].
+  /// Each detection: [x1, y1, x2, y2, conf, class_id, kp0_x, kp0_y, kp0_conf, ...] in xyxy pixel coords.
+  /// NMS is already applied by the model.
+  private func postProcessEnd2EndPose(
+    prediction: MLMultiArray,
+    shape: [Int],
+    confidenceThreshold: Float
+  ) -> [(box: Box, keypoints: Keypoints)] {
+    let numDetections = shape[1]
+    let numFields = shape[2]
+    let strides = prediction.strides.map { $0.intValue }
+    let pointer = prediction.dataPointer.assumingMemoryBound(to: Float.self)
+    let detStride = strides[1]
+    let fieldStride = strides[2]
+
+    // Determine keypoint start field: check if class_id field is present
+    let kpStartField: Int
+    if (numFields - 6) % 3 == 0 {
+      kpStartField = 6  // [x1, y1, x2, y2, conf, class_id, kp...]
+    } else {
+      kpStartField = 5  // [x1, y1, x2, y2, conf, kp...]
+    }
+    let numKeypoints = (numFields - kpStartField) / 3
+
+    var results: [(box: Box, keypoints: Keypoints)] = []
+
+    for i in 0..<numDetections {
+      let base = i * detStride
+      let conf = pointer[base + 4 * fieldStride]
+      guard conf > confidenceThreshold else { continue }
+
+      let x1 = CGFloat(pointer[base])
+      let y1 = CGFloat(pointer[base + fieldStride])
+      let x2 = CGFloat(pointer[base + 2 * fieldStride])
+      let y2 = CGFloat(pointer[base + 3 * fieldStride])
+
+      // Convert xyxy to normalized and image coordinates
+      let Nx = x1 / CGFloat(modelInputSize.width)
+      let Ny = y1 / CGFloat(modelInputSize.height)
+      let Nw = (x2 - x1) / CGFloat(modelInputSize.width)
+      let Nh = (y2 - y1) / CGFloat(modelInputSize.height)
+      let ix = Nx * inputSize.width
+      let iy = Ny * inputSize.height
+      let iw = Nw * inputSize.width
+      let ih = Nh * inputSize.height
+      let normalizedBox = CGRect(x: Nx, y: Ny, width: Nw, height: Nh)
+      let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
+      let boxResult = Box(
+        index: 0, cls: "person", conf: conf, xywh: imageSizeBox, xywhn: normalizedBox)
+
+      // Extract keypoints
+      var xynArray = [(x: Float, y: Float)]()
+      var xyArray = [(x: Float, y: Float)]()
+      var confArray = [Float]()
+
+      for k in 0..<numKeypoints {
+        let kx = pointer[base + (kpStartField + 3 * k) * fieldStride]
+        let ky = pointer[base + (kpStartField + 3 * k + 1) * fieldStride]
+        let kc = pointer[base + (kpStartField + 3 * k + 2) * fieldStride]
+
+        let nX = kx / Float(modelInputSize.width)
+        let nY = ky / Float(modelInputSize.height)
+        xynArray.append((x: nX, y: nY))
+
+        let x = nX * Float(inputSize.width)
+        let y = nY * Float(inputSize.height)
+        xyArray.append((x: x, y: y))
+
+        confArray.append(kc)
+      }
+
+      let keypoints = Keypoints(xyn: xynArray, xy: xyArray, conf: confArray)
+      results.append((boxResult, keypoints))
+    }
+
+    return results
+  }
+}

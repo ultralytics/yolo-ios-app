@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23727" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23721"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="YOLOiOSApp" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleAspectFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ShC-gv-PaQ" customClass="YOLOView" customModule="YOLO">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="BZf-Ft-ERG" userLabel="Label Time">
+                                        <rect key="frame" x="175.66666666666666" y="155" width="42" height="20"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
+                                        </accessibility>
+                                        <fontDescription key="fontDescription" style="UICTFontTextStyleBody"/>
+                                        <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Hif-Vv-5nn">
+                                        <rect key="frame" x="163" y="116" width="67" height="34"/>
+                                        <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" style="UICTFontTextStyleTitle1"/>
+                                        <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
+                                        <rect key="frame" x="19" y="180" width="355" height="32"/>
+                                        <segments>
+                                            <segment title="Classify" width="69"/>
+                                            <segment title="Segment" width="75"/>
+                                            <segment title="Detect" width="69"/>
+                                            <segment title="Pose" width="69"/>
+                                            <segment title="OBB" width="69"/>
+                                        </segments>
+                                        <connections>
+                                            <action selector="indexChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="3y2-Ij-sA7"/>
+                                        </connections>
+                                    </segmentedControl>
+                                    <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="lOR-xu-27i">
+                                        <rect key="frame" x="178" y="405" width="37" height="37"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                    </activityIndicatorView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Version 0.0 (0)" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OCe-bb-RWv" userLabel="version">
+                                        <rect key="frame" x="8" y="765" width="100" height="14"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" staticText="YES" updatesFrequently="YES"/>
+                                        </accessibility>
+                                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="12"/>
+                                        <color key="textColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="ultralytics_yolo_logotype.png" id="EZE-r4-WFr">
+                                        <rect key="frame" x="215" y="625" width="159" height="67"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                        <accessibility key="accessibilityConfiguration">
+                                            <accessibilityTraits key="traits" button="YES" link="YES" image="YES" allowsDirectInteraction="YES"/>
+                                        </accessibility>
+                                    </imageView>
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="Ndv-n8-RpD">
+                                        <rect key="frame" x="-10" y="216" width="413" height="32"/>
+                                        <segments>
+                                            <segment title="nano"/>
+                                            <segment title="small"/>
+                                            <segment title="medium"/>
+                                            <segment title=" large"/>
+                                            <segment title="xlarge"/>
+                                        </segments>
+                                    </segmentedControl>
+                                </subviews>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <constraints>
+                                    <constraint firstItem="BZf-Ft-ERG" firstAttribute="top" secondItem="Hif-Vv-5nn" secondAttribute="bottom" constant="5" id="10a-HD-y6c"/>
+                                    <constraint firstItem="Hif-Vv-5nn" firstAttribute="top" secondItem="ShC-gv-PaQ" secondAttribute="topMargin" constant="-10" id="4VU-KS-qnX"/>
+                                    <constraint firstItem="Ndv-n8-RpD" firstAttribute="top" secondItem="9cm-Nq-b3N" secondAttribute="bottom" constant="5" id="4Xr-1c-jaQ"/>
+                                    <constraint firstItem="9cm-Nq-b3N" firstAttribute="top" secondItem="BZf-Ft-ERG" secondAttribute="bottom" constant="5" id="CsQ-eU-xjO"/>
+                                    <constraint firstItem="9cm-Nq-b3N" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="DEd-UO-Mod"/>
+                                    <constraint firstItem="Ndv-n8-RpD" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="d5L-pL-CfY"/>
+                                    <constraint firstItem="Hif-Vv-5nn" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="onI-er-Sda"/>
+                                    <constraint firstItem="BZf-Ft-ERG" firstAttribute="centerX" secondItem="ShC-gv-PaQ" secondAttribute="centerX" id="zJN-OL-7hd"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <gestureRecognizers/>
+                        <constraints>
+                            <constraint firstItem="ShC-gv-PaQ" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="7ji-b1-IGX"/>
+                            <constraint firstItem="ShC-gv-PaQ" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" id="BBw-Vb-KDM"/>
+                            <constraint firstAttribute="bottom" secondItem="ShC-gv-PaQ" secondAttribute="bottom" id="Jr0-gN-ccq"/>
+                            <constraint firstItem="ShC-gv-PaQ" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="mEk-Gz-JJe"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="View0" destination="8bC-Xf-vdC" id="Nwc-r7-Csg"/>
+                        <outlet property="activityIndicator" destination="lOR-xu-27i" id="RHs-yl-MIU"/>
+                        <outlet property="labelFPS" destination="BZf-Ft-ERG" id="beX-1M-6KR"/>
+                        <outlet property="labelName" destination="Hif-Vv-5nn" id="BQr-fg-dFd"/>
+                        <outlet property="labelVersion" destination="OCe-bb-RWv" id="MoL-rU-F2n"/>
+                        <outlet property="logoImage" destination="EZE-r4-WFr" id="k6G-jf-qS7"/>
+                        <outlet property="modelSegmentedControl" destination="Ndv-n8-RpD" id="RZ3-r2-t3v"/>
+                        <outlet property="segmentedControl" destination="9cm-Nq-b3N" id="RqH-Ft-fGI"/>
+                        <outlet property="yoloView" destination="ShC-gv-PaQ" id="X4o-si-9fj"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <pinchGestureRecognizer id="lf1-rc-A2P">
+                    <connections>
+                        <action selector="pinch:" destination="BYZ-38-t0r" id="Lxl-ni-yl4"/>
+                    </connections>
+                </pinchGestureRecognizer>
+            </objects>
+            <point key="canvasLocation" x="196.18320610687022" y="128.87323943661971"/>
+        </scene>
+    </scenes>
+    <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+    <resources>
+        <image name="ultralytics_yolo_logotype.png" width="1406" height="394"/>
+        <systemColor name="groupTableViewBackgroundColor">
+            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
+</document>

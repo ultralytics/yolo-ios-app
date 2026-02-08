@@ -1,0 +1,255 @@
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+//  This file is part of the Ultralytics YOLO Package, managing camera capture for real-time inference.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  The VideoCapture component manages the camera and video processing pipeline for real-time
+//  object detection. It handles setting up the AVCaptureSession, managing camera devices,
+//  configuring camera properties like focus and exposure, and processing video frames for
+//  model inference. The class delivers capture frames to the predictor component for real-time
+//  analysis and returns results through delegate callbacks. It also supports camera controls
+//  such as switching between front and back cameras, zooming, and capturing still photos.
+
+import AVFoundation
+import CoreVideo
+import UIKit
+import Vision
+
+/// Protocol for receiving video capture frame processing results.
+@MainActor
+public protocol VideoCaptureDelegate: AnyObject {
+  func onPredict(result: YOLOResult)
+  func onInferenceTime(speed: Double, fps: Double)
+}
+
+func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
+  if UserDefaults.standard.bool(forKey: "use_telephoto"),
+    let device = AVCaptureDevice.default(.builtInTelephotoCamera, for: .video, position: position)
+  {
+    return device
+  } else if let device = AVCaptureDevice.default(
+    .builtInDualCamera, for: .video, position: position)
+  {
+    return device
+  } else if let device = AVCaptureDevice.default(
+    .builtInWideAngleCamera, for: .video, position: position)
+  {
+    return device
+  } else {
+    return AVCaptureDevice.default(for: .video)
+  }
+}
+
+public class VideoCapture: NSObject, @unchecked Sendable {
+  public var predictor: Predictor?
+  public var previewLayer: AVCaptureVideoPreviewLayer?
+  public weak var delegate: VideoCaptureDelegate?
+  var captureDevice: AVCaptureDevice?
+
+  let captureSession = AVCaptureSession()
+  var videoInput: AVCaptureDeviceInput? = nil
+  let videoOutput = AVCaptureVideoDataOutput()
+  var photoOutput = AVCapturePhotoOutput()
+  let cameraQueue = DispatchQueue(label: "camera-queue")
+  var inferenceOK = true
+  var longSide: CGFloat = 3
+  var shortSide: CGFloat = 4
+  var frameSizeCaptured = false
+
+  private var currentBuffer: CVPixelBuffer?
+
+  deinit {
+    captureSession.stopRunning()
+    videoOutput.setSampleBufferDelegate(nil, queue: nil)
+  }
+
+  public func setUp(
+    sessionPreset: AVCaptureSession.Preset = .hd1280x720,
+    position: AVCaptureDevice.Position,
+    orientation: UIDeviceOrientation,
+    completion: @escaping @Sendable (Bool) -> Void
+  ) {
+    cameraQueue.async { [weak self] in
+      guard let self = self else {
+        DispatchQueue.main.async {
+          completion(false)
+        }
+        return
+      }
+      let success = self.setUpCamera(
+        sessionPreset: sessionPreset, position: position, orientation: orientation)
+      DispatchQueue.main.async {
+        completion(success)
+      }
+    }
+  }
+
+  func setUpCamera(
+    sessionPreset: AVCaptureSession.Preset, position: AVCaptureDevice.Position,
+    orientation: UIDeviceOrientation
+  ) -> Bool {
+    captureSession.beginConfiguration()
+    captureSession.sessionPreset = sessionPreset
+
+    guard let device = bestCaptureDevice(position: position) else {
+      return false
+    }
+    captureDevice = device
+
+    do {
+      videoInput = try AVCaptureDeviceInput(device: device)
+    } catch {
+      print("Failed to create video input: \(error)")
+      return false
+    }
+
+    guard let input = videoInput else {
+      print("Video input is nil")
+      return false
+    }
+    if captureSession.canAddInput(input) {
+      captureSession.addInput(input)
+    } else {
+      print("Cannot add video input to session")
+    }
+    var videoOrientation = AVCaptureVideoOrientation.portrait
+    switch orientation {
+    case .portrait:
+      videoOrientation = .portrait
+    case .landscapeLeft:
+      videoOrientation = .landscapeRight
+    case .landscapeRight:
+      videoOrientation = .landscapeLeft
+    default:
+      videoOrientation = .portrait
+    }
+    let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+    previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+    previewLayer.connection?.videoOrientation = videoOrientation
+    self.previewLayer = previewLayer
+
+    let settings: [String: Any] = [
+      kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)
+    ]
+
+    videoOutput.videoSettings = settings
+    videoOutput.alwaysDiscardsLateVideoFrames = true
+    videoOutput.setSampleBufferDelegate(self, queue: cameraQueue)
+    if captureSession.canAddOutput(videoOutput) {
+      captureSession.addOutput(videoOutput)
+    }
+    if captureSession.canAddOutput(photoOutput) {
+      captureSession.addOutput(photoOutput)
+      if #available(iOS 16.0, *) {
+        // Use maxPhotoDimensions instead of deprecated isHighResolutionCaptureEnabled
+        if let device = captureDevice,
+          let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last
+        {
+          photoOutput.maxPhotoDimensions = maxDimensions
+        }
+      } else {
+        // Fallback for iOS versions before 16.0
+        photoOutput.isHighResolutionCaptureEnabled = true
+      }
+    }
+
+    // We want the buffers to be in portrait orientation otherwise they are
+    // rotated by 90 degrees. Need to set this _after_ addOutput()!
+    let connection = videoOutput.connection(with: AVMediaType.video)
+    connection?.videoOrientation = videoOrientation
+    if position == .front {
+      connection?.isVideoMirrored = true
+    }
+
+    guard let device = captureDevice else { return false }
+    do {
+      try device.lockForConfiguration()
+      if device.isFocusModeSupported(.continuousAutoFocus),
+        device.isFocusPointOfInterestSupported
+      {
+        device.focusMode = .continuousAutoFocus
+        device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+      }
+      device.exposureMode = .continuousAutoExposure
+      device.unlockForConfiguration()
+    } catch {
+      return false
+    }
+
+    captureSession.commitConfiguration()
+    return true
+  }
+
+  func start() {
+    if !captureSession.isRunning {
+      DispatchQueue.global().async { [weak self] in
+        self?.captureSession.startRunning()
+      }
+    }
+  }
+
+  func stop() {
+    if captureSession.isRunning {
+      DispatchQueue.global().async { [weak self] in
+        self?.captureSession.stopRunning()
+      }
+    }
+  }
+
+  private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
+    guard let predictor = predictor else {
+      return
+    }
+    if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+      currentBuffer = pixelBuffer
+      if !frameSizeCaptured {
+        let frameWidth = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+        let frameHeight = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+        longSide = max(frameWidth, frameHeight)
+        shortSide = min(frameWidth, frameHeight)
+        frameSizeCaptured = true
+      }
+
+      predictor.predict(sampleBuffer: sampleBuffer, onResultsListener: self, onInferenceTime: self)
+      currentBuffer = nil
+    }
+  }
+
+  func updateVideoOrientation(orientation: AVCaptureVideoOrientation) {
+    guard let connection = videoOutput.connection(with: .video) else { return }
+
+    connection.videoOrientation = orientation
+    let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
+    if currentInput?.device.position == .front {
+      connection.isVideoMirrored = true
+    } else {
+      connection.isVideoMirrored = false
+    }
+    self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+  }
+}
+
+extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
+  public func captureOutput(
+    _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
+    from connection: AVCaptureConnection
+  ) {
+    guard inferenceOK else { return }
+    predictOnFrame(sampleBuffer: sampleBuffer)
+  }
+}
+
+extension VideoCapture: ResultsListener, InferenceTimeListener {
+  public func on(inferenceTime: Double, fpsRate: Double) {
+    DispatchQueue.main.async { [weak self] in
+      self?.delegate?.onInferenceTime(speed: inferenceTime, fps: fpsRate)
+    }
+  }
+
+  public func on(result: YOLOResult) {
+    DispatchQueue.main.async { [weak self] in
+      self?.delegate?.onPredict(result: result)
+    }
+  }
+}

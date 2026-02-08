@@ -241,6 +241,36 @@ extension OBB {
     return worldCorners
   }
 
+  /// Converts the OBB to pixel-space corner points, applying rotation in pixel coordinates.
+  ///
+  /// Unlike `toPolygon()` which works in normalized space, this method converts to pixel
+  /// coordinates before rotation, preventing aspect-ratio distortion on non-square images.
+  ///
+  /// - Parameter imageSize: The target image/view size in pixels.
+  /// - Returns: An array of four CGPoints in pixel coordinates.
+  public func toPolygon(imageSize: CGSize) -> Polygon {
+    let cxPx = CGFloat(cx) * imageSize.width
+    let cyPx = CGFloat(cy) * imageSize.height
+    let halfWPx = CGFloat(w) / 2 * imageSize.width
+    let halfHPx = CGFloat(h) / 2 * imageSize.height
+
+    let localCorners = [
+      CGPoint(x: -halfWPx, y: -halfHPx),
+      CGPoint(x: halfWPx, y: -halfHPx),
+      CGPoint(x: halfWPx, y: halfHPx),
+      CGPoint(x: -halfWPx, y: halfHPx),
+    ]
+
+    let cosA = cos(Double(angle))
+    let sinA = sin(Double(angle))
+
+    return localCorners.map { pt -> CGPoint in
+      let rx = CGFloat(cosA) * pt.x - CGFloat(sinA) * pt.y
+      let ry = CGFloat(sinA) * pt.x + CGFloat(cosA) * pt.y
+      return CGPoint(x: rx + cxPx, y: ry + cyPx)
+    }
+  }
+
   /// Calculates the area of the oriented bounding box.
   ///
   /// The area of an oriented bounding box is simply the product of its width and height,

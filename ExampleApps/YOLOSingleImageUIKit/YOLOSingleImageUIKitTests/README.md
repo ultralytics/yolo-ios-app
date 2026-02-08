@@ -12,7 +12,7 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute the complete test suite, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26x-seg.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) segmentation model.
+- `yolo26x-seg.mlpackage`: An [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26/) segmentation model.
 
 **Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from [version control](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History#_removing_a_file_from_every_commit) to keep repository size manageable.
 

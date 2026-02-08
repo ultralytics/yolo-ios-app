@@ -701,15 +701,14 @@ class OBBRenderer {
       let index = detection.index % ultralyticsColors.count
       let color = ultralyticsColors[index]
 
-      let corners = detection.box.toPolygon()
+      // Compute polygon in pixel space to avoid aspect-ratio distortion
+      let corners = detection.box.toPolygon(imageSize: imageViewSize)
       let path = UIBezierPath()
       for (i, corner) in corners.enumerated() {
-        let px = corner.x * scaleX
-        let py = corner.y * scaleY
         if i == 0 {
-          path.move(to: CGPoint(x: px, y: py))
+          path.move(to: corner)
         } else {
-          path.addLine(to: CGPoint(x: px, y: py))
+          path.addLine(to: corner)
         }
       }
       path.close()
@@ -740,12 +739,9 @@ class OBBRenderer {
       let verticalPadding: CGFloat = dynamicFontSize / 5
 
       if let firstCorner = corners.first {
-        let px = firstCorner.x * scaleX
-        let py = firstCorner.y * scaleY
-
         textLayer.frame = CGRect(
-          x: px,
-          y: py - textSize.height - verticalPadding,
+          x: firstCorner.x,
+          y: firstCorner.y - textSize.height - verticalPadding,
           width: textSize.width + horizontalPadding,
           height: textSize.height + verticalPadding
         )
@@ -793,16 +789,15 @@ func drawOBBsOnCIImage(
     let color = ultralyticsColors[colorIndex]
     cgContext.setStrokeColor(color.cgColor)
 
-    let corners = detection.box.toPolygon()
+    // Compute polygon in pixel space to avoid aspect-ratio distortion
+    let corners = detection.box.toPolygon(imageSize: outputSize)
 
     cgContext.beginPath()
     for (i, corner) in corners.enumerated() {
-      let px = corner.x * outputSize.width
-      let py = corner.y * outputSize.height
       if i == 0 {
-        cgContext.move(to: CGPoint(x: px, y: py))
+        cgContext.move(to: corner)
       } else {
-        cgContext.addLine(to: CGPoint(x: px, y: py))
+        cgContext.addLine(to: corner)
       }
     }
     cgContext.closePath()
@@ -815,9 +810,8 @@ func drawOBBsOnCIImage(
       .backgroundColor: color.withAlphaComponent(0.7),
     ]
     let textSize = (labelText as NSString).size(withAttributes: attrs)
-    let corner0 = corners[0]
-    let labelX = corner0.x * outputSize.width
-    let labelY = corner0.y * outputSize.height - textSize.height
+    let labelX = corners[0].x
+    let labelY = corners[0].y - textSize.height
 
     (labelText as NSString).draw(
       at: CGPoint(x: labelX, y: labelY),

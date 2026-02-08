@@ -10,7 +10,7 @@ This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing)
 
 To execute the complete test suite, including tests involving model [inference](https://www.ultralytics.com/glossary/real-time-inference), you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n-obb.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
+- `yolo26n-obb.mlpackage` - An [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
 
 **Note**: This model file is not included in the repository due to its size.
 

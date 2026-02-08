@@ -12,7 +12,7 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](../models/yolo26.md) [segmentation model](../tasks/segment.md).
+- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26/) [segmentation model](https://docs.ultralytics.com/tasks/segment/).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
@@ -31,7 +31,7 @@ model = YOLO("yolo26n-seg.pt")
 model.export(format="coreml")  # Creates yolo26n-seg.mlpackage
 ```
 
-For more details on exporting models, refer to the [Ultralytics Export documentation](../modes/export.md).
+For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/).
 
 ### Adding Model Files to the Project
 

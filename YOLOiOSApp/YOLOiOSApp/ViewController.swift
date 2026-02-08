@@ -384,7 +384,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
           // Check if external display is connected
-          let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+          let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
 
           if hasExternalDisplay {
             // External display is connected - skip YOLOView loading, just notify external display
@@ -459,7 +459,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
       // Check if external display is connected
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
 
       if hasExternalDisplay {
         // External display is connected - skip YOLOView loading, just notify external display
@@ -567,7 +567,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
 
       // Check if external display is connected
-      let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
 
       // Only set inference flag on YOLOView if no external display
       if !hasExternalDisplay {

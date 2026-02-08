@@ -10,7 +10,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project leverages Ultralytics' state-of-the-art [YOLO26 models](https://docs.ultralytics.com/models/yolo26/) to transform your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
+Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project leverages Ultralytics' state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) to transform your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
   <br>
@@ -46,12 +46,12 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 | Pose Estimation | ✅  |
 | OBB Detection   | ✅  |
 
-- Native iOS Performance-Maximum speed with Swift & CoreML
+- Native iOS Performance - Maximum speed with Swift & CoreML
 - Optimized for Apple Silicon - Leverages Neural Engine & GPU
 - Real-time Detection - 60+ FPS on latest iPhones
-- Low Latency-Direct hardware access without framework overhead
-- iOS-First Design-Native UI/UX following Apple guidelines
-- CoreML Integration-Apple's optimized ML framework
+- Low Latency - Direct hardware access without framework overhead
+- iOS-First Design - Native UI/UX following Apple guidelines
+- CoreML Integration - Apple's optimized ML framework
 
 ## 📂 Repository Content
 
@@ -97,7 +97,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 
 - **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [CoreML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization).
 - **Multi-OS Support**: The Swift Package is compatible with iOS, iPadOS, and macOS, enabling broad application deployment.
-- **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect/), with [segmentation](https://docs.ultralytics.com/tasks/segment/), [classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection planned for future updates.
+- **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect/), [segmentation](https://docs.ultralytics.com/tasks/segment/), [classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ## 🧪 Testing Procedures
 
@@ -107,7 +107,7 @@ This repository includes comprehensive [unit tests](https://en.wikipedia.org/wik
 
 Tests require CoreML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
 
-1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files (e.g., `YOLOv11Tests.swift`).
+1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files.
 2.  Download the required models from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
 3.  Convert the models to CoreML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
 4.  Add the exported `.mlpackage` files to your [Xcode](https://developer.apple.com/xcode/) project, ensuring they are included in the test targets.

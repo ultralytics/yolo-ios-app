@@ -42,7 +42,7 @@ Getting started with the Ultralytics YOLO iOS App is straightforward. Follow the
 Ensure you have the following before you begin:
 
 - **Xcode:** The app requires [Xcode](https://developer.apple.com/xcode/) installed on your macOS machine. You can download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-- **iOS Device:** An iPhone or iPad running [iOS 14.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
+- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
 - **Apple Developer Account:** A free [Apple Developer account](https://developer.apple.com/programs/enroll/) is sufficient for testing on your device.
 
 ### Installation
@@ -56,10 +56,10 @@ Ensure you have the following before you begin:
     ```
 
 2.  **Open the Project in Xcode:**
-    Locate the `YOLO.xcodeproj` file within the cloned directory and open it using Xcode.
+    Locate the `YOLOiOSApp.xcodeproj` file within the cloned directory and open it using Xcode.
 
     <p align="center">
-    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="Xcode project structure showing YOLO.xcodeproj">
+    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="Xcode project structure showing YOLOiOSApp.xcodeproj">
     </p>
 
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
@@ -157,7 +157,7 @@ You can export these models using the Python script provided in the [Installatio
 
 ### Running Tests in Xcode
 
-1.  Open the `YOLO.xcodeproj` project in Xcode.
+1.  Open the `YOLOiOSApp.xcodeproj` project in Xcode.
 2.  Navigate to the Test Navigator tab (represented by a diamond icon) in the left sidebar.
 3.  Select the tests you wish to run (e.g., the entire `YOLOTests` suite or individual test functions).
 4.  Click the Run button (play icon) next to your selection to execute the tests on a connected device or simulator.

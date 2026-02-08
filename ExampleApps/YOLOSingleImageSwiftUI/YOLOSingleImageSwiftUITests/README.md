@@ -12,13 +12,13 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26/) [segmentation model](https://docs.ultralytics.com/tasks/segment/).
+- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) [segmentation model](https://docs.ultralytics.com/tasks/segment/).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
 ### Obtaining the Model File
 
-1.  Download pretrained [Ultralytics YOLO26 models](https://docs.ultralytics.com/models/yolo26/) from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
+1.  Download pretrained [Ultralytics YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
 2.  Convert the [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` functionality:
 
 ```python
@@ -50,7 +50,7 @@ For better project organization, consider placing the model file within a "Model
 
 ![Adding model to target in Xcode](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
 
-## 📊 Testing Strategy
+### Testing Strategy
 
 These unit tests verify several key aspects of the application:
 

@@ -12,7 +12,7 @@ Follow these instructions to set up and run the tests for the application.
 
 To execute the full test suite effectively, you will need the following [Apple Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n.mlpackage`: An [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26/) model optimized for [object detection](https://docs.ultralytics.com/tasks/detect/) tasks.
+- `yolo26n.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for [object detection](https://docs.ultralytics.com/tasks/detect/) tasks.
 
 **Note**: This model file is not included directly in the repository. Due to its potentially [large size](https://git-lfs.com/), including it could complicate version control management with Git.
 
@@ -27,9 +27,9 @@ from ultralytics import YOLO
 # Load the YOLO26 nano detection model
 model = YOLO("yolo26n.pt")
 
-# Export the model to Core ML format
+# Export the model to Core ML format (YOLO26 detect is NMS-free)
 # See https://docs.ultralytics.com/integrations/coreml/ for more details
-model.export(format="coreml")
+model.export(format="coreml", nms=False)
 ```
 
 ### Adding Model Files to the Project
@@ -74,6 +74,6 @@ To execute the **complete** test suite, including tests that require the model t
 
 This tiered testing approach provides flexibility, ensuring that both fundamental application logic and the critical model integration can be thoroughly validated, depending on the availability of the model files.
 
-## ✨ Contributing
+## 🤝 Contributing
 
 Contributions to enhance the YOLO RealTime UIKit example application and its tests are highly encouraged! If you have suggestions, identify bugs, or want to propose improvements, please feel free to open an issue or submit a pull request in the main [Ultralytics repository](https://github.com/ultralytics/ultralytics). For more detailed guidance on contributing, please see our [Contributing Guide](https://docs.ultralytics.com/help/contributing/). Thank you for helping make Ultralytics better!

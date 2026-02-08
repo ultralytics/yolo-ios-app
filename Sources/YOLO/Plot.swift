@@ -685,9 +685,6 @@ class OBBRenderer {
   ) {
     usedLayerCount = 0
 
-    let scaleX = imageViewSize.width
-    let scaleY = imageViewSize.height
-
     // Calculate line width and font size dynamically based on image dimensions
     let dynamicLineWidth = max(imageViewSize.width, imageViewSize.height) / 200
     let dynamicFontSize = max(imageViewSize.width, imageViewSize.height) / 50
@@ -701,7 +698,7 @@ class OBBRenderer {
       let index = detection.index % ultralyticsColors.count
       let color = ultralyticsColors[index]
 
-      // Compute polygon in pixel space to avoid aspect-ratio distortion
+      // Compute polygon in pixel space to avoid parallelogram distortion
       let corners = detection.box.toPolygon(imageSize: imageViewSize)
       let path = UIBezierPath()
       for (i, corner) in corners.enumerated() {

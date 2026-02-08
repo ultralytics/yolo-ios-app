@@ -20,11 +20,9 @@ import Vision
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 public class Segmenter: BasePredictor, @unchecked Sendable {
-  var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-      //            DispatchQueue.main.async { [self] in
       guard results.count == 2 else { return }
       var pred: MLMultiArray
       var masks: MLMultiArray
@@ -77,6 +75,9 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         alphas.append(alpha)
       }
 
+      // Update timing before capturing values to avoid one-frame lag
+      self.updateTime()
+
       // Capture needed values before async block
       let capturedMasks = masks
       let capturedBoxes = boxes
@@ -86,10 +87,11 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
       let capturedT4 = self.t4
       let capturedLabels = self.labels
 
+      let capturedDetectedObjects = Array(limitedObjects)
       DispatchQueue.global(qos: .userInitiated).async { [weak self] in
         guard
           let processedMasks = generateCombinedMaskImage(
-            detectedObjects: detectedObjects,
+            detectedObjects: capturedDetectedObjects,
             protos: capturedMasks,
             inputWidth: capturedModelInputSize.width,
             inputHeight: capturedModelInputSize.height,
@@ -107,7 +109,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
           speed: capturedT2,
           fps: 1 / capturedT4, names: capturedLabels)
-        self?.updateTime()
         self?.currentOnResultsListener?.on(result: result)
       }
     }
@@ -213,8 +214,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let annotatedImage = drawYOLOSegmentationWithBoxes(
           ciImage: image,
           boxes: boxes,
-          maskImage: processedMasks.0,
-          originalImageSize: inputSize
+          maskImage: processedMasks.0
         )
 
         // 6. Construct result
@@ -290,10 +290,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
-
-    // Pre-allocate reusable arrays outside the loop
-    let classProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
-    defer { classProbs.deallocate() }
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
       let x = pointerWrapper.pointer[j]
@@ -440,21 +436,5 @@ final class FloatPointerWrapper: @unchecked Sendable {
   let pointer: UnsafeMutablePointer<Float>
   init(_ pointer: UnsafeMutablePointer<Float>) {
     self.pointer = pointer
-  }
-}
-
-final class ResultsWrapper: @unchecked Sendable {
-  private var results: [(CGRect, Int, Float, MLMultiArray)] = []
-
-  func reserveCapacity(_ capacity: Int) {
-    results.reserveCapacity(capacity)
-  }
-
-  func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
-    results.append(result)
-  }
-
-  func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
-    return results
   }
 }

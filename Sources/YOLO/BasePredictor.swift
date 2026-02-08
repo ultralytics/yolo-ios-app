@@ -70,7 +70,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   var t3 = CACurrentMediaTime()  // FPS start
 
   /// Smoothed frames per second measurement (averaged over recent frames).
-  var t4 = 0.0  // FPS dt smoothed
+  var t4 = 1.0  // FPS dt smoothed (non-zero to avoid infinity on first frame)
 
   /// Flag indicating whether the predictor is currently processing an update.
   public var isUpdating: Bool = false
@@ -236,7 +236,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
       currentOnResultsListener = onResultsListener
       currentOnInferenceTimeListener = onInferenceTime
-      //            currentOnFpsRateListener = onFpsRate
 
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
@@ -248,8 +247,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
       t0 = CACurrentMediaTime()  // inference start
       do {
-        if visionRequest != nil {
-          try handler.perform([visionRequest!])
+        if let request = visionRequest {
+          try handler.perform([request])
         }
       } catch {
         print(error)
@@ -270,6 +269,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
   func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
+    let iou = requiresNMS ? iouThreshold : 1.0
+    detector?.featureProvider = ThresholdProvider(
+      iouThreshold: iou, confidenceThreshold: confidenceThreshold)
   }
 
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
@@ -282,6 +284,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
   func setIouThreshold(iou: Double) {
     iouThreshold = iou
+    let effectiveIou = requiresNMS ? iouThreshold : 1.0
+    detector?.featureProvider = ThresholdProvider(
+      iouThreshold: effectiveIou, confidenceThreshold: confidenceThreshold)
   }
 
   /// The maximum number of detections to return in results (default: 30).
@@ -338,8 +343,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     if let multiArrayConstraint = inputDescription.multiArrayConstraint {
       let shape = multiArrayConstraint.shape
       if shape.count >= 2 {
-        let height = shape[0].intValue
-        let width = shape[1].intValue
+        let height = shape[shape.count - 2].intValue
+        let width = shape[shape.count - 1].intValue
         return (width: width, height: height)
       }
     }

@@ -17,7 +17,7 @@ import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
 public class YOLO: @unchecked Sendable {
-  var predictor: Predictor!
+  var predictor: Predictor?
 
   private var pendingNumItems: Int?
   private var pendingConfidence: Double?
@@ -27,7 +27,8 @@ public class YOLO: @unchecked Sendable {
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
     let downloader = YOLOModelDownloader()
 
-    downloader.download(from: url, task: task) { result in
+    downloader.download(from: url, task: task) { [weak self] result in
+      guard let self = self else { return }
       switch result {
       case .success(let modelPath):
         self.loadModel(from: modelPath, task: task, completion: completion)
@@ -73,7 +74,8 @@ public class YOLO: @unchecked Sendable {
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    let handleResult: (Result<BasePredictor, Error>) -> Void = { result in
+    let handleResult: (Result<BasePredictor, Error>) -> Void = { [weak self] result in
+      guard let self = self else { return }
       switch result {
       case .success(let predictor):
         self.predictor = predictor
@@ -165,39 +167,31 @@ public class YOLO: @unchecked Sendable {
     iou.map { setIouThreshold($0) }
   }
 
-  public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
-    let ciImage = CIImage(image: uiImage)!
-    let result = predictor.predictOnImage(image: ciImage)
-    //        if returnAnnotatedImage {
-    //            let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //            result.annotatedImage = annotatedImage
-    //        }
-    return result
+  public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
+    guard let ciImage = CIImage(image: uiImage), let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
+    return predictor.predictOnImage(image: ciImage)
   }
 
-  public func callAsFunction(_ ciImage: CIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
-    let result = predictor.predictOnImage(image: ciImage)
-    //    if returnAnnotatedImage {
-    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //      result.annotatedImage = annotatedImage
-    //    }
-    return result
+  public func callAsFunction(_ ciImage: CIImage) -> YOLOResult {
+    guard let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
+    return predictor.predictOnImage(image: ciImage)
   }
 
-  public func callAsFunction(_ cgImage: CGImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
+  public func callAsFunction(_ cgImage: CGImage) -> YOLOResult {
+    guard let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
     let ciImage = CIImage(cgImage: cgImage)
-    let result = predictor.predictOnImage(image: ciImage)
-    //    if returnAnnotatedImage {
-    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //      result.annotatedImage = annotatedImage
-    //    }
-    return result
+    return predictor.predictOnImage(image: ciImage)
   }
 
   public func callAsFunction(
     _ resourceName: String,
-    withExtension ext: String? = nil,
-    returnAnnotatedImage: Bool = true
+    withExtension ext: String? = nil
   ) -> YOLOResult {
     guard let url = Bundle.main.url(forResource: resourceName, withExtension: ext),
       let data = try? Data(contentsOf: url),
@@ -205,12 +199,11 @@ public class YOLO: @unchecked Sendable {
     else {
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
-    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
+    return self(uiImage)
   }
 
   public func callAsFunction(
-    _ remoteURL: URL?,
-    returnAnnotatedImage: Bool = true
+    _ remoteURL: URL?
   ) -> YOLOResult {
     guard let remoteURL = remoteURL,
       let data = try? Data(contentsOf: remoteURL),
@@ -218,12 +211,11 @@ public class YOLO: @unchecked Sendable {
     else {
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
-    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
+    return self(uiImage)
   }
 
   public func callAsFunction(
-    _ localPath: String,
-    returnAnnotatedImage: Bool = true
+    _ localPath: String
   ) -> YOLOResult {
     let fileURL = URL(fileURLWithPath: localPath)
     guard let data = try? Data(contentsOf: fileURL),
@@ -231,18 +223,17 @@ public class YOLO: @unchecked Sendable {
     else {
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
-    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
+    return self(uiImage)
   }
 
   @MainActor @available(iOS 16.0, *)
   public func callAsFunction(
-    _ swiftUIImage: SwiftUI.Image,
-    returnAnnotatedImage: Bool = true
+    _ swiftUIImage: SwiftUI.Image
   ) -> YOLOResult {
     let renderer = ImageRenderer(content: swiftUIImage)
     guard let uiImage = renderer.uiImage else {
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
-    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
+    return self(uiImage)
   }
 }

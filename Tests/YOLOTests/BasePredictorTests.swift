@@ -118,7 +118,7 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(predictor.t0, 0.0, accuracy: 0.001)
     XCTAssertEqual(predictor.t1, 0.0, accuracy: 0.001)
     XCTAssertEqual(predictor.t2, 0.0, accuracy: 0.001)
-    XCTAssertEqual(predictor.t4, 0.0, accuracy: 0.001)
+    XCTAssertEqual(predictor.t4, 1.0, accuracy: 0.001)  // non-zero to avoid infinity FPS on first frame
     XCTAssertGreaterThan(predictor.t3, 0)  // Should be initialized with current time
   }
 }

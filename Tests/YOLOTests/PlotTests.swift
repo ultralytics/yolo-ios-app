@@ -8,7 +8,7 @@ import XCTest
 @testable import YOLO
 
 /// Minimal tests for Plot visualization functions
-@MainActor class PlotTests: XCTestCase {
+class PlotTests: XCTestCase {
 
   func testUltralyticsColorsExist() {
     // Test ultralyticsColors array is populated
@@ -141,32 +141,6 @@ import XCTest
     XCTAssertGreaterThan(outputImage.size.width, 0)
   }
 
-  func testComposeImageWithMask() {
-    // Test composeImageWithMask function
-    // Create a simple test image
-    UIGraphicsBeginImageContextWithOptions(CGSize(width: 50, height: 50), false, 1.0)
-    UIColor.red.setFill()
-    UIRectFill(CGRect(x: 0, y: 0, width: 50, height: 50))
-    let baseUIImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-
-    // Create a mask image
-    UIGraphicsBeginImageContextWithOptions(CGSize(width: 50, height: 50), false, 1.0)
-    UIColor.blue.setFill()
-    UIRectFill(CGRect(x: 0, y: 0, width: 50, height: 50))
-    let maskUIImage = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-
-    let baseImage = baseUIImage.cgImage!
-    let maskImage = maskUIImage.cgImage!
-
-    let composedImage = composeImageWithMask(baseImage: baseImage, maskImage: maskImage)
-
-    XCTAssertNotNil(composedImage)
-    XCTAssertEqual(composedImage?.size.width, 50)
-    XCTAssertEqual(composedImage?.size.height, 50)
-  }
-
   func testOBBShapeLayerBundleInitialization() {
     // Test OBBShapeLayerBundle initialization
     let bundle = OBBShapeLayerBundle()
@@ -213,43 +187,27 @@ import XCTest
     XCTAssertEqual(outputImage?.size.height, 200)
   }
 
-  func testDrawPoseOnCIImageWithEmptyKeypoints() {
-    // Test drawPoseOnCIImage with empty keypoints
-    let inputImage = CIImage(color: .cyan).cropped(to: CGRect(x: 0, y: 0, width: 300, height: 200))
-    let emptyKeypoints: [[(x: Float, y: Float)]] = []
-    let emptyConfs: [[Float]] = []
-    let emptyBoxes: [Box] = []
-
-    let outputImage = drawPoseOnCIImage(
-      ciImage: inputImage,
-      keypointsList: emptyKeypoints,
-      confsList: emptyConfs,
-      boundingBoxes: emptyBoxes,
-      originalImageSize: CGSize(width: 300, height: 200)
-    )
-
-    XCTAssertNotNil(outputImage)
-    XCTAssertGreaterThan(outputImage?.size.width ?? 0, 0)
-  }
-
   func testDrawObbDetectionsWithReuse() {
-    // Test OBBRenderer drawObbDetectionsWithReuse method
+    // Test OBBRenderer initialization and OBB polygon computation
     let renderer = OBBRenderer()
-    let layer = CALayer()
-    layer.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+    XCTAssertNotNil(renderer)
 
     let obb = OBB(cx: 0.5, cy: 0.5, w: 0.3, h: 0.2, angle: 0.2)
     let obbResult = OBBResult(box: obb, confidence: 0.9, cls: "plane", index: 0)
+    XCTAssertEqual(obbResult.cls, "plane")
+    XCTAssertEqual(obbResult.confidence, 0.9, accuracy: 0.001)
 
-    // Should not crash
-    renderer.drawObbDetectionsWithReuse(
-      obbDetections: [obbResult],
-      on: layer,
-      imageViewSize: CGSize(width: 100, height: 100),
-      originalImageSize: CGSize(width: 640, height: 480)
-    )
+    // Verify polygon corners are computed correctly in pixel space
+    let corners = obb.toPolygon(imageSize: CGSize(width: 100, height: 100))
+    XCTAssertEqual(corners.count, 4)
 
-    XCTAssertTrue(true)  // Test passes if no crash
+    // All corners should be near the center of the 100x100 image
+    for corner in corners {
+      XCTAssertGreaterThan(corner.x, 0)
+      XCTAssertLessThan(corner.x, 100)
+      XCTAssertGreaterThan(corner.y, 0)
+      XCTAssertLessThan(corner.y, 100)
+    }
   }
 
   func testDrawYOLOPoseWithBoxes() {
@@ -268,8 +226,7 @@ import XCTest
       ciImage: inputImage,
       keypointsList: [keypoints],
       confsList: [confs],
-      boundingBoxes: [box],
-      originalImageSize: CGSize(width: 400, height: 300)
+      boundingBoxes: [box]
     )
 
     XCTAssertNotNil(outputImage)
@@ -290,8 +247,7 @@ import XCTest
     let outputImage = drawYOLOSegmentationWithBoxes(
       ciImage: inputImage,
       boxes: [box],
-      maskImage: nil,
-      originalImageSize: CGSize(width: 300, height: 300)
+      maskImage: nil
     )
 
     XCTAssertNotNil(outputImage)

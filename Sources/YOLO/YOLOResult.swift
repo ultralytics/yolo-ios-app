@@ -55,12 +55,8 @@ public struct YOLOResult: @unchecked Sendable {
   /// Optional frames per second rate for real-time processing.
   public var fps: Double?
 
-  /// The original input image that was processed.
-  public var originalImage: UIImage?
-
   /// Array of class label names used by the model.
   public var names: [String]
-  //    let keypoints: [Keypoint]
 }
 
 /// Represents a single bounding box detection from a YOLO model.

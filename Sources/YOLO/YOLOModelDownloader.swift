@@ -39,33 +39,59 @@ public class YOLOModelDownloader: NSObject {
     }
   }
 
+  private let lock = NSLock()
   private var downloadTask: URLSessionDownloadTask?
   private var progressHandler: ProgressHandler?
   private var completionHandler: CompletionHandler?
   private var currentTask: YOLOTask?
   private var originalURL: URL?
+  private var isDownloading = false
 
   private lazy var session: URLSession = {
     URLSession(configuration: .default, delegate: self, delegateQueue: nil)
   }()
+
+  deinit {
+    session.invalidateAndCancel()
+  }
 
   /// Download model from URL with optional task type and progress tracking
   public func download(
     from url: URL, task: YOLOTask? = nil, progress: ProgressHandler? = nil,
     completion: @escaping CompletionHandler
   ) {
-    self.progressHandler = progress
-    self.completionHandler = completion
-    self.currentTask = task
-    self.originalURL = url
-
-    // Check cache first
+    // Check cache first (before acquiring lock)
     if let cachedPath = YOLOModelCache.shared.getCachedModelPath(url: url, task: task) {
-      completion(.success(cachedPath))
+      DispatchQueue.main.async {
+        completion(.success(cachedPath))
+      }
       return
     }
 
-    // No cache found, Start download
+    lock.lock()
+    guard !isDownloading else {
+      lock.unlock()
+      completion(
+        .failure(
+          DownloadError.downloadFailed(
+            NSError(
+              domain: "YOLOModelDownloader", code: -1,
+              userInfo: [NSLocalizedDescriptionKey: "A download is already in progress"]))))
+      return
+    }
+    isDownloading = true
+    self.progressHandler = progress
+    self.completionHandler = { [weak self] result in
+      self?.lock.lock()
+      self?.isDownloading = false
+      self?.lock.unlock()
+      completion(result)
+    }
+    self.currentTask = task
+    self.originalURL = url
+    lock.unlock()
+
+    // Start download
     downloadTask = session.downloadTask(with: url)
     downloadTask?.resume()
   }
@@ -227,6 +253,22 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
       return
     }
 
+    // Validate HTTP status code
+    if let httpResponse = downloadTask.response as? HTTPURLResponse,
+      !(200..<300).contains(httpResponse.statusCode)
+    {
+      completionHandler?(
+        .failure(
+          DownloadError.downloadFailed(
+            NSError(
+              domain: "YOLOModelDownloader", code: httpResponse.statusCode,
+              userInfo: [
+                NSLocalizedDescriptionKey:
+                  "Server returned HTTP \(httpResponse.statusCode)"
+              ]))))
+      return
+    }
+
     processDownloadedFile(at: location, originalURL: originalURL)
   }
 
@@ -234,7 +276,9 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
     _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
     totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
   ) {
-    let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+    let progress =
+      totalBytesExpectedToWrite > 0
+      ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
     DispatchQueue.main.async {
       self.progressHandler?(progress)
     }

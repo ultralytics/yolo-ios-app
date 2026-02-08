@@ -10,8 +10,6 @@
 //  and image classification. This enum is used throughout the application to configure the model loading
 //  and inference pipeline for the specific task selected by the user.
 
-import Foundation
-
 /// Represents the different computer vision tasks supported by YOLO models.
 ///
 /// This enumeration defines the various computer vision tasks that can be performed

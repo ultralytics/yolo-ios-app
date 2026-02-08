@@ -240,8 +240,10 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
       let y2 = pointer[base + 3 * fieldStride]
       let classId = numFields > 6 ? Int(pointer[base + 5 * fieldStride]) : 0
 
-      // Angle is the last field
-      let angle = pointer[base + (numFields - 1) * fieldStride]
+      // Angle is the last field — YOLO26 outputs raw angle, needs sigmoid transformation:
+      // angle = (sigmoid(raw) - 0.25) * π
+      let rawAngle = pointer[base + (numFields - 1) * fieldStride]
+      let angle = (1.0 / (1.0 + exp(-rawAngle)) - 0.25) * Float.pi
 
       // Convert xyxy pixel coords to normalized cx,cy,w,h
       let cx = (x1 + x2) / 2.0 / inputW

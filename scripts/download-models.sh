@@ -38,23 +38,31 @@ process_model() {
     # Remove existing model directory if present
     rm -rf "$model_path"
 
-    # Create model directory
-    mkdir -p "$model_path"
-
     # Download the model
     echo "Downloading $model_name..."
     curl -L "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar
 
-    # Extract the zip file
+    # Extract to temp directory to handle nested structure
+    local tmp_dir="$OUTPUT_DIR/_tmp_extract_$$"
+    rm -rf "$tmp_dir"
+    mkdir -p "$tmp_dir"
+
     echo "Extracting $model_name..."
-    unzip -o "$zip_path" -d "$model_path"
+    unzip -o "$zip_path" -d "$tmp_dir"
 
-    # Remove macOS metadata if present (after extraction)
-    rm -rf "$model_path/__MACOSX" 2> /dev/null || true
-    find "$model_path" -name "*.DS_Store" -delete 2> /dev/null || true
+    # Remove macOS metadata if present
+    rm -rf "$tmp_dir/__MACOSX" 2> /dev/null || true
+    find "$tmp_dir" -name "*.DS_Store" -delete 2> /dev/null || true
 
-    # Clean up zip
-    rm "$zip_path"
+    # Handle nested directory: zip may contain model_name.mlpackage/ folder
+    if [ -d "$tmp_dir/$model_name.mlpackage" ]; then
+      mv "$tmp_dir/$model_name.mlpackage" "$model_path"
+    else
+      mv "$tmp_dir" "$model_path"
+    fi
+
+    # Clean up
+    rm -rf "$tmp_dir" "$zip_path"
 
     # Quick verification
     [ -f "$model_path/Manifest.json" ] && echo "✅ Model $model_name ready" || echo "⚠️ Model $model_name may be incomplete"

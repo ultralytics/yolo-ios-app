@@ -92,7 +92,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
         top1 = topObservation.identifier
         top1Conf = Float(topObservation.confidence)
       }
-      for i in 0...candidateNumber - 1 {
+      for i in 0..<candidateNumber {
         let observation = observations[i]
         let label = observation.identifier
         let confidence: Float = Float(observation.confidence)
@@ -188,7 +188,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
           top1 = topObservation.identifier
           top1Conf = Float(topObservation.confidence)
         }
-        for i in 0...candidateNumber - 1 {
+        for i in 0..<candidateNumber {
           let observation = observations[i]
           let label = observation.identifier
           let confidence: Float = Float(observation.confidence)

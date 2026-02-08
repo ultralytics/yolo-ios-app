@@ -234,7 +234,9 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
     _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
     totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
   ) {
-    let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+    let progress =
+      totalBytesExpectedToWrite > 0
+      ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
     DispatchQueue.main.async {
       self.progressHandler?(progress)
     }

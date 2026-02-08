@@ -338,8 +338,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     if let multiArrayConstraint = inputDescription.multiArrayConstraint {
       let shape = multiArrayConstraint.shape
       if shape.count >= 2 {
-        let height = shape[0].intValue
-        let width = shape[1].intValue
+        let height = shape[shape.count - 2].intValue
+        let width = shape[shape.count - 1].intValue
         return (width: width, height: height)
       }
     }

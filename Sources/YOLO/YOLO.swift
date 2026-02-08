@@ -27,7 +27,8 @@ public class YOLO: @unchecked Sendable {
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
     let downloader = YOLOModelDownloader()
 
-    downloader.download(from: url, task: task) { result in
+    downloader.download(from: url, task: task) { [weak self] result in
+      guard let self = self else { return }
       switch result {
       case .success(let modelPath):
         self.loadModel(from: modelPath, task: task, completion: completion)
@@ -73,7 +74,8 @@ public class YOLO: @unchecked Sendable {
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    let handleResult: (Result<BasePredictor, Error>) -> Void = { result in
+    let handleResult: (Result<BasePredictor, Error>) -> Void = { [weak self] result in
+      guard let self = self else { return }
       switch result {
       case .success(let predictor):
         self.predictor = predictor
@@ -166,32 +168,25 @@ public class YOLO: @unchecked Sendable {
   }
 
   public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
-    let ciImage = CIImage(image: uiImage)!
-    let result = predictor.predictOnImage(image: ciImage)
-    //        if returnAnnotatedImage {
-    //            let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //            result.annotatedImage = annotatedImage
-    //        }
-    return result
+    guard let ciImage = CIImage(image: uiImage), let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
+    return predictor.predictOnImage(image: ciImage)
   }
 
   public func callAsFunction(_ ciImage: CIImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
-    let result = predictor.predictOnImage(image: ciImage)
-    //    if returnAnnotatedImage {
-    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //      result.annotatedImage = annotatedImage
-    //    }
-    return result
+    guard let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
+    return predictor.predictOnImage(image: ciImage)
   }
 
   public func callAsFunction(_ cgImage: CGImage, returnAnnotatedImage: Bool = true) -> YOLOResult {
+    guard let predictor = predictor else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
     let ciImage = CIImage(cgImage: cgImage)
-    let result = predictor.predictOnImage(image: ciImage)
-    //    if returnAnnotatedImage {
-    //      let annotatedImage = drawYOLODetections(on: ciImage, result: result)
-    //      result.annotatedImage = annotatedImage
-    //    }
-    return result
+    return predictor.predictOnImage(image: ciImage)
   }
 
   public func callAsFunction(

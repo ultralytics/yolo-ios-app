@@ -73,7 +73,11 @@ struct YOLOViewRepresentable: UIViewRepresentable {
   func makeUIView(context: Context) -> YOLOView {
     let modelPath = modelURL?.path ?? modelPathOrName ?? ""
     assert(!modelPath.isEmpty, "Either modelPathOrName or modelURL must be provided")
-    return YOLOView(frame: .zero, modelPathOrName: modelPath, task: task)
+    let view = YOLOView(frame: .zero, modelPathOrName: modelPath, task: task)
+    if cameraPosition == .front {
+      view.switchCameraTapped()
+    }
+    return view
   }
 
   func updateUIView(_ uiView: YOLOView, context: Context) {

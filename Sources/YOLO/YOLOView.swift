@@ -33,13 +33,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public weak var delegate: YOLOViewDelegate?
 
   public func onInferenceTime(speed: Double, fps: Double) {
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
-      // Notify delegate of performance metrics
-
-      self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
-    }
+    self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
+    self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
   }
 
   public func onPredict(result: YOLOResult) {
@@ -50,21 +45,16 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     onDetection?(result)
 
     if task == .segment {
-      DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
-        if let maskImage = result.masks?.combinedMask {
-
-          guard let maskLayer = self.maskLayer else { return }
-
-          maskLayer.isHidden = false
-          maskLayer.frame = self.overlayLayer.bounds
-          maskLayer.contents = maskImage
-
-          self.videoCapture.predictor.isUpdating = false
-        } else {
-          self.videoCapture.predictor.isUpdating = false
+      if let maskImage = result.masks?.combinedMask {
+        guard let maskLayer = self.maskLayer else {
+          self.videoCapture.predictor?.isUpdating = false
+          return
         }
+        maskLayer.isHidden = false
+        maskLayer.frame = self.overlayLayer.bounds
+        maskLayer.contents = maskImage
       }
+      self.videoCapture.predictor?.isUpdating = false
     } else if task == .classify {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)
     } else if task == .pose {
@@ -231,8 +221,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     guard let unwrappedModelURL = modelURL else {
-      let error = PredictorError.modelFileNotFound
-      fatalError(error.localizedDescription)
+      activityIndicator.stopAnimating()
+      completion?(.failure(PredictorError.modelFileNotFound))
+      return
     }
 
     modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
@@ -515,7 +506,9 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       setupPoseLayerIfNeeded()
     case .obb:
       setupObbLayerIfNeeded()
-      overlayLayer.addSublayer(obbLayer!)
+      if let obbLayer = obbLayer, obbLayer.superlayer !== overlayLayer {
+        overlayLayer.addSublayer(obbLayer)
+      }
       obbLayer?.isHidden = false
     default: break
     }
@@ -543,7 +536,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
 
     resultCount = predictions.boxes.count
 
-    if UIDevice.current.orientation == .portrait {
+    if !UIDevice.current.orientation.isLandscape {
 
       var ratio: CGFloat = 1.0
 
@@ -852,6 +845,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public override func layoutSubviews() {
+    super.layoutSubviews()
     setupOverlayLayer()
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
@@ -1146,9 +1140,13 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
 
     self.videoCapture.captureSession.beginConfiguration()
-    let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
-    self.videoCapture.captureSession.removeInput(currentInput!)
-    guard let currentPosition = currentInput?.device.position else { return }
+    guard let currentInput = self.videoCapture.captureSession.inputs.first as? AVCaptureDeviceInput
+    else {
+      self.videoCapture.captureSession.commitConfiguration()
+      return
+    }
+    self.videoCapture.captureSession.removeInput(currentInput)
+    let currentPosition = currentInput.device.position
 
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
 
@@ -1182,7 +1180,7 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func capturePhoto(completion: @escaping (UIImage?) -> Void) {
     self.photoCaptureCompletion = completion
     let settings = AVCapturePhotoSettings()
-    usleep(20_000)  // short 10 ms delay to allow camera to focus
+    Thread.sleep(forTimeInterval: 0.02)  // short delay to allow camera to focus
     self.videoCapture.photoOutput.capturePhoto(
       with: settings, delegate: self as AVCapturePhotoCaptureDelegate
     )
@@ -1361,9 +1359,9 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
           self.addSubview(boxView)
           tempViews.append(boxView)
         }
-        let bounds = UIScreen.main.bounds
-        UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
-        self.drawHierarchy(in: bounds, afterScreenUpdates: true)
+        let captureBounds = self.bounds
+        UIGraphicsBeginImageContextWithOptions(captureBounds.size, true, 0.0)
+        self.drawHierarchy(in: captureBounds, afterScreenUpdates: true)
         let img = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         imageLayer.removeFromSuperlayer()

@@ -33,7 +33,8 @@ public func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float
         let otherIdx = sortedIndices[j]
         if activeIndices[otherIdx] {
           let intersection = boxes[idx].intersection(boxes[otherIdx])
-          if intersection.area > CGFloat(threshold) * min(boxes[idx].area, boxes[otherIdx].area) {
+          let union = boxes[idx].area + boxes[otherIdx].area - intersection.area
+          if union > 0 && intersection.area / union > CGFloat(threshold) {
             activeIndices[otherIdx] = false
           }
         }

@@ -12,23 +12,23 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11n-seg.mlpackage` - An [Ultralytics YOLO11](../models/yolo11.md) [segmentation model](../tasks/segment.md).
+- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](../models/yolo26.md) [segmentation model](../tasks/segment.md).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
 ### Obtaining the Model File
 
-1.  Download pretrained [Ultralytics YOLO11 models](https://docs.ultralytics.com/models/yolo11/) from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
+1.  Download pretrained [Ultralytics YOLO26 models](https://docs.ultralytics.com/models/yolo26/) from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
 2.  Convert the [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` functionality:
 
 ```python
 from ultralytics import YOLO
 
-# Load the YOLO11 nano segmentation model
-model = YOLO("yolo11n-seg.pt")
+# Load the YOLO26 nano segmentation model
+model = YOLO("yolo26n-seg.pt")
 
 # Export the model to Core ML format
-model.export(format="coreml")  # Creates yolo11n-seg.mlpackage
+model.export(format="coreml")  # Creates yolo26n-seg.mlpackage
 ```
 
 For more details on exporting models, refer to the [Ultralytics Export documentation](../modes/export.md).
@@ -39,7 +39,7 @@ For more details on exporting models, refer to the [Ultralytics Export documenta
 
 Follow these steps to add the model file correctly using Xcode:
 
-1.  Drag and drop the `yolo11n-seg.mlpackage` file into your Xcode project navigator.
+1.  Drag and drop the `yolo26n-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
     - Ensure the checkbox for the **`YOLO-Single-Image-SwiftUI`** target (the main app) is selected.
     - You may optionally select the `YOLO-Single-Image-SwiftUITests` target, but the main target is essential.
@@ -67,7 +67,7 @@ By default, the `SKIP_MODEL_TESTS` flag in the test files is set to `true`. This
 
 To run the complete test suite, including tests that perform actual model inference:
 
-1.  Ensure you have added the required `yolo11n-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files" section.
+1.  Ensure you have added the required `yolo26n-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files" section.
 2.  Locate the `SKIP_MODEL_TESTS` flag within the test source file (e.g., `YOLO_Single_Image_SwiftUITests.swift`) and set it to `false`.
 3.  Run the tests again using Xcode's Test navigator (Cmd+U).
 

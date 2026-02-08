@@ -99,18 +99,18 @@ import UIKit // Or AppKit for macOS
 
 // --- Initialization ---
 // Initialize with a model file name included in the app bundle (automatically finds .mlmodelc)
-guard let model = try? YOLO(modelFileName: "yolo11n", task: .detect) else {
+guard let model = try? YOLO(modelFileName: "yolo26n", task: .detect) else {
     fatalError("Failed to load YOLO model.")
 }
 
 // Or initialize with a specific path to a .mlmodel file
-let modelPath = Bundle.main.path(forResource: "yolo11n", ofType: "mlmodel")!
+let modelPath = Bundle.main.path(forResource: "yolo26n", ofType: "mlmodel")!
 guard let model = try? YOLO(modelPath: modelPath, task: .detect) else {
     fatalError("Failed to load YOLO model.")
 }
 
 // Or initialize with a remote URL (model will be downloaded and cached automatically)
-let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
+let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo26n.mlpackage.zip")!
 guard let model = try? YOLO(url: modelURL, task: .detect) else {
     fatalError("Failed to load YOLO model from URL.")
 }
@@ -164,7 +164,7 @@ struct CameraView: View {
     var body: some View {
         // Use YOLOCamera for real-time inference in SwiftUI
         YOLOCamera(
-            modelPathOrName: "yolo11n-seg", // Model file name in bundle
+            modelPathOrName: "yolo26n-seg", // Model file name in bundle
             task: .segment,             // Specify the task
             cameraPosition: .back       // Use the back camera
             // Optional confidenceThreshold parameter can be added here
@@ -181,7 +181,7 @@ struct CameraView: View {
 struct CameraViewWithURL: View {
     var body: some View {
         YOLOCamera(
-            url: URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip")!,
+            url: URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip")!,
             task: .segment,
             cameraPosition: .back
         )
@@ -214,7 +214,7 @@ class CameraViewController: UIViewController {
                     // Initialize YOLOView on the main thread after permission check
                     self.yoloView = YOLOView(
                         frame: self.view.bounds,
-                        modelFileName: "yolo11n-seg", // Model file name in bundle
+                        modelFileName: "yolo26n-seg", // Model file name in bundle
                         task: .segment,             // Specify the task
                         cameraPosition: .back       // Use the back camera
                         // Optional confidenceThreshold parameter can be added here
@@ -274,40 +274,40 @@ First, install the `ultralytics` package using [pip](https://pip.pypa.io/en/stab
 pip install ultralytics
 ```
 
-Then, use the following Python script to export your desired [YOLO11](https://docs.ultralytics.com/models/yolo11/) models (or other YOLO versions like [YOLOv8](https://docs.ultralytics.com/models/yolov8/)). The example below exports YOLO11 detection models in various sizes to Core ML INT8 format, including [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) for detection models.
+Then, use the following Python script to export your desired [YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) models (or other YOLO versions like [YOLOv8](https://docs.ultralytics.com/models/yolov8/)). The example below exports YOLO26 detection models in various sizes to Core ML INT8 format. YOLO26 is NMS-free, so [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) is not needed during export.
 
 ```python
 from ultralytics import YOLO
 
-# Example: Export YOLO11 detection models
+# Example: Export YOLO26 detection models (NMS-free)
 for size in ("n", "s", "m", "l", "x"):
-    # Load a YOLO11 PyTorch model
-    model = YOLO(f"yolo11{size}.pt")  # Assumes you have the .pt file locally or downloads it
+    # Load a YOLO26 PyTorch model
+    model = YOLO(f"yolo26{size}.pt")  # Assumes you have the .pt file locally or downloads it
 
-    # Export the PyTorch model to CoreML INT8 format (with NMS for detection)
+    # Export the PyTorch model to CoreML INT8 format (YOLO26 is NMS-free)
     # imgsz can be adjusted based on expected input size
-    model.export(format="coreml", int8=True, nms=True, imgsz=[640, 384])
-    print(f"Exported yolo11{size}.mlmodel with NMS")
+    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
+    print(f"Exported yolo26{size}.mlmodel (NMS-free)")
 
-# Example: Export a YOLO11 segmentation model (without CoreML NMS)
-seg_model = YOLO("yolo11n-seg.pt")
+# Example: Export a YOLO26 segmentation model (without CoreML NMS)
+seg_model = YOLO("yolo26n-seg.pt")
 seg_model.export(format="coreml", int8=True, imgsz=[640, 384])  # NMS=False (or omitted) for non-detection tasks
-print("Exported yolo11n-seg.mlmodel without NMS")
+print("Exported yolo26n-seg.mlmodel without NMS")
 
 # Similarly for other tasks:
-# cls_model = YOLO("yolo11n-cls.pt")
+# cls_model = YOLO("yolo26n-cls.pt")
 # cls_model.export(format="coreml", int8=True, imgsz=[224, 224]) # Classification often uses smaller imgsz
 
-# pose_model = YOLO("yolo11n-pose.pt")
+# pose_model = YOLO("yolo26n-pose.pt")
 # pose_model.export(format="coreml", int8=True, imgsz=[640, 384])
 
-# obb_model = YOLO("yolo11n-obb.pt")
+# obb_model = YOLO("yolo26n-obb.pt")
 # obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
 ```
 
 This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
-**Important Note on NMS:** The `nms=True` flag during export adds Core ML's built-in Non-Maximum Suppression layers, which is **only applicable to detection models**. For segmentation, pose estimation, and OBB tasks, export with `nms=False` (or omit the argument). This YOLO Swift Package includes optimized Swift implementations of NMS for these other tasks, which are applied automatically after inference. Using `nms=True` for non-detection models may lead to export errors or incorrect behavior.
+**Important Note on NMS:** YOLO26 is NMS-free, so all models should be exported with `nms=False` (or omit the argument). The YOLO Swift Package includes optimized Swift postprocessing that handles YOLO26's NMS-free output format automatically after inference.
 
 ## 🤝 Contributing
 

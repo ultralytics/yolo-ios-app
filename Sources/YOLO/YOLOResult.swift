@@ -241,18 +241,33 @@ extension OBB {
     return worldCorners
   }
 
-  /// Converts the OBB to pixel-space corner points, applying rotation in pixel coordinates.
+  /// Converts the OBB to pixel-space corner points, correcting for aspect ratio.
   ///
-  /// Unlike `toPolygon()` which works in normalized space, this method converts to pixel
-  /// coordinates before rotation, preventing aspect-ratio distortion on non-square images.
+  /// The model operates in a square coordinate space (e.g. 640x640), so the angle and
+  /// extents need adjustment when rendering on a non-square display. This method maps
+  /// the OBB from normalized (square) space to pixel (non-square) space, keeping
+  /// rectangles as rectangles with the correct visual angle.
   ///
   /// - Parameter imageSize: The target image/view size in pixels.
   /// - Returns: An array of four CGPoints in pixel coordinates.
   public func toPolygon(imageSize: CGSize) -> Polygon {
-    let cxPx = CGFloat(cx) * imageSize.width
-    let cyPx = CGFloat(cy) * imageSize.height
-    let halfWPx = CGFloat(w) / 2 * imageSize.width
-    let halfHPx = CGFloat(h) / 2 * imageSize.height
+    let W = Double(imageSize.width)
+    let H = Double(imageSize.height)
+    let cosA = cos(Double(angle))
+    let sinA = sin(Double(angle))
+
+    // Adjust angle from square model space to non-square display space
+    let adjAngle = atan2(H * sinA, W * cosA)
+    let cosAdj = CGFloat(cos(adjAngle))
+    let sinAdj = CGFloat(sin(adjAngle))
+
+    // Adjust extents: width direction (cosA, sinA) scales non-uniformly
+    let halfWPx = CGFloat(w) / 2 * CGFloat(sqrt(pow(cosA * W, 2) + pow(sinA * H, 2)))
+    // Height direction (-sinA, cosA) scales non-uniformly
+    let halfHPx = CGFloat(h) / 2 * CGFloat(sqrt(pow(sinA * W, 2) + pow(cosA * H, 2)))
+
+    let cxPx = CGFloat(cx) * CGFloat(W)
+    let cyPx = CGFloat(cy) * CGFloat(H)
 
     let localCorners = [
       CGPoint(x: -halfWPx, y: -halfHPx),
@@ -261,12 +276,9 @@ extension OBB {
       CGPoint(x: -halfWPx, y: halfHPx),
     ]
 
-    let cosA = cos(Double(angle))
-    let sinA = sin(Double(angle))
-
     return localCorners.map { pt -> CGPoint in
-      let rx = CGFloat(cosA) * pt.x - CGFloat(sinA) * pt.y
-      let ry = CGFloat(sinA) * pt.x + CGFloat(cosA) * pt.y
+      let rx = cosAdj * pt.x - sinAdj * pt.y
+      let ry = sinAdj * pt.x + cosAdj * pt.y
       return CGPoint(x: rx + cxPx, y: ry + cyPx)
     }
   }

@@ -272,7 +272,7 @@ First, install the `ultralytics` package using [pip](https://pip.pypa.io/en/stab
 pip install ultralytics
 ```
 
-Then, use the following Python script to export your desired [YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) models (or other YOLO versions like [YOLOv8](https://docs.ultralytics.com/models/yolov8/)). The example below exports YOLO26 detection models in various sizes to Core ML INT8 format. YOLO26 is NMS-free, so [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) is not needed during export.
+Then, use the following Python script to export your desired [YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) models. The example below exports YOLO26 detection models in various sizes to Core ML INT8 format. YOLO26 is NMS-free, so [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) is not needed during export.
 
 ```python
 from ultralytics import YOLO

@@ -12,23 +12,23 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute the complete test suite, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11x-seg.mlpackage`: An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) segmentation model.
+- `yolo26x-seg.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) segmentation model.
 
 **Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from [version control](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History#_removing_a_file_from_every_commit) to keep repository size manageable.
 
 ### Obtaining the Model File
 
-1.  **Download**: Obtain the base PyTorch YOLO11 model (`yolo11x-seg.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
+1.  **Download**: Obtain the base PyTorch YOLO26 model (`yolo26x-seg.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
 2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
 ```python
 from ultralytics import YOLO
 
-# Load the YOLO11 segmentation model
-model = YOLO("yolo11x-seg.pt")
+# Load the YOLO26 segmentation model
+model = YOLO("yolo26x-seg.pt")
 
 # Export the model to Core ML format
-# This will create the yolo11x-seg.mlpackage file
+# This will create the yolo26x-seg.mlpackage file
 model.export(format="coreml")
 ```
 
@@ -38,7 +38,7 @@ model.export(format="coreml")
 
 Follow these steps carefully:
 
-1.  Drag and drop the generated `yolo11x-seg.mlpackage` file into your Xcode project navigator.
+1.  Drag and drop the generated `yolo26x-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
     - Ensure the checkbox next to the **`YOLO-Single-Image-UIKit`** target is checked. This is crucial.
     - You may optionally check the `YOLO-Single-Image-UIKitTests` target as well, but including it only in the test target is insufficient.
@@ -71,11 +71,11 @@ By default, the test suite is configured to run _without_ requiring the actual m
 
 To run the full test suite, including tests that perform actual model inference:
 
-1.  **Add Models**: Ensure you have obtained and added the required `yolo11x-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
+1.  **Add Models**: Ensure you have obtained and added the required `yolo26x-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
 2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
 3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 
-This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics HUB](https://docs.ultralytics.com/hub/).
+This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics Platform](https://platform.ultralytics.com).
 
 ## 🤝 Contributing
 

@@ -42,7 +42,7 @@ Getting started with the Ultralytics YOLO iOS App is straightforward. Follow the
 Ensure you have the following before you begin:
 
 - **Xcode:** The app requires [Xcode](https://developer.apple.com/xcode/) installed on your macOS machine. You can download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-- **iOS Device:** An iPhone or iPad running [iOS 14.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
+- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
 - **Apple Developer Account:** A free [Apple Developer account](https://developer.apple.com/programs/enroll/) is sufficient for testing on your device.
 
 ### Installation
@@ -56,15 +56,15 @@ Ensure you have the following before you begin:
     ```
 
 2.  **Open the Project in Xcode:**
-    Locate the `YOLO.xcodeproj` file within the cloned directory and open it using Xcode.
+    Locate the `YOLOiOSApp.xcodeproj` file within the cloned directory and open it using Xcode.
 
     <p align="center">
-    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="Xcode project structure showing YOLO.xcodeproj">
+    <img width="50%" src="https://github.com/ultralytics/ultralytics/assets/26833433/e0053238-4a7c-4d18-8720-6ce24c73dea0" alt="Xcode project structure showing YOLOiOSApp.xcodeproj">
     </p>
 
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
-3.  **Add YOLO11 Models:**
+3.  **Add YOLO26 Models:**
     You need models in the [CoreML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized CoreML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `YOLO/{TaskName}Models` directory within the Xcode project (e.g., `YOLO/DetectModels`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments.
 
     ```python
@@ -76,12 +76,12 @@ Ensure you have the following before you begin:
         model_types=("", "-seg", "-cls", "-pose", "-obb"),
         model_sizes=("n", "s", "m", "l", "x"),
     ):
-        """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+        """Exports YOLO26 models to CoreML format and optionally zips the output packages."""
         for model_type in model_types:
             imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
-            nms = True if model_type == "" else False  # only apply NMS to Detect models
+            nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
             for size in model_sizes:
-                model_name = f"yolo11{size}{model_type}"
+                model_name = f"yolo26{size}{model_type}"
                 model = YOLO(f"{model_name}.pt")
                 model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
                 zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
@@ -104,7 +104,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 - **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [image classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Choose from a range of preloaded Ultralytics YOLO11 models, from the lightweight YOLO11n ('nano') optimized for edge devices to the powerful YOLO11x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://docs.ultralytics.com/hub/quickstart/) trained on your own data after exporting them to the CoreML format.
+- **Multiple AI Models:** Choose from a range of preloaded Ultralytics YOLO26 models, from the lightweight YOLO26n ('nano') optimized for edge devices to the powerful YOLO26x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://platform.ultralytics.com) trained on your own data after exporting them to the CoreML format.
 
 ### 📺 External Display Support (Optional)
 
@@ -147,17 +147,17 @@ The test suite is designed to run with or without the actual CoreML model files:
 
 To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized CoreML models** in your project:
 
-- **Detection:** `yolo11n.mlpackage` (place in `YOLO/DetectModels`)
-- **Segmentation:** `yolo11n-seg.mlpackage` (place in `YOLO/SegmentModels`)
-- **Pose Estimation:** `yolo11n-pose.mlpackage` (place in `YOLO/PoseModels`)
-- **OBB Detection:** `yolo11n-obb.mlpackage` (place in `YOLO/OBBModels`)
-- **Classification:** `yolo11n-cls.mlpackage` (place in `YOLO/ClassifyModels`)
+- **Detection:** `yolo26n.mlpackage` (place in `YOLO/DetectModels`)
+- **Segmentation:** `yolo26n-seg.mlpackage` (place in `YOLO/SegmentModels`)
+- **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `YOLO/PoseModels`)
+- **OBB Detection:** `yolo26n-obb.mlpackage` (place in `YOLO/OBBModels`)
+- **Classification:** `yolo26n-cls.mlpackage` (place in `YOLO/ClassifyModels`)
 
-You can export these models using the Python script provided in the [Installation section](#add-yolo11-models) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
+You can export these models using the Python script provided in the [Installation section](#add-yolo26-models) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
 
 ### Running Tests in Xcode
 
-1.  Open the `YOLO.xcodeproj` project in Xcode.
+1.  Open the `YOLOiOSApp.xcodeproj` project in Xcode.
 2.  Navigate to the Test Navigator tab (represented by a diamond icon) in the left sidebar.
 3.  Select the tests you wish to run (e.g., the entire `YOLOTests` suite or individual test functions).
 4.  Click the Run button (play icon) next to your selection to execute the tests on a connected device or simulator.

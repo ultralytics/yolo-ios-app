@@ -26,11 +26,11 @@ mkdir -p Tests/YOLOTests/Resources/
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
-- `yolo11n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
-- `yolo11n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
-- `yolo11n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
-- `yolo11n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
-- `yolo11n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
+- `yolo26n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
+- `yolo26n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
+- `yolo26n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
+- `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
+- `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ### 3. Methods to Acquire Model Files
 
@@ -50,12 +50,12 @@ def export_and_zip_yolo_models(
     model_types=("", "-seg", "-cls", "-pose", "-obb"),
     model_sizes=("n", "s", "m", "l", "x"),
 ):
-    """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+    """Exports YOLO26 models to CoreML format and optionally zips the output packages."""
     for model_type in model_types:
         imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
-        nms = True if model_type == "" else False  # only apply NMS to Detect models
+        nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
         for size in model_sizes:
-            model_name = f"yolo11{size}{model_type}"
+            model_name = f"yolo26{size}{model_type}"
             model = YOLO(f"{model_name}.pt")
             model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
             zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
@@ -67,7 +67,7 @@ export_and_zip_yolo_models()
 
 #### Method 2: Use Ultralytics Pre-Exported Models (If Available)
 
-Check the [Ultralytics YOLO11 model page](https://docs.ultralytics.com/models/yolo11/) or the [Ultralytics HUB Models section](https://docs.ultralytics.com/hub/models/) for potentially available pre-exported Core ML models. Note that direct downloads of `.mlpackage` files might not always be provided, making Method 1 the more reliable approach.
+Check the [Ultralytics YOLO26 model page](https://platform.ultralytics.com/ultralytics/yolo26) or the [Ultralytics Platform](https://platform.ultralytics.com) for potentially available pre-exported Core ML models. Note that direct downloads of `.mlpackage` files might not always be provided, making Method 1 the more reliable approach.
 
 ### 4. Place the Model Files
 
@@ -108,7 +108,7 @@ Encountering issues? Here are some common problems and solutions:
 If you receive an error message indicating that a model file could not be found:
 
 1.  **Verify Path:** Double-check that all required `.mlpackage` files are present directly inside the `Tests/YOLOTests/Resources/` directory.
-2.  **Verify Filenames:** Ensure the filenames exactly match the required names (e.g., `yolo11n.mlpackage`, `yolo11n-seg.mlpackage`, etc.). Check for typos or incorrect extensions.
+2.  **Verify Filenames:** Ensure the filenames exactly match the required names (e.g., `yolo26n.mlpackage`, `yolo26n-seg.mlpackage`, etc.). Check for typos or incorrect extensions.
 3.  **Check `Package.swift`:** Confirm that the `Resources` directory is correctly specified as a resource for the `YOLOTests` target in the `Package.swift` file. See the [Swift Package Manager documentation](https://developer.apple.com/documentation/xcode/bundling-resources-with-a-swift-package) for details on resource bundling.
 
 ### Other Issues
@@ -116,7 +116,7 @@ If you receive an error message indicating that a model file could not be found:
 If tests fail or you encounter other problems:
 
 1.  **SwiftPM Version:** Ensure your installed Swift Package Manager version is compatible with the project requirements.
-2.  **iOS Target:** The project requires [iOS](https://www.apple.com/ios/ios-18/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
+2.  **iOS Target:** The package requires [iOS](https://www.apple.com/ios/ios-18/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
 3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
 5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).

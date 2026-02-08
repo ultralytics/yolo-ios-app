@@ -12,33 +12,33 @@ Follow these instructions to set up and run the tests for the application.
 
 To execute the full test suite effectively, you will need the following [Apple Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11n.mlpackage`: An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for [object detection](https://docs.ultralytics.com/tasks/detect/) tasks.
+- `yolo26n.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for [object detection](https://docs.ultralytics.com/tasks/detect/) tasks.
 
 **Note**: This model file is not included directly in the repository. Due to its potentially [large size](https://git-lfs.com/), including it could complicate version control management with Git.
 
 ### Obtaining the Model File
 
 1.  Download pretrained [Ultralytics YOLO](https://docs.ultralytics.com/models/) models from the official [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics).
-2.  Convert the downloaded model (e.g., `yolo11n.pt`) to the Core ML format using the [Ultralytics `export` mode](https://docs.ultralytics.com/modes/export/). See our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml/) for detailed instructions.
+2.  Convert the downloaded model (e.g., `yolo26n.pt`) to the Core ML format using the [Ultralytics `export` mode](https://docs.ultralytics.com/modes/export/). See our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml/) for detailed instructions.
 
 ```python
 from ultralytics import YOLO
 
-# Load the YOLO11 nano detection model
-model = YOLO("yolo11n.pt")
+# Load the YOLO26 nano detection model
+model = YOLO("yolo26n.pt")
 
-# Export the model to Core ML format
+# Export the model to Core ML format (YOLO26 detect is NMS-free)
 # See https://docs.ultralytics.com/integrations/coreml/ for more details
-model.export(format="coreml")
+model.export(format="coreml", nms=False)
 ```
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The model file (`yolo11n.mlpackage`) **must** be added to the **main application target** (`YOLO-RealTime-UIKit`) within your [Xcode project](https://developer.apple.com/xcode/), not just the test target. This ensures the model is correctly bundled and accessible by the main application.
+**IMPORTANT**: The model file (`yolo26n.mlpackage`) **must** be added to the **main application target** (`YOLO-RealTime-UIKit`) within your [Xcode project](https://developer.apple.com/xcode/), not just the test target. This ensures the model is correctly bundled and accessible by the main application.
 
 Follow these steps to add the model file correctly:
 
-1.  Drag and drop `yolo11n.mlpackage` into your Xcode project navigator.
+1.  Drag and drop `yolo26n.mlpackage` into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
     - Ensure the checkbox for the **"YOLO-RealTime-UIKit" target** (the main app target) is **checked**.
     - Optionally, check the "YOLO-RealTime-UIKitTests" target, but remember the main target is crucial for the tests to access the model.
@@ -68,12 +68,12 @@ By default, the `SKIP_MODEL_TESTS` flag within the test files is set to `true`. 
 
 To execute the **complete** test suite, including tests that require the model to perform actual inference:
 
-1.  Ensure you have added the required `yolo11n.mlpackage` file to the **main application target** as detailed in the "Adding Model Files to the Project" section above.
+1.  Ensure you have added the required `yolo26n.mlpackage` file to the **main application target** as detailed in the "Adding Model Files to the Project" section above.
 2.  Locate the primary test file (e.g., `YOLORealTimeUIKitTests.swift`) and change the `SKIP_MODEL_TESTS` flag to `false`.
 3.  Run the tests again using Xcode's testing tools (Shortcut: Cmd+U).
 
 This tiered testing approach provides flexibility, ensuring that both fundamental application logic and the critical model integration can be thoroughly validated, depending on the availability of the model files.
 
-## ✨ Contributing
+## 🤝 Contributing
 
 Contributions to enhance the YOLO RealTime UIKit example application and its tests are highly encouraged! If you have suggestions, identify bugs, or want to propose improvements, please feel free to open an issue or submit a pull request in the main [Ultralytics repository](https://github.com/ultralytics/ultralytics). For more detailed guidance on contributing, please see our [Contributing Guide](https://docs.ultralytics.com/help/contributing/). Thank you for helping make Ultralytics better!

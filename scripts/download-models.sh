@@ -15,11 +15,11 @@ APP_DIR="$SCRIPT_DIR/../YOLOiOSApp"
 
 # Model to directory mapping
 MODELS=(
-  "yolo11n:DetectModels"
-  "yolo11n-seg:SegmentModels"
-  "yolo11n-cls:ClassifyModels"
-  "yolo11n-pose:PoseModels"
-  "yolo11n-obb:OBBModels"
+  "yolo26n:Models/Detect"
+  "yolo26n-seg:Models/Segment"
+  "yolo26n-cls:Models/Classify"
+  "yolo26n-pose:Models/Pose"
+  "yolo26n-obb:Models/OBB"
 )
 
 # Ensure directories exist

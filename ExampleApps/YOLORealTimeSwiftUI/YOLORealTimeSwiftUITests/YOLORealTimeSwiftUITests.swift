@@ -20,7 +20,7 @@ import XCTest
 /// of the app, including model initialization, camera preview functionality, and UI interactions.
 ///
 /// - Note: These tests require the application to be built with testing enabled.
-/// - Important: Some tests require the YOLO11 OBB model to be available in the project.
+/// - Important: Some tests require the YOLO26 OBB model to be available in the project.
 struct YOLORealTimeSwiftUITests {
 
   // Flag to skip model-dependent tests if model is not available
@@ -40,7 +40,7 @@ struct YOLORealTimeSwiftUITests {
     }
 
     let yoloCamera = YOLOCamera(
-      modelPathOrName: "yolo11n-obb",
+      modelPathOrName: "yolo26n-obb",
       task: .obb,
       cameraPosition: .back
     )
@@ -79,7 +79,7 @@ struct YOLORealTimeSwiftUITests {
 
     // Test initialization with front camera
     let frontCamera = YOLOCamera(
-      modelPathOrName: "yolo11n-obb",
+      modelPathOrName: "yolo26n-obb",
       task: .obb,
       cameraPosition: .front
     )
@@ -88,7 +88,7 @@ struct YOLORealTimeSwiftUITests {
 
     // Test initialization with back camera
     let backCamera = YOLOCamera(
-      modelPathOrName: "yolo11n-obb",
+      modelPathOrName: "yolo26n-obb",
       task: .obb,
       cameraPosition: .back
     )

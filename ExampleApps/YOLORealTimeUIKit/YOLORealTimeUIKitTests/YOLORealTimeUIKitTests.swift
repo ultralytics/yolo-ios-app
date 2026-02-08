@@ -20,7 +20,7 @@ import XCTest
 /// of the app, including model initialization, camera configuration, and UI interactions.
 ///
 /// - Note: These tests require the application to be built with testing enabled.
-/// - Important: Some tests may require the YOLO11 detection model to be available.
+/// - Important: Some tests may require the YOLO26 detection model to be available.
 struct YOLORealTimeUIKitTests {
 
   // Flag to skip model-dependent tests if model is not available
@@ -43,7 +43,7 @@ struct YOLORealTimeUIKitTests {
     }
 
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo26n", task: .detect)
 
     // Allow some time for initialization to complete
     try await Task.sleep(for: .seconds(0.5))
@@ -69,7 +69,7 @@ struct YOLORealTimeUIKitTests {
     }
 
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo26n", task: .detect)
 
     // Allow some time for initialization to complete
     try await Task.sleep(for: .seconds(0.5))
@@ -113,7 +113,7 @@ struct YOLORealTimeUIKitTests {
     }
 
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo26n", task: .detect)
 
     // Allow some time for initialization to complete
     try await Task.sleep(for: .seconds(0.5))
@@ -173,7 +173,7 @@ struct YOLORealTimeUIKitTests {
 
     // Create YOLOView with valid model
     let frame = CGRect(x: 0, y: 0, width: 640, height: 480)
-    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo11n", task: .detect)
+    let yoloView = await YOLOView(frame: frame, modelPathOrName: "yolo26n", task: .detect)
 
     // Allow initialization to complete
     try await Task.sleep(for: .seconds(0.5))

@@ -39,6 +39,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
+  /// Whether the model requires NMS post-processing (false for YOLO26 nms-free models).
+  public private(set) var requiresNMS: Bool = true
+
   /// The current pixel buffer being processed (used for camera frame processing).
   var currentBuffer: CVPixelBuffer?
 
@@ -159,12 +162,19 @@ public class BasePredictor: Predictor, @unchecked Sendable {
             ])
         }
 
+        // Detect NMS-free models (YOLO26 support)
+        if let nmsValue = userDefined["nms"] {
+          predictor.requiresNMS = (nmsValue.lowercased() != "false")
+        }
+
         // (3) Store model input size
         predictor.modelInputSize = predictor.getModelInputSize(for: mlModel)
 
         // (4) Create VNCoreMLModel, VNCoreMLRequest, etc.
         let coreMLModel = try VNCoreMLModel(for: mlModel)
-        coreMLModel.featureProvider = ThresholdProvider()
+        let iou = predictor.requiresNMS ? predictor.iouThreshold : 1.0
+        coreMLModel.featureProvider = ThresholdProvider(
+          iouThreshold: iou, confidenceThreshold: predictor.confidenceThreshold)
         predictor.detector = coreMLModel
         predictor.visionRequest = {
           let request = VNCoreMLRequest(

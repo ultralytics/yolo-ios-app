@@ -20,7 +20,7 @@ import XCTest
 /// of the app, including model initialization, image processing, and UI interactions.
 ///
 /// - Note: These tests require the application to be built with testing enabled.
-/// - Important: Some tests may require the YOLO11 segmentation model to be available.
+/// - Important: Some tests may require the YOLO26 segmentation model to be available.
 struct YOLOSingleImageSwiftUITests {
 
   // Flag to skip model-dependent tests if model is not available
@@ -82,7 +82,7 @@ struct YOLOSingleImageSwiftUITests {
 
     // Since this is a model-dependent test, we'll focus on checking
     // that the model can be initialized without waiting for completion
-    let yolo = YOLO("yolo11n-seg", task: .segment)
+    let yolo = YOLO("yolo26n-seg", task: .segment)
 
     // Basic check that the model exists
     #expect(yolo != nil, "YOLO model should initialize")
@@ -120,7 +120,7 @@ struct YOLOSingleImageSwiftUITests {
     // without relying on the model being fully loaded
 
     // Initialize the model
-    let yolo = YOLO("yolo11n-seg", task: .segment)
+    let yolo = YOLO("yolo26n-seg", task: .segment)
 
     // Create a test image that would be used for inference
     let size = CGSize(width: 640, height: 640)

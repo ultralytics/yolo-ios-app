@@ -124,7 +124,7 @@ struct ModelSelectionManager {
         let displayTitle = removeTaskSuffix(from: fullName)
 
         // Check if model is downloaded using ModelCacheManager for remote models
-        // Use the model name without extension as the key (e.g., "yolo11n", "yolo11m-seg")
+        // Use the model name without extension as the key (e.g., "yolo26n", "yolo26m-seg")
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal
@@ -168,7 +168,7 @@ struct ModelSelectionManager {
 
       if let model = standardModels[size] {
         // Check if model is downloaded using ModelCacheManager for remote models
-        // Use the model name without extension as the key (e.g., "yolo11n", "yolo11m-seg")
+        // Use the model name without extension as the key (e.g., "yolo26n", "yolo26m-seg")
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal
@@ -190,7 +190,6 @@ struct ModelSelectionManager {
   ) {
     if #available(iOS 13.0, *) {
       if let title = control.titleForSegment(at: index) {
-        let attributes: [NSAttributedString.Key: Any] = [.foregroundColor: color]
         control.setTitle(title, forSegmentAt: index)
 
         if let image = control.imageForSegment(at: index) {

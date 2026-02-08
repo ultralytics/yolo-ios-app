@@ -22,7 +22,7 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   ]
   return tasks.reduce(into: [:]) { result, task in
     result[task.0] = sizes.map { size in
-      let model = "yolo11\(size)\(task.1)"
+      let model = "yolo26\(size)\(task.1)"
       return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
     }
   }

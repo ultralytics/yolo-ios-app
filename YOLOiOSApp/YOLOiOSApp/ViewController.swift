@@ -82,6 +82,19 @@ class ViewController: UIViewController, YOLOViewDelegate {
     static let progressViewWidth: CGFloat = 200
   }
 
+  // MARK: - Helper Methods
+  
+  // Helper function to check for external screens (iOS 16+ compatible)
+  private func hasExternalScreen() -> Bool {
+    if #available(iOS 16.0, *) {
+      return UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .contains { $0.screen != UIScreen.main }
+    } else {
+      return UIScreen.screens.count > 1
+    }
+  }
+
   // MARK: - Loading State Management
   private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
     loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
@@ -105,11 +118,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
-    ("Classify", "ClassifyModels", .classify),
-    ("Segment", "SegmentModels", .segment),
-    ("Detect", "DetectModels", .detect),
-    ("Pose", "PoseModels", .pose),
-    ("OBB", "OBBModels", .obb),
+    ("Classify", "Models/Classify", .classify),
+    ("Segment", "Models/Segment", .segment),
+    ("Detect", "Models/Detect", .detect),
+    ("Pose", "Models/Pose", .pose),
+    ("OBB", "Models/OBB", .obb),
   ]
 
   private var modelsForTask: [String: [String]] = [:]
@@ -141,7 +154,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     checkForExternalDisplays()
 
     // If external display is already connected, ensure YOLOView doesn't interfere
-    if UIScreen.screens.count > 1 {
+    if hasExternalScreen() {
       print("External display already connected at startup - deferring camera init")
       yoloView.isHidden = true
     }
@@ -164,7 +177,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       reloadModelEntriesAndLoadFirst(for: currentTask)
 
       // Check for external display after initial setup
-      if UIScreen.screens.count > 1 {
+      if hasExternalScreen() {
         print("External display may be connected at startup - will be handled by notifications")
       }
     }
@@ -247,7 +260,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       .filter { ["mlmodel", "mlpackage"].contains($0.pathExtension) }
       .map { $0.lastPathComponent }
 
-    return folderName == "DetectModels" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
+    return folderName == "Models/Detect" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
   }
 
   private func reorderDetectionModels(_ fileNames: [String]) -> [String] {
@@ -328,7 +341,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     // Check if external display is connected
-    let hasExternalDisplay = UIScreen.screens.count > 1 || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = hasExternalScreen() || SceneDelegate.hasExternalDisplay
 
     // Only reset YOLOView if no external display is connected
     if !hasExternalDisplay {
@@ -379,13 +392,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
             self.finishLoadingModel(success: true, modelName: entry.displayName)
           } else {
             // Normal model loading on main YOLOView
-            self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { result in
-              switch result {
-              case .success():
-                self.finishLoadingModel(success: true, modelName: entry.displayName)
-              case .failure(let error):
-                print(error)
-                self.finishLoadingModel(success: false, modelName: entry.displayName)
+            self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { [weak self] result in
+              DispatchQueue.main.async {
+                switch result {
+                case .success():
+                  self?.finishLoadingModel(success: true, modelName: entry.displayName)
+                case .failure(let error):
+                  print(error)
+                  self?.finishLoadingModel(success: false, modelName: entry.displayName)
+                }
               }
             }
           }
@@ -452,13 +467,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.finishLoadingModel(success: true, modelName: displayName)
       } else {
         // Normal model loading on main YOLOView
-        self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { result in
-          switch result {
-          case .success():
-            self.finishLoadingModel(success: true, modelName: displayName)
-          case .failure(let error):
-            print(error)
-            self.finishLoadingModel(success: false, modelName: displayName)
+        self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { [weak self] result in
+          DispatchQueue.main.async {
+            switch result {
+            case .success():
+              self?.finishLoadingModel(success: true, modelName: displayName)
+            case .failure(let error):
+              print(error)
+              self?.finishLoadingModel(success: false, modelName: displayName)
+            }
           }
         }
       }
@@ -716,7 +733,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func debugCheckModelFolders() {
     print("\n🔍 DEBUG: Checking model folders...")
-    let folders = ["DetectModels", "SegmentModels", "ClassifyModels", "PoseModels", "OBBModels"]
+    let folders = ["Models/Detect", "Models/Segment", "Models/Classify", "Models/Pose", "Models/OBB"]
 
     for folder in folders {
       if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {

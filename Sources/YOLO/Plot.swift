@@ -317,40 +317,6 @@ func generateCombinedMaskImage(
   return (mergedCGImage, probabilityMasks)
 }
 
-func composeImageWithMask(
-  baseImage: CGImage,
-  maskImage: CGImage
-) -> UIImage? {
-  let width = baseImage.width
-  let height = baseImage.height
-
-  guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-  guard
-    let context = CGContext(
-      data: nil,
-      width: width,
-      height: height,
-      bitsPerComponent: 8,
-      bytesPerRow: width * 4,
-      space: colorSpace,
-      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-    )
-  else {
-    return nil
-  }
-
-  let baseRect = CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height))
-  context.draw(baseImage, in: baseRect)
-
-  context.saveGState()
-  context.setAlpha(0.5)
-  context.draw(maskImage, in: baseRect)
-  context.restoreGState()
-
-  guard let composedImage = context.makeImage() else { return UIImage(cgImage: baseImage) }
-  return UIImage(cgImage: composedImage)
-}
-
 public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {
   let context = CIContext(options: nil)
   guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
@@ -442,8 +408,6 @@ func drawKeypoints(
   boundingBoxes: [Box],
   on layer: CALayer,
   imageViewSize: CGSize,
-  originalImageSize: CGSize,
-  radius: CGFloat = 5,
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
 ) {
@@ -454,7 +418,6 @@ func drawKeypoints(
       keypoints: keypoints, confs: confsList[i], boundingBox: boundingBoxes[i],
       on: layer,
       imageViewSize: imageViewSize,
-      originalImageSize: originalImageSize,
       radius: dynamicRadius,
       confThreshold: confThreshold,
       drawSkeleton: drawSkeleton
@@ -468,18 +431,11 @@ func drawSinglePersonKeypoints(
   boundingBox: Box,
   on layer: CALayer,
   imageViewSize: CGSize,
-  originalImageSize: CGSize,
   radius: CGFloat,
   confThreshold: Float,
   drawSkeleton: Bool
 ) {
-  //      guard keypoints.count == 17 else {
-  //        print("Keypoints array must have 51 elements.")
-  //        return
-  //      }
   let lineWidth = radius * 0.4
-  _ = Float(imageViewSize.width / originalImageSize.width)
-  _ = Float(imageViewSize.height / originalImageSize.height)
 
   // Dynamic keypoint count support
   let numKeypoints = keypoints.count
@@ -570,59 +526,6 @@ func drawLine(
   layer.addSublayer(lineLayer)
 }
 
-func drawPoseOnCIImage(
-  ciImage: CIImage,
-  keypointsList: [[(x: Float, y: Float)]],
-  confsList: [[Float]],
-  boundingBoxes: [Box],
-  originalImageSize: CGSize,
-  radius: CGFloat = 5,
-  confThreshold: Float = 0.25,
-  drawSkeleton: Bool = true
-) -> UIImage? {
-  let context = CIContext(options: nil)
-
-  guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-    return nil
-  }
-
-  let renderedWidth = cgImage.width
-  let renderedHeight = cgImage.height
-  let renderedSize = CGSize(width: renderedWidth, height: renderedHeight)
-
-  // Calculate radius scaled to the rendered image size
-  let circleRadius = CGFloat(max(renderedWidth, renderedHeight) / 100)
-
-  UIGraphicsBeginImageContextWithOptions(renderedSize, false, 0.0)
-  guard let currentContext = UIGraphicsGetCurrentContext() else {
-    return nil
-  }
-
-  UIImage(cgImage: cgImage).draw(in: CGRect(origin: .zero, size: renderedSize))
-
-  let rootLayer = CALayer()
-  rootLayer.frame = CGRect(origin: .zero, size: renderedSize)
-
-  drawKeypoints(
-    keypointsList: keypointsList,
-    confsList: confsList,
-    boundingBoxes: boundingBoxes,
-    on: rootLayer,
-    imageViewSize: renderedSize,
-    originalImageSize: originalImageSize,
-    radius: circleRadius,
-    confThreshold: confThreshold,
-    drawSkeleton: drawSkeleton
-  )
-
-  rootLayer.render(in: currentContext)
-
-  let finalImage = UIGraphicsGetImageFromCurrentImageContext()
-  UIGraphicsEndImageContext()
-
-  return finalImage
-}
-
 class OBBShapeLayerBundle {
   let shapeLayer = CAShapeLayer()
   let textLayer = CATextLayer()
@@ -684,9 +587,7 @@ class OBBRenderer {
   @MainActor func drawObbDetectionsWithReuse(
     obbDetections: [OBBResult],
     on layer: CALayer,
-    imageViewSize: CGSize,
-    originalImageSize: CGSize,
-    lineWidth: CGFloat = 2.0
+    imageViewSize: CGSize
   ) {
     usedLayerCount = 0
 
@@ -833,7 +734,6 @@ public func drawYOLOPoseWithBoxes(
   keypointsList: [[(x: Float, y: Float)]],
   confsList: [[Float]],
   boundingBoxes: [Box],
-  originalImageSize: CGSize,
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
 ) -> UIImage? {
@@ -932,8 +832,6 @@ public func drawYOLOPoseWithBoxes(
     boundingBoxes: boundingBoxes,
     on: poseLayer,
     imageViewSize: renderedSize,
-    originalImageSize: originalImageSize,
-    radius: circleRadius,
     confThreshold: confThreshold,
     drawSkeleton: drawSkeleton
   )
@@ -952,8 +850,7 @@ public func drawYOLOPoseWithBoxes(
 public func drawYOLOSegmentationWithBoxes(
   ciImage: CIImage,
   boxes: [Box],
-  maskImage: CGImage?,
-  originalImageSize: CGSize
+  maskImage: CGImage?
 ) -> UIImage? {
   // 1. Convert CIImage to CGImage only once
   let context = CIContext(options: nil)
@@ -996,13 +893,6 @@ public func drawYOLOSegmentationWithBoxes(
     drawContext.scaleBy(x: 1, y: -1)
 
     let baseRect = CGRect(origin: .zero, size: renderedSize)
-
-    // Scale mask if necessary when it has different dimensions from the original image
-    _ =
-      maskImage.width != Int(width) || maskImage.height != Int(height)
-      ? baseRect
-      : CGRect(
-        x: 0, y: 0, width: CGFloat(maskImage.width), height: CGFloat(maskImage.height))
 
     // Draw mask image with the correct orientation
     drawContext.draw(maskImage, in: baseRect)

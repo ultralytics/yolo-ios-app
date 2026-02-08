@@ -38,10 +38,6 @@ public protocol InferenceTimeListener: AnyObject {
   ///   - fpsRate: The calculated frames per second rate based on recent inference times.
   func on(inferenceTime: Double, fpsRate: Double)
 }
-//
-//protocol FpsRateListener: AnyObject {
-//    func on(fpsRate: Double)
-//}
 
 /// Core protocol for YOLO model predictors.
 ///
@@ -77,15 +73,6 @@ public protocol Predictor {
 /// This enumeration defines the different types of errors that may be encountered
 /// during model loading, configuration, and inference operations.
 enum PredictorError: Error {
-  /// The requested task type is not supported or invalid.
-  case invalidTask
-
-  /// No class labels were found for the model.
-  case noLabelsFound
-
-  /// The provided URL for model or resource loading is invalid.
-  case invalidUrl
-
   /// The model file could not be found at the specified location.
   case modelFileNotFound
 }

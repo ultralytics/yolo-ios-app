@@ -236,7 +236,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
       currentOnResultsListener = onResultsListener
       currentOnInferenceTimeListener = onInferenceTime
-      //            currentOnFpsRateListener = onFpsRate
 
       /// - Tag: MappingOrientation
       // The frame is always oriented based on the camera sensor,
@@ -248,8 +247,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
       t0 = CACurrentMediaTime()  // inference start
       do {
-        if visionRequest != nil {
-          try handler.perform([visionRequest!])
+        if let request = visionRequest {
+          try handler.perform([request])
         }
       } catch {
         print(error)

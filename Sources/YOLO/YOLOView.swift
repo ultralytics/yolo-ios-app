@@ -69,17 +69,14 @@ public class YOLOView: UIView, VideoCaptureDelegate {
       guard let poseLayer = poseLayer else { return }
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
-        on: poseLayer, imageViewSize: overlayLayer.frame.size, originalImageSize: result.orig_shape)
+        on: poseLayer, imageViewSize: overlayLayer.frame.size)
     } else if task == .obb {
-      //            self.setupObbLayerIfNeeded()
       guard let obbLayer = self.obbLayer else { return }
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
         obbDetections: obbDetections,
         on: obbLayer,
-        imageViewSize: self.overlayLayer.frame.size,
-        originalImageSize: result.orig_shape,  // Example
-        lineWidth: 3
+        imageViewSize: self.overlayLayer.frame.size
       )
     }
   }
@@ -87,17 +84,8 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public var onDetection: ((YOLOResult) -> Void)?
   private var videoCapture: VideoCapture
   private var busy = false
-  private var currentBuffer: CVPixelBuffer?
-  var framesDone = 0
-  var t0 = 0.0  // inference start
-  var t1 = 0.0  // inference dt
-  var t2 = 0.0  // inference dt smoothed
-  var t3 = CACurrentMediaTime()  // FPS start
-  var t4 = 0.0  // FPS dt smoothed
   var task = YOLOTask.detect
-  var colors: [String: UIColor] = [:]
   var modelName: String = ""
-  var classes: [String] = []
   let maxBoundingBoxViews = 100
   var boundingBoxViews = [BoundingBoxView]()
   public var sliderNumItems = UISlider()
@@ -127,7 +115,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   private let maximumZoom: CGFloat = 10.0
   private var lastZoomFactor: CGFloat = 1.0
 
-  public var capturedImage: UIImage?
   private var photoCaptureCompletion: ((UIImage?) -> Void)?
 
   /// Pending camera position to apply after async camera setup completes.
@@ -536,11 +523,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
     }
     parentLayer.sublayers = nil
     parentLayer.contents = nil
-  }
-
-  func addMaskSubLayers() {
-    guard let maskLayer = maskLayer else { return }
-    self.overlayLayer.addSublayer(maskLayer)
   }
 
   func showBoxes(predictions: YOLOResult) {

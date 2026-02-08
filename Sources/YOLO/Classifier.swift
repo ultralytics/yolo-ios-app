@@ -20,18 +20,6 @@ import Vision
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
 public class Classifier: BasePredictor, @unchecked Sendable {
 
-  override func setConfidenceThreshold(confidence: Double) {
-    confidenceThreshold = confidence
-    detector?.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
-  }
-
-  override func setIouThreshold(iou: Double) {
-    iouThreshold = iou
-    detector?.featureProvider = ThresholdProvider(
-      iouThreshold: iouThreshold, confidenceThreshold: confidenceThreshold)
-  }
-
   override func processObservations(for request: VNRequest, error: Error?) {
     let imageWidth = inputSize.width
     let imageHeight = inputSize.height

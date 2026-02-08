@@ -245,8 +245,7 @@ import XCTest
     renderer.drawObbDetectionsWithReuse(
       obbDetections: [obbResult],
       on: layer,
-      imageViewSize: CGSize(width: 100, height: 100),
-      originalImageSize: CGSize(width: 640, height: 480)
+      imageViewSize: CGSize(width: 100, height: 100)
     )
 
     XCTAssertTrue(true)  // Test passes if no crash
@@ -268,8 +267,7 @@ import XCTest
       ciImage: inputImage,
       keypointsList: [keypoints],
       confsList: [confs],
-      boundingBoxes: [box],
-      originalImageSize: CGSize(width: 400, height: 300)
+      boundingBoxes: [box]
     )
 
     XCTAssertNotNil(outputImage)
@@ -290,8 +288,7 @@ import XCTest
     let outputImage = drawYOLOSegmentationWithBoxes(
       ciImage: inputImage,
       boxes: [box],
-      maskImage: nil,
-      originalImageSize: CGSize(width: 300, height: 300)
+      maskImage: nil
     )
 
     XCTAssertNotNil(outputImage)

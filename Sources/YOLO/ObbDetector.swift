@@ -447,28 +447,6 @@ func polygonArea(_ poly: Polygon) -> CGFloat {
   return abs(area) * 0.5
 }
 
-/// Compute IoU of two oriented bounding boxes (cx,cy,w,h,angle).
-/// Steps:
-///   1. Convert each OBB to polygon
-///   2. Intersect polygons
-///   3. Area(Intersection) / Area(Union)
-func obbIoU(_ box1: OBB, _ box2: OBB) -> Float {
-  let poly1 = box1.toPolygon()
-  let poly2 = box2.toPolygon()
-
-  let area1 = box1.area
-  let area2 = box2.area
-
-  // Intersect polygons
-  let interPoly = polygonIntersection(subjectPolygon: poly1, clipPolygon: poly2)
-  let interArea = polygonArea(interPoly)
-
-  let unionArea = area1 + area2 - interArea
-  if unionArea <= 0.0 { return 0.0 }
-  let iou = Float(interArea / unionArea)
-  return iou
-}
-
 /// Store cached geometry for faster OBB IoU checks.
 public struct OBBInfo {
   let box: OBB

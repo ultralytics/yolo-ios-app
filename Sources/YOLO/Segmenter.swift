@@ -20,7 +20,6 @@ import Vision
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 public class Segmenter: BasePredictor, @unchecked Sendable {
-  var colorsForMask: [(red: UInt8, green: UInt8, blue: UInt8)] = []
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -216,8 +215,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         let annotatedImage = drawYOLOSegmentationWithBoxes(
           ciImage: image,
           boxes: boxes,
-          maskImage: processedMasks.0,
-          originalImageSize: inputSize
+          maskImage: processedMasks.0
         )
 
         // 6. Construct result

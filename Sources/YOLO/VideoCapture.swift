@@ -42,24 +42,16 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
 }
 
 public class VideoCapture: NSObject, @unchecked Sendable {
-  public var predictor: Predictor!
+  public var predictor: Predictor?
   public var previewLayer: AVCaptureVideoPreviewLayer?
   public weak var delegate: VideoCaptureDelegate?
   var captureDevice: AVCaptureDevice?
 
-  public func stopCapture() {
-    captureSession.stopRunning()
-  }
-
-  public func startCapture() {
-    captureSession.startRunning()
-  }
   let captureSession = AVCaptureSession()
   var videoInput: AVCaptureDeviceInput? = nil
   let videoOutput = AVCaptureVideoDataOutput()
   var photoOutput = AVCapturePhotoOutput()
   let cameraQueue = DispatchQueue(label: "camera-queue")
-  var lastCapturedPhoto: UIImage? = nil
   var inferenceOK = true
   var longSide: CGFloat = 3
   var shortSide: CGFloat = 4
@@ -160,12 +152,10 @@ public class VideoCapture: NSObject, @unchecked Sendable {
         // Fallback for iOS versions before 16.0
         photoOutput.isHighResolutionCaptureEnabled = true
       }
-      //            photoOutput.isLivePhotoCaptureEnabled = photoOutput.isLivePhotoCaptureSupported
     }
 
     // We want the buffers to be in portrait orientation otherwise they are
     // rotated by 90 degrees. Need to set this _after_ addOutput()!
-    // let curDeviceOrientation = UIDevice.current.orientation
     let connection = videoOutput.connection(with: AVMediaType.video)
     connection?.videoOrientation = videoOrientation
     if position == .front {
@@ -205,17 +195,6 @@ public class VideoCapture: NSObject, @unchecked Sendable {
         self?.captureSession.stopRunning()
       }
     }
-  }
-
-  func setZoomRatio(ratio: CGFloat) {
-    guard let device = captureDevice else { return }
-    do {
-      try device.lockForConfiguration()
-      defer {
-        device.unlockForConfiguration()
-      }
-      device.videoZoomFactor = ratio
-    } catch {}
   }
 
   private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
@@ -258,21 +237,6 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
   ) {
     guard inferenceOK else { return }
     predictOnFrame(sampleBuffer: sampleBuffer)
-  }
-}
-
-extension VideoCapture: AVCapturePhotoCaptureDelegate {
-  @available(iOS 11.0, *)
-  public func photoOutput(
-    _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
-  ) {
-    guard let data = photo.fileDataRepresentation(),
-      let image = UIImage(data: data)
-    else {
-      return
-    }
-
-    self.lastCapturedPhoto = image
   }
 }
 

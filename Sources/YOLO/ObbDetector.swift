@@ -211,7 +211,8 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
   }
 
   /// Processes YOLO26 end2end OBB output: [1, max_det, 7].
-  /// Each detection: [x1, y1, x2, y2, conf, class_id, angle] in xyxy pixel coords.
+  /// Each detection: [cx, cy, w, h, conf, class_id, angle] in xywh pixel coords.
+  /// OBB uses dist2rbox() which always outputs center-based xywh (NOT xyxy like detect).
   /// NMS is already applied by the model.
   private func postProcessEnd2EndOBB(
     feature: MLMultiArray,
@@ -234,22 +235,16 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
       let conf = pointer[base + 4 * fieldStride]
       guard conf > confidenceThreshold else { continue }
 
-      let x1 = pointer[base]
-      let y1 = pointer[base + fieldStride]
-      let x2 = pointer[base + 2 * fieldStride]
-      let y2 = pointer[base + 3 * fieldStride]
+      // OBB boxes are center-based xywh from dist2rbox (NOT xyxy like detect)
+      let cx = pointer[base] / inputW
+      let cy = pointer[base + fieldStride] / inputH
+      let w = pointer[base + 2 * fieldStride] / inputW
+      let h = pointer[base + 3 * fieldStride] / inputH
       let classId = numFields > 6 ? Int(pointer[base + 5 * fieldStride]) : 0
 
-      // Angle is the last field — YOLO26 outputs raw angle, needs sigmoid transformation:
-      // angle = (sigmoid(raw) - 0.25) * π
-      let rawAngle = pointer[base + (numFields - 1) * fieldStride]
-      let angle = (1.0 / (1.0 + exp(-rawAngle)) - 0.25) * Float.pi
-
-      // Convert xyxy pixel coords to normalized cx,cy,w,h
-      let cx = (x1 + x2) / 2.0 / inputW
-      let cy = (y1 + y2) / 2.0 / inputH
-      let w = (x2 - x1) / inputW
-      let h = (y2 - y1) / inputH
+      // Angle is the last field — OBB26 outputs raw angle in radians (no sigmoid needed,
+      // model learns to predict radians directly, used with cos/sin in dist2rbox)
+      let angle = pointer[base + (numFields - 1) * fieldStride]
 
       let obb = OBB(cx: cx, cy: cy, w: w, h: h, angle: angle)
       results.append((box: obb, score: conf, cls: classId))

@@ -71,9 +71,12 @@ public class YOLOModelDownloader: NSObject {
     lock.lock()
     guard !isDownloading else {
       lock.unlock()
-      completion(.failure(DownloadError.downloadFailed(
-        NSError(domain: "YOLOModelDownloader", code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "A download is already in progress"]))))
+      completion(
+        .failure(
+          DownloadError.downloadFailed(
+            NSError(
+              domain: "YOLOModelDownloader", code: -1,
+              userInfo: [NSLocalizedDescriptionKey: "A download is already in progress"]))))
       return
     }
     isDownloading = true

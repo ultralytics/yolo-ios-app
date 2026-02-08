@@ -438,4 +438,3 @@ final class FloatPointerWrapper: @unchecked Sendable {
     self.pointer = pointer
   }
 }
-

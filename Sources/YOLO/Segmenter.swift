@@ -23,7 +23,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-      //            DispatchQueue.main.async { [self] in
       guard results.count == 2 else { return }
       var pred: MLMultiArray
       var masks: MLMultiArray

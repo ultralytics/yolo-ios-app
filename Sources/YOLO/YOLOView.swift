@@ -503,11 +503,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   public func resetLayers() {
     removeAllSubLayers(parentLayer: maskLayer)
     removeAllSubLayers(parentLayer: poseLayer)
+    removeAllSubLayers(parentLayer: obbLayer)
     removeAllSubLayers(parentLayer: overlayLayer)
 
     maskLayer = nil
     poseLayer = nil
-    obbLayer?.isHidden = true
+    obbLayer = nil
   }
 
   func setupSublayers() {
@@ -586,18 +587,6 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           case .portraitUpsideDown:
             displayRect = CGRect(
               x: 1.0 - rect.origin.x - rect.width,
-              y: 1.0 - rect.origin.y - rect.height,
-              width: rect.width,
-              height: rect.height)
-          case .landscapeLeft:
-            displayRect = CGRect(
-              x: rect.origin.x,
-              y: rect.origin.y,
-              width: rect.width,
-              height: rect.height)
-          case .landscapeRight:
-            displayRect = CGRect(
-              x: rect.origin.x,
               y: rect.origin.y,
               width: rect.width,
               height: rect.height)
@@ -1047,12 +1036,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   @objc public func sliderChanged(_ sender: Any) {
+    guard let slider = sender as? UISlider else { return }
 
-    if sender as? UISlider === sliderNumItems {
+    if slider === sliderNumItems {
       if let predictor = videoCapture.predictor as? BasePredictor {
         let numItems = Int(sliderNumItems.value)
         predictor.setNumItemsThreshold(numItems: numItems)
-        // Update the label to reflect the new max items value
         let currentItemsText = self.labelSliderNumItems.text ?? ""
         if let range = currentItemsText.range(of: " items") {
           let currentCount = String(currentItemsText[..<range.lowerBound])
@@ -1061,15 +1050,14 @@ public class YOLOView: UIView, VideoCaptureDelegate {
           self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
         }
       }
-    }
-    let conf = Double(round(100 * sliderConf.value)) / 100
-    let iou = Double(round(100 * sliderIoU.value)) / 100
-    self.labelSliderConf.text = String(conf) + " Confidence Threshold"
-    self.labelSliderIoU.text = String(iou) + " IoU Threshold"
-    if let predictor = videoCapture.predictor as? BasePredictor {
-      predictor.setIouThreshold(iou: iou)
-      predictor.setConfidenceThreshold(confidence: conf)
-
+    } else if slider === sliderConf {
+      let conf = Double(round(100 * sliderConf.value)) / 100
+      self.labelSliderConf.text = String(conf) + " Confidence Threshold"
+      (videoCapture.predictor as? BasePredictor)?.setConfidenceThreshold(confidence: conf)
+    } else if slider === sliderIoU {
+      let iou = Double(round(100 * sliderIoU.value)) / 100
+      self.labelSliderIoU.text = String(iou) + " IoU Threshold"
+      (videoCapture.predictor as? BasePredictor)?.setIouThreshold(iou: iou)
     }
   }
 
@@ -1194,9 +1182,12 @@ public class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func capturePhoto(completion: @escaping (UIImage?) -> Void) {
+    guard photoCaptureCompletion == nil else {
+      completion(nil)  // Previous capture still in progress
+      return
+    }
     self.photoCaptureCompletion = completion
     let settings = AVCapturePhotoSettings()
-    Thread.sleep(forTimeInterval: 0.02)  // short delay to allow camera to focus
     self.videoCapture.photoOutput.capturePhoto(
       with: settings, delegate: self as AVCapturePhotoCaptureDelegate
     )
@@ -1303,10 +1294,17 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
       print("error occurred : \(error.localizedDescription)")
     }
     if let dataImage = photo.fileDataRepresentation() {
-      let dataProvider = CGDataProvider(data: dataImage as CFData)
-      let cgImageRef: CGImage! = CGImage(
-        jpegDataProviderSource: dataProvider!, decode: nil, shouldInterpolate: true,
-        intent: .defaultIntent)
+      guard let dataProvider = CGDataProvider(data: dataImage as CFData),
+        let cgImageRef = CGImage(
+          jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
+          intent: .defaultIntent)
+      else {
+        Task { @MainActor [weak self] in
+          self?.photoCaptureCompletion?(nil)
+          self?.photoCaptureCompletion = nil
+        }
+        return
+      }
 
       Task { @MainActor [weak self] in
         guard let self = self else { return }

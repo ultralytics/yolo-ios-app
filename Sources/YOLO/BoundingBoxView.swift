@@ -65,6 +65,7 @@ public class BoundingBoxView {
   ///   - color: The color of the bounding box stroke and label background.
   ///   - alpha: The opacity level for the bounding box stroke and label background.
   func show(frame: CGRect, label: String, color: UIColor, alpha: CGFloat) {
+    CATransaction.begin()
     CATransaction.setDisableActions(true)  // Disable implicit animations
 
     let path = UIBezierPath(roundedRect: frame, cornerRadius: 6.0)  // Rounded rectangle for the bounding box
@@ -86,6 +87,7 @@ public class BoundingBoxView {
     let textSize = CGSize(width: textRect.width + 12, height: textRect.height)  // Add padding to the text size
     let textOrigin = CGPoint(x: frame.origin.x - 2, y: frame.origin.y - textSize.height - 2)  // Position above the bounding box
     textLayer.frame = CGRect(origin: textOrigin, size: textSize)  // Set the text layer frame
+    CATransaction.commit()
   }
 
   /// Hides the bounding box and text layers.

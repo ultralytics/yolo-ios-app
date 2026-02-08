@@ -38,11 +38,11 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
           boxes.append(person.box)
           keypointsList.append(person.keypoints)
         }
+        self.updateTime()
         let result = YOLOResult(
           orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
-          annotatedImage: nil, speed: 0, fps: 0, originalImage: nil, names: labels)
+          annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
         self.currentOnResultsListener?.on(result: result)
-        self.updateTime()
       }
     }
   }
@@ -102,11 +102,11 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
             originalImageSize: inputSize
           )
 
+          updateTime()
           let result = YOLOResult(
             orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
             keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
-            fps: 1 / self.t4, originalImage: nil, names: labels)
-          updateTime()
+            fps: 1 / self.t4, names: labels)
           return result
         }
       }

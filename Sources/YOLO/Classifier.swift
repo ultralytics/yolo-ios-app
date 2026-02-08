@@ -12,6 +12,7 @@
 //  VNClassificationObservation result types. The implementation extracts both the top prediction
 //  and the top 5 predictions with their confidence scores, enabling rich user feedback.
 
+import Accelerate
 import Foundation
 import UIKit
 import Vision
@@ -43,22 +44,29 @@ public class Classifier: BasePredictor, @unchecked Sendable {
       let multiArray = observation.first?.featureValue.multiArrayValue
 
       if let multiArray = multiArray {
-        // Initialize an array to store the classes
-        var valuesArray = [Double]()
+        // Apply softmax to convert raw logits to probabilities
+        var floatValues = [Float](repeating: 0, count: multiArray.count)
         for i in 0..<multiArray.count {
-          let value = multiArray[i].doubleValue
-          valuesArray.append(value)
+          floatValues[i] = multiArray[i].floatValue
+        }
+        var softmaxOutput = [Float](repeating: 0, count: floatValues.count)
+        var count = Int32(floatValues.count)
+        vvexpf(&softmaxOutput, floatValues, &count)
+        var sumExp: Float = 0
+        vDSP_sve(softmaxOutput, 1, &sumExp, vDSP_Length(floatValues.count))
+        if sumExp > 0 {
+          vDSP_vsdiv(softmaxOutput, 1, &sumExp, &softmaxOutput, 1, vDSP_Length(floatValues.count))
         }
 
         var indexedMap = [Int: Double]()
-        for (index, value) in valuesArray.enumerated() {
-          indexedMap[index] = value
+        for (index, value) in softmaxOutput.enumerated() {
+          indexedMap[index] = Double(value)
         }
 
         let sortedMap = indexedMap.sorted { $0.value > $1.value }
 
         // top1
-        if let (topIndex, topScore) = sortedMap.first {
+        if let (topIndex, topScore) = sortedMap.first, topIndex < labels.count {
           let top1Label = labels[topIndex]
           let top1Conf = Float(topScore)
           probs.top1 = top1Label
@@ -70,7 +78,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
         var top5Labels: [String] = []
         var top5Confs: [Float] = []
 
-        for (index, value) in topObservations {
+        for (index, value) in topObservations where index < labels.count {
           top5Labels.append(labels[index])
           top5Confs.append(Float(value))
         }
@@ -110,7 +118,6 @@ public class Classifier: BasePredictor, @unchecked Sendable {
     self.t3 = CACurrentMediaTime()
 
     self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-    //                self.currentOnFpsRateListener?.on(fpsRate: 1 / self.t4)
     let result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)
@@ -133,28 +140,33 @@ public class Classifier: BasePredictor, @unchecked Sendable {
     do {
       try requestHandler.perform([request])
       if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        _ = [[String: Any]]()
-
         // Get the MLMultiArray from the observation
         let multiArray = observation.first?.featureValue.multiArrayValue
 
         if let multiArray = multiArray {
-          // Initialize an array to store the classes
-          var valuesArray = [Double]()
+          // Apply softmax to convert raw logits to probabilities
+          var floatValues = [Float](repeating: 0, count: multiArray.count)
           for i in 0..<multiArray.count {
-            let value = multiArray[i].doubleValue
-            valuesArray.append(value)
+            floatValues[i] = multiArray[i].floatValue
+          }
+          var softmaxOutput = [Float](repeating: 0, count: floatValues.count)
+          var count = Int32(floatValues.count)
+          vvexpf(&softmaxOutput, floatValues, &count)
+          var sumExp: Float = 0
+          vDSP_sve(softmaxOutput, 1, &sumExp, vDSP_Length(floatValues.count))
+          if sumExp > 0 {
+            vDSP_vsdiv(softmaxOutput, 1, &sumExp, &softmaxOutput, 1, vDSP_Length(floatValues.count))
           }
 
           var indexedMap = [Int: Double]()
-          for (index, value) in valuesArray.enumerated() {
-            indexedMap[index] = value
+          for (index, value) in softmaxOutput.enumerated() {
+            indexedMap[index] = Double(value)
           }
 
           let sortedMap = indexedMap.sorted { $0.value > $1.value }
 
           // top1
-          if let (topIndex, topScore) = sortedMap.first {
+          if let (topIndex, topScore) = sortedMap.first, topIndex < labels.count {
             let top1Label = labels[topIndex]
             let top1Conf = Float(topScore)
             probs.top1 = top1Label
@@ -166,7 +178,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
           var top5Labels: [String] = []
           var top5Confs: [Float] = []
 
-          for (index, value) in topObservations {
+          for (index, value) in topObservations where index < labels.count {
             top5Labels.append(labels[index])
             top5Confs.append(Float(value))
           }

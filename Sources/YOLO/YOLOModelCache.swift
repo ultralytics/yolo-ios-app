@@ -19,6 +19,9 @@ public class YOLOModelCache {
   /// Cache directory URL
   let cacheDirectory: URL
 
+  /// Lock for thread-safe file system access
+  private let lock = NSLock()
+
   /// Error types for cache operations
   public enum CacheError: LocalizedError {
     case failedToCreateDirectory
@@ -35,10 +38,17 @@ public class YOLOModelCache {
   }
 
   private init() {
-    // Create cache directory in Documents/YOLOModels/
+    // Create cache directory in Library/Caches/YOLOModels/ (Apple storage guidelines)
+    let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    self.cacheDirectory = cachesDirectory.appendingPathComponent("YOLOModels", isDirectory: true)
+
+    // Migrate from old Documents location if it exists
     let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[
       0]
-    self.cacheDirectory = documentsDirectory.appendingPathComponent("YOLOModels", isDirectory: true)
+    let oldCacheDir = documentsDirectory.appendingPathComponent("YOLOModels", isDirectory: true)
+    if FileManager.default.fileExists(atPath: oldCacheDir.path) {
+      try? FileManager.default.moveItem(at: oldCacheDir, to: cacheDirectory)
+    }
 
     // Create directory if it doesn't exist
     if !FileManager.default.fileExists(atPath: cacheDirectory.path) {
@@ -62,6 +72,9 @@ public class YOLOModelCache {
 
   /// Get cached model path if available
   public func getCachedModelPath(url: URL, task: YOLOTask? = nil) -> URL? {
+    lock.lock()
+    defer { lock.unlock() }
+
     let key = cacheKey(for: url, task: task)
 
     for ext in ["mlmodelc", "mlpackage", "mlmodel"] {

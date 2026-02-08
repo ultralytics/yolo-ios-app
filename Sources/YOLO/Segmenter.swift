@@ -77,6 +77,9 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
         alphas.append(alpha)
       }
 
+      // Update timing before capturing values to avoid one-frame lag
+      self.updateTime()
+
       // Capture needed values before async block
       let capturedMasks = masks
       let capturedBoxes = boxes
@@ -108,7 +111,6 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
           speed: capturedT2,
           fps: 1 / capturedT4, names: capturedLabels)
-        self?.updateTime()
         self?.currentOnResultsListener?.on(result: result)
       }
     }

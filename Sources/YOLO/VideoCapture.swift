@@ -67,6 +67,11 @@ public class VideoCapture: NSObject, @unchecked Sendable {
 
   private var currentBuffer: CVPixelBuffer?
 
+  deinit {
+    captureSession.stopRunning()
+    videoOutput.setSampleBufferDelegate(nil, queue: nil)
+  }
+
   public func setUp(
     sessionPreset: AVCaptureSession.Preset = .hd1280x720,
     position: AVCaptureDevice.Position,

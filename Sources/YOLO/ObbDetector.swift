@@ -42,10 +42,11 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
           obbResults.append(obbResult)
         }
 
+        self.updateTime()
         self.currentOnResultsListener?.on(
           result: YOLOResult(
-            orig_shape: inputSize, boxes: [], obb: obbResults, speed: 0, names: labels))
-        self.updateTime()
+            orig_shape: inputSize, boxes: [], obb: obbResults, speed: self.t2, fps: 1 / self.t4,
+            names: labels))
       }
     }
   }
@@ -99,7 +100,7 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
           return YOLOResult(
             orig_shape: inputSize, boxes: [], masks: nil, probs: nil, keypointsList: [],
             obb: obbResults, annotatedImage: annotatedImage, speed: self.t2, fps: 1 / self.t4,
-            originalImage: nil, names: labels)
+            names: labels)
         }
       }
     } catch {
@@ -107,8 +108,6 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
     }
     return result
   }
-
-  fileprivate let lockQueue = DispatchQueue(label: "com.example.obbLock")
 
   func postProcessOBB(
     feature: MLMultiArray,
@@ -470,43 +469,6 @@ func obbIoU(_ box1: OBB, _ box2: OBB) -> Float {
   return iou
 }
 
-/// Perform NMS for oriented bounding boxes.
-/// - Parameters:
-///   - boxes: Array of OBB (cx, cy, w, h, angle)
-///   - scores: Confidence scores parallel to `boxes`
-///   - iouThreshold: Intersection-over-Union threshold
-/// - Returns: Array of kept indices
-//public func nonMaxSuppressionOBB(
-//    boxes: [OBB],
-//    scores: [Float],
-//    iouThreshold: Float
-//) -> [Int] {
-//    // Sort by descending scores
-//    let sortedIndices = scores.enumerated()
-//        .sorted(by: { $0.element > $1.element })
-//        .map { $0.offset }
-//
-//    var selectedIndices = [Int]()
-//    var active = [Bool](repeating: true, count: boxes.count)
-//
-//    for i in 0..<sortedIndices.count {
-//        let idx = sortedIndices[i]
-//        if !active[idx] { continue }  // already suppressed
-//        selectedIndices.append(idx)
-//
-//        for j in (i+1)..<sortedIndices.count {
-//            let otherIdx = sortedIndices[j]
-//            if active[otherIdx] {
-//                // Compute IoU for oriented boxes
-//                let iouVal = obbIoU(boxes[idx], boxes[otherIdx])
-//                if iouVal > iouThreshold {
-//                    active[otherIdx] = false
-//                }
-//            }
-//        }
-//    }
-//    return selectedIndices
-//}
 /// Store cached geometry for faster OBB IoU checks.
 public struct OBBInfo {
   let box: OBB

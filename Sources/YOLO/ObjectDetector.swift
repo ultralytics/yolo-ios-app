@@ -184,7 +184,7 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
 
     // Detect format: end2end [1, max_det, 6] vs traditional [1, 4+nc, num_anchors]
     guard shape.count == 3 else { return [] }
-    let isEnd2End = shape[2] <= 6 || shape[2] < shape[1]
+    let isEnd2End = shape[2] < shape[1]
 
     if isEnd2End {
       return processEnd2EndResults(

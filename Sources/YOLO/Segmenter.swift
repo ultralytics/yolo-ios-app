@@ -67,6 +67,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
           width: box.width / modelWidth, height: box.height / modelHeight)
         let confidence = p.2
         let bestClass = p.1
+        guard bestClass < self.labels.count else { continue }
         let label = self.labels[bestClass]
         let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
@@ -184,6 +185,7 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
             width: box.width / modelWidth, height: box.height / modelHeight)
           let confidence = p.2
           let bestClass = p.1
+          guard bestClass < labels.count else { continue }
           let label = labels[bestClass]
           let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
@@ -245,9 +247,18 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     confidenceThreshold: Float,
     iouThreshold: Float
   ) -> [(CGRect, Int, Float, MLMultiArray)] {
+    let shape = feature.shape.map { $0.intValue }
+    guard shape.count == 3 else { return [] }
 
-    let numAnchors = feature.shape[2].intValue
-    let numFeatures = feature.shape[1].intValue
+    // YOLO26 end2end seg: [1, max_det, 6+32] where shape[2] < shape[1]
+    // Traditional seg: [1, 4+nc+32, num_anchors] where shape[2] > shape[1]
+    if shape[2] < shape[1] {
+      return postProcessEnd2EndSegment(
+        feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
+    }
+
+    let numAnchors = shape[2]
+    let numFeatures = shape[1]
     let boxFeatureLength = 4
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
@@ -366,6 +377,54 @@ public class Segmenter: BasePredictor, @unchecked Sendable {
     }
 
     return selectedBoxesAndFeatures
+  }
+
+  /// Processes YOLO26 end2end segmentation output: [1, max_det, 6+32].
+  /// Each detection: [x1, y1, x2, y2, conf, class_id, mask_0...mask_31] in xyxy pixel coords.
+  /// NMS is already applied by the model, so no additional NMS is needed.
+  private nonisolated func postProcessEnd2EndSegment(
+    feature: MLMultiArray,
+    shape: [Int],
+    confidenceThreshold: Float
+  ) -> [(CGRect, Int, Float, MLMultiArray)] {
+    let numDetections = shape[1]
+    let numFields = shape[2]
+    let maskCoefficients = 32
+    let strides = feature.strides.map { $0.intValue }
+    let pointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    let detStride = strides[1]
+    let fieldStride = strides[2]
+
+    var results: [(CGRect, Int, Float, MLMultiArray)] = []
+
+    for i in 0..<numDetections {
+      let base = i * detStride
+      let conf = pointer[base + 4 * fieldStride]
+      guard conf > confidenceThreshold else { continue }
+
+      let x1 = CGFloat(pointer[base])
+      let y1 = CGFloat(pointer[base + fieldStride])
+      let x2 = CGFloat(pointer[base + 2 * fieldStride])
+      let y2 = CGFloat(pointer[base + 3 * fieldStride])
+      let classId = numFields > 5 ? Int(pointer[base + 5 * fieldStride]) : 0
+
+      let boundingBox = CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1)
+
+      // Extract mask coefficients (fields 6..37)
+      guard
+        let maskProbs = try? MLMultiArray(
+          shape: [NSNumber(value: maskCoefficients)], dataType: .float32)
+      else { continue }
+      let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
+      let maskStartField = numFields > 5 ? 6 : 5
+      for m in 0..<min(maskCoefficients, numFields - maskStartField) {
+        maskProbsData[m] = pointer[base + (maskStartField + m) * fieldStride]
+      }
+
+      results.append((boundingBox, classId, conf, maskProbs))
+    }
+
+    return results
   }
 
   func checkShapeDimensions(of multiArray: MLMultiArray) -> Int {

@@ -661,6 +661,11 @@ class OBBRenderer {
   private func getLayerBundle(for parentLayer: CALayer) -> OBBShapeLayerBundle {
     if usedLayerCount < layerPool.count {
       let bundle = layerPool[usedLayerCount]
+      // Re-attach to parent if orphaned (e.g., after resetLayers removed sublayers)
+      if bundle.shapeLayer.superlayer !== parentLayer {
+        parentLayer.addSublayer(bundle.shapeLayer)
+        parentLayer.addSublayer(bundle.textLayer)
+      }
       bundle.shapeLayer.isHidden = false
       bundle.textLayer.isHidden = false
       usedLayerCount += 1

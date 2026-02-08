@@ -272,7 +272,10 @@ public class ObjectDetector: BasePredictor, @unchecked Sendable {
       var bestClass = 0
       for c in 0..<numClasses {
         let score = pointer[(4 + c) * featureStride + j * anchorStride]
-        if score > bestScore { bestScore = score; bestClass = c }
+        if score > bestScore {
+          bestScore = score
+          bestClass = c
+        }
       }
       guard bestScore > confThreshold else { continue }
 

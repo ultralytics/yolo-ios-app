@@ -28,10 +28,10 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 
 ## 📋 Requirements
 
-| Platform | Minimum Version | Notes                                                                                                    |
-| -------- | --------------- | -------------------------------------------------------------------------------------------------------- |
-| iOS      | 16.0+           | Suitable for iPhone / iPad                                                                               |
-| macOS    | 13.0+           | Camera functionality may depend on hardware availability                                                 |
+| Platform | Minimum Version | Notes                                                    |
+| -------- | --------------- | -------------------------------------------------------- |
+| iOS      | 16.0+           | Suitable for iPhone / iPad                               |
+| macOS    | 13.0+           | Camera functionality may depend on hardware availability |
 
 - **Swift 5.10+**: Required for modern language features.
 - **Xcode 15.3+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).

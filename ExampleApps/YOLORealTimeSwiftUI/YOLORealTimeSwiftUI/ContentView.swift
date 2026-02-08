@@ -18,7 +18,7 @@ import YOLO
 struct ContentView: View {
   var body: some View {
     YOLOCamera(
-      modelPathOrName: "yolo11n",
+      modelPathOrName: "yolo26n",
       task: .detect,
       cameraPosition: .back
     )

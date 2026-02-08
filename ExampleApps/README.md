@@ -42,7 +42,7 @@ Follow these steps to get the examples up and running:
     #### Obtaining YOLO Core ML Models
 
     You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
-    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLOv8 GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
+    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLO GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
     - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
     - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
@@ -62,12 +62,12 @@ Follow these steps to get the examples up and running:
           model_types=("", "-seg", "-cls", "-pose", "-obb"),
           model_sizes=("n", "s", "m", "l", "x"),
       ):
-          """Exports YOLO11 models to CoreML format and optionally zips the output packages."""
+          """Exports YOLO26 models to CoreML format and optionally zips the output packages."""
           for model_type in model_types:
               imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
-              nms = True if model_type == "" else False  # only apply NMS to Detect models
+              nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
               for size in model_sizes:
-                  model_name = f"yolo11{size}{model_type}"
+                  model_name = f"yolo26{size}{model_type}"
                   model = YOLO(f"{model_name}.pt")
                   model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
                   zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")

@@ -13,6 +13,7 @@
 //  with the computational complexity of rotated geometry operations.
 
 import Accelerate
+import CoreML
 import Foundation
 import UIKit
 import Vision
@@ -35,6 +36,7 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
         for result in limitedResults {
           let box = result.box
           let score = result.score
+          guard result.cls < labels.count else { continue }
           let clsIdx = labels[result.cls]
           let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
           obbResults.append(obbResult)
@@ -87,6 +89,7 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
           for result in limitedResults {
             let box = result.box
             let score = result.score
+            guard result.cls < labels.count else { continue }
             let clsIdx = labels[result.cls]
             let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
             obbResults.append(obbResult)
@@ -112,9 +115,18 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
     confidenceThreshold: Float,
     iouThreshold: Float
   ) -> [(box: OBB, score: Float, cls: Int)] {
+    let shape = feature.shape.map { $0.intValue }
+    guard shape.count == 3 else { return [] }
 
-    let shape1 = feature.shape[1].intValue
-    let numAnchors = feature.shape[2].intValue
+    // YOLO26 end2end OBB: [1, max_det, 7] where 7 = x1,y1,x2,y2,conf,class_id,angle
+    // Traditional OBB: [1, 4+nc+1, num_anchors] where shape[2] > shape[1]
+    if shape[2] < shape[1] {
+      return postProcessEnd2EndOBB(
+        feature: feature, shape: shape, confidenceThreshold: confidenceThreshold)
+    }
+
+    let shape1 = shape[1]
+    let numAnchors = shape[2]
     let numClasses = shape1 - 5  // (4 + numClasses + 1) = shape1
 
     let pointer = feature.dataPointer.bindMemory(
@@ -195,6 +207,49 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
       let d = detections[idx]
       results.append((d.obb, d.score, d.cls))
     }
+    return results
+  }
+
+  /// Processes YOLO26 end2end OBB output: [1, max_det, 7].
+  /// Each detection: [cx, cy, w, h, conf, class_id, angle] in xywh pixel coords.
+  /// OBB uses dist2rbox() which always outputs center-based xywh (NOT xyxy like detect).
+  /// NMS is already applied by the model.
+  private func postProcessEnd2EndOBB(
+    feature: MLMultiArray,
+    shape: [Int],
+    confidenceThreshold: Float
+  ) -> [(box: OBB, score: Float, cls: Int)] {
+    let numDetections = shape[1]
+    let numFields = shape[2]
+    let strides = feature.strides.map { $0.intValue }
+    let pointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
+    let detStride = strides[1]
+    let fieldStride = strides[2]
+    let inputW = Float(modelInputSize.width)
+    let inputH = Float(modelInputSize.height)
+
+    var results: [(box: OBB, score: Float, cls: Int)] = []
+
+    for i in 0..<numDetections {
+      let base = i * detStride
+      let conf = pointer[base + 4 * fieldStride]
+      guard conf > confidenceThreshold else { continue }
+
+      // OBB boxes are center-based xywh from dist2rbox (NOT xyxy like detect)
+      let cx = pointer[base] / inputW
+      let cy = pointer[base + fieldStride] / inputH
+      let w = pointer[base + 2 * fieldStride] / inputW
+      let h = pointer[base + 3 * fieldStride] / inputH
+      let classId = numFields > 6 ? Int(pointer[base + 5 * fieldStride]) : 0
+
+      // Angle is the last field — OBB26 outputs raw angle in radians (no sigmoid needed,
+      // model learns to predict radians directly, used with cos/sin in dist2rbox)
+      let angle = pointer[base + (numFields - 1) * fieldStride]
+
+      let obb = OBB(cx: cx, cy: cy, w: w, h: h, angle: angle)
+      results.append((box: obb, score: conf, cls: classId))
+    }
+
     return results
   }
 

@@ -10,7 +10,7 @@ This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing)
 
 To execute the complete test suite, including tests involving model [inference](https://www.ultralytics.com/glossary/real-time-inference), you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo11n-obb.mlpackage` - An [Ultralytics YOLO11](https://docs.ultralytics.com/models/yolo11/) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
+- `yolo26n-obb.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
 
 **Note**: This model file is not included in the repository due to its size.
 
@@ -22,11 +22,11 @@ To execute the complete test suite, including tests involving model [inference](
 ```python
 from ultralytics import YOLO
 
-# Load a pretrained OBB model (e.g., yolo11n-obb.pt)
-model = YOLO("yolo11n-obb.pt")
+# Load a pretrained OBB model (e.g., yolo26n-obb.pt)
+model = YOLO("yolo26n-obb.pt")
 
 # Export the model to Core ML format
-model.export(format="coreml")  # Creates yolo11n-obb.mlpackage
+model.export(format="coreml")  # Creates yolo26n-obb.mlpackage
 ```
 
 ### Adding Model Files to the Project
@@ -35,7 +35,7 @@ model.export(format="coreml")  # Creates yolo11n-obb.mlpackage
 
 Follow these steps to add the model file correctly within Xcode:
 
-1.  Drag and drop the `yolo11n-obb.mlpackage` file into your Xcode project navigator.
+1.  Drag and drop the `yolo26n-obb.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
     - Ensure the **"YOLO-RealTime-SwiftUI"** target checkbox is **checked**.
     - Optionally, check the "YOLO-RealTime-SwiftUITests" target, but the main target is essential.
@@ -60,13 +60,13 @@ These tests aim to verify several aspects of the application:
 
 #### Running Tests Without Models (Default)
 
-By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo11n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) environments where managing large model files might be complex. Check our [Quickstart guide](https://docs.ultralytics.com/quickstart/) for setting up your environment.
+By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo26n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) environments where managing large model files might be complex. Check our [Quickstart guide](https://docs.ultralytics.com/quickstart/) for setting up your environment.
 
 #### Running Tests With Models
 
 To run the full test suite, including tests that perform inference:
 
-1.  Ensure you have obtained `yolo11n-obb.mlpackage` and added it to the **main application target** as described above.
+1.  Ensure you have obtained `yolo26n-obb.mlpackage` and added it to the **main application target** as described above.
 2.  Open the relevant test file (e.g., `YOLO_RealTime_SwiftUITests.swift`).
 3.  Change the flag `SKIP_MODEL_TESTS` to `false`.
 4.  Run the tests using Xcode (Product > Test or `Cmd+U`).

@@ -10,7 +10,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   private var yoloView: YOLOView?
   private var isInitialized = false
   private var currentTask: YOLOTask = .detect
-  private var currentModelName: String = "yolo11n"
+  private var currentModelName: String = "yolo26n"
 
   // UI Elements with proper scaling
   private var labelName: UILabel!
@@ -297,17 +297,18 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       print("📱 External display loading bundle model from: \(actualModelPath)")
     }
 
-    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+    let capturedModelPath = actualModelPath
+    yoloView?.setModel(modelPathOrName: capturedModelPath, task: task) { [weak self] result in
       guard case .success = result else {
-        print("❌ Failed to load model on external display: \(actualModelPath)")
+        print("❌ Failed to load model on external display: \(capturedModelPath)")
         return
       }
 
       DispatchQueue.main.async {
         self?.updateModelNameLabel()
+        self?.yoloView?.setNeedsDisplay()
+        self?.yoloView?.layoutIfNeeded()
       }
-      self?.yoloView?.setNeedsDisplay()
-      self?.yoloView?.layoutIfNeeded()
     }
   }
 

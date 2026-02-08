@@ -117,11 +117,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-        
+
         // Configure compute units for optimal performance
         // Use Neural Engine when available for best performance and power efficiency
         config.computeUnits = .all  // Use CPU, GPU, and Neural Engine
-        
+
         // Alternative options:
         // config.computeUnits = .cpuAndNeuralEngine  // CPU + ANE only
         // config.computeUnits = .cpuAndGPU           // CPU + GPU only

@@ -83,7 +83,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   // MARK: - Helper Methods
-  
+
   // Helper function to check for external screens (iOS 16+ compatible)
   private func hasExternalScreen() -> Bool {
     if #available(iOS 16.0, *) {
@@ -392,7 +392,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
             self.finishLoadingModel(success: true, modelName: entry.displayName)
           } else {
             // Normal model loading on main YOLOView
-            self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) { [weak self] result in
+            self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) {
+              [weak self] result in
               DispatchQueue.main.async {
                 switch result {
                 case .success():
@@ -467,7 +468,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.finishLoadingModel(success: true, modelName: displayName)
       } else {
         // Normal model loading on main YOLOView
-        self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) { [weak self] result in
+        self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) {
+          [weak self] result in
           DispatchQueue.main.async {
             switch result {
             case .success():
@@ -733,7 +735,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func debugCheckModelFolders() {
     print("\n🔍 DEBUG: Checking model folders...")
-    let folders = ["Models/Detect", "Models/Segment", "Models/Classify", "Models/Pose", "Models/OBB"]
+    let folders = [
+      "Models/Detect", "Models/Segment", "Models/Classify", "Models/Pose", "Models/OBB",
+    ]
 
     for folder in folders {
       if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {

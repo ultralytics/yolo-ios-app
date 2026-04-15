@@ -19,110 +19,99 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
-public class Segmenter: BasePredictor, @unchecked Sendable {
+public final class Segmenter: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
-    if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-      guard results.count == 2 else { return }
-      var pred: MLMultiArray
-      var masks: MLMultiArray
-      guard let out0 = results[0].featureValue.multiArrayValue,
-        let out1 = results[1].featureValue.multiArrayValue
-      else { return }
-      let out0dim = checkShapeDimensions(of: out0)
-      _ = checkShapeDimensions(of: out1)
-      if out0dim == 4 {
-        masks = out0
-        pred = out1
-      } else {
-        masks = out1
-        pred = out0
-      }
-      let detectedObjects = postProcessSegment(
-        feature: pred, confidenceThreshold: Float(confidenceThreshold),
-        iouThreshold: Float(iouThreshold))
+    guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
+      self.isUpdating = false
+      return
+    }
+    guard results.count == 2 else {
+      self.isUpdating = false
+      return
+    }
+    var pred: MLMultiArray
+    var masks: MLMultiArray
+    guard let out0 = results[0].featureValue.multiArrayValue,
+      let out1 = results[1].featureValue.multiArrayValue
+    else {
+      self.isUpdating = false
+      return
+    }
+    let out0dim = checkShapeDimensions(of: out0)
+    _ = checkShapeDimensions(of: out1)
+    if out0dim == 4 {
+      masks = out0
+      pred = out1
+    } else {
+      masks = out1
+      pred = out0
+    }
+    let detectedObjects = postProcessSegment(
+      feature: pred, confidenceThreshold: Float(confidenceThreshold),
+      iouThreshold: Float(iouThreshold))
 
-      let detectionsCount = detectedObjects.count
-      var boxes: [Box] = []
-      boxes.reserveCapacity(detectionsCount)
-      var alphas = [CGFloat]()
-      alphas.reserveCapacity(detectionsCount)
+    let detectionsCount = detectedObjects.count
+    var boxes: [Box] = []
+    boxes.reserveCapacity(detectionsCount)
 
-      let modelWidth = CGFloat(self.modelInputSize.width)
-      let modelHeight = CGFloat(self.modelInputSize.height)
-      let inputWidth = Int(self.inputSize.width)
-      let inputHeight = Int(self.inputSize.height)
+    let modelWidth = CGFloat(self.modelInputSize.width)
+    let modelHeight = CGFloat(self.modelInputSize.height)
+    let inputWidth = Int(self.inputSize.width)
+    let inputHeight = Int(self.inputSize.height)
 
-      // Pre-calculate alpha constants
-      let alphaScale: CGFloat = 0.9 / 0.8  // (1.0 - 0.2)
-      let alphaOffset: CGFloat = -0.2 * alphaScale
+    let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
+    for p in limitedObjects {
+      let box = p.0
+      let rect = CGRect(
+        x: box.minX / modelWidth, y: box.minY / modelHeight,
+        width: box.width / modelWidth, height: box.height / modelHeight)
+      let confidence = p.2
+      let bestClass = p.1
+      guard bestClass < self.labels.count else { continue }
+      let label = self.labels[bestClass]
+      let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
 
-      let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
-      for p in limitedObjects {
-        let box = p.0
-        let rect = CGRect(
-          x: box.minX / modelWidth, y: box.minY / modelHeight,
-          width: box.width / modelWidth, height: box.height / modelHeight)
-        let confidence = p.2
-        let bestClass = p.1
-        guard bestClass < self.labels.count else { continue }
-        let label = self.labels[bestClass]
-        let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+      boxes.append(
+        Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect))
+    }
 
-        let boxResult = Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
-        let alpha = CGFloat(confidence) * alphaScale + alphaOffset
-        boxes.append(boxResult)
-        alphas.append(alpha)
-      }
+    // Update timing before capturing values to avoid one-frame lag
+    self.updateTime()
 
-      // Update timing before capturing values to avoid one-frame lag
-      self.updateTime()
+    // Capture needed values before async block
+    let capturedMasks = masks
+    let capturedBoxes = boxes
+    let capturedInputSize = self.inputSize
+    let capturedModelInputSize = self.modelInputSize
+    let capturedT2 = self.t2
+    let capturedT4 = self.t4
+    let capturedLabels = self.labels
 
-      // Capture needed values before async block
-      let capturedMasks = masks
-      let capturedBoxes = boxes
-      let capturedInputSize = self.inputSize
-      let capturedModelInputSize = self.modelInputSize
-      let capturedT2 = self.t2
-      let capturedT4 = self.t4
-      let capturedLabels = self.labels
+    let capturedDetectedObjects = Array(limitedObjects)
+    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      guard
+        let processedMasks = generateCombinedMaskImage(
+          detectedObjects: capturedDetectedObjects,
+          protos: capturedMasks,
+          inputWidth: capturedModelInputSize.width,
+          inputHeight: capturedModelInputSize.height,
+          threshold: 0.5
 
-      let capturedDetectedObjects = Array(limitedObjects)
-      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-        guard
-          let processedMasks = generateCombinedMaskImage(
-            detectedObjects: capturedDetectedObjects,
-            protos: capturedMasks,
-            inputWidth: capturedModelInputSize.width,
-            inputHeight: capturedModelInputSize.height,
-            threshold: 0.5
-
-          ) as? (CGImage?, [[[Float]]])
-        else {
-          DispatchQueue.main.async { [weak self] in
-            self?.isUpdating = false
-          }
-          return
+        ) as? (CGImage?, [[[Float]]])
+      else {
+        DispatchQueue.main.async { [weak self] in
+          self?.isUpdating = false
         }
-        let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
-        let result = YOLOResult(
-          orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
-          speed: capturedT2,
-          fps: 1 / capturedT4, names: capturedLabels)
-        self?.currentOnResultsListener?.on(result: result)
+        return
       }
+      let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
+      let result = YOLOResult(
+        orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
+        speed: capturedT2,
+        fps: 1 / capturedT4, names: capturedLabels)
+      self?.currentOnResultsListener?.on(result: result)
     }
-  }
-
-  private func updateTime() {
-    if self.t1 < 10.0 {  // valid dt
-      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-    }
-    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-    self.t3 = CACurrentMediaTime()
-
-    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {

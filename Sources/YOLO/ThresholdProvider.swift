@@ -13,7 +13,7 @@
 import CoreML
 
 /// Provides custom IoU and confidence thresholds for adjusting model predictions.
-public class ThresholdProvider: MLFeatureProvider {
+public final class ThresholdProvider: MLFeatureProvider {
   /// Stores IoU and confidence thresholds as MLFeatureValue objects.
   var values: [String: MLFeatureValue]
 

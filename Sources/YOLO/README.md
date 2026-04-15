@@ -93,57 +93,51 @@ Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core
 
 ```swift
 import YOLO
-import UIKit // Or AppKit for macOS
+import UIKit
 
 // --- Initialization ---
-// Initialize with a model file name included in the app bundle (automatically finds .mlmodelc)
-guard let model = try? YOLO(modelFileName: "yolo26n", task: .detect) else {
-    fatalError("Failed to load YOLO model.")
+// Load a model bundled with your app (looks up .mlmodelc or .mlpackage by resource name).
+// The loading callback is invoked on the main thread when the model is ready.
+var model: YOLO?
+model = YOLO("yolo11n", task: .detect) { result in
+    switch result {
+    case .success:
+        print("Model ready")
+    case .failure(let error):
+        print("Failed to load model: \(error)")
+    }
 }
 
-// Or initialize with a specific path to a .mlmodel file
-let modelPath = Bundle.main.path(forResource: "yolo26n", ofType: "mlmodel")!
-guard let model = try? YOLO(modelPath: modelPath, task: .detect) else {
-    fatalError("Failed to load YOLO model.")
+// Or provide an absolute path to an .mlmodel / .mlpackage.
+model = YOLO("/path/to/yolo11n.mlpackage", task: .detect) { result in
+    // handle result
+    _ = result
 }
 
-// Or initialize with a remote URL (model will be downloaded and cached automatically)
-let modelURL = URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo26n.mlpackage.zip")!
-guard let model = try? YOLO(url: modelURL, task: .detect) else {
-    fatalError("Failed to load YOLO model from URL.")
+// Or initialize from a remote URL — the model is downloaded and cached by YOLOModelCache.
+let modelURL = URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
+model = YOLO(url: modelURL, task: .detect) { result in
+    // handle result
+    _ = result
 }
 
 // --- Inference ---
-// Load an image (replace with your image loading logic)
-guard let image = UIImage(named: "your_image_name") else { // Or load CGImage, CIImage
-    fatalError("Failed to load image.")
+// Once the load completion has fired, call the model with any supported input type.
+guard let model = model, let image = UIImage(named: "your_image_name") else { return }
+
+let output: YOLOResult = model(image)   // UIImage overload; also accepts CIImage, CGImage,
+                                        // a bundle resource name, or a local file path.
+
+// Detection boxes (applies to .detect, .segment, .pose, and similar tasks).
+for box in output.boxes {
+    print("\(box.cls) — conf \(box.conf) at \(box.xywh)")
 }
 
-// Perform inference
-do {
-    let results = try model.predict(source: image) // Can also accept CGImage, CIImage, file path String, or URL
-
-    // Process results based on the task
-    switch model.task {
-    case .detect:
-        // Access detection results (bounding boxes, confidences, classes)
-        for result in results {
-            print("Detected object: \(result.label) with confidence \(result.confidence) at \(result.rect)")
-        }
-    case .segment:
-        // Access segmentation results (masks, bounding boxes, etc.)
-        // Note: Mask processing might require additional steps depending on your needs.
-        for result in results {
-            print("Segmented object: \(result.label) with mask area...") // Access result.mask
-        }
-    // Add cases for .classify, .pose, .obb as needed
-    default:
-        print("Processing results for task: \(model.task)")
-    }
-
-} catch {
-    print("Error performing inference: \(error)")
-}
+// Task-specific fields on YOLOResult:
+//   .masks           — Segmenter  (combined mask CGImage + per-instance mask arrays)
+//   .probs           — Classifier (top1 / top5 labels and scores)
+//   .keypointsList   — PoseEstimator
+//   .obb             — ObbDetector (oriented bounding boxes)
 ```
 
 ### YOLOCamera / YOLOView (Real-Time Camera Inference)
@@ -155,31 +149,33 @@ The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) co
 #### SwiftUI Example
 
 ```swift
-import YOLO // Ensure YOLO is imported
+import YOLO
 import SwiftUI
 
 struct CameraView: View {
     var body: some View {
-        // Use YOLOCamera for real-time inference in SwiftUI
+        // Real-time inference using the rear camera.
         YOLOCamera(
-            modelPathOrName: "yolo26n-seg", // Model file name in bundle
-            task: .segment,             // Specify the task
-            cameraPosition: .back       // Use the back camera
-            // Optional confidenceThreshold parameter can be added here
-        )
-        .edgesIgnoringSafeArea(.all) // Optional: make the view full-screen
-        // Add error handling if needed
-        .onAppear {
-            // Request camera permissions if not already granted
+            modelPathOrName: "yolo11n-seg",  // Resource name in the app bundle
+            task: .segment,
+            cameraPosition: .back
+        ) { result in
+            // Called once per processed frame.
+            print("Detected \(result.boxes.count) objects")
         }
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
-// Alternative: Initialize with remote URL
+// Alternative: load the model from a remote URL (downloaded + cached on first use).
 struct CameraViewWithURL: View {
+    private static let modelURL = URL(
+        string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip"
+    )!
+
     var body: some View {
         YOLOCamera(
-            url: URL(string: "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip")!,
+            url: Self.modelURL,
             task: .segment,
             cameraPosition: .back
         )
@@ -191,59 +187,45 @@ struct CameraViewWithURL: View {
 #### UIKit Example
 
 ```swift
-import YOLO // Ensure YOLO is imported
+import AVFoundation
 import UIKit
-import AVFoundation // Needed for camera permission check
+import YOLO
 
 class CameraViewController: UIViewController {
     var yoloView: YOLOView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupCameraView()
-    }
 
-    func setupCameraView() {
-        // Check for camera permissions using AVFoundation
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-            guard let self = self else { return }
             DispatchQueue.main.async {
-                if granted {
-                    // Initialize YOLOView on the main thread after permission check
-                    self.yoloView = YOLOView(
-                        frame: self.view.bounds,
-                        modelFileName: "yolo26n-seg", // Model file name in bundle
-                        task: .segment,             // Specify the task
-                        cameraPosition: .back       // Use the back camera
-                        // Optional confidenceThreshold parameter can be added here
-                    )
-                    // Handle potential initialization errors
-                    if let yoloView = self.yoloView {
-                        yoloView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                        self.view.addSubview(yoloView)
-                        // Start the camera session if needed (often handled internally by YOLOView)
-                    } else {
-                        print("Error: Failed to initialize YOLOView.")
-                        // Show an error message to the user
-                    }
-                } else {
-                    print("Error: Camera permission denied.")
-                    // Show an error message or guide the user to settings
+                guard let self, granted else {
+                    print("Camera permission denied")
+                    return
                 }
+                let view = YOLOView(
+                    frame: self.view.bounds,
+                    modelPathOrName: "yolo11n-seg", // Bundle resource name
+                    task: .segment
+                )
+                view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                view.onDetection = { result in
+                    print("\(result.boxes.count) detections")
+                }
+                self.view.addSubview(view)
+                self.yoloView = view
             }
         }
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        // Stop the camera session when the view disappears (often handled internally)
-        yoloView?.stopSession()
-    }
-
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Restart the camera session if needed (often handled internally)
-        yoloView?.startSession()
+        yoloView?.resume()
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        yoloView?.stop()
     }
 }
 ```
@@ -305,7 +287,7 @@ print("Exported yolo26n-seg.mlmodel without NMS")
 
 This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
-**Important Note on NMS:** YOLO26 is NMS-free, so all models should be exported with `nms=False` (or omit the argument). The YOLO Swift Package includes optimized Swift postprocessing that handles YOLO26's NMS-free output format automatically after inference.
+**Important Note on NMS:** The SDK supports both architectures. YOLO26 is NMS-free — export with `nms=False` (or omit the argument) and the Swift package applies postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) are also supported; the predictor detects the model's `nms` metadata flag at load time and dispatches to the correct path.
 
 ## 🤝 Contributing
 

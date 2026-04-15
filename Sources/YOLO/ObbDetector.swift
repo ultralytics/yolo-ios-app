@@ -19,7 +19,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO models that detect objects using oriented (rotated) bounding boxes.
-public class ObbDetector: BasePredictor, @unchecked Sendable {
+public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -49,17 +49,6 @@ public class ObbDetector: BasePredictor, @unchecked Sendable {
             names: labels))
       }
     }
-  }
-
-  private func updateTime() {
-    if self.t1 < 10.0 {  // valid dt
-      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-    }
-    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-    self.t3 = CACurrentMediaTime()
-
-    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {

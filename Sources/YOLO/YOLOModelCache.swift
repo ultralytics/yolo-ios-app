@@ -12,7 +12,7 @@ import CryptoKit
 import Foundation
 
 /// Manages caching of downloaded YOLO models in the documents directory.
-public class YOLOModelCache {
+public final class YOLOModelCache {
   /// Shared singleton instance
   public static let shared = YOLOModelCache()
 

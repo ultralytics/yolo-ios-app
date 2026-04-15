@@ -750,7 +750,6 @@ public func drawYOLOPoseWithBoxes(
   let renderedSize = CGSize(width: width, height: height)
 
   // 2. Calculate drawing sizes
-  let circleRadius = max(width, height) / 100
   let lineWidth = max(width, height) / 200
   let fontSize = max(width, height) / 50
 

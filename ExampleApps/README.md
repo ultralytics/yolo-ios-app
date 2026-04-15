@@ -8,19 +8,19 @@ Welcome! This directory contains example Xcode projects demonstrating how to int
 
 We provide several sample apps built with both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit) to illustrate different use cases:
 
-### YOLO-Single-Image-SwiftUI
+### YOLOSingleImageSwiftUI
 
 - A straightforward SwiftUI application demonstrating inference on a single image selected from the user's photo library using an [Ultralytics YOLO](https://docs.ultralytics.com/models/) Core ML model.
 
-### YOLO-Single-Image-UIKit
+### YOLOSingleImageUIKit
 
 - A simple UIKit application showcasing inference on a single image chosen from the photo library, powered by an Ultralytics YOLO Core ML model.
 
-### YOLO-RealTime-SwiftUI
+### YOLORealTimeSwiftUI
 
 - An example SwiftUI app performing real-time [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, or other tasks using the device's camera feed.
 
-### YOLO-RealTime-UIKit
+### YOLORealTimeUIKit
 
 - An example UIKit app implementing real-time inference from the live camera stream.
 
@@ -35,7 +35,7 @@ Follow these steps to get the examples up and running:
     cd yolo-ios-app/ExampleApps
     ```
 
-2.  **Open an Example Project:** Navigate to the desired example directory (e.g., `YOLO-RealTime-SwiftUI`) and open the `.xcodeproj` file in [Xcode](https://developer.apple.com/xcode/).
+2.  **Open an Example Project:** Navigate to the desired example directory (e.g., `YOLORealTimeSwiftUI`) and open the `.xcodeproj` file in [Xcode](https://developer.apple.com/xcode/).
 
 3.  **Add a YOLO Core ML Model:** Drag and drop your chosen `.mlpackage` or `.mlmodel` file into the Xcode project navigator. Ensure it's added to the target membership of the application.
 
@@ -101,7 +101,7 @@ Each example app includes [unit tests](https://en.wikipedia.org/wiki/Unit_testin
 
 ### Test Configuration
 
-- **Without Models:** By default, tests are configured to skip model-dependent checks (`SKIP_MODEL_TESTS = true` in the test files). This allows verifying basic UI and logic without needing the potentially large Core ML model files, useful for quick checks and some [Continuous Integration (CI)](https://www.ultralytics.com/glossary/continuous-integration-ci) setups.
+- **Without Models:** Some example test targets are configured to skip model-dependent checks when `SKIP_MODEL_TESTS = true`, while others currently run model checks by default. Review the specific test target and its local `README.md` before relying on a no-model run. When enabled, skipping model checks still verifies the basic UI and application logic without requiring large Core ML assets.
 - **With Models:** To perform comprehensive testing including model inference:
   1.  Ensure the required Core ML model(s) are added to the main application target (refer to the specific `README.md` within each test directory for details on required models). You can obtain models as described in the [Usage section](#obtaining-yolo-core-ml-models).
   2.  Set `SKIP_MODEL_TESTS = false` within the relevant test file(s).

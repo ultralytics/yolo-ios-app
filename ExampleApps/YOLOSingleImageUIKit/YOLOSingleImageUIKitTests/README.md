@@ -10,25 +10,25 @@ Follow these instructions to set up and run the unit tests for the application.
 
 ### Prerequisites
 
-To execute the complete test suite, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
+To execute the complete test suite, you will need the [Core ML](https://developer.apple.com/documentation/coreml) model the example app loads by default:
 
-- `yolo26x-seg.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) segmentation model.
+- `yolo26n.mlpackage`: An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) detection model.
 
 **Note**: This model file is not included in the repository due to its significant size. Large files are often excluded from [version control](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History#_removing_a_file_from_every_commit) to keep repository size manageable.
 
 ### Obtaining the Model File
 
-1.  **Download**: Obtain the base PyTorch YOLO26 model (`yolo26x-seg.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
+1.  **Download**: Obtain the base PyTorch YOLO26 model (`yolo26n.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
 2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
 
 ```python
 from ultralytics import YOLO
 
-# Load the YOLO26 segmentation model
-model = YOLO("yolo26x-seg.pt")
+# Load the YOLO26 detection model
+model = YOLO("yolo26n.pt")
 
 # Export the model to Core ML format
-# This will create the yolo26x-seg.mlpackage file
+# This will create the yolo26n.mlpackage file
 model.export(format="coreml")
 ```
 
@@ -38,7 +38,7 @@ model.export(format="coreml")
 
 Follow these steps carefully:
 
-1.  Drag and drop the generated `yolo26x-seg.mlpackage` file into your Xcode project navigator.
+1.  Drag and drop the generated `yolo26n.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
     - Ensure the checkbox next to the **`YOLO-Single-Image-UIKit`** target is checked. This is crucial.
     - You may optionally check the `YOLO-Single-Image-UIKitTests` target as well, but including it only in the test target is insufficient.
@@ -62,16 +62,16 @@ These unit tests are designed to verify several key aspects of the application:
 
 #### Running Tests Without Models
 
-By default, the test suite is configured to run _without_ requiring the actual model files. This is controlled by the `SKIP_MODEL_TESTS` flag within the test code, which is set to `true`.
+The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent checks run by default.
 
-- **Benefits**: This allows developers to quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key. Check our [CI guide](https://docs.ultralytics.com/help/CI/) for more details.
+- **Benefits**: If you switch `SKIP_MODEL_TESTS` to `true`, developers can quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key. Check our [CI guide](https://docs.ultralytics.com/help/CI/) for more details.
 - **Limitations**: Tests that specifically depend on running inference with the model will be skipped.
 
 #### Running Tests With Models
 
 To run the full test suite, including tests that perform actual model inference:
 
-1.  **Add Models**: Ensure you have obtained and added the required `yolo26x-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
+1.  **Add Models**: Ensure you have obtained and added the required `yolo26n.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
 2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
 3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 

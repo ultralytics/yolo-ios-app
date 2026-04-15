@@ -88,12 +88,7 @@ public final class YOLOModelDownloader: NSObject {
     }
     isDownloading = true
     self.progressHandler = progress
-    self.completionHandler = { [weak self] result in
-      self?.lock.lock()
-      self?.isDownloading = false
-      self?.lock.unlock()
-      completion(result)
-    }
+    self.completionHandler = completion
     self.currentTask = task
     self.originalURL = url
     lock.unlock()
@@ -106,7 +101,25 @@ public final class YOLOModelDownloader: NSObject {
   /// Cancel current download
   public func cancelDownload() {
     downloadTask?.cancel()
+  }
+
+  /// Finishes the active download exactly once and resets state before invoking the stored callback.
+  private func finish(_ result: Result<URL, Error>) {
+    lock.lock()
+    guard isDownloading else {
+      lock.unlock()
+      return
+    }
+    isDownloading = false
     downloadTask = nil
+    let completionHandler = completionHandler
+    self.completionHandler = nil
+    progressHandler = nil
+    currentTask = nil
+    originalURL = nil
+    lock.unlock()
+
+    completionHandler?(result)
   }
 
   /// Process downloaded file
@@ -137,10 +150,10 @@ public final class YOLOModelDownloader: NSObject {
       let compiledPath = try compileModelIfNeeded(at: modelPath)
       let cachedPath = try cacheModel(compiledPath, for: url)
 
-      completionHandler?(.success(cachedPath))
+      finish(.success(cachedPath))
 
     } catch {
-      completionHandler?(.failure(error))
+      finish(.failure(error))
     }
   }
 
@@ -181,7 +194,7 @@ public final class YOLOModelDownloader: NSObject {
 
   /// Extract ZIP file while skipping macOS metadata
   private func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
-    guard let archive = Archive(url: sourceURL, accessMode: .read) else {
+    guard let archive = try? Archive(url: sourceURL, accessMode: .read) else {
       throw DownloadError.invalidZipFile
     }
 
@@ -256,7 +269,7 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
     didFinishDownloadingTo location: URL
   ) {
     guard let originalURL = downloadTask.originalRequest?.url else {
-      completionHandler?(.failure(DownloadError.invalidURL))
+      finish(.failure(DownloadError.invalidURL))
       return
     }
 
@@ -264,7 +277,7 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
     if let httpResponse = downloadTask.response as? HTTPURLResponse,
       !(200..<300).contains(httpResponse.statusCode)
     {
-      completionHandler?(
+      finish(
         .failure(
           DownloadError.downloadFailed(
             NSError(
@@ -299,23 +312,7 @@ extension YOLOModelDownloader: URLSessionDownloadDelegate {
     _ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?
   ) {
     if let error = error {
-      completionHandler?(.failure(DownloadError.downloadFailed(error)))
-      return
-    }
-    // Successful completion is normally reported via didFinishDownloadingTo. Guard against the
-    // edge case where the session finishes without ever delivering a file location.
-    lock.lock()
-    let stillRunning = isDownloading
-    lock.unlock()
-    if stillRunning {
-      completionHandler?(
-        .failure(
-          DownloadError.downloadFailed(
-            NSError(
-              domain: "YOLOModelDownloader", code: -2,
-              userInfo: [
-                NSLocalizedDescriptionKey: "Download completed without delivering a file"
-              ]))))
+      finish(.failure(DownloadError.downloadFailed(error)))
     }
   }
 }

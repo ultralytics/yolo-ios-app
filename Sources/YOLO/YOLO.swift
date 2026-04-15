@@ -75,7 +75,7 @@ public final class YOLO: @unchecked Sendable {
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    let handleResult: (Result<BasePredictor, Error>) -> Void = { [weak self] result in
+    let handleResult: @Sendable (Result<BasePredictor, Error>) -> Void = { [weak self] result in
       guard let self = self else { return }
       switch result {
       case .success(let predictor):
@@ -238,7 +238,7 @@ public final class YOLO: @unchecked Sendable {
     return self(uiImage)
   }
 
-  @MainActor
+  @MainActor @available(iOS 16.0, *)
   public func callAsFunction(
     _ swiftUIImage: SwiftUI.Image
   ) -> YOLOResult {

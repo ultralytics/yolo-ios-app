@@ -16,7 +16,7 @@ let package = Package(
       targets: ["YOLO"])
   ],
   dependencies: [
-    .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.19")
+    .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20")
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.

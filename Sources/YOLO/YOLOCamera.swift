@@ -22,6 +22,15 @@ public struct YOLOCamera: View {
   public let cameraPosition: AVCaptureDevice.Position
   public let onDetection: ((YOLOResult) -> Void)?
 
+  /// Creates a camera view that loads a model from the app bundle or a local file path.
+  ///
+  /// - Parameters:
+  ///   - modelPathOrName: A resource name to look up in the main bundle (e.g. `"yolo11n"` — the
+  ///     initializer searches for `.mlmodelc` then `.mlpackage`) or an absolute filesystem path
+  ///     to a `.mlmodel`/`.mlpackage` file.
+  ///   - task: The YOLO task to run (detect/segment/classify/pose/obb). Defaults to `.detect`.
+  ///   - cameraPosition: Which camera to use. Defaults to `.back`.
+  ///   - onDetection: Optional callback fired with each frame's inference result.
   public init(
     modelPathOrName: String,
     task: YOLOTask = .detect,
@@ -35,6 +44,14 @@ public struct YOLOCamera: View {
     self.onDetection = onDetection
   }
 
+  /// Creates a camera view that downloads (and caches) a model from a remote URL.
+  ///
+  /// - Parameters:
+  ///   - url: Remote URL pointing at a zipped `.mlpackage` or `.mlmodel`. Cached locally by
+  ///     `YOLOModelCache` so subsequent launches skip the download.
+  ///   - task: The YOLO task to run (detect/segment/classify/pose/obb). Defaults to `.detect`.
+  ///   - cameraPosition: Which camera to use. Defaults to `.back`.
+  ///   - onDetection: Optional callback fired with each frame's inference result.
   public init(
     url: URL,
     task: YOLOTask = .detect,

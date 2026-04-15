@@ -18,7 +18,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
-public class Classifier: BasePredictor, @unchecked Sendable {
+public final class Classifier: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
     let imageWidth = inputSize.width
@@ -98,14 +98,7 @@ public class Classifier: BasePredictor, @unchecked Sendable {
       probs = Probs(top1: top1, top5: top5, top1Conf: top1Conf, top5Confs: top5Confs)
     }
 
-    // Measure FPS
-    if self.t1 < 10.0 {  // valid dt
-      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-    }
-    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-    self.t3 = CACurrentMediaTime()
-
-    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
+    self.updateTime()
     let result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)

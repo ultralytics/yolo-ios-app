@@ -27,7 +27,7 @@ public protocol YOLOViewDelegate: AnyObject {
 
 /// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
 @MainActor
-public class YOLOView: UIView, VideoCaptureDelegate {
+public final class YOLOView: UIView, VideoCaptureDelegate {
 
   /// Delegate object - Receives performance metrics and YOLO detection results
   public weak var delegate: YOLOViewDelegate?

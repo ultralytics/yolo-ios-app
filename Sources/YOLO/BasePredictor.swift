@@ -72,6 +72,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Smoothed frames per second measurement (averaged over recent frames).
   var t4 = 1.0  // FPS dt smoothed (non-zero to avoid infinity on first frame)
 
+  /// EMA weight for new samples in smoothed inference/FPS measurements.
+  private static let emaAlpha = 0.05
+
+  /// Maximum plausible per-frame delta (seconds); outliers above this are ignored.
+  private static let maxValidDt = 10.0
+
   /// Flag indicating whether the predictor is currently processing an update.
   public var isUpdating: Bool = false
 
@@ -85,9 +91,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Performs cleanup when the predictor is deallocated.
   ///
-  /// Cancels any pending vision requests and releases references to avoid memory leaks.
+  /// Releases the Vision request so its completion handler can no longer retain `self`.
   deinit {
-    visionRequest?.cancel()
     visionRequest = nil
   }
 
@@ -357,5 +362,20 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
     print("Cannot find input size")
     return (0, 0)
+  }
+
+  /// Updates the smoothed inference time and FPS, then notifies the timing listener.
+  ///
+  /// Call this once per processed frame after `t1` is set. Uses an EMA with
+  /// `emaAlpha` weight on new samples and skips obvious outliers above `maxValidDt`.
+  func updateTime() {
+    let alpha = Self.emaAlpha
+    if self.t1 < Self.maxValidDt {  // valid dt
+      self.t2 = self.t1 * alpha + self.t2 * (1 - alpha)  // smoothed inference time
+    }
+    self.t4 = (CACurrentMediaTime() - self.t3) * alpha + self.t4 * (1 - alpha)  // smoothed FPS dt
+    self.t3 = CACurrentMediaTime()
+
+    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
   }
 }

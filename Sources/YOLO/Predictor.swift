@@ -72,7 +72,7 @@ public protocol Predictor {
 ///
 /// This enumeration defines the different types of errors that may be encountered
 /// during model loading, configuration, and inference operations.
-enum PredictorError: Error {
+public enum PredictorError: Error {
   /// The model file could not be found at the specified location.
   case modelFileNotFound
 }

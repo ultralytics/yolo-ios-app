@@ -16,8 +16,9 @@ import SwiftUI
 import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
-public class YOLO: @unchecked Sendable {
+public final class YOLO: @unchecked Sendable {
   var predictor: Predictor?
+  private var modelDownloader: YOLOModelDownloader?
 
   private var pendingNumItems: Int?
   private var pendingConfidence: Double?
@@ -25,10 +26,10 @@ public class YOLO: @unchecked Sendable {
 
   /// Initialize YOLO with remote URL for automatic download and caching
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
-    let downloader = YOLOModelDownloader()
-
-    downloader.download(from: url, task: task) { [weak self] result in
+    modelDownloader = YOLOModelDownloader()
+    modelDownloader?.download(from: url, task: task) { [weak self] result in
       guard let self = self else { return }
+      self.modelDownloader = nil
       switch result {
       case .success(let modelPath):
         self.loadModel(from: modelPath, task: task, completion: completion)
@@ -74,7 +75,7 @@ public class YOLO: @unchecked Sendable {
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    let handleResult: (Result<BasePredictor, Error>) -> Void = { [weak self] result in
+    let handleResult: @Sendable (Result<BasePredictor, Error>) -> Void = { [weak self] result in
       guard let self = self else { return }
       switch result {
       case .success(let predictor):
@@ -140,7 +141,7 @@ public class YOLO: @unchecked Sendable {
   }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
   public func setIouThreshold(_ iou: Double) {
     guard (0.0...1.0).contains(iou) else {
       print("Warning: IoU threshold should be between 0.0 and 1.0")
@@ -167,26 +168,27 @@ public class YOLO: @unchecked Sendable {
     iou.map { setIouThreshold($0) }
   }
 
-  public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
-    guard let ciImage = CIImage(image: uiImage), let predictor = predictor else {
+  /// Runs inference against the loaded predictor, or returns an empty result if no model is loaded.
+  private func run(_ ciImage: CIImage) -> YOLOResult {
+    guard let predictor = predictor else {
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
     return predictor.predictOnImage(image: ciImage)
+  }
+
+  public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
+    guard let ciImage = CIImage(image: uiImage) else {
+      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    }
+    return run(ciImage)
   }
 
   public func callAsFunction(_ ciImage: CIImage) -> YOLOResult {
-    guard let predictor = predictor else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
-    return predictor.predictOnImage(image: ciImage)
+    return run(ciImage)
   }
 
   public func callAsFunction(_ cgImage: CGImage) -> YOLOResult {
-    guard let predictor = predictor else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
-    let ciImage = CIImage(cgImage: cgImage)
-    return predictor.predictOnImage(image: ciImage)
+    return run(CIImage(cgImage: cgImage))
   }
 
   public func callAsFunction(
@@ -202,6 +204,16 @@ public class YOLO: @unchecked Sendable {
     return self(uiImage)
   }
 
+  /// Runs inference on an image fetched from a remote URL.
+  ///
+  /// - Warning: This overload performs a **synchronous** network fetch on the caller's thread
+  ///   via `Data(contentsOf:)` and may block indefinitely. Prefer downloading the bytes yourself
+  ///   (e.g. `URLSession`) and calling `callAsFunction(_: UIImage)` / `callAsFunction(_: CIImage)`.
+  @available(
+    *, deprecated,
+    message:
+      "Blocking network I/O on the calling thread. Fetch the image yourself and call callAsFunction(_: UIImage) instead."
+  )
   public func callAsFunction(
     _ remoteURL: URL?
   ) -> YOLOResult {

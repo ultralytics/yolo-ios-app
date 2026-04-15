@@ -19,7 +19,7 @@ import UIKit
 import Vision
 
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
-public class PoseEstimator: BasePredictor, @unchecked Sendable {
+public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
@@ -44,17 +44,6 @@ public class PoseEstimator: BasePredictor, @unchecked Sendable {
         self.currentOnResultsListener?.on(result: result)
       }
     }
-  }
-
-  private func updateTime() {
-    if self.t1 < 10.0 {  // valid dt
-      self.t2 = self.t1 * 0.05 + self.t2 * 0.95  // smoothed inference time
-    }
-    self.t4 = (CACurrentMediaTime() - self.t3) * 0.05 + self.t4 * 0.95  // smoothed delivered FPS
-    self.t3 = CACurrentMediaTime()
-
-    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)  // t2 seconds to ms
-
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {

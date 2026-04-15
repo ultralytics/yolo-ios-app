@@ -81,15 +81,7 @@ Ensure the filenames match exactly those listed in step 2.
 
 ## ▶️ Running the Tests
 
-With the model files correctly placed, you can run the test suite using either [Swift Package Manager (SwiftPM)](https://www.swift.org/package-manager/) or [Xcode](https://developer.apple.com/xcode/).
-
-### Using SwiftPM
-
-Navigate to the root directory of the `yolo-ios-app` package in your terminal and run:
-
-```bash
-swift test
-```
+With the model files correctly placed, run the test suite with [Xcode](https://developer.apple.com/xcode/) or `xcodebuild` against an iOS simulator. The package imports iOS-only frameworks such as `UIKit`, so `swift test` is not a reliable path for this target.
 
 ### Using Xcode
 
@@ -98,6 +90,18 @@ swift test
 3.  Select **Product** > **Test** from the menu bar, or use the shortcut **⌘U**.
 
 Xcode will build the package and execute all the tests defined in the `YOLOTests` target.
+
+### Using xcodebuild
+
+From the repository root, run:
+
+```bash
+xcodebuild \
+  -scheme YOLO \
+  -sdk iphonesimulator \
+  -destination "platform=iOS Simulator,name=iPhone 16" \
+  clean build test
+```
 
 ## 🛠️ Troubleshooting
 
@@ -115,7 +119,7 @@ If you receive an error message indicating that a model file could not be found:
 
 If tests fail or you encounter other problems:
 
-1.  **SwiftPM Version:** Ensure your installed Swift Package Manager version is compatible with the project requirements.
+1.  **Xcode Version:** Ensure your installed Xcode version supports Swift 5.10 and an iOS 16 simulator runtime.
 2.  **iOS Target:** The package requires [iOS](https://www.apple.com/ios/ios-18/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
 3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.

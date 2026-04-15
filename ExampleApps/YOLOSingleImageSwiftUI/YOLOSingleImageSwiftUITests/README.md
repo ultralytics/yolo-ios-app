@@ -61,7 +61,7 @@ These unit tests verify several key aspects of the application:
 
 #### Running Tests Without Models (CI/Basic Checks)
 
-By default, the `SKIP_MODEL_TESTS` flag in the test files is set to `true`. This configuration allows you to run a subset of tests **without requiring the actual model files**. These tests focus on verifying the basic UI functionality, view rendering, and non-inference logic. This setup is ideal for [Continuous Integration (CI)](https://www.atlassian.com/continuous-delivery/continuous-integration) environments or initial setup checks where model files might not be readily available.
+The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent checks run by default. If you want a lighter local pass without the model asset, switch that flag to `true`. With the flag enabled, the remaining tests focus on basic UI functionality, view rendering, and non-inference logic.
 
 #### Running Tests With Models (Full Suite)
 

@@ -18,10 +18,10 @@ import Vision
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
-  func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
+  func yoloView(_: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
 
   /// Called when detection results are available
-  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult)
+  func yoloView(_: YOLOView, didReceiveResult result: YOLOResult)
 
 }
 

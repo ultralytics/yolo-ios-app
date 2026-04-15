@@ -20,7 +20,7 @@ import Vision
 /// Specialized predictor for YOLO classification models that identify the subject of an image.
 public final class Classifier: BasePredictor, @unchecked Sendable {
 
-  override func processObservations(for request: VNRequest, error: Error?) {
+  override func processObservations(for request: VNRequest, _ error: Error?) {
     let imageWidth = inputSize.width
     let imageHeight = inputSize.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)

@@ -6,7 +6,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: []
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -14,6 +18,7 @@ permissions:
 jobs:
   test:
     runs-on: macos-26
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
 
@@ -27,11 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: xcodebuild -resolvePackageDependencies
-
-      - name: Create test .env file
-        run: |
-          echo "API_URL=https://test-api.ultralytics.com
-          FIREBASE_API_KEY=test-key" > .env
 
       - name: Build and Test
         run: |
@@ -110,3 +110,31 @@ jobs:
           files: ./info.lcov
           slug: ultralytics/yolo-ios-app
           fail_ci_if_error: false
+
+  periphery:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Periphery
+        run: |
+          brew tap peripheryapp/periphery
+          brew install periphery
+
+      - name: Run Periphery
+        run: |
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
+          DESTINATION=${DESTINATION:-name=iPhone 14}
+
+          periphery scan \
+            --project YOLOiOSApp/YOLOiOSApp.xcodeproj \
+            --schemes YOLOiOSApp \
+            --exclude-tests \
+            --retain-public \
+            --report-include 'Sources/YOLO/**/*.swift' \
+            --format github-actions \
+            --strict \
+            -- \
+            -destination "platform=iOS Simulator,$DESTINATION"

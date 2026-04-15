@@ -73,8 +73,8 @@ class BasePredictorTests: XCTestCase {
     let predictor = BasePredictor()
 
     // Should not crash when called
-    predictor.processObservations(for: MockVNRequest(), error: nil)
-    predictor.processObservations(for: MockVNRequest(), error: NSError(domain: "test", code: 0))
+    predictor.processObservations(for: MockVNRequest(), nil)
+    predictor.processObservations(for: MockVNRequest(), NSError(domain: "test", code: 0))
   }
 
   func testLabelsProperty() {

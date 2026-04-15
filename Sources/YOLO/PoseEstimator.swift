@@ -21,7 +21,7 @@ import Vision
 /// Specialized predictor for YOLO pose estimation models that identify human body keypoints.
 public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
-  override func processObservations(for request: VNRequest, error: Error?) {
+  override func processObservations(for request: VNRequest, _ error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
 
       if let prediction = results.first?.featureValue.multiArrayValue {

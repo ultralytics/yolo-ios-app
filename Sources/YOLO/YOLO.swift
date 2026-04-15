@@ -16,6 +16,10 @@ import SwiftUI
 import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
+///
+/// Model loading is asynchronous. Calling a `callAsFunction` overload before the init completion
+/// handler has fired returns an empty `YOLOResult`. Use `isLoaded` to check readiness, or perform
+/// inference from inside the completion handler.
 public final class YOLO: @unchecked Sendable {
   var predictor: Predictor?
   private var modelDownloader: YOLOModelDownloader?
@@ -23,6 +27,14 @@ public final class YOLO: @unchecked Sendable {
   private var pendingNumItems: Int?
   private var pendingConfidence: Double?
   private var pendingIou: Double?
+
+  /// Whether the model has finished loading and is ready to run inference.
+  ///
+  /// `false` while the model is still compiling/loading (or if loading failed).
+  /// `true` once the completion handler passed to `init` has fired with `.success`.
+  public var isLoaded: Bool {
+    (predictor as? BasePredictor)?.isModelLoaded ?? false
+  }
 
   /// Initialize YOLO with remote URL for automatic download and caching
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
@@ -177,10 +189,24 @@ public final class YOLO: @unchecked Sendable {
   }
 
   public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
-    guard let ciImage = CIImage(image: uiImage) else {
+    // CIImage(image:) drops UIImage.imageOrientation, so non-`.up` photos (e.g. portrait
+    // shots with orientation = .right) would otherwise be inferred against raw, rotated
+    // pixels. Build the CIImage from the backing CGImage and re-apply the orientation.
+    guard let cgImage = uiImage.cgImage else {
+      let uprightImage = uiImage.uprightForYOLO()
+      if let cgImage = uprightImage.cgImage {
+        return run(CIImage(cgImage: cgImage))
+      }
+      if let ciImage = uprightImage.ciImage {
+        return run(ciImage)
+      }
+      if let ciImage = CIImage(image: uprightImage) {
+        return run(ciImage)
+      }
       return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
     }
-    return run(ciImage)
+    let orientation = CGImagePropertyOrientation(uiImage.imageOrientation)
+    return run(CIImage(cgImage: cgImage).oriented(orientation))
   }
 
   public func callAsFunction(_ ciImage: CIImage) -> YOLOResult {

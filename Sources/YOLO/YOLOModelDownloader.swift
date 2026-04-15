@@ -194,7 +194,10 @@ public final class YOLOModelDownloader: NSObject {
 
   /// Extract ZIP file while skipping macOS metadata
   private func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
-    guard let archive = try? Archive(url: sourceURL, accessMode: .read) else {
+    let archive: Archive
+    do {
+      archive = try Archive(url: sourceURL, accessMode: .read)
+    } catch {
       throw DownloadError.invalidZipFile
     }
 

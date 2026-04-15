@@ -21,7 +21,7 @@ import Vision
 /// Specialized predictor for YOLO segmentation models that identify objects and their pixel-level masks.
 public final class Segmenter: BasePredictor, @unchecked Sendable {
 
-  override func processObservations(for request: VNRequest, error: Error?) {
+  override func processObservations(for request: VNRequest, _ error: Error?) {
     guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
       self.isUpdating = false
       return

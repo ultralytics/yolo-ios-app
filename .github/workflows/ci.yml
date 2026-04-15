@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: []
+    branches: [main]
 
 permissions:
   contents: read
@@ -27,11 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: xcodebuild -resolvePackageDependencies
-
-      - name: Create test .env file
-        run: |
-          echo "API_URL=https://test-api.ultralytics.com
-          FIREBASE_API_KEY=test-key" > .env
 
       - name: Build and Test
         run: |
@@ -110,3 +105,26 @@ jobs:
           files: ./info.lcov
           slug: ultralytics/yolo-ios-app
           fail_ci_if_error: false
+
+  periphery:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Periphery
+        run: |
+          brew tap peripheryapp/periphery
+          brew install periphery
+
+      - name: Run Periphery
+        run: |
+          periphery scan \
+            --project YOLOiOSApp/YOLOiOSApp.xcodeproj \
+            --schemes YOLOiOSApp \
+            --exclude-tests \
+            --retain-public \
+            --report-include 'Sources/YOLO/**/*.swift' \
+            --format github-actions \
+            --strict \
+            -- \
+            -destination 'platform=iOS Simulator,name=iPhone 17'

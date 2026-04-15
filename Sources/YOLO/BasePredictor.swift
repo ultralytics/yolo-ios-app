@@ -198,7 +198,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
                 return
               }
               if isRealTime {
-                predictor.processObservations(for: request, error: error)
+                predictor.processObservations(for: request, error)
               }
             })
           request.imageCropAndScaleOption = .scaleFill
@@ -315,7 +315,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameters:
   ///   - request: The completed Vision request containing model outputs.
   ///   - error: Any error that occurred during the Vision request.
-  func processObservations(for request: VNRequest, error: Error?) {
+  func processObservations(for request: VNRequest, _ error: Error?) {
     // Base implementation is empty - must be overridden by subclasses
   }
 

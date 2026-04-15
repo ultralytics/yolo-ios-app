@@ -37,7 +37,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// - Parameters:
   ///   - request: The completed Vision request containing object detection results.
   ///   - error: Any error that occurred during the Vision request.
-  override func processObservations(for request: VNRequest, error: Error?) {
+  override func processObservations(for request: VNRequest, _ error: Error?) {
     let boxes = decodeBoxes(from: request)
     self.updateTime()
     let result = YOLOResult(

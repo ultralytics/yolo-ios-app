@@ -21,7 +21,7 @@ import Vision
 /// Specialized predictor for YOLO models that detect objects using oriented (rotated) bounding boxes.
 public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
-  override func processObservations(for request: VNRequest, error: Error?) {
+  override func processObservations(for request: VNRequest, _ error: Error?) {
     if let results = request.results as? [VNCoreMLFeatureValueObservation] {
 
       if let prediction = results.first?.featureValue.multiArrayValue {
@@ -438,13 +438,11 @@ func polygonArea(_ poly: Polygon) -> CGFloat {
 
 /// Store cached geometry for faster OBB IoU checks.
 public struct OBBInfo {
-  let box: OBB
   let polygon: Polygon  // The 4 corners in order
   let area: CGFloat
   let aabb: CGRect  // Axis-aligned bounding box for quick overlap check
 
   init(_ obb: OBB) {
-    self.box = obb
     self.polygon = obb.toPolygon()
     self.area = CGFloat(obb.area)
     self.aabb = obb.toAABB()

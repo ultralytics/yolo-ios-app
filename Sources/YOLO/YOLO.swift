@@ -211,7 +211,8 @@ public final class YOLO: @unchecked Sendable {
   ///   (e.g. `URLSession`) and calling `callAsFunction(_: UIImage)` / `callAsFunction(_: CIImage)`.
   @available(
     *, deprecated,
-    message: "Blocking network I/O on the calling thread. Fetch the image yourself and call callAsFunction(_: UIImage) instead."
+    message:
+      "Blocking network I/O on the calling thread. Fetch the image yourself and call callAsFunction(_: UIImage) instead."
   )
   public func callAsFunction(
     _ remoteURL: URL?

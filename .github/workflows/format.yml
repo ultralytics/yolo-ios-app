@@ -12,6 +12,10 @@ on:
     branches: [main]
     types: [opened, closed, synchronize, review_requested]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write # Modify code in PRs
   pull-requests: write # Add comments and labels to PRs

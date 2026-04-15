@@ -124,6 +124,10 @@ jobs:
 
       - name: Run Periphery
         run: |
+          IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+          DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
+          DESTINATION=${DESTINATION:-name=iPhone 14}
+
           periphery scan \
             --project YOLOiOSApp/YOLOiOSApp.xcodeproj \
             --schemes YOLOiOSApp \
@@ -133,4 +137,4 @@ jobs:
             --format github-actions \
             --strict \
             -- \
-            -destination 'platform=iOS Simulator,name=iPhone 17'
+            -destination "platform=iOS Simulator,$DESTINATION"

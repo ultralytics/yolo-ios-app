@@ -20,7 +20,7 @@ The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralyti
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://twitter.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-twitter.png" width="3%" alt="Ultralytics Twitter"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
+  <a href="https://www.youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
@@ -42,7 +42,7 @@ Getting started with the Ultralytics YOLO iOS App is straightforward. Follow the
 Ensure you have the following before you begin:
 
 - **Xcode:** The app requires [Xcode](https://developer.apple.com/xcode/) installed on your macOS machine. You can download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-18-iphe3fa5df43/ios) or later is needed for testing.
+- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://www.apple.com/os/ios/) or later is needed for testing.
 - **Apple Developer Account:** A free [Apple Developer account](https://developer.apple.com/programs/enroll/) is sufficient for testing on your device.
 
 ### Installation
@@ -178,7 +178,7 @@ Contributions power the open-source community! We welcome your involvement in im
 
 Ultralytics provides two licensing options to accommodate different use cases:
 
-- **AGPL-3.0 License:** Ideal for students, researchers, and enthusiasts who want to experiment, learn, and share their work openly. This [OSI-approved](https://opensource.org/license/agpl-v3) license promotes collaboration and knowledge sharing within the open-source community. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for the full terms and conditions.
+- **AGPL-3.0 License:** Ideal for students, researchers, and enthusiasts who want to experiment, learn, and share their work openly. This [OSI-approved](https://opensource.org/license/agpl-3.0) license promotes collaboration and knowledge sharing within the open-source community. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for the full terms and conditions.
 - **Enterprise License:** Designed for commercial applications where integrating Ultralytics software into proprietary products or services is necessary. This license allows for commercial use without the open-source requirements of AGPL-3.0. If your project requires an Enterprise License, please contact us through the [Ultralytics Licensing](https://www.ultralytics.com/license) page.
 
 ## 🤝 Contact
@@ -199,7 +199,7 @@ For general questions, support, and discussions about Ultralytics YOLO models, s
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://twitter.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-twitter.png" width="3%" alt="Ultralytics Twitter"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
+  <a href="https://www.youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">

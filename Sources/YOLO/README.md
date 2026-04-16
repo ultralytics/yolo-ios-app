@@ -294,4 +294,4 @@ Contributions are welcome! Whether it's bug reports, feature requests, or code c
 
 ## 📜 License
 
-This project is licensed under the [AGPL-3.0 License](https://opensource.org/license/agpl-v3). See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).
+This project is licensed under the [AGPL-3.0 License](https://opensource.org/license/agpl-3.0). See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for details. For alternative licensing options, please visit [Ultralytics Licensing](https://www.ultralytics.com/license).

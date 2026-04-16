@@ -42,7 +42,7 @@ Getting started with the Ultralytics YOLO iOS App is straightforward. Follow the
 Ensure you have the following before you begin:
 
 - **Xcode:** The app requires [Xcode](https://developer.apple.com/xcode/) installed on your macOS machine. You can download it from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
-- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://support.apple.com/guide/iphone/iphone-models-compatible-with-ios-26-iphe3fa5df43/ios) or later is needed for testing.
+- **iOS Device:** An iPhone or iPad running [iOS 16.0](https://www.apple.com/os/ios/) or later is needed for testing.
 - **Apple Developer Account:** A free [Apple Developer account](https://developer.apple.com/programs/enroll/) is sufficient for testing on your device.
 
 ### Installation

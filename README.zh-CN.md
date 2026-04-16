@@ -25,7 +25,7 @@
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://twitter.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-twitter.png" width="3%" alt="Ultralytics Twitter"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
+  <a href="https://www.youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
@@ -141,7 +141,7 @@ var body: some View {
 
 Ultralytics 提供两种许可证选项，以适配不同的使用场景：
 
-- **AGPL-3.0 License**：这是一个经 [OSI 批准](https://opensource.org/license/agpl-v3)的开源许可证，适用于学术研究、个人项目和实验用途。它鼓励开放协作与知识共享。详情请参阅 [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) 文件以及完整的 [AGPL-3.0 许可证文本](https://www.gnu.org/licenses/agpl-3.0.en.html)。
+- **AGPL-3.0 License**：这是一个经 [OSI 批准](https://opensource.org/license/agpl-3.0)的开源许可证，适用于学术研究、个人项目和实验用途。它鼓励开放协作与知识共享。详情请参阅 [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) 文件以及完整的 [AGPL-3.0 许可证文本](https://www.gnu.org/licenses/agpl-3.0.en.html)。
 - **Enterprise License**：面向商业应用场景，允许将 Ultralytics 软件和 AI 模型集成到商业产品与服务中，而无需遵循 AGPL-3.0 的开源要求。如果你的场景涉及商业用途，请通过 [Ultralytics Licensing](https://www.ultralytics.com/license) 与我们联系。
 
 ## 🤝 联系我们
@@ -157,7 +157,7 @@ Ultralytics 提供两种许可证选项，以适配不同的使用场景：
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://twitter.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-twitter.png" width="3%" alt="Ultralytics Twitter"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
-  <a href="https://youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
+  <a href="https://www.youtube.com/ultralytics?sub_confirmation=1"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-youtube.png" width="3%" alt="Ultralytics YouTube"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">
   <a href="https://www.tiktok.com/@ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-tiktok.png" width="3%" alt="Ultralytics TikTok"></a>
   <img src="https://github.com/ultralytics/assets/raw/main/social/logo-transparent.png" width="3%" alt="space">

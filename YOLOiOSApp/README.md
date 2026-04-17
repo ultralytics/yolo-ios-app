@@ -65,7 +65,7 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Add YOLO26 Models:**
-    You need models in the [Core ML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized Core ML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `YOLO/{TaskName}Models` directory within the Xcode project (e.g., `YOLO/DetectModels`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments.
+    The app does not ship CoreML models by default. Official Ultralytics models are downloaded on demand and cached on device. You need models in the [CoreML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized CoreML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `YOLO/{TaskName}Models` directory within the Xcode project (e.g., `YOLO/DetectModels`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments. You can also deploy and use custom models trained on your own data after exporting them to the CoreML format.
 
     ```python
     from ultralytics import YOLO
@@ -76,7 +76,7 @@ Ensure you have the following before you begin:
         model_types=("", "-seg", "-cls", "-pose", "-obb"),
         model_sizes=("n", "s", "m", "l", "x"),
     ):
-        """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
+        """Exports YOLO26 models to CoreML format and optionally zips the output packages."""
         for model_type in model_types:
             imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
             nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
@@ -104,7 +104,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 - **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [image classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Choose from a range of preloaded Ultralytics YOLO26 models, from the lightweight YOLO26n ('nano') optimized for edge devices to the powerful YOLO26x ('x-large') for maximum accuracy. You can also deploy and use [custom models](https://platform.ultralytics.com) trained on your own data after exporting them to the Core ML format.
+- **Multiple AI Models:** Choose from a range of downloadable Ultralytics YOLO26 models, from the lightweight YOLO26n ('nano') optimized for edge devices to the powerful YOLO26x ('x-large') for maximum accuracy. You can also deploy and use custom models trained on your own data after exporting them to the CoreML format.
 
 ### 📺 External Display Support (Optional)
 
@@ -138,14 +138,14 @@ The YOLO iOS App includes a suite of unit and integration tests to ensure functi
 
 ### Model Testing Configuration
 
-The test suite is designed to run with or without the actual Core ML model files:
+The test suite is designed to run with or without the actual CoreML model files:
 
 - **Without Models:** Set `SKIP_MODEL_TESTS = true` in the test target's build settings (under `Build Settings` > `User-Defined`). This allows running tests that don't require model inference, such as UI tests or utility function tests.
 - **With Models:** Set `SKIP_MODEL_TESTS = false` and ensure the required model files are added to the project in their respective directories as described below. This enables the full test suite, including tests that perform actual model inference.
 
 ### Required Models for Full Testing
 
-To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized Core ML models** in your project:
+To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized CoreML models** in your project:
 
 - **Detection:** `yolo26n.mlpackage` (place in `YOLO/DetectModels`)
 - **Segmentation:** `yolo26n-seg.mlpackage` (place in `YOLO/SegmentModels`)

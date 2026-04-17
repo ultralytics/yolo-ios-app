@@ -288,7 +288,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public func getConfidenceThreshold() -> Double { Double(sliderConf.value) }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.45).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
   public func setIouThreshold(_ iou: Double) {
     guard validateUnitRange(iou, name: "IoU threshold") else { return }
     sliderIoU.value = Float(iou)
@@ -618,18 +618,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     configureSlider(sliderConf, min: 0, max: 1, value: 0.25)
     self.addSubview(sliderConf)
 
-    labelSliderIoU.text = "0.45 IoU Threshold"
+    labelSliderIoU.text = "0.70 IoU Threshold"
     labelSliderIoU.textAlignment = .left
     labelSliderIoU.textColor = .white
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
-    configureSlider(sliderIoU, min: 0, max: 1, value: 0.45)
+    configureSlider(sliderIoU, min: 0, max: 1, value: 0.7)
     self.addSubview(sliderIoU)
 
     self.labelSliderNumItems.text = "0 items (max " + String(Int(sliderNumItems.value)) + ")"
     self.labelSliderConf.text = "0.25 Confidence Threshold"
-    self.labelSliderIoU.text = "0.45 IoU Threshold"
+    self.labelSliderIoU.text = "0.70 IoU Threshold"
 
     labelZoom.text = "1.00x"
     labelZoom.textColor = .white

@@ -21,7 +21,7 @@ class ThresholdProviderTests: XCTestCase {
 
     XCTAssertNotNil(iouValue)
     XCTAssertNotNil(confValue)
-    XCTAssertEqual(iouValue!.doubleValue, 0.45, accuracy: 0.001)
+    XCTAssertEqual(iouValue!.doubleValue, 0.7, accuracy: 0.001)
     XCTAssertEqual(confValue!.doubleValue, 0.25, accuracy: 0.001)
   }
 

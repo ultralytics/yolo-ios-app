@@ -1,12 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Export all YOLO models to CoreML format for the iOS app.
+Export all YOLO models to Core ML format for the iOS app.
 
 Usage:
     pip install ultralytics
     python scripts/export-models.py
 
-Exports YOLO models (5 sizes x 5 tasks = 25 models) to CoreML .mlpackage
+Exports YOLO models (5 sizes x 5 tasks = 25 models) to Core ML .mlpackage
 format and copies them into the app's Models/ directories.
 """
 
@@ -32,11 +32,11 @@ TASKS = {
 
 
 def main():
-    """Export YOLO26 models to CoreML format and prepare zips for release."""
+    """Export YOLO26 models to Core ML format and prepare zips for release."""
     for size in SIZES:
         for suffix, task_dir in TASKS.items():
             model_name = f"yolo26{size}{suffix}.pt"
-            print(f"\nExporting {model_name} to CoreML...")
+            print(f"\nExporting {model_name} to Core ML...")
             model = YOLO(model_name)
             exported = model.export(format="coreml", int8=True, nms=False)
 

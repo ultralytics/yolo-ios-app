@@ -27,7 +27,7 @@ on:
 
 jobs:
   check:
-    if: github.repository == 'ultralytics/yolo-ios-app' && (github.actor == 'glenn-jocher' || github.actor == 'asabri97' || github.actor == 'john-rocky')
+    if: github.repository == 'ultralytics/yolo-ios-app' && github.actor == 'glenn-jocher'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -22,80 +22,54 @@ import Vision
 public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-
-      if let prediction = results.first?.featureValue.multiArrayValue {
-        let nmsResults = postProcessOBB(
-          feature: prediction,  // your MLMultiArray
-          confidenceThreshold: Float(self.confidenceThreshold),
-          iouThreshold: Float(self.iouThreshold)
-        )
-
-        var obbResults: [OBBResult] = []
-        let limitedResults = nmsResults.prefix(self.numItemsThreshold)
-        for result in limitedResults {
-          let box = result.box
-          let score = result.score
-          guard result.cls < labels.count else { continue }
-          let clsIdx = labels[result.cls]
-          let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
-          obbResults.append(obbResult)
-        }
-
-        self.updateTime()
-        self.currentOnResultsListener?.on(
-          result: YOLOResult(
-            orig_shape: inputSize, boxes: [], obb: obbResults, speed: self.t2, fps: 1 / self.t4,
-            names: labels))
-      }
-    }
+    guard let prediction = firstFeatureArray(request) else { return }
+    let obbResults = buildResults(from: prediction)
+    self.updateTime()
+    self.currentOnResultsListener?.on(
+      result: YOLOResult(
+        orig_shape: inputSize, boxes: [], obb: obbResults,
+        speed: self.t2, fps: 1 / self.t4, names: labels))
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
-      let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
-      return emptyResult
+      return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    let result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
 
     do {
       try requestHandler.perform([request])
-
-      if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-
-        if let prediction = results.first?.featureValue.multiArrayValue {
-          let nmsResults = postProcessOBB(
-            feature: prediction,  // your MLMultiArray
-            confidenceThreshold: Float(self.confidenceThreshold),
-            iouThreshold: Float(self.iouThreshold)
-          )
-
-          var obbResults: [OBBResult] = []
-          let limitedResults = nmsResults.prefix(self.numItemsThreshold)
-          for result in limitedResults {
-            let box = result.box
-            let score = result.score
-            guard result.cls < labels.count else { continue }
-            let clsIdx = labels[result.cls]
-            let obbResult = OBBResult(box: box, confidence: score, cls: clsIdx, index: result.cls)
-            obbResults.append(obbResult)
-          }
-          let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
-          updateTime()
-          return YOLOResult(
-            orig_shape: inputSize, boxes: [], masks: nil, probs: nil, keypointsList: [],
-            obb: obbResults, annotatedImage: annotatedImage, speed: self.t2, fps: 1 / self.t4,
-            names: labels)
-        }
+      guard let prediction = firstFeatureArray(request) else {
+        return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       }
+      let obbResults = buildResults(from: prediction)
+      updateTime()
+      return YOLOResult(
+        orig_shape: inputSize, boxes: [], obb: obbResults,
+        annotatedImage: drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults),
+        speed: self.t2, fps: 1 / self.t4, names: labels)
     } catch {
-      print(error)
+      YOLOLog.error("OBB detection failed: \(error)")
     }
-    return result
+    return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+  }
+
+  private func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
+    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
+  }
+
+  private func buildResults(from prediction: MLMultiArray) -> [OBBResult] {
+    let nmsResults = postProcessOBB(
+      feature: prediction,
+      confidenceThreshold: Float(self.confidenceThreshold),
+      iouThreshold: Float(self.iouThreshold))
+    return nmsResults.prefix(self.numItemsThreshold).compactMap { result in
+      guard result.cls < labels.count else { return nil }
+      return OBBResult(
+        box: result.box, confidence: result.score,
+        cls: labels[result.cls], index: result.cls)
+    }
   }
 
   func postProcessOBB(

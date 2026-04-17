@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The BasePredictor class is the foundation for all task-specific predictors in the YOLO framework.
-//  It manages the loading and initialization of CoreML models, handling common operations such as
+//  It manages the loading and initialization of Core ML models, handling common operations such as
 //  model loading, class label extraction, and inference timing. The class provides an asynchronous
 //  model loading mechanism that runs on background threads and includes support for configuring
 //  model parameters like confidence thresholds and IoU thresholds. Specific task implementations
@@ -19,7 +19,7 @@ import Vision
 /// Base class for all YOLO model predictors, handling common model loading and inference logic.
 ///
 /// The BasePredictor serves as the foundation for all task-specific YOLO model predictors.
-/// It manages CoreML model loading, initialization, and common inference operations.
+/// It manages Core ML model loading, initialization, and common inference operations.
 /// Specialized predictors (for detection, segmentation, etc.) inherit from this class
 /// and override the prediction-specific methods to handle task-specific processing.
 ///
@@ -30,10 +30,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Flag indicating if the model has been successfully loaded and is ready for inference.
   private(set) var isModelLoaded: Bool = false
 
-  /// The Vision CoreML model used for inference operations.
+  /// The Vision Core ML model used for inference operations.
   var detector: VNCoreMLModel?
 
-  /// The Vision request that processes images using the CoreML model.
+  /// The Vision request that processes images using the Core ML model.
   var visionRequest: VNCoreMLRequest?
 
   /// The class labels used by the model for categorizing detections.
@@ -96,14 +96,40 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     visionRequest = nil
   }
 
+  /// Dispatches `create` to the concrete predictor type for the given task.
+  ///
+  /// Centralizes the task → predictor mapping so callers don't duplicate the switch.
+  public static func create(
+    for task: YOLOTask,
+    modelURL: URL,
+    isRealTime: Bool = false,
+    completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
+  ) {
+    switch task {
+    case .classify:
+      Classifier.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .segment:
+      Segmenter.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .pose:
+      PoseEstimator.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .obb:
+      ObbDetector.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .detect:
+      ObjectDetector.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    }
+  }
+
   /// Factory method to asynchronously create and initialize a predictor with the specified model.
   ///
-  /// This method loads the CoreML model in a background thread and sets up the prediction
+  /// This method loads the Core ML model in a background thread and sets up the prediction
   /// infrastructure. The completion handler is called on the main thread with either a
   /// successfully initialized predictor or an error.
   ///
   /// - Parameters:
-  ///   - unwrappedModelURL: The URL of the CoreML model file to load.
+  ///   - unwrappedModelURL: The URL of the Core ML model file to load.
   ///   - isRealTime: Flag indicating if the predictor will be used for real-time processing (camera feed).
   ///   - completion: Callback that receives the initialized predictor or an error.
   /// - Note: Model loading happens on a background thread to avoid blocking the main thread.
@@ -122,15 +148,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-
-        // Configure compute units for optimal performance
-        // Use Neural Engine when available for best performance and power efficiency
-        config.computeUnits = .all  // Use CPU, GPU, and Neural Engine
-
-        // Alternative options:
-        // config.computeUnits = .cpuAndNeuralEngine  // CPU + ANE only
-        // config.computeUnits = .cpuAndGPU           // CPU + GPU only
-        // config.computeUnits = .cpuOnly             // CPU only
+        config.computeUnits = .all  // CPU + GPU + Neural Engine
 
         let mlModel: MLModel
         if isCompiled {
@@ -256,7 +274,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           try handler.perform([request])
         }
       } catch {
-        print(error)
+        YOLOLog.error("Vision request failed: \(error)")
       }
       t1 = CACurrentMediaTime() - t0  // inference dt
 
@@ -328,20 +346,20 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Returns: A YOLOResult containing the prediction outputs.
   public func predictOnImage(image: CIImage) -> YOLOResult {
     // Base implementation returns an empty result - must be overridden by subclasses
-    return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    return .empty
   }
 
   /// Extracts the required input dimensions from the model description.
   ///
-  /// This utility method determines the expected input size for the CoreML model
+  /// This utility method determines the expected input size for the Core ML model
   /// by examining its input description, which is essential for properly sizing
   /// and formatting images before inference.
   ///
-  /// - Parameter model: The CoreML model to analyze.
+  /// - Parameter model: The Core ML model to analyze.
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
     guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
-      print("can not find input description")
+      YOLOLog.warning("Model has no input description")
       return (0, 0)
     }
 
@@ -360,7 +378,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("Cannot find input size")
+    YOLOLog.warning("Could not determine model input size")
     return (0, 0)
   }
 

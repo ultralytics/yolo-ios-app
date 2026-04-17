@@ -192,113 +192,28 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.task = task
     setupSublayers()
 
-    var modelURL: URL?
-    let lowercasedPath = modelPathOrName.lowercased()
-    let fileManager = FileManager.default
-
-    // Determine model URL
-    if lowercasedPath.hasSuffix(".mlmodel") || lowercasedPath.hasSuffix(".mlpackage")
-      || lowercasedPath.hasSuffix(".mlmodelc")
-    {
-      let possibleURL = URL(fileURLWithPath: modelPathOrName)
-      if fileManager.fileExists(atPath: possibleURL.path) {
-        modelURL = possibleURL
-      }
-    } else {
-      if let compiledURL = Bundle.main.url(forResource: modelPathOrName, withExtension: "mlmodelc")
-      {
-        modelURL = compiledURL
-      } else if let packageURL = Bundle.main.url(
-        forResource: modelPathOrName, withExtension: "mlpackage")
-      {
-        modelURL = packageURL
-      }
-    }
-
-    guard let unwrappedModelURL = modelURL else {
+    guard let modelURL = ModelPathResolver.resolve(modelPathOrName) else {
       activityIndicator.stopAnimating()
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
 
-    modelName = unwrappedModelURL.deletingPathExtension().lastPathComponent
+    modelName = modelURL.deletingPathExtension().lastPathComponent
 
-    // Common success handling for all tasks
-    let handleSuccess: @Sendable (Predictor) -> Void = { [weak self] predictor in
+    BasePredictor.create(for: task, modelURL: modelURL, isRealTime: true) {
+      @Sendable [weak self] result in
       Task { @MainActor in
         guard let self = self else { return }
-        self.videoCapture.predictor = predictor
         self.activityIndicator.stopAnimating()
-        self.labelName.text = processString(self.modelName)
-        completion?(.success(()))
-      }
-    }
-
-    // Common failure handling for all tasks
-    let handleFailure: @Sendable (Error) -> Void = { [weak self] error in
-      Task { @MainActor in
-        guard let self = self else { return }
-        print("Failed to load model with error: \(error)")
-        self.activityIndicator.stopAnimating()
-        completion?(.failure(error))
-      }
-    }
-
-    switch task {
-    case .classify:
-      Classifier.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        @Sendable result in
         switch result {
         case .success(let predictor):
-          handleSuccess(predictor)
+          self.videoCapture.predictor = predictor
+          self.labelName.text = processString(self.modelName)
+          if task == .obb { self.obbLayer?.isHidden = false }
+          completion?(.success(()))
         case .failure(let error):
-          handleFailure(error)
-        }
-      }
-
-    case .segment:
-      Segmenter.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) { @Sendable result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor)
-        case .failure(let error):
-          handleFailure(error)
-        }
-      }
-
-    case .pose:
-      PoseEstimator.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        @Sendable result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor)
-        case .failure(let error):
-          handleFailure(error)
-        }
-      }
-
-    case .obb:
-      ObbDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        @Sendable [weak self] result in
-        switch result {
-        case .success(let predictor):
-          Task { @MainActor in
-            self?.obbLayer?.isHidden = false
-          }
-          handleSuccess(predictor)
-        case .failure(let error):
-          handleFailure(error)
-        }
-      }
-
-    default:
-      ObjectDetector.create(unwrappedModelURL: unwrappedModelURL, isRealTime: true) {
-        @Sendable result in
-        switch result {
-        case .success(let predictor):
-          handleSuccess(predictor)
-        case .failure(let error):
-          handleFailure(error)
+          YOLOLog.error("Failed to load model: \(error)")
+          completion?(.failure(error))
         }
       }
     }
@@ -312,7 +227,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         [weak self] success in
         Task { @MainActor in
           guard let self = self else { return }
-          // .hd4K3840x2160 or .photo (4032x3024)  Warning: 4k may not work on all devices i.e. 2019 iPod
           if success {
             // Add the video preview into the UI.
             if let previewLayer = self.videoCapture.previewLayer {
@@ -363,10 +277,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   /// Sets the confidence threshold for filtering results.
   /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
   public func setConfidenceThreshold(_ confidence: Double) {
-    guard (0.0...1.0).contains(confidence) else {
-      print("Warning: Confidence threshold should be between 0.0 and 1.0")
-      return
-    }
+    guard validateUnitRange(confidence, name: "Confidence threshold") else { return }
     sliderConf.value = Float(confidence)
     labelSliderConf.text = String(format: "%.2f Confidence Threshold", confidence)
     (videoCapture.predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
@@ -377,12 +288,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public func getConfidenceThreshold() -> Double { Double(sliderConf.value) }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.4).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
   public func setIouThreshold(_ iou: Double) {
-    guard (0.0...1.0).contains(iou) else {
-      print("Warning: IoU threshold should be between 0.0 and 1.0")
-      return
-    }
+    guard validateUnitRange(iou, name: "IoU threshold") else { return }
     sliderIoU.value = Float(iou)
     labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
     (videoCapture.predictor as? BasePredictor)?.setIouThreshold(iou: iou)
@@ -458,10 +366,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       layer.frame = self.overlayLayer.bounds
       layer.opacity = 0.5
       layer.name = "maskLayer"
-      // Specify contentsGravity or backgroundColor as needed
-      // layer.contentsGravity = .resizeAspectFill
-      // layer.backgroundColor = UIColor.clear.cgColor
-
       self.overlayLayer.addSublayer(layer)
       self.maskLayer = layer
     }
@@ -526,144 +430,90 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   func showBoxes(predictions: YOLOResult) {
-
     let width = self.bounds.width
     let height = self.bounds.height
-    var resultCount = 0
+    let resultCount = predictions.boxes.count
+    let maxVisible = min(resultCount, 50, boundingBoxViews.count)
 
-    resultCount = predictions.boxes.count
+    self.labelSliderNumItems.text =
+      "\(resultCount) items (max \(Int(sliderNumItems.value)))"
 
-    if !UIDevice.current.orientation.isLandscape {
-
-      var ratio: CGFloat = 1.0
-
-      if videoCapture.captureSession.sessionPreset == .photo {
-        ratio = (height / width) / (4.0 / 3.0)
+    if UIDevice.current.orientation.isLandscape {
+      let frameAspect = videoCapture.longSide / videoCapture.shortSide
+      let viewAspect = width / height
+      let scale: CGFloat
+      let offsetX: CGFloat
+      let offsetY: CGFloat
+      if frameAspect > viewAspect {
+        scale = height / videoCapture.shortSide
+        offsetX = (videoCapture.longSide * scale - width) / 2
+        offsetY = 0
       } else {
-        ratio = (height / width) / (16.0 / 9.0)
+        scale = width / videoCapture.longSide
+        offsetX = 0
+        offsetY = (videoCapture.shortSide * scale - height) / 2
       }
-
-      self.labelSliderNumItems.text =
-        String(resultCount) + " items (max " + String(Int(sliderNumItems.value)) + ")"
-      for i in 0..<boundingBoxViews.count {
-        if i < (resultCount) && i < 50 {
-          var rect = CGRect.zero
-          var label = ""
-          var boxColor: UIColor = .white
-          var confidence: CGFloat = 0
-          var alpha: CGFloat = 0.9
-          var bestClass = ""
-
-          let prediction = predictions.boxes[i]
-          rect = CGRect(
-            x: prediction.xywhn.minX, y: 1 - prediction.xywhn.maxY, width: prediction.xywhn.width,
-            height: prediction.xywhn.height)
-          bestClass = prediction.cls
-          confidence = CGFloat(prediction.conf)
-          let colorIndex = prediction.index % ultralyticsColors.count
-          boxColor = ultralyticsColors[colorIndex]
-          label = String(format: "%@ %.1f", bestClass, confidence * 100)
-          alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-          var displayRect = rect
-          switch UIDevice.current.orientation {
-          case .portraitUpsideDown:
-            displayRect = CGRect(
-              x: 1.0 - rect.origin.x - rect.width,
-              y: rect.origin.y,
-              width: rect.width,
-              height: rect.height)
-          case .unknown:
-            print("The device orientation is unknown, the predictions may be affected")
-            fallthrough
-          default: break
-          }
-          if ratio >= 1 {
-            let offset = (1 - ratio) * (0.5 - displayRect.minX)
-            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-            displayRect = displayRect.applying(transform)
-            displayRect.size.width *= ratio
-          } else {
-            let offset = (ratio - 1) * (0.5 - displayRect.maxY)
-            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-            displayRect = displayRect.applying(transform)
-            ratio = (height / width) / (3.0 / 4.0)
-            displayRect.size.height /= ratio
-          }
-          displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
-
-          boundingBoxViews[i].show(
-            frame: displayRect, label: label, color: boxColor, alpha: alpha)
-
-        } else {
-          boundingBoxViews[i].hide()
-        }
+      for i in 0..<maxVisible {
+        let prediction = predictions.boxes[i]
+        var rect = flippedNormalizedRect(prediction.xywhn)
+        rect.origin.x = rect.origin.x * videoCapture.longSide * scale - offsetX
+        rect.origin.y =
+          height
+          - (rect.origin.y * videoCapture.shortSide * scale
+            - offsetY
+            + rect.size.height * videoCapture.shortSide * scale)
+        rect.size.width *= videoCapture.longSide * scale
+        rect.size.height *= videoCapture.shortSide * scale
+        showBox(at: i, prediction: prediction, frame: rect)
       }
     } else {
-      resultCount = predictions.boxes.count
-      self.labelSliderNumItems.text =
-        String(resultCount) + " items (max " + String(Int(sliderNumItems.value)) + ")"
-
-      let frameAspectRatio = videoCapture.longSide / videoCapture.shortSide
-      let viewAspectRatio = width / height
-      var scaleX: CGFloat = 1.0
-      var scaleY: CGFloat = 1.0
-      var offsetX: CGFloat = 0.0
-      var offsetY: CGFloat = 0.0
-
-      if frameAspectRatio > viewAspectRatio {
-        scaleY = height / videoCapture.shortSide
-        scaleX = scaleY
-        offsetX = (videoCapture.longSide * scaleX - width) / 2
-      } else {
-        scaleX = width / videoCapture.longSide
-        scaleY = scaleX
-        offsetY = (videoCapture.shortSide * scaleY - height) / 2
-      }
-
-      for i in 0..<boundingBoxViews.count {
-        if i < resultCount && i < 50 {
-          var rect = CGRect.zero
-          var label = ""
-          var boxColor: UIColor = .white
-          var confidence: CGFloat = 0
-          var alpha: CGFloat = 0.9
-          var bestClass = ""
-
-          let prediction = predictions.boxes[i]
-          rect = CGRect(
-            x: prediction.xywhn.minX,
-            y: 1 - prediction.xywhn.maxY,
-            width: prediction.xywhn.width,
-            height: prediction.xywhn.height
-          )
-          bestClass = prediction.cls
-          confidence = CGFloat(prediction.conf)
-
-          let colorIndex = predictions.boxes[i].index % ultralyticsColors.count
-          boxColor = ultralyticsColors[colorIndex]
-          label = String(format: "%@ %.1f", bestClass, confidence * 100)
-          alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-
-          rect.origin.x = rect.origin.x * videoCapture.longSide * scaleX - offsetX
-          rect.origin.y =
-            height
-            - (rect.origin.y * videoCapture.shortSide * scaleY
-              - offsetY
-              + rect.size.height * videoCapture.shortSide * scaleY)
-          rect.size.width *= videoCapture.longSide * scaleX
-          rect.size.height *= videoCapture.shortSide * scaleY
-
-          boundingBoxViews[i].show(
-            frame: rect,
-            label: label,
-            color: boxColor,
-            alpha: alpha
-          )
-        } else {
-          boundingBoxViews[i].hide()
+      let aspect: CGFloat =
+        videoCapture.captureSession.sessionPreset == .photo ? (4.0 / 3.0) : (16.0 / 9.0)
+      var ratio = (height / width) / aspect
+      for i in 0..<maxVisible {
+        let prediction = predictions.boxes[i]
+        var displayRect = flippedNormalizedRect(prediction.xywhn)
+        if UIDevice.current.orientation == .portraitUpsideDown {
+          displayRect.origin.x = 1.0 - displayRect.origin.x - displayRect.width
+        } else if UIDevice.current.orientation == .unknown {
+          YOLOLog.warning("Device orientation is unknown; predictions may be affected")
         }
+        if ratio >= 1 {
+          let offset = (1 - ratio) * (0.5 - displayRect.minX)
+          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
+          displayRect = displayRect.applying(transform)
+          displayRect.size.width *= ratio
+        } else {
+          let offset = (ratio - 1) * (0.5 - displayRect.maxY)
+          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
+          displayRect = displayRect.applying(transform)
+          ratio = (height / width) / (3.0 / 4.0)
+          displayRect.size.height /= ratio
+        }
+        displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
+        showBox(at: i, prediction: prediction, frame: displayRect)
       }
     }
+
+    for i in maxVisible..<boundingBoxViews.count {
+      boundingBoxViews[i].hide()
+    }
+  }
+
+  /// Flips a normalized Vision rect from bottom-origin to top-origin for display.
+  @inline(__always)
+  private func flippedNormalizedRect(_ r: CGRect) -> CGRect {
+    CGRect(x: r.minX, y: 1 - r.maxY, width: r.width, height: r.height)
+  }
+
+  /// Configures the ith bounding box view with the prediction's color/label/alpha.
+  @inline(__always)
+  private func showBox(at index: Int, prediction: Box, frame: CGRect) {
+    let confidence = CGFloat(prediction.conf)
+    let color = ultralyticsColors[prediction.index % ultralyticsColors.count]
+    let label = String(format: "%@ %.1f", prediction.cls, confidence * 100)
+    let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
+    boundingBoxViews[index].show(frame: frame, label: label, color: color, alpha: alpha)
   }
 
   func removeClassificationLayers() {
@@ -768,18 +618,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     configureSlider(sliderConf, min: 0, max: 1, value: 0.25)
     self.addSubview(sliderConf)
 
-    labelSliderIoU.text = "0.45 IoU Threshold"
+    labelSliderIoU.text = "0.70 IoU Threshold"
     labelSliderIoU.textAlignment = .left
     labelSliderIoU.textColor = .white
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
-    configureSlider(sliderIoU, min: 0, max: 1, value: 0.45)
+    configureSlider(sliderIoU, min: 0, max: 1, value: 0.7)
     self.addSubview(sliderIoU)
 
     self.labelSliderNumItems.text = "0 items (max " + String(Int(sliderNumItems.value)) + ")"
     self.labelSliderConf.text = "0.25 Confidence Threshold"
-    self.labelSliderIoU.text = "0.45 IoU Threshold"
+    self.labelSliderIoU.text = "0.70 IoU Threshold"
 
     labelZoom.text = "1.00x"
     labelZoom.textColor = .white
@@ -1000,70 +850,46 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   @objc func orientationDidChange() {
-    var orientation: AVCaptureVideoOrientation = .portrait
-    switch UIDevice.current.orientation {
-    case .portrait:
-      orientation = .portrait
-    case .portraitUpsideDown:
-      orientation = .portraitUpsideDown
-    case .landscapeRight:
-      orientation = .landscapeLeft
-    case .landscapeLeft:
-      orientation = .landscapeRight
-    default:
-      return
-    }
+    guard let orientation = AVCaptureVideoOrientation(UIDevice.current.orientation) else { return }
     videoCapture.updateVideoOrientation(orientation: orientation)
     videoCapture.frameSizeCaptured = false
   }
 
   @objc public func sliderChanged(_ sender: Any) {
     guard let slider = sender as? UISlider else { return }
+    let predictor = videoCapture.predictor as? BasePredictor
 
     if slider === sliderNumItems {
-      if let predictor = videoCapture.predictor as? BasePredictor {
-        let numItems = Int(sliderNumItems.value)
-        predictor.setNumItemsThreshold(numItems: numItems)
-        let currentItemsText = self.labelSliderNumItems.text ?? ""
-        if let range = currentItemsText.range(of: " items") {
-          let currentCount = String(currentItemsText[..<range.lowerBound])
-          self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
-        } else {
-          self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
-        }
-      }
+      let numItems = Int(sliderNumItems.value)
+      predictor?.setNumItemsThreshold(numItems: numItems)
+      updateNumItemsLabel(max: numItems)
     } else if slider === sliderConf {
       let conf = Double(round(100 * sliderConf.value)) / 100
-      self.labelSliderConf.text = String(conf) + " Confidence Threshold"
-      (videoCapture.predictor as? BasePredictor)?.setConfidenceThreshold(confidence: conf)
+      self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
+      predictor?.setConfidenceThreshold(confidence: conf)
     } else if slider === sliderIoU {
       let iou = Double(round(100 * sliderIoU.value)) / 100
-      self.labelSliderIoU.text = String(iou) + " IoU Threshold"
-      (videoCapture.predictor as? BasePredictor)?.setIouThreshold(iou: iou)
+      self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+      predictor?.setIouThreshold(iou: iou)
     }
   }
 
-  /// Update thresholds programmatically (for external display sync)
+  /// Rewrites the numItems label, keeping any existing "current count" prefix intact.
+  private func updateNumItemsLabel(max numItems: Int) {
+    let current = self.labelSliderNumItems.text ?? ""
+    let countPrefix = current.range(of: " items").map { String(current[..<$0.lowerBound]) } ?? "0"
+    self.labelSliderNumItems.text = "\(countPrefix) items (max \(numItems))"
+  }
+
+  /// Update thresholds programmatically (for external display sync).
   public func updateThresholds(conf: Double, iou: Double, numItems: Int) {
-    // Update slider values
     sliderConf.value = Float(conf)
     sliderIoU.value = Float(iou)
     sliderNumItems.value = Float(numItems)
-
-    // Update labels
     self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
     self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    updateNumItemsLabel(max: numItems)
 
-    // Update current items count in label
-    let currentItemsText = self.labelSliderNumItems.text ?? ""
-    if let range = currentItemsText.range(of: " items") {
-      let currentCount = String(currentItemsText[..<range.lowerBound])
-      self.labelSliderNumItems.text = currentCount + " items (max " + String(numItems) + ")"
-    } else {
-      self.labelSliderNumItems.text = "0 items (max " + String(numItems) + ")"
-    }
-
-    // Update predictor thresholds
     if let predictor = videoCapture.predictor as? BasePredictor {
       predictor.setConfidenceThreshold(confidence: conf)
       predictor.setIouThreshold(iou: iou)
@@ -1087,7 +913,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         }
         device.videoZoomFactor = factor
       } catch {
-        print("\(error.localizedDescription)")
+        YOLOLog.error("Zoom configuration failed: \(error.localizedDescription)")
       }
     }
 
@@ -1144,17 +970,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     self.videoCapture.captureSession.addInput(videoInput1)
-    var orientation: AVCaptureVideoOrientation = .portrait
-    switch UIDevice.current.orientation {
-    case .portrait:
-      orientation = .portrait
-    case .portraitUpsideDown:
-      orientation = .portraitUpsideDown
-    case .landscapeRight:
-      orientation = .landscapeLeft
-    case .landscapeLeft:
-      orientation = .landscapeRight
-    default:
+    guard let orientation = AVCaptureVideoOrientation(UIDevice.current.orientation) else {
       self.videoCapture.captureSession.commitConfiguration()
       return
     }
@@ -1273,7 +1089,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
   ) {
     if let error = error {
-      print("error occurred : \(error.localizedDescription)")
+      YOLOLog.error("Photo capture error: \(error.localizedDescription)")
     }
     if let dataImage = photo.fileDataRepresentation() {
       guard let dataProvider = CGDataProvider(data: dataImage as CFData),
@@ -1371,7 +1187,7 @@ extension YOLOView: AVCapturePhotoCaptureDelegate {
         photoCaptureCompletion = nil
       }
     } else {
-      print("AVCapturePhotoCaptureDelegate Error")
+      YOLOLog.error("AVCapturePhotoCaptureDelegate: photo has no file data")
     }
   }
 }

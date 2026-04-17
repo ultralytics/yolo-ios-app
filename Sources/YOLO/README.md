@@ -33,7 +33,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 | iOS      | 16.0+           | Suitable for iPhone / iPad |
 
 - **Swift 5.10+**: Required for modern language features.
-- **Xcode 15.3+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
+- **Xcode 15.3+**: Required to build against the iOS 16 SDK and use the modern [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) APIs. Download from the [Apple Developer site](https://developer.apple.com/xcode/). Xcode 17 is recommended on recent macOS versions.
 
 ## 🚀 Installation
 
@@ -45,15 +45,11 @@ In Xcode, navigate to `File > Add Packages...` and enter the repository URL:
 https://github.com/ultralytics/yolo-ios-app.git
 ```
 
-Select the repository when it appears. Choose the `main` branch or the latest version tag.
+Select the repository when it appears, then choose the `main` branch or the latest version tag.
 
-Next, in the "Choose Package Products for yolo-ios-app.git" popup, specify your app project in Add to Target and click Add package.
+In the "Choose Package Products for yolo-ios-app" dialog, add the `YOLO` product to your app target and click **Add Package**.
 
-If the package has been added to your project, you’re successful.
-
-(Optional)
-
-Or specify the target in your `Package.swift` file:
+Alternatively, declare the dependency in your own `Package.swift`:
 
 ```swift
 // In your Package.swift dependencies array
@@ -88,17 +84,20 @@ import YOLO
 
 Use the `YOLO` class for performing inference on static images ([`UIImage`](https://developer.apple.com/documentation/uikit/uiimage), `CIImage`, `CGImage`), image file paths, or URLs. It supports various tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
 
-Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format (either a compiled `.mlmodelc` directory included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle) or a path to an uncompiled `.mlmodel` file).
+Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format. You can load an official model from a remote URL, point to your own local `.mlpackage` or `.mlmodelc`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
 
 ```swift
 import YOLO
 import UIKit
 
 // --- Initialization ---
-// Load a model bundled with your app (looks up .mlmodelc or .mlpackage by resource name).
-// The loading callback is invoked on the main thread when the model is ready.
+// Start with an official Ultralytics model URL.
+// The model is downloaded once, cached, and then loaded from disk on later runs.
 var model: YOLO?
-model = YOLO("yolo11n", task: .detect) { result in
+let officialModelURL = URL(
+    string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.mlpackage.zip"
+)!
+model = YOLO(url: officialModelURL, task: .detect) { result in
     switch result {
     case .success:
         print("Model ready")
@@ -107,15 +106,14 @@ model = YOLO("yolo11n", task: .detect) { result in
     }
 }
 
-// Or provide an absolute path to an .mlmodel / .mlpackage.
-model = YOLO("/path/to/yolo11n.mlpackage", task: .detect) { result in
+// Or load your own fine-tuned Core ML export from disk.
+model = YOLO("/path/to/your-custom-model.mlpackage", task: .detect) { result in
     // handle result
     _ = result
 }
 
-// Or initialize from a remote URL — the model is downloaded and cached by YOLOModelCache.
-let modelURL = URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n.mlpackage.zip")!
-model = YOLO(url: modelURL, task: .detect) { result in
+// Or load a model you've bundled into your app by resource name.
+model = YOLO("yolo26n", task: .detect) { result in
     // handle result
     _ = result
 }
@@ -152,10 +150,14 @@ import YOLO
 import SwiftUI
 
 struct CameraView: View {
+    private static let modelURL = URL(
+        string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip"
+    )!
+
     var body: some View {
-        // Real-time inference using the rear camera.
+        // Real-time inference using an official downloadable model.
         YOLOCamera(
-            modelPathOrName: "yolo11n-seg",  // Resource name in the app bundle
+            url: Self.modelURL,
             task: .segment,
             cameraPosition: .back
         ) { result in
@@ -166,15 +168,11 @@ struct CameraView: View {
     }
 }
 
-// Alternative: load the model from a remote URL (downloaded + cached on first use).
-struct CameraViewWithURL: View {
-    private static let modelURL = URL(
-        string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo11n-seg.mlpackage.zip"
-    )!
-
+// Alternative: use your own model already included in the app bundle.
+struct CameraViewWithBundledModel: View {
     var body: some View {
         YOLOCamera(
-            url: Self.modelURL,
+            modelPathOrName: "my-custom-yolo-seg",
             task: .segment,
             cameraPosition: .back
         )
@@ -204,7 +202,7 @@ class CameraViewController: UIViewController {
                 }
                 let view = YOLOView(
                     frame: self.view.bounds,
-                    modelPathOrName: "yolo11n-seg", // Bundle resource name
+                    modelPathOrName: "my-custom-yolo-seg", // Bundle resource name
                     task: .segment
                 )
                 view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -263,12 +261,12 @@ for size in ("n", "s", "m", "l", "x"):
     # Load a YOLO26 PyTorch model
     model = YOLO(f"yolo26{size}.pt")  # Assumes you have the .pt file locally or downloads it
 
-    # Export the PyTorch model to CoreML INT8 format (YOLO26 is NMS-free)
+    # Export the PyTorch model to Core ML INT8 format (YOLO26 is NMS-free)
     # imgsz can be adjusted based on expected input size
     model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
     print(f"Exported yolo26{size}.mlmodel (NMS-free)")
 
-# Example: Export a YOLO26 segmentation model (without CoreML NMS)
+# Example: Export a YOLO26 segmentation model (without Core ML NMS)
 seg_model = YOLO("yolo26n-seg.pt")
 seg_model.export(format="coreml", int8=True, imgsz=[640, 384])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo26n-seg.mlmodel without NMS")

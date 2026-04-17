@@ -48,12 +48,12 @@
 | 姿态估计 | ✅  |
 | OBB 检测 | ✅  |
 
-- 原生 iOS 性能 - 通过 Swift 与 CoreML 获得最高速度
+- 原生 iOS 性能 - 通过 Swift 与 Core ML 获得最高速度
 - 针对 Apple Silicon 优化 - 充分利用 Neural Engine 与 GPU
 - 实时检测 - 在最新款 iPhone 上可达 60+ FPS
 - 低延迟 - 无框架额外开销，直接访问硬件能力
 - iOS 优先设计 - 原生 UI/UX，遵循 Apple 设计规范
-- CoreML 集成 - 使用 Apple 官方优化的机器学习框架
+- Core ML 集成 - 使用 Apple 官方优化的机器学习框架
 
 ## 📂 仓库内容
 
@@ -61,7 +61,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时目标检测。你还可以通过简单拖放，将自己的 [CoreML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时目标检测。你还可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
@@ -97,7 +97,7 @@ var body: some View {
 
 ## ✨ 核心亮点
 
-- **实时推理**：使用优化后的 [CoreML 模型](https://docs.ultralytics.com/integrations/coreml/)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
+- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml/)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
 - **Apple 移动平台支持**：Swift Package 面向 iOS 和 iPadOS，并提供原生 Core ML 集成。
 - **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect/)、[分割](https://docs.ultralytics.com/tasks/segment/)、[分类](https://docs.ultralytics.com/tasks/classify/)、[姿态估计](https://docs.ultralytics.com/tasks/pose/)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb/)。
 
@@ -107,11 +107,11 @@ var body: some View {
 
 ### 运行测试
 
-测试依赖 CoreML 模型文件（`.mlpackage`），但由于文件体积较大，仓库中不包含这些模型。若要执行带模型校验的测试，请按以下步骤操作：
+测试依赖 Core ML 模型文件（`.mlpackage`），但由于文件体积较大，仓库中不包含这些模型。若要执行带模型校验的测试，请按以下步骤操作：
 
 1. 在相关测试文件中将 `SKIP_MODEL_TESTS = false`。
 2. 从 [Ultralytics 发布页](https://github.com/ultralytics/ultralytics/releases)下载所需模型，或通过 [Ultralytics Platform](https://platform.ultralytics.com) 训练你自己的模型。
-3. 使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 将模型转换为 CoreML 格式。
+3. 使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 将模型转换为 Core ML 格式。
 4. 将导出的 `.mlpackage` 文件添加到你的 [Xcode](https://developer.apple.com/xcode/) 项目中，并确保它们已加入对应的测试 target。
 5. 通过 Xcode 的 Test Navigator（Cmd+U）运行测试。
 

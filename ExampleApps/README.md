@@ -62,7 +62,7 @@ Follow these steps to get the examples up and running:
           model_types=("", "-seg", "-cls", "-pose", "-obb"),
           model_sizes=("n", "s", "m", "l", "x"),
       ):
-          """Exports YOLO26 models to CoreML format and optionally zips the output packages."""
+          """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
           for model_type in model_types:
               imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
               nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False

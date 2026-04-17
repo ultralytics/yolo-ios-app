@@ -12,7 +12,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11/) (with CoreML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
+Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11/) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/us/app/idetection/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
   <br>
@@ -48,12 +48,12 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 | Pose Estimation | ✅  |
 | OBB Detection   | ✅  |
 
-- Native iOS Performance — Maximum speed with Swift & CoreML
+- Native iOS Performance — Maximum speed with Swift & Core ML
 - Optimized for Apple Silicon — Leverages the Neural Engine & GPU
 - Real-time Detection — 60+ FPS on recent iPhones
 - Low Latency — Direct hardware access without framework overhead
 - iOS-First Design — Native UI/UX following Apple guidelines
-- CoreML Integration — Apple's optimized ML framework
+- Core ML Integration — Apple's optimized ML framework
 - YOLO26 (NMS-free) and YOLO11 models both supported
 
 ## 📂 Repository Content
@@ -62,7 +62,7 @@ This repository provides a comprehensive solution for running YOLO models on App
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time object detection using your device's camera or image library. Official Ultralytics models are downloaded on demand, and you can also test your custom [CoreML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time object detection using your device's camera or image library. Official Ultralytics models are downloaded on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
@@ -98,8 +98,8 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 
 ## ✨ Key Highlights
 
-- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [CoreML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization).
-- **Apple Mobile Support**: The Swift Package targets iOS and iPadOS with native CoreML integration.
+- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization).
+- **Apple Mobile Support**: The Swift Package targets iOS and iPadOS with native Core ML integration.
 - **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect/), [segmentation](https://docs.ultralytics.com/tasks/segment/), [classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
 ## 🧪 Testing Procedures
@@ -108,11 +108,11 @@ This repository includes comprehensive [unit tests](https://en.wikipedia.org/wik
 
 ### Running Tests
 
-Tests require CoreML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
+Tests require Core ML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
 
 1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files.
 2.  Download the required models from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
-3.  Convert the models to CoreML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
+3.  Convert the models to Core ML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
 4.  Add the exported `.mlpackage` files to your [Xcode](https://developer.apple.com/xcode/) project, ensuring they are included in the test targets.
 5.  Run the tests using Xcode's Test Navigator (Cmd+U).
 

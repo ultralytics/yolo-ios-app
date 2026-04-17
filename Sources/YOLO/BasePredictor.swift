@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The BasePredictor class is the foundation for all task-specific predictors in the YOLO framework.
-//  It manages the loading and initialization of CoreML models, handling common operations such as
+//  It manages the loading and initialization of Core ML models, handling common operations such as
 //  model loading, class label extraction, and inference timing. The class provides an asynchronous
 //  model loading mechanism that runs on background threads and includes support for configuring
 //  model parameters like confidence thresholds and IoU thresholds. Specific task implementations
@@ -19,7 +19,7 @@ import Vision
 /// Base class for all YOLO model predictors, handling common model loading and inference logic.
 ///
 /// The BasePredictor serves as the foundation for all task-specific YOLO model predictors.
-/// It manages CoreML model loading, initialization, and common inference operations.
+/// It manages Core ML model loading, initialization, and common inference operations.
 /// Specialized predictors (for detection, segmentation, etc.) inherit from this class
 /// and override the prediction-specific methods to handle task-specific processing.
 ///
@@ -30,10 +30,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Flag indicating if the model has been successfully loaded and is ready for inference.
   private(set) var isModelLoaded: Bool = false
 
-  /// The Vision CoreML model used for inference operations.
+  /// The Vision Core ML model used for inference operations.
   var detector: VNCoreMLModel?
 
-  /// The Vision request that processes images using the CoreML model.
+  /// The Vision request that processes images using the Core ML model.
   var visionRequest: VNCoreMLRequest?
 
   /// The class labels used by the model for categorizing detections.
@@ -124,12 +124,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Factory method to asynchronously create and initialize a predictor with the specified model.
   ///
-  /// This method loads the CoreML model in a background thread and sets up the prediction
+  /// This method loads the Core ML model in a background thread and sets up the prediction
   /// infrastructure. The completion handler is called on the main thread with either a
   /// successfully initialized predictor or an error.
   ///
   /// - Parameters:
-  ///   - unwrappedModelURL: The URL of the CoreML model file to load.
+  ///   - unwrappedModelURL: The URL of the Core ML model file to load.
   ///   - isRealTime: Flag indicating if the predictor will be used for real-time processing (camera feed).
   ///   - completion: Callback that receives the initialized predictor or an error.
   /// - Note: Model loading happens on a background thread to avoid blocking the main thread.
@@ -351,11 +351,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Extracts the required input dimensions from the model description.
   ///
-  /// This utility method determines the expected input size for the CoreML model
+  /// This utility method determines the expected input size for the Core ML model
   /// by examining its input description, which is essential for properly sizing
   /// and formatting images before inference.
   ///
-  /// - Parameter model: The CoreML model to analyze.
+  /// - Parameter model: The Core ML model to analyze.
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
     guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {

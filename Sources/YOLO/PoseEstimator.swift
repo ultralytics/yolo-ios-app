@@ -81,7 +81,6 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
             confsList.append(person.keypoints.conf)
           }
 
-          // 新しい統合描画関数を使用
           let annotatedImage = drawYOLOPoseWithBoxes(
             ciImage: image,
             keypointsList: keypointsForImage,
@@ -98,7 +97,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         }
       }
     } catch {
-      print(error)
+      YOLOLog.error("Pose estimation failed: \(error)")
     }
     return result
   }

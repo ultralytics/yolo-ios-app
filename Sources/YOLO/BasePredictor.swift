@@ -96,6 +96,32 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     visionRequest = nil
   }
 
+  /// Dispatches `create` to the concrete predictor type for the given task.
+  ///
+  /// Centralizes the task → predictor mapping so callers don't duplicate the switch.
+  public static func create(
+    for task: YOLOTask,
+    modelURL: URL,
+    isRealTime: Bool = false,
+    completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
+  ) {
+    switch task {
+    case .classify:
+      Classifier.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .segment:
+      Segmenter.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .pose:
+      PoseEstimator.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .obb:
+      ObbDetector.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .detect:
+      ObjectDetector.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    }
+  }
+
   /// Factory method to asynchronously create and initialize a predictor with the specified model.
   ///
   /// This method loads the CoreML model in a background thread and sets up the prediction
@@ -122,15 +148,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-
-        // Configure compute units for optimal performance
-        // Use Neural Engine when available for best performance and power efficiency
-        config.computeUnits = .all  // Use CPU, GPU, and Neural Engine
-
-        // Alternative options:
-        // config.computeUnits = .cpuAndNeuralEngine  // CPU + ANE only
-        // config.computeUnits = .cpuAndGPU           // CPU + GPU only
-        // config.computeUnits = .cpuOnly             // CPU only
+        config.computeUnits = .all  // CPU + GPU + Neural Engine
 
         let mlModel: MLModel
         if isCompiled {
@@ -256,7 +274,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           try handler.perform([request])
         }
       } catch {
-        print(error)
+        YOLOLog.error("Vision request failed: \(error)")
       }
       t1 = CACurrentMediaTime() - t0  // inference dt
 
@@ -279,10 +297,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       iouThreshold: iou, confidenceThreshold: confidenceThreshold)
   }
 
-  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
+  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.45).
   ///
   /// Used to filter overlapping detections during non-maximum suppression.
-  var iouThreshold = 0.7
+  var iouThreshold = 0.45
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///
@@ -328,7 +346,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Returns: A YOLOResult containing the prediction outputs.
   public func predictOnImage(image: CIImage) -> YOLOResult {
     // Base implementation returns an empty result - must be overridden by subclasses
-    return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    return .empty
   }
 
   /// Extracts the required input dimensions from the model description.
@@ -341,7 +359,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
     guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
-      print("can not find input description")
+      YOLOLog.warning("Model has no input description")
       return (0, 0)
     }
 
@@ -360,7 +378,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return (width: width, height: height)
     }
 
-    print("Cannot find input size")
+    YOLOLog.warning("Could not determine model input size")
     return (0, 0)
   }
 

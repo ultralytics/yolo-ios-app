@@ -106,7 +106,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       try requestHandler.perform([request])
       boxes = decodeBoxes(from: request)
     } catch {
-      print(error)
+      YOLOLog.error("Object detection failed: \(error)")
     }
     let elapsed = Date().timeIntervalSince(start)
 

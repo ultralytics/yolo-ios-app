@@ -41,6 +41,20 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
   }
 }
 
+extension AVCaptureVideoOrientation {
+  /// Maps a `UIDeviceOrientation` to the matching video orientation. Unknown device
+  /// orientations (face-up/down) return `nil` so callers can preserve the existing setting.
+  init?(_ deviceOrientation: UIDeviceOrientation) {
+    switch deviceOrientation {
+    case .portrait: self = .portrait
+    case .portraitUpsideDown: self = .portraitUpsideDown
+    case .landscapeLeft: self = .landscapeRight
+    case .landscapeRight: self = .landscapeLeft
+    default: return nil
+    }
+  }
+}
+
 public final class VideoCapture: NSObject, @unchecked Sendable {
   public var predictor: Predictor?
   public var previewLayer: AVCaptureVideoPreviewLayer?
@@ -100,30 +114,17 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     do {
       videoInput = try AVCaptureDeviceInput(device: device)
     } catch {
-      print("Failed to create video input: \(error)")
+      YOLOLog.error("Failed to create video input: \(error)")
       return false
     }
 
-    guard let input = videoInput else {
-      print("Video input is nil")
-      return false
-    }
+    guard let input = videoInput else { return false }
     if captureSession.canAddInput(input) {
       captureSession.addInput(input)
     } else {
-      print("Cannot add video input to session")
+      YOLOLog.warning("Cannot add video input to session")
     }
-    var videoOrientation = AVCaptureVideoOrientation.portrait
-    switch orientation {
-    case .portrait:
-      videoOrientation = .portrait
-    case .landscapeLeft:
-      videoOrientation = .landscapeRight
-    case .landscapeRight:
-      videoOrientation = .landscapeLeft
-    default:
-      videoOrientation = .portrait
-    }
+    let videoOrientation = AVCaptureVideoOrientation(orientation) ?? .portrait
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
     previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     previewLayer.connection?.videoOrientation = videoOrientation

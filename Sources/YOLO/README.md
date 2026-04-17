@@ -33,7 +33,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 | iOS      | 16.0+           | Suitable for iPhone / iPad |
 
 - **Swift 5.10+**: Required for modern language features.
-- **Xcode 15.3+**: Needed to leverage Core ML and the latest [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) features. Download from the [Apple Developer site](https://developer.apple.com/xcode/).
+- **Xcode 15.3+**: Required to build against the iOS 16 SDK and use the modern [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) APIs. Download from the [Apple Developer site](https://developer.apple.com/xcode/). Xcode 17 is recommended on recent macOS versions.
 
 ## 🚀 Installation
 
@@ -45,15 +45,11 @@ In Xcode, navigate to `File > Add Packages...` and enter the repository URL:
 https://github.com/ultralytics/yolo-ios-app.git
 ```
 
-Select the repository when it appears. Choose the `main` branch or the latest version tag.
+Select the repository when it appears, then choose the `main` branch or the latest version tag.
 
-Next, in the "Choose Package Products for yolo-ios-app.git" popup, specify your app project in Add to Target and click Add package.
+In the "Choose Package Products for yolo-ios-app" dialog, add the `YOLO` product to your app target and click **Add Package**.
 
-If the package has been added to your project, you’re successful.
-
-(Optional)
-
-Or specify the target in your `Package.swift` file:
+Alternatively, declare the dependency in your own `Package.swift`:
 
 ```swift
 // In your Package.swift dependencies array

@@ -57,6 +57,9 @@ public struct YOLOResult: @unchecked Sendable {
 
   /// Array of class label names used by the model.
   public var names: [String]
+
+  /// An empty result with zeroed metrics, used as a default return value before inference runs.
+  public static let empty = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
 }
 
 /// Represents a single bounding box detection from a YOLO model.

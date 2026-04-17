@@ -22,94 +22,41 @@ import Vision
 public final class Segmenter: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    guard let results = request.results as? [VNCoreMLFeatureValueObservation] else {
+    guard let parsed = parseSegmentationRequest(request) else {
       self.isUpdating = false
       return
     }
-    guard results.count == 2 else {
-      self.isUpdating = false
-      return
-    }
-    var pred: MLMultiArray
-    var masks: MLMultiArray
-    guard let out0 = results[0].featureValue.multiArrayValue,
-      let out1 = results[1].featureValue.multiArrayValue
-    else {
-      self.isUpdating = false
-      return
-    }
-    let out0dim = checkShapeDimensions(of: out0)
-    _ = checkShapeDimensions(of: out1)
-    if out0dim == 4 {
-      masks = out0
-      pred = out1
-    } else {
-      masks = out1
-      pred = out0
-    }
-    let detectedObjects = postProcessSegment(
-      feature: pred, confidenceThreshold: Float(confidenceThreshold),
-      iouThreshold: Float(iouThreshold))
+    let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
+    let boxes = buildBoxes(from: limitedObjects)
 
-    let detectionsCount = detectedObjects.count
-    var boxes: [Box] = []
-    boxes.reserveCapacity(detectionsCount)
-
-    let modelWidth = CGFloat(self.modelInputSize.width)
-    let modelHeight = CGFloat(self.modelInputSize.height)
-    let inputWidth = Int(self.inputSize.width)
-    let inputHeight = Int(self.inputSize.height)
-
-    let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
-    for p in limitedObjects {
-      let box = p.0
-      let rect = CGRect(
-        x: box.minX / modelWidth, y: box.minY / modelHeight,
-        width: box.width / modelWidth, height: box.height / modelHeight)
-      let confidence = p.2
-      let bestClass = p.1
-      guard bestClass < self.labels.count else { continue }
-      let label = self.labels[bestClass]
-      let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
-
-      boxes.append(
-        Box(index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect))
-    }
-
-    // Update timing before capturing values to avoid one-frame lag
+    // Update timing before capturing values to avoid one-frame lag.
     self.updateTime()
 
-    // Capture needed values before async block
-    let capturedMasks = masks
-    let capturedBoxes = boxes
+    let capturedMasks = parsed.masks
     let capturedInputSize = self.inputSize
     let capturedModelInputSize = self.modelInputSize
     let capturedT2 = self.t2
     let capturedT4 = self.t4
     let capturedLabels = self.labels
 
-    let capturedDetectedObjects = Array(limitedObjects)
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard
-        let processedMasks = generateCombinedMaskImage(
-          detectedObjects: capturedDetectedObjects,
+        let processed = generateCombinedMaskImage(
+          detectedObjects: limitedObjects,
           protos: capturedMasks,
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
           threshold: 0.5
-
         ) as? (CGImage?, [[[Float]]])
       else {
-        DispatchQueue.main.async { [weak self] in
-          self?.isUpdating = false
-        }
+        DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
       }
-      let maskResults = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
       let result = YOLOResult(
-        orig_shape: capturedInputSize, boxes: capturedBoxes, masks: maskResults,
-        speed: capturedT2,
-        fps: 1 / capturedT4, names: capturedLabels)
+        orig_shape: capturedInputSize,
+        boxes: boxes,
+        masks: Masks(masks: processed.1, combinedMask: processed.0),
+        speed: capturedT2, fps: 1 / capturedT4, names: capturedLabels)
       self?.currentOnResultsListener?.on(result: result)
     }
   }
@@ -117,118 +64,84 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
-      let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
-      return emptyResult
+      return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
 
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    var result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
+    self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
+    var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
 
     do {
       try requestHandler.perform([request])
-      if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-        guard results.count == 2 else {
-          return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
-        }
+      guard let parsed = parseSegmentationRequest(request) else { return result }
 
-        // 1. Parse model outputs
-        var pred: MLMultiArray
-        var masks: MLMultiArray
-        guard let out0 = results[0].featureValue.multiArrayValue,
-          let out1 = results[1].featureValue.multiArrayValue
-        else {
-          return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
-        }
+      let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
+      let boxes = buildBoxes(from: limitedObjects)
 
-        let out0dim = checkShapeDimensions(of: out0)
-        _ = checkShapeDimensions(of: out1)
-        if out0dim == 4 {
-          masks = out0
-          pred = out1
-        } else {
-          masks = out1
-          pred = out0
-        }
-
-        // 2. Post-process detection results
-        let detectedObjects = postProcessSegment(
-          feature: pred, confidenceThreshold: Float(self.confidenceThreshold),
-          iouThreshold: Float(self.iouThreshold))
-
-        // 3. Construct bounding box information
-        let detectionsCount = detectedObjects.count
-        var boxes: [Box] = []
-        boxes.reserveCapacity(detectionsCount)
-
-        let modelWidth = CGFloat(self.modelInputSize.width)
-        let modelHeight = CGFloat(self.modelInputSize.height)
-        let inputWidth = Int(inputSize.width)
-        let inputHeight = Int(inputSize.height)
-
-        let limitedObjects = detectedObjects.prefix(self.numItemsThreshold)
-        for p in limitedObjects {
-          let box = p.0
-          let rect = CGRect(
-            x: box.minX / modelWidth, y: box.minY / modelHeight,
-            width: box.width / modelWidth, height: box.height / modelHeight)
-          let confidence = p.2
-          let bestClass = p.1
-          guard bestClass < labels.count else { continue }
-          let label = labels[bestClass]
-          let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
-
-          let boxResult = Box(
-            index: bestClass, cls: label, conf: confidence, xywh: xywh, xywhn: rect)
-          boxes.append(boxResult)
-        }
-
-        // 4. Generate mask image
-        guard
-          let processedMasks = generateCombinedMaskImage(
-            detectedObjects: Array(limitedObjects),
-            protos: masks,
-            inputWidth: self.modelInputSize.width,
-            inputHeight: self.modelInputSize.height,
-            threshold: 0.5
-          ) as? (CGImage?, [[[Float]]])
-        else {
-          return YOLOResult(
-            orig_shape: inputSize, boxes: boxes, masks: nil, annotatedImage: nil, speed: 0,
-            names: labels)
-        }
-
-        // 5. Use the new integrated drawing function to render masks and boxes in a single pass
-        let annotatedImage = drawYOLOSegmentationWithBoxes(
-          ciImage: image,
-          boxes: boxes,
-          maskImage: processedMasks.0
-        )
-
-        // 6. Construct result
-        let maskResults: Masks = Masks(masks: processedMasks.1, combinedMask: processedMasks.0)
-
-        // 7. Update timing measurements
-        updateTime()
-
-        // 8. Return result
-        result = YOLOResult(
-          orig_shape: inputSize,
-          boxes: boxes,
-          masks: maskResults,
-          annotatedImage: annotatedImage,
-          speed: self.t2,
-          fps: 1 / self.t4,
-          names: labels
-        )
-
-        return result
+      guard
+        let processed = generateCombinedMaskImage(
+          detectedObjects: limitedObjects, protos: parsed.masks,
+          inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
+          threshold: 0.5
+        ) as? (CGImage?, [[[Float]]])
+      else {
+        return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
       }
+
+      updateTime()
+      result = YOLOResult(
+        orig_shape: inputSize, boxes: boxes,
+        masks: Masks(masks: processed.1, combinedMask: processed.0),
+        annotatedImage: drawYOLOSegmentationWithBoxes(
+          ciImage: image, boxes: boxes, maskImage: processed.0),
+        speed: self.t2, fps: 1 / self.t4, names: labels)
     } catch {
-      print(error)
+      YOLOLog.error("Segmentation failed: \(error)")
     }
     return result
+  }
+
+  /// Pulls the `(pred, masks, detectedObjects)` tuple out of a completed Vision request.
+  /// The shape-4 output is the prototype masks and the other is the detection features;
+  /// their order depends on the exported model.
+  private func parseSegmentationRequest(
+    _ request: VNRequest
+  ) -> (masks: MLMultiArray, detectedObjects: [(CGRect, Int, Float, MLMultiArray)])? {
+    guard let results = request.results as? [VNCoreMLFeatureValueObservation],
+      results.count == 2,
+      let out0 = results[0].featureValue.multiArrayValue,
+      let out1 = results[1].featureValue.multiArrayValue
+    else { return nil }
+
+    let (masks, pred): (MLMultiArray, MLMultiArray) =
+      checkShapeDimensions(of: out0) == 4 ? (out0, out1) : (out1, out0)
+    let detectedObjects = postProcessSegment(
+      feature: pred,
+      confidenceThreshold: Float(confidenceThreshold),
+      iouThreshold: Float(iouThreshold))
+    return (masks, detectedObjects)
+  }
+
+  /// Converts post-processed (rect, class, score, maskCoeffs) tuples into `Box` values
+  /// mapped from model-space to the current input-image coordinate space.
+  private func buildBoxes(from objects: [(CGRect, Int, Float, MLMultiArray)]) -> [Box] {
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let inputWidth = Int(inputSize.width)
+    let inputHeight = Int(inputSize.height)
+    var boxes: [Box] = []
+    boxes.reserveCapacity(objects.count)
+    for (box, classIndex, confidence, _) in objects {
+      guard classIndex < labels.count else { continue }
+      let rect = CGRect(
+        x: box.minX / modelWidth, y: box.minY / modelHeight,
+        width: box.width / modelWidth, height: box.height / modelHeight)
+      let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+      boxes.append(
+        Box(
+          index: classIndex, cls: labels[classIndex], conf: confidence,
+          xywh: xywh, xywhn: rect))
+    }
+    return boxes
   }
 
   nonisolated func postProcessSegment(

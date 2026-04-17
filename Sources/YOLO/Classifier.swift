@@ -21,184 +21,79 @@ import Vision
 public final class Classifier: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    let imageWidth = inputSize.width
-    let imageHeight = inputSize.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
-
-    if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-
-      // Get the MLMultiArray from the observation
-      let multiArray = observation.first?.featureValue.multiArrayValue
-
-      if let multiArray = multiArray {
-        // Apply softmax to convert raw logits to probabilities
-        var floatValues = [Float](repeating: 0, count: multiArray.count)
-        for i in 0..<multiArray.count {
-          floatValues[i] = multiArray[i].floatValue
-        }
-        var softmaxOutput = [Float](repeating: 0, count: floatValues.count)
-        var count = Int32(floatValues.count)
-        vvexpf(&softmaxOutput, floatValues, &count)
-        var sumExp: Float = 0
-        vDSP_sve(softmaxOutput, 1, &sumExp, vDSP_Length(floatValues.count))
-        if sumExp > 0 {
-          vDSP_vsdiv(softmaxOutput, 1, &sumExp, &softmaxOutput, 1, vDSP_Length(floatValues.count))
-        }
-
-        var indexedMap = [Int: Double]()
-        for (index, value) in softmaxOutput.enumerated() {
-          indexedMap[index] = Double(value)
-        }
-
-        let sortedMap = indexedMap.sorted { $0.value > $1.value }
-
-        // top1
-        if let (topIndex, topScore) = sortedMap.first, topIndex < labels.count {
-          let top1Label = labels[topIndex]
-          let top1Conf = Float(topScore)
-          probs.top1 = top1Label
-          probs.top1Conf = top1Conf
-        }
-
-        // top5
-        let topObservations = sortedMap.prefix(5)
-        var top5Labels: [String] = []
-        var top5Confs: [Float] = []
-
-        for (index, value) in topObservations where index < labels.count {
-          top5Labels.append(labels[index])
-          top5Confs.append(Float(value))
-        }
-
-        probs.top5 = top5Labels
-        probs.top5Confs = top5Confs
-      }
-    } else if let observations = request.results as? [VNClassificationObservation] {
-      var top1 = ""
-      var top1Conf: Float = 0
-      var top5: [String] = []
-      var top5Confs: [Float] = []
-
-      var candidateNumber = 5
-      if observations.count < candidateNumber {
-        candidateNumber = observations.count
-      }
-      if let topObservation = observations.first {
-        top1 = topObservation.identifier
-        top1Conf = Float(topObservation.confidence)
-      }
-      for i in 0..<candidateNumber {
-        let observation = observations[i]
-        let label = observation.identifier
-        let confidence: Float = Float(observation.confidence)
-        top5Confs.append(confidence)
-        top5.append(label)
-      }
-      probs = Probs(top1: top1, top5: top5, top1Conf: top1Conf, top5Confs: top5Confs)
-    }
-
+    let probs = extractProbs(from: request)
     self.updateTime()
     let result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)
-
     self.currentOnResultsListener?.on(result: result)
-
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
     let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
-      let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
-      return emptyResult
+      return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
 
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
     do {
       try requestHandler.perform([request])
-      if let observation = request.results as? [VNCoreMLFeatureValueObservation] {
-        // Get the MLMultiArray from the observation
-        let multiArray = observation.first?.featureValue.multiArrayValue
-
-        if let multiArray = multiArray {
-          // Apply softmax to convert raw logits to probabilities
-          var floatValues = [Float](repeating: 0, count: multiArray.count)
-          for i in 0..<multiArray.count {
-            floatValues[i] = multiArray[i].floatValue
-          }
-          var softmaxOutput = [Float](repeating: 0, count: floatValues.count)
-          var count = Int32(floatValues.count)
-          vvexpf(&softmaxOutput, floatValues, &count)
-          var sumExp: Float = 0
-          vDSP_sve(softmaxOutput, 1, &sumExp, vDSP_Length(floatValues.count))
-          if sumExp > 0 {
-            vDSP_vsdiv(softmaxOutput, 1, &sumExp, &softmaxOutput, 1, vDSP_Length(floatValues.count))
-          }
-
-          var indexedMap = [Int: Double]()
-          for (index, value) in softmaxOutput.enumerated() {
-            indexedMap[index] = Double(value)
-          }
-
-          let sortedMap = indexedMap.sorted { $0.value > $1.value }
-
-          // top1
-          if let (topIndex, topScore) = sortedMap.first, topIndex < labels.count {
-            let top1Label = labels[topIndex]
-            let top1Conf = Float(topScore)
-            probs.top1 = top1Label
-            probs.top1Conf = top1Conf
-          }
-
-          // top5
-          let topObservations = sortedMap.prefix(5)
-          var top5Labels: [String] = []
-          var top5Confs: [Float] = []
-
-          for (index, value) in topObservations where index < labels.count {
-            top5Labels.append(labels[index])
-            top5Confs.append(Float(value))
-          }
-
-          probs.top5 = top5Labels
-          probs.top5Confs = top5Confs
-        }
-      } else if let observations = request.results as? [VNClassificationObservation] {
-        var top1 = ""
-        var top1Conf: Float = 0
-        var top5: [String] = []
-        var top5Confs: [Float] = []
-
-        var candidateNumber = 5
-        if observations.count < candidateNumber {
-          candidateNumber = observations.count
-        }
-        if let topObservation = observations.first {
-          top1 = topObservation.identifier
-          top1Conf = Float(topObservation.confidence)
-        }
-        for i in 0..<candidateNumber {
-          let observation = observations[i]
-          let label = observation.identifier
-          let confidence: Float = Float(observation.confidence)
-          top5Confs.append(confidence)
-          top5.append(label)
-        }
-        probs = Probs(top1: top1, top5: top5, top1Conf: top1Conf, top5Confs: top5Confs)
-      }
-
+      probs = extractProbs(from: request)
     } catch {
-      print(error)
+      YOLOLog.error("Classifier inference failed: \(error)")
     }
 
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: t1, names: labels)
-    let annotatedImage = drawYOLOClassifications(on: image, result: result)
-    result.annotatedImage = annotatedImage
+    result.annotatedImage = drawYOLOClassifications(on: image, result: result)
     return result
+  }
+
+  /// Extracts top-1 and top-5 probabilities from a Vision request result.
+  ///
+  /// Handles both `VNCoreMLFeatureValueObservation` (raw logits that require softmax) and
+  /// `VNClassificationObservation` (already-normalized scores).
+  private func extractProbs(from request: VNRequest) -> Probs {
+    if let observations = request.results as? [VNCoreMLFeatureValueObservation],
+      let multiArray = observations.first?.featureValue.multiArrayValue
+    {
+      return softmaxProbs(from: multiArray)
+    }
+    if let observations = request.results as? [VNClassificationObservation] {
+      let top = observations.prefix(5)
+      return Probs(
+        top1: observations.first?.identifier ?? "",
+        top5: top.map { $0.identifier },
+        top1Conf: Float(observations.first?.confidence ?? 0),
+        top5Confs: top.map { Float($0.confidence) }
+      )
+    }
+    return Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
+  }
+
+  /// Applies softmax to raw logits and returns the top-1/top-5 probabilities.
+  private func softmaxProbs(from multiArray: MLMultiArray) -> Probs {
+    let count = multiArray.count
+    var logits = [Float](repeating: 0, count: count)
+    for i in 0..<count { logits[i] = multiArray[i].floatValue }
+
+    var output = [Float](repeating: 0, count: count)
+    var n = Int32(count)
+    vvexpf(&output, logits, &n)
+    var sum: Float = 0
+    vDSP_sve(output, 1, &sum, vDSP_Length(count))
+    if sum > 0 {
+      vDSP_vsdiv(output, 1, &sum, &output, 1, vDSP_Length(count))
+    }
+
+    let sorted = output.enumerated().sorted { $0.element > $1.element }
+    let top = sorted.prefix(5).filter { $0.offset < labels.count }
+    return Probs(
+      top1: top.first.map { labels[$0.offset] } ?? "",
+      top5: top.map { labels[$0.offset] },
+      top1Conf: top.first?.element ?? 0,
+      top5Confs: top.map { $0.element }
+    )
   }
 }

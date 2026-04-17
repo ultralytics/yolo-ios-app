@@ -180,7 +180,7 @@ func makeBoundingBoxInfos(from boxViews: [BoundingBoxView]) -> [BoundingBoxInfo]
       let fontName = "Avenir"
       let labelFont = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
 
-      let finalAlpha = strokeAlpha  // shapeLayerベース
+      let finalAlpha = strokeAlpha
 
       let info = BoundingBoxInfo(
         rect: boundingRect,

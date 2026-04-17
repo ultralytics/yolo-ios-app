@@ -54,40 +54,18 @@ public final class YOLO: @unchecked Sendable {
   public init(
     _ modelPathOrName: String, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)? = nil
   ) {
-    var modelURL: URL?
-
-    let lowercasedPath = modelPathOrName.lowercased()
-    let fileManager = FileManager.default
-
-    if lowercasedPath.hasSuffix(".mlmodel") || lowercasedPath.hasSuffix(".mlpackage") {
-      let possibleURL = URL(fileURLWithPath: modelPathOrName)
-      if fileManager.fileExists(atPath: possibleURL.path) {
-        modelURL = possibleURL
-      }
-    } else {
-      if let compiledURL = Bundle.main.url(forResource: modelPathOrName, withExtension: "mlmodelc")
-      {
-        modelURL = compiledURL
-      } else if let packageURL = Bundle.main.url(
-        forResource: modelPathOrName, withExtension: "mlpackage")
-      {
-        modelURL = packageURL
-      }
-    }
-
-    guard let unwrappedModelURL = modelURL else {
+    guard let modelURL = ModelPathResolver.resolve(modelPathOrName) else {
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
-
-    loadModel(from: unwrappedModelURL, task: task, completion: completion)
+    loadModel(from: modelURL, task: task, completion: completion)
   }
 
   /// Load model from URL with task-specific predictor creation
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    let handleResult: @Sendable (Result<BasePredictor, Error>) -> Void = { [weak self] result in
+    BasePredictor.create(for: task, modelURL: modelURL) { [weak self] result in
       guard let self = self else { return }
       switch result {
       case .success(let predictor):
@@ -100,23 +78,9 @@ public final class YOLO: @unchecked Sendable {
         self.pendingIou = nil
         completion?(.success(self))
       case .failure(let error):
-        print("Failed to load model with error: \(error)")
+        YOLOLog.error("Failed to load model: \(error)")
         completion?(.failure(error))
       }
-    }
-
-    switch task {
-    case .classify:
-      Classifier.create(unwrappedModelURL: modelURL, completion: handleResult)
-    case .segment:
-      Segmenter.create(unwrappedModelURL: modelURL, completion: handleResult)
-    case .pose:
-      PoseEstimator.create(unwrappedModelURL: modelURL, completion: handleResult)
-    case .obb:
-      ObbDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
-    default:
-      ObjectDetector.create(unwrappedModelURL: modelURL, completion: handleResult)
-
     }
   }
 
@@ -138,10 +102,7 @@ public final class YOLO: @unchecked Sendable {
   /// Sets the confidence threshold for filtering results.
   /// - Parameter confidence: The confidence threshold value (0.0 to 1.0, default is 0.25).
   public func setConfidenceThreshold(_ confidence: Double) {
-    guard (0.0...1.0).contains(confidence) else {
-      print("Warning: Confidence threshold should be between 0.0 and 1.0")
-      return
-    }
+    guard validateUnitRange(confidence, name: "Confidence threshold") else { return }
     pendingConfidence = confidence
     (predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
   }
@@ -153,12 +114,9 @@ public final class YOLO: @unchecked Sendable {
   }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.45).
   public func setIouThreshold(_ iou: Double) {
-    guard (0.0...1.0).contains(iou) else {
-      print("Warning: IoU threshold should be between 0.0 and 1.0")
-      return
-    }
+    guard validateUnitRange(iou, name: "IoU threshold") else { return }
     pendingIou = iou
     (predictor as? BasePredictor)?.setIouThreshold(iou: iou)
   }
@@ -182,31 +140,21 @@ public final class YOLO: @unchecked Sendable {
 
   /// Runs inference against the loaded predictor, or returns an empty result if no model is loaded.
   private func run(_ ciImage: CIImage) -> YOLOResult {
-    guard let predictor = predictor else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
-    return predictor.predictOnImage(image: ciImage)
+    predictor?.predictOnImage(image: ciImage) ?? .empty
   }
 
   public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
     // CIImage(image:) drops UIImage.imageOrientation, so non-`.up` photos (e.g. portrait
     // shots with orientation = .right) would otherwise be inferred against raw, rotated
     // pixels. Build the CIImage from the backing CGImage and re-apply the orientation.
-    guard let cgImage = uiImage.cgImage else {
-      let uprightImage = uiImage.uprightForYOLO()
-      if let cgImage = uprightImage.cgImage {
-        return run(CIImage(cgImage: cgImage))
-      }
-      if let ciImage = uprightImage.ciImage {
-        return run(ciImage)
-      }
-      if let ciImage = CIImage(image: uprightImage) {
-        return run(ciImage)
-      }
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    if let cgImage = uiImage.cgImage {
+      let orientation = CGImagePropertyOrientation(uiImage.imageOrientation)
+      return run(CIImage(cgImage: cgImage).oriented(orientation))
     }
-    let orientation = CGImagePropertyOrientation(uiImage.imageOrientation)
-    return run(CIImage(cgImage: cgImage).oriented(orientation))
+    let upright = uiImage.uprightForYOLO()
+    if let cgImage = upright.cgImage { return run(CIImage(cgImage: cgImage)) }
+    if let ciImage = upright.ciImage ?? CIImage(image: upright) { return run(ciImage) }
+    return .empty
   }
 
   public func callAsFunction(_ ciImage: CIImage) -> YOLOResult {
@@ -224,9 +172,7 @@ public final class YOLO: @unchecked Sendable {
     guard let url = Bundle.main.url(forResource: resourceName, withExtension: ext),
       let data = try? Data(contentsOf: url),
       let uiImage = UIImage(data: data)
-    else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
+    else { return .empty }
     return self(uiImage)
   }
 
@@ -246,9 +192,7 @@ public final class YOLO: @unchecked Sendable {
     guard let remoteURL = remoteURL,
       let data = try? Data(contentsOf: remoteURL),
       let uiImage = UIImage(data: data)
-    else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
+    else { return .empty }
     return self(uiImage)
   }
 
@@ -258,9 +202,7 @@ public final class YOLO: @unchecked Sendable {
     let fileURL = URL(fileURLWithPath: localPath)
     guard let data = try? Data(contentsOf: fileURL),
       let uiImage = UIImage(data: data)
-    else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
+    else { return .empty }
     return self(uiImage)
   }
 
@@ -269,9 +211,17 @@ public final class YOLO: @unchecked Sendable {
     _ swiftUIImage: SwiftUI.Image
   ) -> YOLOResult {
     let renderer = ImageRenderer(content: swiftUIImage)
-    guard let uiImage = renderer.uiImage else {
-      return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
-    }
+    guard let uiImage = renderer.uiImage else { return .empty }
     return self(uiImage)
   }
+}
+
+/// Validates that `value` lies in the unit interval and logs a warning otherwise.
+@inline(__always)
+func validateUnitRange(_ value: Double, name: String) -> Bool {
+  guard (0.0...1.0).contains(value) else {
+    YOLOLog.warning("\(name) should be between 0.0 and 1.0 (got \(value))")
+    return false
+  }
+  return true
 }

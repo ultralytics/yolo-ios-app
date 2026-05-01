@@ -109,6 +109,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private let lensControl = UISegmentedControl()
   private let lensCaptionLabel = UILabel()
   private var lensDevices = [AVCaptureDevice]()
+  private var selectedLensDeviceID: String?
+  private var cameraSwitchInProgress = false
   private var overlayLayer = CALayer()
   private var maskLayer: CALayer?
   private var poseLayer: CALayer?
@@ -950,7 +952,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     switch pinch.state {
     case .began, .changed:
       update(scale: newScaleFactor)
-      self.labelZoom.text = String(format: "%.2fx", newScaleFactor)
+      self.labelZoom.text = zoomLabelText(rawZoomFactor: newScaleFactor, device: device)
       self.labelZoom.font = UIFont.preferredFont(forTextStyle: .title2)
     case .ended:
       lastZoomFactor = minMaxZoom(newScaleFactor)
@@ -994,14 +996,40 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func switchToCamera(_ device: AVCaptureDevice) {
-    guard videoCapture.selectCaptureDevice(device, orientation: UIDevice.current.orientation) else {
-      updateLensControl()
-      return
-    }
+    guard !cameraSwitchInProgress else { return }
+    cameraSwitchInProgress = true
+    setCameraControlsEnabled(false)
 
-    lastZoomFactor = min(max(device.videoZoomFactor, minimumZoom), maximumZoom)
-    labelZoom.text = String(format: "%.2fx", lastZoomFactor)
-    updateLensControl()
+    videoCapture.selectCaptureDevice(device, orientation: UIDevice.current.orientation) {
+      [weak self] success in
+      guard let self else { return }
+
+      self.cameraSwitchInProgress = false
+      self.setCameraControlsEnabled(true)
+
+      guard success else {
+        self.updateLensControl()
+        return
+      }
+
+      self.selectedLensDeviceID = device.position == .back ? device.uniqueID : nil
+      let activeDevice = self.videoCapture.captureDevice ?? device
+      let rawZoomFactor =
+        zoomFactor(for: device, on: activeDevice)
+        ?? min(max(activeDevice.videoZoomFactor, self.minimumZoom), self.maximumZoom)
+      self.lastZoomFactor = rawZoomFactor
+      self.labelZoom.text = self.zoomLabelText(rawZoomFactor: rawZoomFactor, device: activeDevice)
+      self.updateLensControl()
+    }
+  }
+
+  private func setCameraControlsEnabled(_ isEnabled: Bool) {
+    switchCameraButton.isEnabled = isEnabled
+    lensControl.isEnabled = isEnabled
+    UIView.animate(withDuration: 0.12) {
+      self.switchCameraButton.alpha = isEnabled ? 1 : 0.45
+      self.lensControl.alpha = isEnabled ? 1 : 0.55
+    }
   }
 
   private func updateLensControl() {
@@ -1011,10 +1039,16 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     if let currentDevice, !lensDevices.contains(where: { $0.uniqueID == currentDevice.uniqueID }) {
       lensDevices.append(currentDevice)
     }
+    if let selectedLensDeviceID,
+      !lensDevices.contains(where: { $0.uniqueID == selectedLensDeviceID })
+    {
+      self.selectedLensDeviceID = nil
+    }
     lensControl.removeAllSegments()
 
     guard lensDevices.count > 1 else {
-      lensCaptionLabel.text = currentDevice.map { lensCaption(for: $0) }
+      let selectedDevice = selectedLensDevice() ?? currentDevice
+      lensCaptionLabel.text = selectedDevice.map { lensCaption(for: $0) }
       updateLensControlVisibility()
       setNeedsLayout()
       return
@@ -1024,10 +1058,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       lensControl.insertSegment(withTitle: lensTitle(for: device), at: index, animated: false)
     }
 
+    let selectedDeviceID = selectedLensDeviceID ?? currentDevice?.uniqueID
     lensControl.selectedSegmentIndex =
-      lensDevices.firstIndex { $0.uniqueID == currentDevice?.uniqueID }
+      lensDevices.firstIndex { $0.uniqueID == selectedDeviceID }
       ?? UISegmentedControl.noSegment
-    lensCaptionLabel.text = currentDevice.map { lensCaption(for: $0) }
+    lensCaptionLabel.text = selectedLensDevice().map { lensCaption(for: $0) }
     updateLensControlVisibility()
     setNeedsLayout()
   }
@@ -1040,12 +1075,41 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   private func lensTitle(for device: AVCaptureDevice) -> String {
     switch device.deviceType {
-    case .builtInUltraWideCamera: return "0.5"
-    case .builtInWideAngleCamera: return "1"
-    case .builtInTelephotoCamera: return "2"
+    case .builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera:
+      if let displayZoomFactor = displayZoomFactor(
+        for: device, activeDevice: videoCapture.captureDevice)
+      {
+        return zoomTitle(displayZoomFactor)
+      }
+      return fallbackLensTitle(for: device)
     case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Default"
     default: return device.localizedName
     }
+  }
+
+  private func fallbackLensTitle(for device: AVCaptureDevice) -> String {
+    switch device.deviceType {
+    case .builtInUltraWideCamera: return "0.5"
+    case .builtInWideAngleCamera: return "1"
+    case .builtInTelephotoCamera: return "2"
+    default: return device.localizedName
+    }
+  }
+
+  private func zoomTitle(_ zoomFactor: CGFloat) -> String {
+    let roundedZoom = (zoomFactor * 10).rounded() / 10
+    return roundedZoom.truncatingRemainder(dividingBy: 1) == 0
+      ? String(format: "%.0f", roundedZoom)
+      : String(format: "%.1f", roundedZoom)
+  }
+
+  private func zoomLabelText(rawZoomFactor: CGFloat, device: AVCaptureDevice) -> String {
+    String(format: "%.2fx", displayZoomFactor(rawZoomFactor, for: device))
+  }
+
+  private func selectedLensDevice() -> AVCaptureDevice? {
+    guard let selectedLensDeviceID else { return videoCapture.captureDevice }
+    return lensDevices.first { $0.uniqueID == selectedLensDeviceID } ?? videoCapture.captureDevice
   }
 
   private func lensCaption(for device: AVCaptureDevice) -> String {

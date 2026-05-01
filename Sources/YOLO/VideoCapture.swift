@@ -63,17 +63,59 @@ func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
-  if let device = AVCaptureDevice.default(
-    .builtInDualCamera, for: .video, position: position)
-  {
-    return device
-  } else if let device = AVCaptureDevice.default(
-    .builtInWideAngleCamera, for: .video, position: position)
-  {
-    return device
-  } else {
-    return AVCaptureDevice.default(for: .video)
+  let preferredTypes: [AVCaptureDevice.DeviceType] =
+    position == .back
+    ? [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera]
+    : [.builtInTrueDepthCamera, .builtInWideAngleCamera]
+
+  for deviceType in preferredTypes {
+    if let device = AVCaptureDevice.default(deviceType, for: .video, position: position) {
+      return device
+    }
   }
+
+  return nil
+}
+
+func zoomFactor(for lensDevice: AVCaptureDevice, on virtualDevice: AVCaptureDevice) -> CGFloat? {
+  guard lensDevice.position == virtualDevice.position else { return nil }
+  let constituentDevices = virtualDevice.constituentDevices
+  guard constituentDevices.count > 1 else { return nil }
+
+  let lensIndex =
+    constituentDevices.firstIndex { $0.uniqueID == lensDevice.uniqueID }
+    ?? constituentDevices.firstIndex { $0.deviceType == lensDevice.deviceType }
+  guard let lensIndex else { return nil }
+
+  let switchOverZoomFactors = virtualDevice.virtualDeviceSwitchOverVideoZoomFactors.map {
+    CGFloat(truncating: $0)
+  }
+  let zoomFactors = [virtualDevice.minAvailableVideoZoomFactor] + switchOverZoomFactors
+  guard lensIndex < zoomFactors.count else { return nil }
+
+  return min(
+    max(zoomFactors[lensIndex], virtualDevice.minAvailableVideoZoomFactor),
+    virtualDevice.maxAvailableVideoZoomFactor
+  )
+}
+
+func displayZoomFactor(_ zoomFactor: CGFloat, for device: AVCaptureDevice) -> CGFloat {
+  if #available(iOS 18.0, *) {
+    return zoomFactor * device.displayVideoZoomFactorMultiplier
+  }
+  return zoomFactor
+}
+
+func displayZoomFactor(
+  for lensDevice: AVCaptureDevice, activeDevice: AVCaptureDevice?
+) -> CGFloat? {
+  let candidates = [activeDevice, bestCaptureDevice(position: lensDevice.position)].compactMap { $0 }
+  for candidate in candidates {
+    if let zoomFactor = zoomFactor(for: lensDevice, on: candidate) {
+      return displayZoomFactor(zoomFactor, for: candidate)
+    }
+  }
+  return nil
 }
 
 extension AVCaptureDevice.DeviceType {
@@ -211,9 +253,55 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     return true
   }
 
-  func selectCaptureDevice(_ device: AVCaptureDevice, orientation: UIDeviceOrientation) -> Bool {
+  func selectCaptureDevice(
+    _ device: AVCaptureDevice,
+    orientation: UIDeviceOrientation,
+    completion: @escaping (Bool) -> Void
+  ) {
+    cameraQueue.async { [weak self] in
+      guard let self else {
+        DispatchQueue.main.async { completion(false) }
+        return
+      }
+
+      let success = self.selectCaptureDeviceSync(device, orientation: orientation)
+      DispatchQueue.main.async {
+        completion(success)
+      }
+    }
+  }
+
+  private func selectCaptureDeviceSync(
+    _ device: AVCaptureDevice, orientation: UIDeviceOrientation
+  ) -> Bool {
+    if device.position == .back, selectVirtualRearLens(device, orientation: orientation) {
+      return true
+    }
+
     guard captureDevice?.uniqueID != device.uniqueID else { return true }
 
+    return switchCaptureInput(to: device, orientation: orientation)
+  }
+
+  private func selectVirtualRearLens(
+    _ lensDevice: AVCaptureDevice, orientation: UIDeviceOrientation
+  ) -> Bool {
+    let candidates = [captureDevice, bestCaptureDevice(position: .back)].compactMap { $0 }
+    for virtualDevice in candidates {
+      guard let zoomFactor = zoomFactor(for: lensDevice, on: virtualDevice) else { continue }
+      if captureDevice?.uniqueID != virtualDevice.uniqueID,
+        !switchCaptureInput(to: virtualDevice, orientation: orientation)
+      {
+        return false
+      }
+      return rampZoom(to: zoomFactor, on: virtualDevice)
+    }
+    return false
+  }
+
+  private func switchCaptureInput(
+    to device: AVCaptureDevice, orientation: UIDeviceOrientation
+  ) -> Bool {
     let newInput: AVCaptureDeviceInput
     do {
       newInput = try AVCaptureDeviceInput(device: device)
@@ -223,6 +311,10 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
 
     captureSession.beginConfiguration()
+    defer {
+      captureSession.commitConfiguration()
+    }
+
     let currentInput = videoInput ?? captureSession.inputs.first as? AVCaptureDeviceInput
     if let currentInput {
       captureSession.removeInput(currentInput)
@@ -232,7 +324,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       if let currentInput, captureSession.canAddInput(currentInput) {
         captureSession.addInput(currentInput)
       }
-      captureSession.commitConfiguration()
       return false
     }
 
@@ -251,28 +342,40 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     previewLayer?.connection?.videoOrientation = videoOrientation
     configureVideoMirroring(previewLayer?.connection, isMirrored: device.position == .front)
 
-    guard configureCameraDevice(device) else {
-      captureSession.commitConfiguration()
+    return configureCameraDevice(device)
+  }
+
+  private func rampZoom(to zoomFactor: CGFloat, on device: AVCaptureDevice) -> Bool {
+    do {
+      try device.lockForConfiguration()
+      defer { device.unlockForConfiguration() }
+
+      let clampedZoomFactor = min(
+        max(zoomFactor, device.minAvailableVideoZoomFactor),
+        device.maxAvailableVideoZoomFactor
+      )
+      if device.isRampingVideoZoom {
+        device.cancelVideoZoomRamp()
+      }
+      device.ramp(toVideoZoomFactor: clampedZoomFactor, withRate: 20)
+      return true
+    } catch {
+      YOLOLog.error("Zoom configuration failed: \(error.localizedDescription)")
       return false
     }
-
-    captureSession.commitConfiguration()
-    return true
   }
 
   func start() {
-    if !captureSession.isRunning {
-      DispatchQueue.global().async { [weak self] in
-        self?.captureSession.startRunning()
-      }
+    cameraQueue.async { [weak self] in
+      guard let self, !self.captureSession.isRunning else { return }
+      self.captureSession.startRunning()
     }
   }
 
   func stop() {
-    if captureSession.isRunning {
-      DispatchQueue.global().async { [weak self] in
-        self?.captureSession.stopRunning()
-      }
+    cameraQueue.async { [weak self] in
+      guard let self, self.captureSession.isRunning else { return }
+      self.captureSession.stopRunning()
     }
   }
 
@@ -296,13 +399,16 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   }
 
   func updateVideoOrientation(orientation: AVCaptureVideoOrientation) {
-    guard let connection = videoOutput.connection(with: .video) else { return }
+    cameraQueue.async { [weak self] in
+      guard let self, let connection = self.videoOutput.connection(with: .video) else { return }
 
-    connection.videoOrientation = orientation
-    let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
-    configureVideoMirroring(connection, isMirrored: currentInput?.device.position == .front)
-    self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
-    configureVideoMirroring(self.previewLayer?.connection, isMirrored: connection.isVideoMirrored)
+      connection.videoOrientation = orientation
+      let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
+      self.configureVideoMirroring(connection, isMirrored: currentInput?.device.position == .front)
+      self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+      self.configureVideoMirroring(
+        self.previewLayer?.connection, isMirrored: connection.isVideoMirrored)
+    }
   }
 
   private func configureVideoMirroring(_ connection: AVCaptureConnection?, isMirrored: Bool) {

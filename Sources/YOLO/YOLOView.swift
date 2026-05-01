@@ -1022,7 +1022,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     cameraSwitchInProgress = true
     setCameraControlsEnabled(false)
     if changesPosition {
-      showCameraTransitionBlur()
+      showCameraTransition()
     }
 
     videoCapture.selectCaptureDevice(device, videoOrientation: currentVideoOrientation()) {
@@ -1032,8 +1032,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self.cameraSwitchInProgress = false
       self.setCameraControlsEnabled(true)
       if changesPosition {
-        self.applyPreviewConnection(for: self.videoCapture.captureDevice ?? device)
-        self.hideCameraTransitionBlur()
+        self.hideCameraTransition()
       }
 
       guard success else {
@@ -1052,7 +1051,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  private func showCameraTransitionBlur() {
+  private func showCameraTransition() {
     cameraTransitionView?.removeFromSuperview()
 
     let transitionView = UIView(frame: bounds)
@@ -1073,7 +1072,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     cameraTransitionView = transitionView
   }
 
-  private func hideCameraTransitionBlur() {
+  private func hideCameraTransition() {
     guard let transitionView = cameraTransitionView else { return }
     cameraTransitionView = nil
     UIView.animate(
@@ -1085,16 +1084,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     } completion: { _ in
       transitionView.removeFromSuperview()
     }
-  }
-
-  private func applyPreviewConnection(for device: AVCaptureDevice) {
-    guard let connection = videoCapture.previewLayer?.connection else { return }
-    if connection.isVideoOrientationSupported {
-      connection.videoOrientation = currentVideoOrientation()
-    }
-    guard connection.isVideoMirroringSupported else { return }
-    connection.automaticallyAdjustsVideoMirroring = false
-    connection.isVideoMirrored = device.position == .front
   }
 
   private func setCameraControlsEnabled(_ isEnabled: Bool) {

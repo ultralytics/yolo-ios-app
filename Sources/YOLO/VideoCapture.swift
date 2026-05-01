@@ -39,6 +39,10 @@ public protocol VideoCaptureDelegate: AnyObject {
 }
 
 func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
+  if position == .front {
+    return bestCaptureDevice(position: position).map { [$0] } ?? []
+  }
+
   var seenDeviceIDs = Set<String>()
   let discoverySession = AVCaptureDevice.DiscoverySession(
     deviceTypes: selectableCameraTypes,

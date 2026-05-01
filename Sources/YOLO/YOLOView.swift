@@ -632,9 +632,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     labelZoom.text = "1.00x"
     labelZoom.textColor = .white
-    labelZoom.font = UIFont.systemFont(ofSize: 14)
+    labelZoom.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
     labelZoom.textAlignment = .center
-    labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
     self.addSubview(labelZoom)
 
     let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
@@ -861,7 +860,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let toolBarHeight: CGFloat = 66
     let controlHeight: CGFloat = 34
     let captionHeight: CGFloat = 14
-    let zoomHeight: CGFloat = max(height * 0.035, 28)
+    let zoomHeight: CGFloat = 18
     let controlWidth = min(max(CGFloat(lensDevices.count) * 60, 104), width - 40)
     lensControl.frame = CGRect(
       x: (width - controlWidth) / 2,
@@ -877,7 +876,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     )
     labelZoom.frame = CGRect(
       x: center.x - 50,
-      y: lensCaptionLabel.frame.minY - zoomHeight - 8,
+      y: lensCaptionLabel.frame.minY - zoomHeight - 2,
       width: 100,
       height: zoomHeight
     )
@@ -954,12 +953,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       update(scale: newScaleFactor)
       self.labelZoom.text = zoomLabelText(rawZoomFactor: newScaleFactor, device: device)
       updateSelectedLens(rawZoomFactor: newScaleFactor, device: device)
-      self.labelZoom.font = UIFont.preferredFont(forTextStyle: .title2)
+      self.labelZoom.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
     case .ended:
       lastZoomFactor = minMaxZoom(newScaleFactor)
       update(scale: lastZoomFactor)
       updateSelectedLens(rawZoomFactor: lastZoomFactor, device: device)
-      self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
+      self.labelZoom.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
     default: break
     }
   }
@@ -1037,8 +1036,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func updateLensControl() {
     let currentDevice = videoCapture.captureDevice
     let position = currentDevice?.position ?? .back
-    lensDevices = captureDevices(position: position)
-    if let currentDevice, !lensDevices.contains(where: { $0.uniqueID == currentDevice.uniqueID }) {
+    lensDevices = position == .front ? currentDevice.map { [$0] } ?? [] : captureDevices(position: position)
+    if position == .back, let currentDevice,
+      !lensDevices.contains(where: { $0.uniqueID == currentDevice.uniqueID })
+    {
       lensDevices.append(currentDevice)
     }
     if let selectedLensDeviceID,
@@ -1047,14 +1048,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self.selectedLensDeviceID = nil
     }
     lensControl.removeAllSegments()
-
-    guard lensDevices.count > 1 else {
-      let selectedDevice = selectedLensDevice() ?? currentDevice
-      lensCaptionLabel.text = selectedDevice.map { lensCaption(for: $0) }
-      updateLensControlVisibility()
-      setNeedsLayout()
-      return
-    }
 
     for (index, device) in lensDevices.enumerated() {
       lensControl.insertSegment(withTitle: lensTitle(for: device), at: index, animated: false)
@@ -1070,12 +1063,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func updateLensControlVisibility() {
-    let isFrontCamera = videoCapture.captureDevice?.position == .front
-    lensControl.isHidden = switchCameraButton.isHidden || isFrontCamera || lensDevices.count <= 1
+    lensControl.isHidden = switchCameraButton.isHidden || lensDevices.isEmpty
     lensCaptionLabel.isHidden = lensControl.isHidden
   }
 
   private func lensTitle(for device: AVCaptureDevice) -> String {
+    if device.position == .front {
+      return "1"
+    }
+
     switch device.deviceType {
     case .builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera:
       if let displayZoomFactor = displayZoomFactor(
@@ -1153,6 +1149,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func lensCaption(for device: AVCaptureDevice) -> String {
+    if device.position == .front {
+      return "Front camera"
+    }
+
     switch device.deviceType {
     case .builtInUltraWideCamera: return "Ultra wide camera"
     case .builtInWideAngleCamera: return "Wide camera"

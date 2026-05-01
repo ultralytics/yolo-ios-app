@@ -16,7 +16,7 @@ import CoreVideo
 import UIKit
 import Vision
 
-private let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
+let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
   .builtInUltraWideCamera,
   .builtInWideAngleCamera,
   .builtInTelephotoCamera,
@@ -34,17 +34,14 @@ func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
     return bestCaptureDevice(position: position).map { [$0] } ?? []
   }
 
-  var seenDeviceIDs = Set<String>()
   let discoverySession = AVCaptureDevice.DiscoverySession(
     deviceTypes: physicalLensTypes,
     mediaType: .video,
     position: position
   )
 
-  let devices = discoverySession.devices
-    .filter { seenDeviceIDs.insert($0.uniqueID).inserted }
+  return discoverySession.devices
     .sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
-  return devices.filter { physicalLensTypes.contains($0.deviceType) }
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -111,10 +108,7 @@ extension AVCaptureDevice.DeviceType {
     case .builtInUltraWideCamera: return 0
     case .builtInWideAngleCamera: return 1
     case .builtInTelephotoCamera: return 2
-    case .builtInDualWideCamera: return 3
-    case .builtInDualCamera: return 4
-    case .builtInTripleCamera: return 5
-    default: return 6
+    default: return 3
     }
   }
 }

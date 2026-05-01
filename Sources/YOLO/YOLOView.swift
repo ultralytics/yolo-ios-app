@@ -1129,7 +1129,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   private func lensDevice(rawZoomFactor: CGFloat, device: AVCaptureDevice) -> AVCaptureDevice? {
     let lensZooms = lensDevices.compactMap { lens -> (device: AVCaptureDevice, zoom: CGFloat)? in
-      guard isPhysicalRearLens(lens), let zoom = zoomFactor(for: lens, on: device)
+      guard lens.position == .back, physicalLensTypes.contains(lens.deviceType),
+        let zoom = zoomFactor(for: lens, on: device)
       else {
         return nil
       }
@@ -1138,15 +1139,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     return lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
       ?? lensZooms.first?.device
-  }
-
-  private func isPhysicalRearLens(_ device: AVCaptureDevice) -> Bool {
-    switch device.deviceType {
-    case .builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera:
-      return device.position == .back
-    default:
-      return false
-    }
   }
 
   private func lensCaption(for device: AVCaptureDevice) -> String {

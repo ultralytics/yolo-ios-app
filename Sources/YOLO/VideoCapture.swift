@@ -74,8 +74,8 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
   }
 }
 
-private extension AVCaptureDevice.DeviceType {
-  var lensSortOrder: Int {
+extension AVCaptureDevice.DeviceType {
+  fileprivate var lensSortOrder: Int {
     switch self {
     case .builtInUltraWideCamera: return 0
     case .builtInWideAngleCamera: return 1

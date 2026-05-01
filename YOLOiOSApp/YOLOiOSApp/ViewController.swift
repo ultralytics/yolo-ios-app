@@ -66,9 +66,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // Store current loading entry for external display notification (Optional feature)
   var currentLoadingEntry: ModelEntry?
 
-  // Custom model selection button (created programmatically)
-  var customModelButton: UIButton!
-
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
 
@@ -139,9 +136,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // Debug: Check model folders
-    debugCheckModelFolders()
-
     // MARK: External Display Setup (Optional)
     // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
     // This code enhances the app for external monitor/TV connections and remains dormant when not in use.
@@ -167,7 +161,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     setupModelSegmentedControl()
-    setupCustomModelButton()
 
     if tasks.indices.contains(Constants.defaultTaskIndex) {
       segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
@@ -193,8 +186,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Add target to sliders to monitor changes
     yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
     yoloView.sliderIoU.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
-    yoloView.sliderNumItems.addTarget(
-      self, action: #selector(sliderValueChanged), for: .valueChanged)
 
     // Setup labels and version
     [labelName, labelFPS, labelVersion].forEach {
@@ -634,35 +625,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     ])
   }
 
-  private func setupCustomModelButton() {
-    customModelButton = UIButton(type: .system)
-    customModelButton.setTitle("Custom", for: .normal)
-    customModelButton.titleLabel?.font = UIFont.systemFont(ofSize: 13)
-    customModelButton.setTitleColor(.white, for: .normal)
-    customModelButton.setTitleColor(.systemBlue, for: .selected)
-    customModelButton.backgroundColor = .systemBackground.withAlphaComponent(0.1)
-    customModelButton.layer.cornerRadius = 8
-    customModelButton.layer.borderWidth = 1
-    customModelButton.layer.borderColor = UIColor.systemGray.cgColor
-    customModelButton.addTarget(
-      self, action: #selector(customModelButtonTapped), for: .touchUpInside)
-    customModelButton.translatesAutoresizingMaskIntoConstraints = false
-
-    View0.addSubview(customModelButton)
-
-    modelSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-      modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-    ])
-  }
-
-  // MARK: - Actions
-  @objc func customModelButtonTapped() {
-    selection.selectionChanged()
-    // Placeholder action for custom model selection; integrate picker if needed
-  }
-
   func updateModelSegmentedControlAppearance() {
     guard modelSegmentedControl != nil else { return }
 
@@ -731,33 +693,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   deinit {
     NotificationCenter.default.removeObserver(self)
-  }
-
-  private func debugCheckModelFolders() {
-    print("\n🔍 DEBUG: Checking model folders...")
-    let folders = [
-      "Models/Detect", "Models/Segment", "Models/Classify", "Models/Pose", "Models/OBB",
-    ]
-
-    for folder in folders {
-      if let folderURL = Bundle.main.url(forResource: folder, withExtension: nil) {
-        print("✅ \(folder) found at: \(folderURL.path)")
-
-        do {
-          let files = try FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: nil)
-          let models = files.filter {
-            $0.pathExtension == "mlmodel" || $0.pathExtension == "mlpackage"
-          }
-          print("   📦 Models: \(models.map { $0.lastPathComponent })")
-        } catch {
-          print("   ❌ Error reading folder: \(error)")
-        }
-      } else {
-        print("❌ \(folder) NOT FOUND in bundle")
-      }
-    }
-    print("\n")
   }
 
 }

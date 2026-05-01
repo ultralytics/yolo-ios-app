@@ -163,7 +163,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     guard let yoloView = yoloView else { return }
 
     let controlsToRemove = [
-      yoloView.sliderNumItems, yoloView.labelSliderNumItems,
       yoloView.sliderConf, yoloView.labelSliderConf,
       yoloView.sliderIoU, yoloView.labelSliderIoU,
       yoloView.labelName, yoloView.labelFPS,
@@ -384,24 +383,6 @@ extension ExternalViewController {
   }
 
   func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-    let detectionCount: Int
-
-    switch currentTask {
-    case .pose:
-      detectionCount = result.keypointsList.count
-    case .obb:
-      detectionCount = result.obb.count
-    case .classify:
-      detectionCount = result.probs != nil ? 1 : 0
-    default:
-      detectionCount = result.boxes.count
-    }
-
-    NotificationCenter.default.post(
-      name: .detectionCountDidUpdate,
-      object: nil,
-      userInfo: ["count": detectionCount]
-    )
   }
 
 }

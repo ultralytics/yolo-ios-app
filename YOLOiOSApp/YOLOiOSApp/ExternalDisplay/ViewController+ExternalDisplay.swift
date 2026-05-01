@@ -84,13 +84,6 @@ extension ViewController {
       object: nil
     )
 
-    // Listen for detection count updates from external display
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleDetectionCountUpdate(_:)),
-      name: .detectionCountDidUpdate,
-      object: nil
-    )
   }
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
@@ -110,25 +103,14 @@ extension ViewController {
         [
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
-          self.yoloView.sliderNumItems, self.yoloView.labelSliderNumItems,
           self.yoloView.playButton, self.yoloView.pauseButton,
           self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
-
-        self.customModelButton?.isHidden = self.currentModels.isEmpty
 
         [
           self.yoloView.switchCameraButton,
           self.yoloView.shareButton,
         ].forEach { $0.isHidden = true }
-        self.yoloView.labelSliderNumItems.text =
-          "0 items (max \(Int(self.yoloView.sliderNumItems.value)))"
-
-        self.yoloView.sliderNumItems.addTarget(
-          self,
-          action: #selector(self.updateNumItemsLabelForExternalDisplay),
-          for: .valueChanged
-        )
         self.modelSegmentedControl.setNeedsLayout()
         self.modelSegmentedControl.layoutIfNeeded()
       }
@@ -155,27 +137,6 @@ extension ViewController {
         .iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
     } else {
       UIViewController.attemptRotationToDeviceOrientation()
-    }
-  }
-
-  @objc private func updateNumItemsLabelForExternalDisplay() {
-    if isExternalDisplayConnected {
-      let maxValue = Int(yoloView.sliderNumItems.value)
-      let currentText = yoloView.labelSliderNumItems.text ?? ""
-      let currentCount = Int(currentText.split(separator: " ").first ?? "0") ?? 0
-      yoloView.labelSliderNumItems.text = "\(currentCount) items (max \(maxValue))"
-    }
-  }
-
-  @objc private func handleDetectionCountUpdate(_ notification: Notification) {
-    guard isExternalDisplayConnected,
-      let count = notification.userInfo?["count"] as? Int
-    else { return }
-
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      let maxValue = Int(self.yoloView.sliderNumItems.value)
-      self.yoloView.labelSliderNumItems.text = "\(count) items (max \(maxValue))"
     }
   }
 
@@ -207,13 +168,6 @@ extension ViewController {
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
       ].forEach { $0.isHidden = false }
-
-      self.yoloView.sliderNumItems.removeTarget(
-        self,
-        action: #selector(self.updateNumItemsLabelForExternalDisplay),
-        for: .valueChanged
-      )
-      self.yoloView.sliderChanged(self.yoloView.sliderNumItems)
 
       self.yoloView.resume()
       self.yoloView.setInferenceFlag(ok: true)
@@ -256,7 +210,6 @@ extension ViewController {
     guard hasExternalDisplay else { return }
 
     // Layout adjustments for external display mode if needed
-    // The segmented control and custom button are already properly positioned
   }
 
   @objc func handleExternalDisplayReady(_ notification: Notification) {

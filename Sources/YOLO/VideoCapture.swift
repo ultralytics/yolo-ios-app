@@ -16,11 +16,44 @@ import CoreVideo
 import UIKit
 import Vision
 
+private let selectableCameraTypes: [AVCaptureDevice.DeviceType] = [
+  .builtInUltraWideCamera,
+  .builtInWideAngleCamera,
+  .builtInTelephotoCamera,
+  .builtInDualWideCamera,
+  .builtInDualCamera,
+  .builtInTripleCamera,
+  .builtInTrueDepthCamera,
+]
+
+private let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
+  .builtInUltraWideCamera,
+  .builtInWideAngleCamera,
+  .builtInTelephotoCamera,
+  .builtInTrueDepthCamera,
+]
+
 /// Protocol for receiving video capture frame processing results.
 @MainActor
 public protocol VideoCaptureDelegate: AnyObject {
   func onPredict(result: YOLOResult)
   func onInferenceTime(speed: Double, fps: Double)
+}
+
+func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
+  var seenDeviceIDs = Set<String>()
+  let discoverySession = AVCaptureDevice.DiscoverySession(
+    deviceTypes: selectableCameraTypes,
+    mediaType: .video,
+    position: position
+  )
+
+  let devices = discoverySession.devices
+    .filter { seenDeviceIDs.insert($0.uniqueID).inserted }
+    .sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
+  let physicalDevices = devices.filter { physicalLensTypes.contains($0.deviceType) }
+
+  return physicalDevices.count > 1 ? physicalDevices : devices
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -38,6 +71,21 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
     return device
   } else {
     return AVCaptureDevice.default(for: .video)
+  }
+}
+
+private extension AVCaptureDevice.DeviceType {
+  var lensSortOrder: Int {
+    switch self {
+    case .builtInUltraWideCamera: return 0
+    case .builtInWideAngleCamera: return 1
+    case .builtInDualWideCamera: return 2
+    case .builtInDualCamera: return 3
+    case .builtInTripleCamera: return 4
+    case .builtInTelephotoCamera: return 5
+    case .builtInTrueDepthCamera: return 6
+    default: return 7
+    }
   }
 }
 
@@ -104,6 +152,9 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     orientation: UIDeviceOrientation
   ) -> Bool {
     captureSession.beginConfiguration()
+    defer {
+      captureSession.commitConfiguration()
+    }
     captureSession.sessionPreset = sessionPreset
 
     guard let device = bestCaptureDevice(position: position) else {
@@ -142,17 +193,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
     if captureSession.canAddOutput(photoOutput) {
       captureSession.addOutput(photoOutput)
-      if #available(iOS 16.0, *) {
-        // Use maxPhotoDimensions instead of deprecated isHighResolutionCaptureEnabled
-        if let device = captureDevice,
-          let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last
-        {
-          photoOutput.maxPhotoDimensions = maxDimensions
-        }
-      } else {
-        // Fallback for iOS versions before 16.0
-        photoOutput.isHighResolutionCaptureEnabled = true
-      }
+      configurePhotoOutput(for: device)
     }
 
     // We want the buffers to be in portrait orientation otherwise they are
@@ -163,18 +204,55 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       connection?.isVideoMirrored = true
     }
 
-    guard let device = captureDevice else { return false }
+    guard configureCameraDevice(device) else {
+      return false
+    }
+
+    return true
+  }
+
+  func selectCaptureDevice(_ device: AVCaptureDevice, orientation: UIDeviceOrientation) -> Bool {
+    guard captureDevice?.uniqueID != device.uniqueID else { return true }
+
+    let newInput: AVCaptureDeviceInput
     do {
-      try device.lockForConfiguration()
-      if device.isFocusModeSupported(.continuousAutoFocus),
-        device.isFocusPointOfInterestSupported
-      {
-        device.focusMode = .continuousAutoFocus
-        device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
-      }
-      device.exposureMode = .continuousAutoExposure
-      device.unlockForConfiguration()
+      newInput = try AVCaptureDeviceInput(device: device)
     } catch {
+      YOLOLog.error("Failed to create video input: \(error)")
+      return false
+    }
+
+    captureSession.beginConfiguration()
+    let currentInput = videoInput ?? captureSession.inputs.first as? AVCaptureDeviceInput
+    if let currentInput {
+      captureSession.removeInput(currentInput)
+    }
+
+    guard captureSession.canAddInput(newInput) else {
+      if let currentInput, captureSession.canAddInput(currentInput) {
+        captureSession.addInput(currentInput)
+      }
+      captureSession.commitConfiguration()
+      return false
+    }
+
+    captureSession.addInput(newInput)
+    videoInput = newInput
+    captureDevice = device
+    configurePhotoOutput(for: device)
+
+    let videoOrientation =
+      AVCaptureVideoOrientation(orientation)
+      ?? videoOutput.connection(with: .video)?.videoOrientation
+      ?? .portrait
+    let videoConnection = videoOutput.connection(with: .video)
+    videoConnection?.videoOrientation = videoOrientation
+    videoConnection?.isVideoMirrored = device.position == .front
+    previewLayer?.connection?.videoOrientation = videoOrientation
+    previewLayer?.connection?.isVideoMirrored = device.position == .front
+
+    guard configureCameraDevice(device) else {
+      captureSession.commitConfiguration()
       return false
     }
 
@@ -228,6 +306,37 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       connection.isVideoMirrored = false
     }
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
+    self.previewLayer?.connection?.isVideoMirrored = connection.isVideoMirrored
+  }
+
+  private func configurePhotoOutput(for device: AVCaptureDevice) {
+    if #available(iOS 16.0, *) {
+      if let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last {
+        photoOutput.maxPhotoDimensions = maxDimensions
+      }
+    } else {
+      photoOutput.isHighResolutionCaptureEnabled = true
+    }
+  }
+
+  private func configureCameraDevice(_ device: AVCaptureDevice) -> Bool {
+    do {
+      try device.lockForConfiguration()
+      if device.isFocusModeSupported(.continuousAutoFocus),
+        device.isFocusPointOfInterestSupported
+      {
+        device.focusMode = .continuousAutoFocus
+        device.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5)
+      }
+      if device.isExposureModeSupported(.continuousAutoExposure) {
+        device.exposureMode = .continuousAutoExposure
+      }
+      device.unlockForConfiguration()
+      return true
+    } catch {
+      YOLOLog.error("Camera configuration failed: \(error.localizedDescription)")
+      return false
+    }
   }
 }
 

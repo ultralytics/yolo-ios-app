@@ -123,8 +123,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private let minimumZoom: CGFloat = 1.0
   private let maximumZoom: CGFloat = 10.0
   private var lastZoomFactor: CGFloat = 1.0
-
-  private var photoCaptureCompletion: ((UIImage?) -> Void)?
+  private var pausedShareImage: UIImage?
 
   /// Pending camera position to apply after async camera setup completes.
   public var pendingCameraPosition: AVCaptureDevice.Position?
@@ -274,6 +273,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func resume() {
+    pausedShareImage = nil
     videoCapture.start()
   }
 
@@ -991,6 +991,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func playTapped() {
     selection.selectionChanged()
+    pausedShareImage = nil
     self.videoCapture.start()
     playButton.isEnabled = false
     pauseButton.isEnabled = true
@@ -998,17 +999,25 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func pauseTapped() {
     selection.selectionChanged()
-    self.videoCapture.stop()
     playButton.isEnabled = true
     pauseButton.isEnabled = false
+    videoCapture.captureNextFrame { [weak self] image in
+      self?.pausedShareImage = image
+      self?.videoCapture.stop()
+    }
   }
 
   @objc func switchCameraTapped() {
     selection.selectionChanged()
+    pausedShareImage = nil
 
     let currentPosition = videoCapture.captureDevice?.position ?? .back
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
-    guard let newCameraDevice = bestCaptureDevice(position: nextCameraPosition) else { return }
+    let newCameraDevice =
+      nextCameraPosition == .back
+      ? captureDevices(position: .back).first { $0.deviceType == .builtInWideAngleCamera }
+      : bestCaptureDevice(position: nextCameraPosition)
+    guard let newCameraDevice else { return }
     switchToCamera(newCameraDevice)
   }
 
@@ -1053,8 +1062,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         return
       }
 
-      self.selectedLensDeviceID = device.position == .back ? device.uniqueID : nil
       let activeDevice = self.videoCapture.captureDevice ?? device
+      self.selectedLensDeviceID = device.position == .back ? device.uniqueID : nil
       let rawZoomFactor =
         zoomFactor(for: device, on: activeDevice)
         ?? min(max(activeDevice.videoZoomFactor, self.minimumZoom), self.maximumZoom)
@@ -1230,215 +1239,47 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func capturePhoto(completion: @escaping (UIImage?) -> Void) {
-    guard photoCaptureCompletion == nil else {
-      completion(nil)  // Previous capture still in progress
+    if let pausedShareImage, !videoCapture.captureSession.isRunning {
+      completion(renderShareImage(pausedShareImage))
       return
     }
-    self.photoCaptureCompletion = completion
-    let settings = AVCapturePhotoSettings()
-    self.videoCapture.photoOutput.capturePhoto(
-      with: settings, delegate: self as AVCapturePhotoCaptureDelegate
-    )
+
+    videoCapture.captureNextFrame { [weak self] image in
+      guard let self, let image else {
+        completion(nil)
+        return
+      }
+      completion(self.renderShareImage(image))
+    }
+  }
+
+  private func renderShareImage(_ image: UIImage) -> UIImage? {
+    let imageView = UIImageView(image: image)
+    imageView.contentMode = .scaleAspectFill
+    imageView.frame = bounds
+    let imageLayer = imageView.layer
+    layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
+
+    var tempViews = [UIView]()
+    let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
+    for info in boundingBoxInfos where !info.isHidden {
+      let boxView = createBoxView(from: info)
+      boxView.frame = info.rect
+      addSubview(boxView)
+      tempViews.append(boxView)
+    }
+
+    UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
+    drawHierarchy(in: bounds, afterScreenUpdates: true)
+    let snapshot = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    imageLayer.removeFromSuperlayer()
+    tempViews.forEach { $0.removeFromSuperview() }
+    return snapshot
   }
 
   public func setInferenceFlag(ok: Bool) {
     videoCapture.inferenceOK = ok
-  }
-}
-
-// MARK: - Helper Methods for Layer Copying
-
-extension YOLOView {
-  /// Copies layer properties from source to destination
-  private func copyLayerProperties(from source: CALayer, to destination: CALayer) {
-    destination.opacity = source.opacity
-    destination.transform = source.transform
-    destination.masksToBounds = source.masksToBounds
-    destination.contentsGravity = source.contentsGravity
-    destination.contentsRect = source.contentsRect
-    destination.contentsCenter = source.contentsCenter
-    destination.compositingFilter = source.compositingFilter
-    destination.backgroundColor = source.backgroundColor
-    destination.cornerRadius = source.cornerRadius
-  }
-
-  /// Copies CAShapeLayer properties
-  private func copyShapeLayer(_ shapeLayer: CAShapeLayer) -> CAShapeLayer {
-    let copy = CAShapeLayer()
-    copy.frame = shapeLayer.frame
-    copy.path = shapeLayer.path
-    copy.strokeColor = shapeLayer.strokeColor
-    copy.lineWidth = shapeLayer.lineWidth
-    copy.fillColor = shapeLayer.fillColor
-    copy.opacity = shapeLayer.opacity
-    return copy
-  }
-
-  /// Copies CATextLayer properties
-  private func copyTextLayer(_ textLayer: CATextLayer) -> CATextLayer {
-    let copy = CATextLayer()
-    copy.frame = textLayer.frame
-    copy.string = textLayer.string
-    copy.font = textLayer.font
-    copy.fontSize = textLayer.fontSize
-    copy.foregroundColor = textLayer.foregroundColor
-    copy.backgroundColor = textLayer.backgroundColor
-    copy.alignmentMode = textLayer.alignmentMode
-    copy.opacity = textLayer.opacity
-    return copy
-  }
-
-  /// Creates a copy of a visualization layer for capture
-  private func copyVisualizationLayer(_ layer: CALayer, isFullFrame: Bool = false) -> CALayer? {
-    let tempLayer = CALayer()
-    let overlayFrame = self.overlayLayer.frame
-
-    if isFullFrame {
-      tempLayer.frame = CGRect(
-        x: overlayFrame.origin.x,
-        y: overlayFrame.origin.y,
-        width: overlayFrame.width,
-        height: overlayFrame.height
-      )
-    } else {
-      // For mask layer - adjust frame to be relative to main view
-      let layerFrame = layer.frame
-      tempLayer.frame = CGRect(
-        x: overlayFrame.origin.x + layerFrame.origin.x,
-        y: overlayFrame.origin.y + layerFrame.origin.y,
-        width: layerFrame.width,
-        height: layerFrame.height
-      )
-      tempLayer.contents = layer.contents
-    }
-
-    tempLayer.opacity = layer.opacity
-    copyLayerProperties(from: layer, to: tempLayer)
-
-    // Copy sublayers if present
-    if let sublayers = layer.sublayers {
-      for sublayer in sublayers {
-        if let shapeLayer = sublayer as? CAShapeLayer {
-          tempLayer.addSublayer(copyShapeLayer(shapeLayer))
-        } else if let textLayer = sublayer as? CATextLayer {
-          tempLayer.addSublayer(copyTextLayer(textLayer))
-        } else {
-          let copyLayer = CALayer()
-          copyLayer.frame = sublayer.frame
-          copyLayerProperties(from: sublayer, to: copyLayer)
-          tempLayer.addSublayer(copyLayer)
-        }
-      }
-    }
-    return tempLayer
-  }
-}
-
-extension YOLOView: AVCapturePhotoCaptureDelegate {
-  nonisolated public func photoOutput(
-    _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?
-  ) {
-    if let error = error {
-      YOLOLog.error("Photo capture error: \(error.localizedDescription)")
-    }
-    if let dataImage = photo.fileDataRepresentation() {
-      guard let dataProvider = CGDataProvider(data: dataImage as CFData),
-        let cgImageRef = CGImage(
-          jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true,
-          intent: .defaultIntent)
-      else {
-        Task { @MainActor [weak self] in
-          self?.photoCaptureCompletion?(nil)
-          self?.photoCaptureCompletion = nil
-        }
-        return
-      }
-
-      Task { @MainActor [weak self] in
-        guard let self = self else { return }
-
-        var isCameraFront = false
-        if let currentInput = self.videoCapture.captureSession.inputs.first
-          as? AVCaptureDeviceInput,
-          currentInput.device.position == .front
-        {
-          isCameraFront = true
-        }
-        var orientation: CGImagePropertyOrientation = isCameraFront ? .leftMirrored : .right
-        switch UIDevice.current.orientation {
-        case .landscapeLeft:
-          orientation = isCameraFront ? .downMirrored : .up
-        case .landscapeRight:
-          orientation = isCameraFront ? .upMirrored : .down
-        default:
-          break
-        }
-        var image = UIImage(cgImage: cgImageRef, scale: 0.5, orientation: .right)
-        if let orientedCIImage = CIImage(image: image)?.oriented(orientation),
-          let cgImage = CIContext().createCGImage(orientedCIImage, from: orientedCIImage.extent)
-        {
-          image = UIImage(cgImage: cgImage)
-        }
-        let imageView = UIImageView(image: image)
-        imageView.contentMode = .scaleAspectFill
-        imageView.frame = self.frame
-        let imageLayer = imageView.layer
-        self.layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
-
-        // Add visualization layers
-        var tempLayers = [CALayer]()
-
-        // Add mask layer if present (for segmentation task)
-        if let maskLayer = self.maskLayer, !maskLayer.isHidden {
-          if let tempLayer = copyVisualizationLayer(maskLayer, isFullFrame: false) {
-            self.layer.addSublayer(tempLayer)
-            tempLayers.append(tempLayer)
-          }
-        }
-
-        // Add pose layer if present (for pose task)
-        if let poseLayer = self.poseLayer {
-          if let tempLayer = copyVisualizationLayer(poseLayer, isFullFrame: true) {
-            self.layer.addSublayer(tempLayer)
-            tempLayers.append(tempLayer)
-          }
-        }
-
-        // Add OBB layer if present (for OBB task)
-        if let obbLayer = self.obbLayer, !obbLayer.isHidden {
-          if let tempLayer = copyVisualizationLayer(obbLayer, isFullFrame: true) {
-            self.layer.addSublayer(tempLayer)
-            tempLayers.append(tempLayer)
-          }
-        }
-
-        var tempViews = [UIView]()
-        let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
-        for info in boundingBoxInfos where !info.isHidden {
-          let boxView = createBoxView(from: info)
-          boxView.frame = info.rect
-
-          self.addSubview(boxView)
-          tempViews.append(boxView)
-        }
-        let captureBounds = self.bounds
-        UIGraphicsBeginImageContextWithOptions(captureBounds.size, true, 0.0)
-        self.drawHierarchy(in: captureBounds, afterScreenUpdates: true)
-        let img = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        imageLayer.removeFromSuperlayer()
-        for layer in tempLayers {
-          layer.removeFromSuperlayer()
-        }
-        for v in tempViews {
-          v.removeFromSuperview()
-        }
-        photoCaptureCompletion?(img)
-        photoCaptureCompletion = nil
-      }
-    } else {
-      YOLOLog.error("AVCapturePhotoCaptureDelegate: photo has no file data")
-    }
   }
 }
 

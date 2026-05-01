@@ -62,6 +62,8 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
 func zoomFactor(for lensDevice: AVCaptureDevice, on virtualDevice: AVCaptureDevice) -> CGFloat? {
   guard lensDevice.position == virtualDevice.position else { return nil }
   let constituentDevices = virtualDevice.constituentDevices
+    .filter { physicalLensTypes.contains($0.deviceType) }
+    .sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
   guard constituentDevices.count > 1 else { return nil }
 
   let lensIndex =
@@ -146,7 +148,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   let captureSession = AVCaptureSession()
   var videoInput: AVCaptureDeviceInput? = nil
   let videoOutput = AVCaptureVideoDataOutput()
-  var photoOutput = AVCapturePhotoOutput()
   let cameraQueue = DispatchQueue(label: "camera-queue")
   var inferenceOK = true
   var longSide: CGFloat = 3
@@ -154,6 +155,8 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   var frameSizeCaptured = false
 
   private var currentBuffer: CVPixelBuffer?
+  private lazy var imageContext = CIContext()
+  private var frameCaptureCompletion: ((UIImage?) -> Void)?
 
   deinit {
     captureSession.stopRunning()
@@ -226,11 +229,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     if captureSession.canAddOutput(videoOutput) {
       captureSession.addOutput(videoOutput)
     }
-    if captureSession.canAddOutput(photoOutput) {
-      captureSession.addOutput(photoOutput)
-      configurePhotoOutput(for: device)
-    }
-
     // We want the buffers to be in portrait orientation otherwise they are
     // rotated by 90 degrees. Need to set this _after_ addOutput()!
     let connection = videoOutput.connection(with: AVMediaType.video)
@@ -327,7 +325,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     captureSession.addInput(newInput)
     videoInput = newInput
     captureDevice = device
-    configurePhotoOutput(for: device)
 
     let videoConnection = videoOutput.connection(with: .video)
     videoConnection?.videoOrientation = videoOrientation
@@ -372,6 +369,20 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
   }
 
+  func captureNextFrame(completion: @escaping (UIImage?) -> Void) {
+    cameraQueue.async { [weak self] in
+      guard let self, self.captureSession.isRunning else {
+        DispatchQueue.main.async { completion(nil) }
+        return
+      }
+      guard self.frameCaptureCompletion == nil else {
+        DispatchQueue.main.async { completion(nil) }
+        return
+      }
+      self.frameCaptureCompletion = completion
+    }
+  }
+
   private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
     guard let predictor = predictor else {
       return
@@ -411,16 +422,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     connection.isVideoMirrored = isMirrored
   }
 
-  private func configurePhotoOutput(for device: AVCaptureDevice) {
-    if #available(iOS 16.0, *) {
-      if let maxDimensions = device.activeFormat.supportedMaxPhotoDimensions.last {
-        photoOutput.maxPhotoDimensions = maxDimensions
-      }
-    } else {
-      photoOutput.isHighResolutionCaptureEnabled = true
-    }
-  }
-
   private func configureCameraDevice(_ device: AVCaptureDevice) -> Bool {
     do {
       try device.lockForConfiguration()
@@ -453,6 +454,23 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer,
     from connection: AVCaptureConnection
   ) {
+    let requestedFrameCompletion = frameCaptureCompletion
+    if requestedFrameCompletion != nil {
+      frameCaptureCompletion = nil
+    }
+    defer {
+      if let requestedFrameCompletion {
+        let capturedImage = CMSampleBufferGetImageBuffer(sampleBuffer).flatMap { pixelBuffer in
+          let image = CIImage(cvPixelBuffer: pixelBuffer)
+          return imageContext.createCGImage(image, from: image.extent).map {
+            UIImage(cgImage: $0)
+          }
+        }
+        DispatchQueue.main.async {
+          requestedFrameCompletion(capturedImage)
+        }
+      }
+    }
     guard inferenceOK else { return }
     predictOnFrame(sampleBuffer: sampleBuffer)
   }

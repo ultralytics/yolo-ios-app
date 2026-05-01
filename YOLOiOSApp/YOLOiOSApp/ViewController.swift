@@ -487,9 +487,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.setLoadingState(false)
       self.isLoadingModel = false
       self.resetDownloadProgress()
+      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
 
       if success {
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        self.currentModelName = processString(modelName)
 
         ModelSelectionManager.setupSegmentedControl(
           self.modelSegmentedControl,
@@ -505,11 +507,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         )
       }
 
-      // Notify external display of model change (Optional feature)
-      if success {
-        // Update currentModelName
-        self.currentModelName = processString(modelName)
-
+      if success && hasExternalDisplay {
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
 
         // Determine the correct model path for external display
@@ -559,16 +557,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
 
-      // Check if external display is connected
-      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
-
       // Only set inference flag on YOLOView if no external display
       if !hasExternalDisplay {
         self.yoloView.setInferenceFlag(ok: success)
       }
 
       if success {
-        // currentModelName is already set above in the notification section
         self.labelName.text = processString(modelName)
       }
     }
@@ -696,8 +690,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         "maxItems": maxItems,
       ]
     )
-
-    print("📊 Threshold changed - Conf: \(conf), IoU: \(iou), Max items: \(maxItems)")
   }
 
   deinit {

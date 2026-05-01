@@ -107,6 +107,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public var toolbar = UIView()
   let selection = UISelectionFeedbackGenerator()
   private let lensControl = UISegmentedControl()
+  private let lensCaptionLabel = UILabel()
   private var lensDevices = [AVCaptureDevice]()
   private var overlayLayer = CALayer()
   private var maskLayer: CALayer?
@@ -692,6 +693,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       ], for: .selected)
     lensControl.addTarget(self, action: #selector(lensChanged(_:)), for: .valueChanged)
     self.addSubview(lensControl)
+
+    lensCaptionLabel.isHidden = true
+    lensCaptionLabel.textAlignment = .center
+    lensCaptionLabel.textColor = UIColor.white.withAlphaComponent(0.78)
+    lensCaptionLabel.font = UIFont.systemFont(ofSize: 11, weight: .medium)
+    self.addSubview(lensCaptionLabel)
   }
 
   public override func layoutSubviews() {
@@ -740,7 +747,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let sliderWidth: CGFloat = width * 0.2
     let sliderHeight: CGFloat = height * 0.06
 
-    let bottomMargin: CGFloat = 80
+    let bottomMargin: CGFloat = lensControl.isHidden ? 80 : 144
     let totalSliderHeight = (sliderHeight + 3) * 6
     let startY = height - bottomMargin - totalSliderHeight
 
@@ -795,7 +802,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let sliderHeight: CGFloat = height * 0.02
     let leftPadding: CGFloat = 20
 
-    let thresholdStartY = center.y + height * 0.16 + sliderHeight * 2 + 20
+    let cameraControlsOffset: CGFloat = lensControl.isHidden ? 0 : 64
+    let thresholdStartY =
+      center.y + height * 0.16 + sliderHeight * 2 + 20 - cameraControlsOffset
 
     labelSliderConf.frame = CGRect(
       x: leftPadding, y: thresholdStartY,
@@ -849,12 +858,26 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     guard !lensControl.isHidden else { return }
     let toolBarHeight: CGFloat = 66
     let controlHeight: CGFloat = 34
+    let captionHeight: CGFloat = 14
+    let zoomHeight: CGFloat = max(height * 0.035, 28)
     let controlWidth = min(max(CGFloat(lensDevices.count) * 52, 104), width - 40)
     lensControl.frame = CGRect(
       x: (width - controlWidth) / 2,
-      y: height - toolBarHeight - controlHeight - 16,
+      y: height - toolBarHeight - controlHeight - 14,
       width: controlWidth,
       height: controlHeight
+    )
+    lensCaptionLabel.frame = CGRect(
+      x: 20,
+      y: lensControl.frame.minY - captionHeight - 4,
+      width: width - 40,
+      height: captionHeight
+    )
+    labelZoom.frame = CGRect(
+      x: center.x - 50,
+      y: lensCaptionLabel.frame.minY - zoomHeight - 8,
+      width: 100,
+      height: zoomHeight
     )
   }
 
@@ -991,6 +1014,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     lensControl.removeAllSegments()
 
     guard lensDevices.count > 1 else {
+      lensCaptionLabel.text = currentDevice.map { lensCaption(for: $0) }
       updateLensControlVisibility()
       setNeedsLayout()
       return
@@ -1003,12 +1027,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     lensControl.selectedSegmentIndex =
       lensDevices.firstIndex { $0.uniqueID == currentDevice?.uniqueID }
       ?? UISegmentedControl.noSegment
+    lensCaptionLabel.text = currentDevice.map { lensCaption(for: $0) }
     updateLensControlVisibility()
     setNeedsLayout()
   }
 
   private func updateLensControlVisibility() {
     lensControl.isHidden = switchCameraButton.isHidden || lensDevices.count <= 1
+    lensCaptionLabel.isHidden = lensControl.isHidden
   }
 
   private func lensTitle(for device: AVCaptureDevice) -> String {
@@ -1018,6 +1044,17 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     case .builtInTelephotoCamera: return "2"
     case .builtInTrueDepthCamera: return "Front"
     case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Auto"
+    default: return device.localizedName
+    }
+  }
+
+  private func lensCaption(for device: AVCaptureDevice) -> String {
+    switch device.deviceType {
+    case .builtInUltraWideCamera: return "Ultra wide camera"
+    case .builtInWideAngleCamera: return "Wide camera"
+    case .builtInTelephotoCamera: return "Telephoto camera"
+    case .builtInTrueDepthCamera: return "Front camera"
+    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Auto camera"
     default: return device.localizedName
     }
   }

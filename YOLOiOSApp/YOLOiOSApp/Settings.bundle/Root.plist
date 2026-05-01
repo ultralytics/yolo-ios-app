@@ -30,16 +30,6 @@
                 <key>Type</key>
                 <string>PSToggleSwitchSpecifier</string>
                 <key>Title</key>
-                <string>Use Telephoto</string>
-                <key>Key</key>
-                <string>use_telephoto</string>
-                <key>DefaultValue</key>
-                <false/>
-            </dict>
-            <dict>
-                <key>Type</key>
-                <string>PSToggleSwitchSpecifier</string>
-                <key>Title</key>
                 <string>Developer Mode</string>
                 <key>Key</key>
                 <string>developer_mode</string>

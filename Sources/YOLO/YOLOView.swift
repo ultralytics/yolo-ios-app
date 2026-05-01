@@ -654,7 +654,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
     infoButton.setImage(UIImage(systemName: "info.circle", withConfiguration: config), for: .normal)
     infoButton.accessibilityLabel = "Ultralytics"
-
     playButton.isEnabled = false
     pauseButton.isEnabled = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
@@ -852,25 +851,20 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75
-    let buttonY = (toolBarHeight - buttonHeight) / 2
-    let horizontalInset: CGFloat = 8
 
     toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-    playButton.frame = CGRect(
-      x: horizontalInset, y: buttonY, width: buttonHeight, height: buttonHeight
-    )
+    playButton.frame = CGRect(x: 0, y: 0, width: buttonHeight, height: buttonHeight)
     pauseButton.frame = CGRect(
-      x: playButton.frame.maxX, y: buttonY, width: buttonHeight, height: buttonHeight
+      x: playButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
     switchCameraButton.frame = CGRect(
-      x: pauseButton.frame.maxX, y: buttonY, width: buttonHeight, height: buttonHeight
+      x: pauseButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
     shareButton.frame = CGRect(
-      x: switchCameraButton.frame.maxX, y: buttonY, width: buttonHeight, height: buttonHeight
+      x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
     infoButton.frame = CGRect(
-      x: width - horizontalInset - buttonHeight, y: buttonY, width: buttonHeight,
-      height: buttonHeight
+      x: shareButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
   }
 

@@ -23,14 +23,12 @@ private let selectableCameraTypes: [AVCaptureDevice.DeviceType] = [
   .builtInDualWideCamera,
   .builtInDualCamera,
   .builtInTripleCamera,
-  .builtInTrueDepthCamera,
 ]
 
 private let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
   .builtInUltraWideCamera,
   .builtInWideAngleCamera,
   .builtInTelephotoCamera,
-  .builtInTrueDepthCamera,
 ]
 
 /// Protocol for receiving video capture frame processing results.
@@ -87,8 +85,7 @@ extension AVCaptureDevice.DeviceType {
     case .builtInDualWideCamera: return 3
     case .builtInDualCamera: return 4
     case .builtInTripleCamera: return 5
-    case .builtInTrueDepthCamera: return 6
-    default: return 7
+    default: return 6
     }
   }
 }

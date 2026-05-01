@@ -860,7 +860,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let controlHeight: CGFloat = 34
     let captionHeight: CGFloat = 14
     let zoomHeight: CGFloat = max(height * 0.035, 28)
-    let controlWidth = min(max(CGFloat(lensDevices.count) * 52, 104), width - 40)
+    let controlWidth = min(max(CGFloat(lensDevices.count) * 60, 104), width - 40)
     lensControl.frame = CGRect(
       x: (width - controlWidth) / 2,
       y: height - toolBarHeight - controlHeight - 14,
@@ -1043,8 +1043,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     case .builtInUltraWideCamera: return "0.5"
     case .builtInWideAngleCamera: return "1"
     case .builtInTelephotoCamera: return "2"
-    case .builtInTrueDepthCamera: return "Front"
-    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Auto"
+    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Default"
     default: return device.localizedName
     }
   }
@@ -1054,8 +1053,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     case .builtInUltraWideCamera: return "Ultra wide camera"
     case .builtInWideAngleCamera: return "Wide camera"
     case .builtInTelephotoCamera: return "Telephoto camera"
-    case .builtInTrueDepthCamera: return "Front camera"
-    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Auto camera"
+    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera:
+      return "Default back camera"
     default: return device.localizedName
     }
   }

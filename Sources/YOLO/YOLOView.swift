@@ -953,10 +953,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     case .began, .changed:
       update(scale: newScaleFactor)
       self.labelZoom.text = zoomLabelText(rawZoomFactor: newScaleFactor, device: device)
+      updateSelectedLens(rawZoomFactor: newScaleFactor, device: device)
       self.labelZoom.font = UIFont.preferredFont(forTextStyle: .title2)
     case .ended:
       lastZoomFactor = minMaxZoom(newScaleFactor)
       update(scale: lastZoomFactor)
+      updateSelectedLens(rawZoomFactor: lastZoomFactor, device: device)
       self.labelZoom.font = UIFont.preferredFont(forTextStyle: .body)
     default: break
     }
@@ -1110,6 +1112,43 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func selectedLensDevice() -> AVCaptureDevice? {
     guard let selectedLensDeviceID else { return videoCapture.captureDevice }
     return lensDevices.first { $0.uniqueID == selectedLensDeviceID } ?? videoCapture.captureDevice
+  }
+
+  private func updateSelectedLens(rawZoomFactor: CGFloat, device: AVCaptureDevice) {
+    guard device.position == .back else {
+      selectedLensDeviceID = nil
+      return
+    }
+
+    let lensZooms = lensDevices.compactMap { lens -> (device: AVCaptureDevice, zoom: CGFloat)? in
+      guard isPhysicalRearLens(lens), let zoom = zoomFactor(for: lens, on: device)
+      else {
+        return nil
+      }
+      return (lens, zoom)
+    }.sorted { $0.zoom < $1.zoom }
+
+    guard let selectedLens =
+      lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
+      ?? lensZooms.first?.device
+    else {
+      return
+    }
+
+    selectedLensDeviceID = selectedLens.uniqueID
+    lensControl.selectedSegmentIndex =
+      lensDevices.firstIndex { $0.uniqueID == selectedLens.uniqueID }
+      ?? UISegmentedControl.noSegment
+    lensCaptionLabel.text = lensCaption(for: selectedLens)
+  }
+
+  private func isPhysicalRearLens(_ device: AVCaptureDevice) -> Bool {
+    switch device.deviceType {
+    case .builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera:
+      return device.position == .back
+    default:
+      return false
+    }
   }
 
   private func lensCaption(for device: AVCaptureDevice) -> String {

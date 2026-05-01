@@ -665,7 +665,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let sliderMidY = (yoloView.sliderConf.frame.midY + yoloView.sliderIoU.frame.midY) / 2
     guard sliderMidY.isFinite, sliderMidY > 0 else { return }
 
-    logoImage.center = CGPoint(x: logoImage.center.x, y: sliderMidY)
+    logoImage.center = CGPoint(x: logoImage.center.x, y: sliderMidY + 6)
   }
 
   @objc func shareButtonTapped() {

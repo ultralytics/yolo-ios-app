@@ -16,15 +16,6 @@ import CoreVideo
 import UIKit
 import Vision
 
-private let selectableCameraTypes: [AVCaptureDevice.DeviceType] = [
-  .builtInUltraWideCamera,
-  .builtInWideAngleCamera,
-  .builtInTelephotoCamera,
-  .builtInDualWideCamera,
-  .builtInDualCamera,
-  .builtInTripleCamera,
-]
-
 private let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
   .builtInUltraWideCamera,
   .builtInWideAngleCamera,
@@ -45,7 +36,7 @@ func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
 
   var seenDeviceIDs = Set<String>()
   let discoverySession = AVCaptureDevice.DiscoverySession(
-    deviceTypes: selectableCameraTypes,
+    deviceTypes: physicalLensTypes,
     mediaType: .video,
     position: position
   )
@@ -409,6 +400,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
   private func configureVideoMirroring(_ connection: AVCaptureConnection?, isMirrored: Bool) {
     guard let connection else { return }
+    guard connection.isVideoMirroringSupported else { return }
     connection.automaticallyAdjustsVideoMirroring = false
     connection.isVideoMirrored = isMirrored
   }

@@ -1036,7 +1036,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func updateLensControl() {
     let currentDevice = videoCapture.captureDevice
     let position = currentDevice?.position ?? .back
-    lensDevices = position == .front ? currentDevice.map { [$0] } ?? [] : captureDevices(position: position)
+    lensDevices =
+      position == .front ? currentDevice.map { [$0] } ?? [] : captureDevices(position: position)
     if position == .back, let currentDevice,
       !lensDevices.contains(where: { $0.uniqueID == currentDevice.uniqueID })
     {

@@ -108,8 +108,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   let selection = UISelectionFeedbackGenerator()
   private let lensControl = UISegmentedControl()
   private let lensCaptionLabel = UILabel()
-  private let cameraTransitionBlurView = UIVisualEffectView(
-    effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+  private var cameraTransitionView: UIView?
   private var lensDevices = [AVCaptureDevice]()
   private var selectedLensDeviceID: String?
   private var cameraSwitchInProgress = false
@@ -599,10 +598,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func setupUI() {
-    cameraTransitionBlurView.alpha = 0
-    cameraTransitionBlurView.isUserInteractionEnabled = false
-    self.addSubview(cameraTransitionBlurView)
-
     labelName.text = processString(modelName)
     labelName.textAlignment = .center
     labelName.font = UIFont.systemFont(ofSize: 24, weight: .medium)
@@ -730,7 +725,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     self.videoCapture.previewLayer?.frame = self.bounds
-    cameraTransitionBlurView.frame = self.bounds
+    cameraTransitionView?.frame = self.bounds
   }
 
   /// Apply consistent toolbar and button styling
@@ -1058,18 +1053,37 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func showCameraTransitionBlur() {
-    cameraTransitionBlurView.frame = bounds
-    cameraTransitionBlurView.isHidden = false
-    cameraTransitionBlurView.alpha = 1
+    cameraTransitionView?.removeFromSuperview()
+
+    let transitionView = UIView(frame: bounds)
+    transitionView.isUserInteractionEnabled = false
+    transitionView.backgroundColor = .black
+
+    if let snapshot = snapshotView(afterScreenUpdates: false) {
+      snapshot.frame = transitionView.bounds
+      transitionView.addSubview(snapshot)
+    }
+
+    let blurView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    blurView.frame = transitionView.bounds
+    blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    transitionView.addSubview(blurView)
+
+    insertSubview(transitionView, belowSubview: labelName)
+    cameraTransitionView = transitionView
   }
 
   private func hideCameraTransitionBlur() {
+    guard let transitionView = cameraTransitionView else { return }
+    cameraTransitionView = nil
     UIView.animate(
       withDuration: 0.18,
       delay: 0.06,
       options: [.beginFromCurrentState, .curveEaseOut]
     ) {
-      self.cameraTransitionBlurView.alpha = 0
+      transitionView.alpha = 0
+    } completion: { _ in
+      transitionView.removeFromSuperview()
     }
   }
 

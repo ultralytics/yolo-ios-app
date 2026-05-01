@@ -108,6 +108,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   let selection = UISelectionFeedbackGenerator()
   private let lensControl = UISegmentedControl()
   private let lensCaptionLabel = UILabel()
+  private let cameraTransitionBlurView = UIVisualEffectView(
+    effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
   private var lensDevices = [AVCaptureDevice]()
   private var selectedLensDeviceID: String?
   private var cameraSwitchInProgress = false
@@ -597,6 +599,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func setupUI() {
+    cameraTransitionBlurView.alpha = 0
+    cameraTransitionBlurView.isUserInteractionEnabled = false
+    self.addSubview(cameraTransitionBlurView)
+
     labelName.text = processString(modelName)
     labelName.textAlignment = .center
     labelName.font = UIFont.systemFont(ofSize: 24, weight: .medium)
@@ -724,6 +730,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     self.videoCapture.previewLayer?.frame = self.bounds
+    cameraTransitionBlurView.frame = self.bounds
   }
 
   /// Apply consistent toolbar and button styling
@@ -1016,8 +1023,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   private func switchToCamera(_ device: AVCaptureDevice) {
     guard !cameraSwitchInProgress else { return }
+    let changesPosition = videoCapture.captureDevice?.position != device.position
     cameraSwitchInProgress = true
     setCameraControlsEnabled(false)
+    if changesPosition {
+      showCameraTransitionBlur()
+    }
 
     videoCapture.selectCaptureDevice(device, videoOrientation: currentVideoOrientation()) {
       [weak self] success in
@@ -1025,6 +1036,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
       self.cameraSwitchInProgress = false
       self.setCameraControlsEnabled(true)
+      if changesPosition {
+        self.applyPreviewConnection(for: self.videoCapture.captureDevice ?? device)
+        self.hideCameraTransitionBlur()
+      }
 
       guard success else {
         self.updateLensControl()
@@ -1040,6 +1055,32 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self.labelZoom.text = self.zoomLabelText(rawZoomFactor: rawZoomFactor, device: activeDevice)
       self.updateLensControl()
     }
+  }
+
+  private func showCameraTransitionBlur() {
+    cameraTransitionBlurView.frame = bounds
+    cameraTransitionBlurView.isHidden = false
+    cameraTransitionBlurView.alpha = 1
+  }
+
+  private func hideCameraTransitionBlur() {
+    UIView.animate(
+      withDuration: 0.18,
+      delay: 0.06,
+      options: [.beginFromCurrentState, .curveEaseOut]
+    ) {
+      self.cameraTransitionBlurView.alpha = 0
+    }
+  }
+
+  private func applyPreviewConnection(for device: AVCaptureDevice) {
+    guard let connection = videoCapture.previewLayer?.connection else { return }
+    if connection.isVideoOrientationSupported {
+      connection.videoOrientation = currentVideoOrientation()
+    }
+    guard connection.isVideoMirroringSupported else { return }
+    connection.automaticallyAdjustsVideoMirroring = false
+    connection.isVideoMirrored = device.position == .front
   }
 
   private func setCameraControlsEnabled(_ isEnabled: Bool) {

@@ -303,6 +303,10 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       return false
     }
 
+    guard configureCameraDevice(device) else {
+      return false
+    }
+
     captureSession.beginConfiguration()
     defer {
       captureSession.commitConfiguration()
@@ -331,7 +335,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     previewLayer?.connection?.videoOrientation = videoOrientation
     configureVideoMirroring(previewLayer?.connection, isMirrored: device.position == .front)
 
-    return configureCameraDevice(device)
+    return true
   }
 
   private func rampZoom(to zoomFactor: CGFloat, on device: AVCaptureDevice) -> Bool {

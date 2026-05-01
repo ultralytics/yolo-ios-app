@@ -109,7 +109,9 @@ func displayZoomFactor(_ zoomFactor: CGFloat, for device: AVCaptureDevice) -> CG
 func displayZoomFactor(
   for lensDevice: AVCaptureDevice, activeDevice: AVCaptureDevice?
 ) -> CGFloat? {
-  let candidates = [activeDevice, bestCaptureDevice(position: lensDevice.position)].compactMap { $0 }
+  let candidates = [activeDevice, bestCaptureDevice(position: lensDevice.position)].compactMap {
+    $0
+  }
   for candidate in candidates {
     if let zoomFactor = zoomFactor(for: lensDevice, on: candidate) {
       return displayZoomFactor(zoomFactor, for: candidate)

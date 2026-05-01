@@ -1044,8 +1044,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self.selectedLensDeviceID = nil
     }
     if position == .back, let currentDevice, selectedLensDeviceID == nil {
-      selectedLensDeviceID = lensDevice(
-        rawZoomFactor: currentDevice.videoZoomFactor, device: currentDevice)?.uniqueID
+      selectedLensDeviceID =
+        lensDevice(
+          rawZoomFactor: currentDevice.videoZoomFactor, device: currentDevice)?.uniqueID
     }
     lensControl.removeAllSegments()
 

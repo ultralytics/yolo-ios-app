@@ -253,6 +253,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
               self.pendingCameraPosition = nil
               self.switchCameraTapped()
             }
+            if let device = self.videoCapture.captureDevice {
+              self.lastZoomFactor = device.videoZoomFactor
+              self.labelZoom.text = self.zoomLabelText(
+                rawZoomFactor: self.lastZoomFactor, device: device)
+            }
             self.updateLensControl()
 
             self.busy = false

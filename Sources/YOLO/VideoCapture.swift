@@ -421,6 +421,12 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       if device.isExposureModeSupported(.continuousAutoExposure) {
         device.exposureMode = .continuousAutoExposure
       }
+      if #available(iOS 18.0, *), device.position == .back {
+        device.videoZoomFactor = min(
+          max(1 / device.displayVideoZoomFactorMultiplier, device.minAvailableVideoZoomFactor),
+          device.maxAvailableVideoZoomFactor
+        )
+      }
       device.unlockForConfiguration()
       return true
     } catch {

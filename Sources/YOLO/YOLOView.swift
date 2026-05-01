@@ -864,7 +864,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
     infoButton.frame = CGRect(
-      x: shareButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
+      x: width - buttonHeight, y: 0, width: buttonHeight, height: buttonHeight
     )
   }
 

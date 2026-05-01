@@ -1033,7 +1033,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func updateLensControlVisibility() {
-    lensControl.isHidden = switchCameraButton.isHidden || lensDevices.count <= 1
+    let isFrontCamera = videoCapture.captureDevice?.position == .front
+    lensControl.isHidden = switchCameraButton.isHidden || isFrontCamera || lensDevices.count <= 1
     lensCaptionLabel.isHidden = lensControl.isHidden
   }
 

@@ -53,17 +53,7 @@ func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
   let devices = discoverySession.devices
     .filter { seenDeviceIDs.insert($0.uniqueID).inserted }
     .sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
-  let physicalDevices = devices.filter { physicalLensTypes.contains($0.deviceType) }
-  var selectableDevices = physicalDevices.isEmpty ? devices : physicalDevices
-
-  if let defaultDevice = bestCaptureDevice(position: position),
-    defaultDevice.position == position,
-    !selectableDevices.contains(where: { $0.uniqueID == defaultDevice.uniqueID })
-  {
-    selectableDevices.append(defaultDevice)
-  }
-
-  return selectableDevices.sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
+  return devices.filter { physicalLensTypes.contains($0.deviceType) }
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {

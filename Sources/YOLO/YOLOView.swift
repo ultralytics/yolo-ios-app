@@ -752,7 +752,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let totalSliderHeight = (sliderHeight + 3) * 6
     let startY = height - bottomMargin - totalSliderHeight
 
-    let thresholdStartY = startY + (sliderHeight + 3) * 2
+    let thresholdStartY = startY + (sliderHeight + 3) * 2 + 10
 
     labelSliderConf.frame = CGRect(
       x: width * 0.1, y: thresholdStartY,
@@ -805,7 +805,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     let cameraControlsOffset: CGFloat = lensControl.isHidden ? 0 : 64
     let thresholdStartY =
-      center.y + height * 0.16 + sliderHeight * 2 + 20 - cameraControlsOffset
+      center.y + height * 0.16 + sliderHeight * 2 + 40 - cameraControlsOffset
 
     labelSliderConf.frame = CGRect(
       x: leftPadding, y: thresholdStartY,
@@ -1038,15 +1038,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let position = currentDevice?.position ?? .back
     lensDevices =
       position == .front ? currentDevice.map { [$0] } ?? [] : captureDevices(position: position)
-    if position == .back, let currentDevice,
-      !lensDevices.contains(where: { $0.uniqueID == currentDevice.uniqueID })
-    {
-      lensDevices.append(currentDevice)
-    }
     if let selectedLensDeviceID,
       !lensDevices.contains(where: { $0.uniqueID == selectedLensDeviceID })
     {
       self.selectedLensDeviceID = nil
+    }
+    if position == .back, let currentDevice, selectedLensDeviceID == nil {
+      selectedLensDeviceID = lensDevice(
+        rawZoomFactor: currentDevice.videoZoomFactor, device: currentDevice)?.uniqueID
     }
     lensControl.removeAllSegments()
 
@@ -1081,7 +1080,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         return zoomTitle(displayZoomFactor)
       }
       return fallbackLensTitle(for: device)
-    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera: return "Default"
     default: return device.localizedName
     }
   }
@@ -1117,19 +1115,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
 
-    let lensZooms = lensDevices.compactMap { lens -> (device: AVCaptureDevice, zoom: CGFloat)? in
-      guard isPhysicalRearLens(lens), let zoom = zoomFactor(for: lens, on: device)
-      else {
-        return nil
-      }
-      return (lens, zoom)
-    }.sorted { $0.zoom < $1.zoom }
-
-    guard
-      let selectedLens =
-        lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
-        ?? lensZooms.first?.device
-    else {
+    guard let selectedLens = lensDevice(rawZoomFactor: rawZoomFactor, device: device) else {
       return
     }
 
@@ -1138,6 +1124,19 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       lensDevices.firstIndex { $0.uniqueID == selectedLens.uniqueID }
       ?? UISegmentedControl.noSegment
     lensCaptionLabel.text = lensCaption(for: selectedLens)
+  }
+
+  private func lensDevice(rawZoomFactor: CGFloat, device: AVCaptureDevice) -> AVCaptureDevice? {
+    let lensZooms = lensDevices.compactMap { lens -> (device: AVCaptureDevice, zoom: CGFloat)? in
+      guard isPhysicalRearLens(lens), let zoom = zoomFactor(for: lens, on: device)
+      else {
+        return nil
+      }
+      return (lens, zoom)
+    }.sorted { $0.zoom < $1.zoom }
+
+    return lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
+      ?? lensZooms.first?.device
   }
 
   private func isPhysicalRearLens(_ device: AVCaptureDevice) -> Bool {
@@ -1158,8 +1157,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     case .builtInUltraWideCamera: return "Ultra wide camera"
     case .builtInWideAngleCamera: return "Wide camera"
     case .builtInTelephotoCamera: return "Telephoto camera"
-    case .builtInDualWideCamera, .builtInDualCamera, .builtInTripleCamera:
-      return "Default back camera"
     default: return device.localizedName
     }
   }

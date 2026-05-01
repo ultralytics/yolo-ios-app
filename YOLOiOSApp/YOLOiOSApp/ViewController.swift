@@ -657,6 +657,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     adjustLayoutForExternalDisplayIfNeeded()
+    alignLogoWithThresholdSliders()
+  }
+
+  private func alignLogoWithThresholdSliders() {
+    guard logoImage != nil, yoloView != nil else { return }
+    let sliderMidY = (yoloView.sliderConf.frame.midY + yoloView.sliderIoU.frame.midY) / 2
+    guard sliderMidY.isFinite, sliderMidY > 0 else { return }
+
+    logoImage.center = CGPoint(x: logoImage.center.x, y: sliderMidY)
   }
 
   @objc func shareButtonTapped() {

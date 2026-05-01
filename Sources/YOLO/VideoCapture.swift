@@ -114,6 +114,16 @@ extension AVCaptureDevice.DeviceType {
 }
 
 extension AVCaptureVideoOrientation {
+  init?(_ interfaceOrientation: UIInterfaceOrientation) {
+    switch interfaceOrientation {
+    case .portrait: self = .portrait
+    case .portraitUpsideDown: self = .portraitUpsideDown
+    case .landscapeLeft: self = .landscapeLeft
+    case .landscapeRight: self = .landscapeRight
+    default: return nil
+    }
+  }
+
   /// Maps a `UIDeviceOrientation` to the matching video orientation. Unknown device
   /// orientations (face-up/down) return `nil` so callers can preserve the existing setting.
   init?(_ deviceOrientation: UIDeviceOrientation) {
@@ -236,7 +246,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
   func selectCaptureDevice(
     _ device: AVCaptureDevice,
-    orientation: UIDeviceOrientation,
+    videoOrientation: AVCaptureVideoOrientation,
     completion: @escaping (Bool) -> Void
   ) {
     cameraQueue.async { [weak self] in
@@ -245,7 +255,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         return
       }
 
-      let success = self.selectCaptureDeviceSync(device, orientation: orientation)
+      let success = self.selectCaptureDeviceSync(device, videoOrientation: videoOrientation)
       DispatchQueue.main.async {
         completion(success)
       }
@@ -253,25 +263,27 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   }
 
   private func selectCaptureDeviceSync(
-    _ device: AVCaptureDevice, orientation: UIDeviceOrientation
+    _ device: AVCaptureDevice, videoOrientation: AVCaptureVideoOrientation
   ) -> Bool {
-    if device.position == .back, selectVirtualRearLens(device, orientation: orientation) {
+    if device.position == .back,
+      selectVirtualRearLens(device, videoOrientation: videoOrientation)
+    {
       return true
     }
 
     guard captureDevice?.uniqueID != device.uniqueID else { return true }
 
-    return switchCaptureInput(to: device, orientation: orientation)
+    return switchCaptureInput(to: device, videoOrientation: videoOrientation)
   }
 
   private func selectVirtualRearLens(
-    _ lensDevice: AVCaptureDevice, orientation: UIDeviceOrientation
+    _ lensDevice: AVCaptureDevice, videoOrientation: AVCaptureVideoOrientation
   ) -> Bool {
     let candidates = [captureDevice, bestCaptureDevice(position: .back)].compactMap { $0 }
     for virtualDevice in candidates {
       guard let zoomFactor = zoomFactor(for: lensDevice, on: virtualDevice) else { continue }
       if captureDevice?.uniqueID != virtualDevice.uniqueID,
-        !switchCaptureInput(to: virtualDevice, orientation: orientation)
+        !switchCaptureInput(to: virtualDevice, videoOrientation: videoOrientation)
       {
         return false
       }
@@ -281,7 +293,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   }
 
   private func switchCaptureInput(
-    to device: AVCaptureDevice, orientation: UIDeviceOrientation
+    to device: AVCaptureDevice, videoOrientation: AVCaptureVideoOrientation
   ) -> Bool {
     let newInput: AVCaptureDeviceInput
     do {
@@ -313,10 +325,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     captureDevice = device
     configurePhotoOutput(for: device)
 
-    let videoOrientation =
-      AVCaptureVideoOrientation(orientation)
-      ?? videoOutput.connection(with: .video)?.videoOrientation
-      ?? .portrait
     let videoConnection = videoOutput.connection(with: .video)
     videoConnection?.videoOrientation = videoOrientation
     configureVideoMirroring(videoConnection, isMirrored: device.position == .front)

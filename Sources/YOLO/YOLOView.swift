@@ -894,9 +894,22 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   @objc func orientationDidChange() {
-    guard let orientation = AVCaptureVideoOrientation(UIDevice.current.orientation) else { return }
-    videoCapture.updateVideoOrientation(orientation: orientation)
+    videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
     videoCapture.frameSizeCaptured = false
+  }
+
+  private func currentVideoOrientation() -> AVCaptureVideoOrientation {
+    if let interfaceOrientation = window?.windowScene?.interfaceOrientation,
+      let videoOrientation = AVCaptureVideoOrientation(interfaceOrientation)
+    {
+      return videoOrientation
+    }
+
+    if let videoOrientation = AVCaptureVideoOrientation(UIDevice.current.orientation) {
+      return videoOrientation
+    }
+
+    return videoCapture.previewLayer?.connection?.videoOrientation ?? .portrait
   }
 
   @objc public func sliderChanged(_ sender: Any) {
@@ -1006,7 +1019,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     cameraSwitchInProgress = true
     setCameraControlsEnabled(false)
 
-    videoCapture.selectCaptureDevice(device, orientation: UIDevice.current.orientation) {
+    videoCapture.selectCaptureDevice(device, videoOrientation: currentVideoOrientation()) {
       [weak self] success in
       guard let self else { return }
 

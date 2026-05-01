@@ -177,7 +177,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     [
       yoloView.labelZoom, yoloView.activityIndicator,
       yoloView.playButton, yoloView.pauseButton,
-      yoloView.switchCameraButton,
+      yoloView.switchCameraButton, yoloView.infoButton,
     ].forEach { $0.isHidden = true }
   }
 

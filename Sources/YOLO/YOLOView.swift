@@ -104,6 +104,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public var pauseButton = UIButton()
   public var switchCameraButton = UIButton()
   public var shareButton = UIButton()
+  public var infoButton = UIButton()
   public var toolbar = UIView()
   let selection = UISelectionFeedbackGenerator()
   private let lensControl = UISegmentedControl()
@@ -651,12 +652,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       UIImage(systemName: "camera.rotate", withConfiguration: config), for: .normal)
     shareButton.setImage(
       UIImage(systemName: "square.and.arrow.up", withConfiguration: config), for: .normal)
+    infoButton.setImage(UIImage(systemName: "info.circle", withConfiguration: config), for: .normal)
+    infoButton.accessibilityLabel = "Ultralytics"
 
     playButton.isEnabled = false
     pauseButton.isEnabled = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
     pauseButton.addTarget(self, action: #selector(pauseTapped), for: .touchUpInside)
     switchCameraButton.addTarget(self, action: #selector(switchCameraTapped), for: .touchUpInside)
+    infoButton.addTarget(self, action: #selector(infoTapped), for: .touchUpInside)
 
     setupToolbar()
     setupLensControl()
@@ -677,7 +681,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   /// Setup toolbar with consistent styling
   private func setupToolbar() {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
+    [playButton, pauseButton, switchCameraButton, shareButton, infoButton].forEach { button in
       button.tintColor = .white
       toolbar.addSubview(button)
     }
@@ -732,7 +736,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func applyToolbarStyling(isLandscape: Bool) {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
     let buttonColor: UIColor = isLandscape ? .white : .white
-    [playButton, pauseButton, switchCameraButton, shareButton].forEach { button in
+    [playButton, pauseButton, switchCameraButton, shareButton, infoButton].forEach { button in
       button.tintColor = buttonColor
     }
   }
@@ -860,6 +864,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     shareButton.frame = CGRect(
       x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
+    infoButton.frame = CGRect(
+      x: width - buttonHeight, y: 0, width: buttonHeight, height: buttonHeight
+    )
   }
 
   private func layoutLensControl(width: CGFloat, height: CGFloat) {
@@ -868,7 +875,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let controlHeight: CGFloat = 34
     let captionHeight: CGFloat = 14
     let zoomHeight: CGFloat = 18
-    let controlWidth = min(max(CGFloat(lensDevices.count) * 60, 104), width - 40)
+    let controlWidth = min(CGFloat(lensDevices.count) * 60, width - 40)
     lensControl.frame = CGRect(
       x: (width - controlWidth) / 2,
       y: height - toolBarHeight - controlHeight - 14,
@@ -1014,6 +1021,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
     switchToCamera(lensDevices[sender.selectedSegmentIndex])
+  }
+
+  @objc private func infoTapped() {
+    selection.selectionChanged()
+    if let url = URL(string: "https://www.ultralytics.com") {
+      UIApplication.shared.open(url)
+    }
   }
 
   private func switchToCamera(_ device: AVCaptureDevice) {

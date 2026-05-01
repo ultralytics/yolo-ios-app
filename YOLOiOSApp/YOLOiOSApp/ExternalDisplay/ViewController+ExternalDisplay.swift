@@ -110,6 +110,7 @@ extension ViewController {
         [
           self.yoloView.switchCameraButton,
           self.yoloView.shareButton,
+          self.yoloView.infoButton,
         ].forEach { $0.isHidden = true }
         self.modelSegmentedControl.setNeedsLayout()
         self.modelSegmentedControl.layoutIfNeeded()
@@ -167,6 +168,7 @@ extension ViewController {
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
+        self.yoloView.infoButton,
       ].forEach { $0.isHidden = false }
 
       self.yoloView.resume()

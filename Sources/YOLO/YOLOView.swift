@@ -1128,9 +1128,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return (lens, zoom)
     }.sorted { $0.zoom < $1.zoom }
 
-    guard let selectedLens =
-      lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
-      ?? lensZooms.first?.device
+    guard
+      let selectedLens =
+        lensZooms.last(where: { rawZoomFactor >= $0.zoom - 0.01 })?.device
+        ?? lensZooms.first?.device
     else {
       return
     }

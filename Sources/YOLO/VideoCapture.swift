@@ -52,8 +52,16 @@ func captureDevices(position: AVCaptureDevice.Position) -> [AVCaptureDevice] {
     .filter { seenDeviceIDs.insert($0.uniqueID).inserted }
     .sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
   let physicalDevices = devices.filter { physicalLensTypes.contains($0.deviceType) }
+  var selectableDevices = physicalDevices.isEmpty ? devices : physicalDevices
 
-  return physicalDevices.count > 1 ? physicalDevices : devices
+  if let defaultDevice = bestCaptureDevice(position: position),
+    defaultDevice.position == position,
+    !selectableDevices.contains(where: { $0.uniqueID == defaultDevice.uniqueID })
+  {
+    selectableDevices.append(defaultDevice)
+  }
+
+  return selectableDevices.sorted { $0.deviceType.lensSortOrder < $1.deviceType.lensSortOrder }
 }
 
 func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
@@ -74,15 +82,15 @@ func bestCaptureDevice(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
   }
 }
 
-extension AVCaptureDevice.DeviceType {
-  fileprivate var lensSortOrder: Int {
+private extension AVCaptureDevice.DeviceType {
+  var lensSortOrder: Int {
     switch self {
     case .builtInUltraWideCamera: return 0
     case .builtInWideAngleCamera: return 1
-    case .builtInDualWideCamera: return 2
-    case .builtInDualCamera: return 3
-    case .builtInTripleCamera: return 4
-    case .builtInTelephotoCamera: return 5
+    case .builtInTelephotoCamera: return 2
+    case .builtInDualWideCamera: return 3
+    case .builtInDualCamera: return 4
+    case .builtInTripleCamera: return 5
     case .builtInTrueDepthCamera: return 6
     default: return 7
     }
@@ -179,6 +187,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
     previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     previewLayer.connection?.videoOrientation = videoOrientation
+    configureVideoMirroring(previewLayer.connection, isMirrored: position == .front)
     self.previewLayer = previewLayer
 
     let settings: [String: Any] = [
@@ -200,9 +209,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     // rotated by 90 degrees. Need to set this _after_ addOutput()!
     let connection = videoOutput.connection(with: AVMediaType.video)
     connection?.videoOrientation = videoOrientation
-    if position == .front {
-      connection?.isVideoMirrored = true
-    }
+    configureVideoMirroring(connection, isMirrored: position == .front)
 
     guard configureCameraDevice(device) else {
       return false
@@ -247,9 +254,9 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       ?? .portrait
     let videoConnection = videoOutput.connection(with: .video)
     videoConnection?.videoOrientation = videoOrientation
-    videoConnection?.isVideoMirrored = device.position == .front
+    configureVideoMirroring(videoConnection, isMirrored: device.position == .front)
     previewLayer?.connection?.videoOrientation = videoOrientation
-    previewLayer?.connection?.isVideoMirrored = device.position == .front
+    configureVideoMirroring(previewLayer?.connection, isMirrored: device.position == .front)
 
     guard configureCameraDevice(device) else {
       captureSession.commitConfiguration()
@@ -300,13 +307,15 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
     connection.videoOrientation = orientation
     let currentInput = self.captureSession.inputs.first as? AVCaptureDeviceInput
-    if currentInput?.device.position == .front {
-      connection.isVideoMirrored = true
-    } else {
-      connection.isVideoMirrored = false
-    }
+    configureVideoMirroring(connection, isMirrored: currentInput?.device.position == .front)
     self.previewLayer?.connection?.videoOrientation = connection.videoOrientation
-    self.previewLayer?.connection?.isVideoMirrored = connection.isVideoMirrored
+    configureVideoMirroring(self.previewLayer?.connection, isMirrored: connection.isVideoMirrored)
+  }
+
+  private func configureVideoMirroring(_ connection: AVCaptureConnection?, isMirrored: Bool) {
+    guard let connection else { return }
+    connection.automaticallyAdjustsVideoMirroring = false
+    connection.isVideoMirrored = isMirrored
   }
 
   private func configurePhotoOutput(for device: AVCaptureDevice) {

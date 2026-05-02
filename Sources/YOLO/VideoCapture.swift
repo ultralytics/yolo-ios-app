@@ -154,6 +154,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   var shortSide: CGFloat = 4
   var frameSizeCaptured = false
 
+  private var currentBuffer: CVPixelBuffer?
   private lazy var imageContext = CIContext()
   private var frameCaptureCompletion: ((UIImage?) -> Void)?
 
@@ -383,15 +384,19 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   }
 
   private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
-    guard let predictor = predictor else { return }
-    if !frameSizeCaptured, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
-      let frameWidth = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
-      let frameHeight = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
-      longSide = max(frameWidth, frameHeight)
-      shortSide = min(frameWidth, frameHeight)
+    guard let predictor = predictor, currentBuffer == nil,
+      let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+    else { return }
+    currentBuffer = pixelBuffer
+    if !frameSizeCaptured {
+      let w = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+      let h = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+      longSide = max(w, h)
+      shortSide = min(w, h)
       frameSizeCaptured = true
     }
     predictor.predict(sampleBuffer: sampleBuffer, onResultsListener: self, onInferenceTime: self)
+    currentBuffer = nil
   }
 
   func updateVideoOrientation(orientation: AVCaptureVideoOrientation) {

@@ -25,31 +25,17 @@ struct ModelEntry {
   let displayName: String
   let identifier: String
   let isLocalBundle: Bool
-  let isRemote: Bool
   let remoteURL: URL?
-
-  init(
-    displayName: String, identifier: String, isLocalBundle: Bool = false, isRemote: Bool = false,
-    remoteURL: URL? = nil
-  ) {
-    self.displayName = displayName
-    self.identifier = identifier
-    self.isLocalBundle = isLocalBundle
-    self.isRemote = isRemote
-    self.remoteURL = remoteURL
-  }
 }
 
 class ModelCacheManager {
   static let shared = ModelCacheManager()
-  var modelCache: [String: MLModel] = [:]
+  private var modelCache: [String: MLModel] = [:]
   private var accessOrder: [String] = []
   private let cacheLimit = 3
-  private var currentSelectedModelKey: String?
 
   private init() {}
 
-  /// Update cache access order for key.
   private func updateAccessOrder(for key: String) {
     if let index = accessOrder.firstIndex(of: key) {
       accessOrder.remove(at: index)
@@ -57,33 +43,11 @@ class ModelCacheManager {
     accessOrder.append(key)
   }
 
-  /// Get model URL in documents directory.
   private func modelURL(for key: String) -> URL {
     documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
   }
 
-  func loadBundledModel() {
-    guard let url = getModelFileURL(fileName: "yolov8m"),
-      let bundledModel = try? MLModel(contentsOf: url)
-    else {
-      print("Failed to load bundled model")
-      return
-    }
-
-    addModelToCache(bundledModel, for: "yolov8m")
-    let destinationURL = modelURL(for: "yolov8m")
-
-    do {
-      if !FileManager.default.fileExists(atPath: destinationURL.path) {
-        try FileManager.default.copyItem(at: url, to: destinationURL)
-        print("File copied to documents directory: \(destinationURL.path)")
-      }
-    } catch {
-      print("Error copying file: \(error)")
-    }
-  }
-
-  func loadLocalModel(key: String, completion: @escaping (MLModel?, String) -> Void) {
+  private func loadLocalModel(key: String, completion: @escaping (MLModel?, String) -> Void) {
     if let cachedModel = modelCache[key] {
       updateAccessOrder(for: key)
       completion(cachedModel, key)
@@ -91,14 +55,13 @@ class ModelCacheManager {
     }
 
     let localModelURL = modelURL(for: key)
-    guard FileManager.default.fileExists(atPath: localModelURL.path) else { return }
-
     do {
       let model = try MLModel(contentsOf: localModelURL)
       addModelToCache(model, for: key)
       completion(model, key)
     } catch {
       print("Error loading local model: \(error)")
+      completion(nil, key)
     }
   }
 
@@ -132,82 +95,30 @@ class ModelCacheManager {
   func isModelDownloaded(key: String) -> Bool {
     FileManager.default.fileExists(atPath: modelURL(for: key).path)
   }
-
-  func prioritizeDownload(for fileName: String, completion: @escaping (MLModel?, String) -> Void) {
-    ModelDownloadManager.shared.prioritizeDownload(for: fileName, completion: completion)
-  }
-
-  func setCurrentSelectedModelKey(_ key: String) { currentSelectedModelKey = key }
-  func getCurrentSelectedModelKey() -> String? { currentSelectedModelKey }
 }
 
 class ModelDownloadManager: NSObject {
   static let shared = ModelDownloadManager()
   private var downloadTasks: [URLSessionDownloadTask: (url: URL, key: String)] = [:]
   private var downloadCompletionHandlers: [URLSessionDownloadTask: (MLModel?, String) -> Void] = [:]
-  private var priorityTask: URLSessionDownloadTask?
+  private lazy var session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
   var progressHandler: ((Double) -> Void)?
 
   private override init() {}
 
-  /// Complete download task and cleanup.
   private func completeTask(_ task: URLSessionDownloadTask, model: MLModel?, key: String) {
     downloadCompletionHandlers[task]?(model, key)
     downloadCompletionHandlers.removeValue(forKey: task)
   }
 
-  /// Create priority download task.
-  private func createPriorityTask(
-    from task: URLSessionDownloadTask, urlKeyPair: (url: URL, key: String),
-    completion: @escaping (MLModel?, String) -> Void
-  ) {
-    let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
-    let priorityDownloadTask = session.downloadTask(with: task.originalRequest!)
-    priorityDownloadTask.priority = URLSessionTask.highPriority
-    downloadTasks[priorityDownloadTask] = urlKeyPair
-    downloadCompletionHandlers[priorityDownloadTask] = completion
-    priorityTask = priorityDownloadTask
-    priorityDownloadTask.resume()
-  }
-
   func startDownload(
     url: URL, fileName: String, key: String, completion: @escaping (MLModel?, String) -> Void
   ) {
-    let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
     let downloadTask = session.downloadTask(with: url)
     let destinationURL = documentsDirectory.appendingPathComponent(fileName)
     downloadTasks[downloadTask] = (url: destinationURL, key: key)
     downloadCompletionHandlers[downloadTask] = completion
     downloadTask.resume()
-  }
-
-  func prioritizeDownload(for fileName: String, completion: @escaping (MLModel?, String) -> Void) {
-    for (task, urlKeyPair) in downloadTasks {
-      guard urlKeyPair.url.lastPathComponent.contains(fileName) else { continue }
-
-      task.cancel(byProducingResumeData: { resumeData in
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
-        let priorityDownloadTask: URLSessionDownloadTask
-
-        if let resumeData = resumeData {
-          priorityDownloadTask = session.downloadTask(withResumeData: resumeData)
-        } else {
-          priorityDownloadTask = session.downloadTask(with: task.originalRequest!)
-        }
-
-        priorityDownloadTask.priority = URLSessionTask.highPriority
-        self.downloadTasks[priorityDownloadTask] = urlKeyPair
-        self.downloadCompletionHandlers[priorityDownloadTask] = completion
-        self.priorityTask = priorityDownloadTask
-        priorityDownloadTask.resume()
-      })
-      break
-    }
-  }
-
-  func cancelCurrentDownload() {
-    priorityTask?.cancel()
-    priorityTask = nil
   }
 }
 
@@ -222,7 +133,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
 
     do {
       let zipURL = destinationURL
-      if fileExists(at: zipURL) {
+      if FileManager.default.fileExists(atPath: zipURL.path) {
         try FileManager.default.removeItem(at: zipURL)
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
@@ -300,47 +211,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
     totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
   ) {
+    guard totalBytesExpectedToWrite > 0 else { return }
     let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
     DispatchQueue.main.async { self.progressHandler?(progress) }
-  }
-}
-
-class ModelFileManager {
-  static let shared = ModelFileManager()
-  private init() {}
-
-  func deleteAllDownloadedModels() {
-    do {
-      let fileURLs = try FileManager.default.contentsOfDirectory(
-        at: documentsDirectory, includingPropertiesForKeys: nil)
-      for fileURL in fileURLs
-      where ["mlmodel", "mlmodelc", "mlpackage"].contains(fileURL.pathExtension) {
-        try FileManager.default.removeItem(at: fileURL)
-        print("Deleted file: \(fileURL.lastPathComponent)")
-      }
-    } catch {
-      print("Error deleting files: \(error)")
-    }
-  }
-}
-
-func getModelFileURL(fileName: String) -> URL? {
-  Bundle.main.url(forResource: fileName, withExtension: "mlmodelc")
-}
-
-func fileExists(at url: URL) -> Bool {
-  FileManager.default.fileExists(atPath: url.path)
-}
-
-extension URL {
-  func changingFileExtension(to newExtension: String) -> URL? {
-    var urlString = self.absoluteString
-    if let range = urlString.range(of: "\\.[^./]*$", options: .regularExpression) {
-      urlString.replaceSubrange(range, with: ".\(newExtension)")
-    } else {
-      urlString.append(".\(newExtension)")
-    }
-    return URL(string: urlString)
   }
 }
 

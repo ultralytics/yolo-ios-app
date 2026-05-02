@@ -61,8 +61,7 @@ public final class YOLOModelCache {
   public func cacheKey(for url: URL, task: YOLOTask? = nil) -> String {
     let urlString =
       task.map { url.absoluteString + "_" + String(describing: $0) } ?? url.absoluteString
-    let key = urlString.data(using: .utf8)?.sha256() ?? url.lastPathComponent
-    return key.replacingOccurrences(of: "/", with: "_")
+    return Data(urlString.utf8).sha256()
   }
 
   /// Check if model is cached

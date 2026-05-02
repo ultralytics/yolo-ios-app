@@ -217,9 +217,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     let scaleFactor = calculateScaleFactor(for: view.bounds.size)
     setupConstraints(scaleFactor: scaleFactor)
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-      self.hideYOLOViewControls()
-      // Don't load initial model - wait for main app to notify us
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+      self?.hideYOLOViewControls()
       NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
     }
   }
@@ -271,38 +270,19 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       }
     }
 
-    // Determine the actual model path to use
     var actualModelPath = modelName
-
-    // Check if this is a full path (local bundle model) or just an identifier (downloaded model)
     if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage")
       && !modelName.contains(".mlmodel")
     {
-      // This is a downloaded model identifier
-      // First check if the model is actually downloaded
-      if ModelCacheManager.shared.isModelDownloaded(key: modelName) {
-        // Construct the full path for the downloaded model
-        let documentsDirectory = FileManager.default.urls(
-          for: .documentDirectory, in: .userDomainMask)[0]
-        let localModelURL = documentsDirectory.appendingPathComponent(modelName)
-          .appendingPathExtension("mlmodelc")
-        actualModelPath = localModelURL.path
-        print("📱 External display loading cached model from: \(actualModelPath)")
-      } else {
-        print("❌ Model not downloaded yet: \(modelName)")
-        return  // Exit early if model is not downloaded
-      }
-    } else {
-      print("📱 External display loading bundle model from: \(actualModelPath)")
+      guard ModelCacheManager.shared.isModelDownloaded(key: modelName) else { return }
+      let documentsDirectory = FileManager.default.urls(
+        for: .documentDirectory, in: .userDomainMask)[0]
+      actualModelPath = documentsDirectory.appendingPathComponent(modelName)
+        .appendingPathExtension("mlmodelc").path
     }
 
-    let capturedModelPath = actualModelPath
-    yoloView?.setModel(modelPathOrName: capturedModelPath, task: task) { [weak self] result in
-      guard case .success = result else {
-        print("❌ Failed to load model on external display: \(capturedModelPath)")
-        return
-      }
-
+    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+      guard case .success = result else { return }
       DispatchQueue.main.async {
         self?.updateModelNameLabel()
         self?.yoloView?.setNeedsDisplay()
@@ -344,10 +324,9 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       return
     }
 
-    // Find the task in our tasks array and update segment control
     if let taskIndex = tasks.firstIndex(where: { $0.name == taskName }) {
-      DispatchQueue.main.async {
-        self.segmentedControl.selectedSegmentIndex = taskIndex
+      DispatchQueue.main.async { [weak self] in
+        self?.segmentedControl.selectedSegmentIndex = taskIndex
       }
     }
   }

@@ -56,7 +56,6 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    let result = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: labels)
 
     do {
       try requestHandler.perform([request])
@@ -99,7 +98,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     } catch {
       YOLOLog.error("Pose estimation failed: \(error)")
     }
-    return result
+    return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
   }
 
   func PostProcessPose(
@@ -122,16 +121,12 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     let numAnchors = shape[2]
     let featureCount = shape[1] - 5
 
-    var boxes = [CGRect]()
-    var scores = [Float]()
-    var features = [[Float]]()
-
     // Wrapper for thread-safe collections
     final class CollectionsWrapper: @unchecked Sendable {
       private let lock = NSLock()
-      private var boxes: [CGRect] = []
-      private var scores: [Float] = []
-      private var features: [[Float]] = []
+      private(set) var boxes: [CGRect] = []
+      private(set) var scores: [Float] = []
+      private(set) var features: [[Float]] = []
 
       func append(box: CGRect, score: Float, feature: [Float]) {
         lock.lock()
@@ -139,10 +134,6 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         scores.append(score)
         features.append(feature)
         lock.unlock()
-      }
-
-      func getCollections() -> (boxes: [CGRect], scores: [Float], features: [[Float]]) {
-        return (boxes, scores, features)
       }
     }
 
@@ -156,38 +147,31 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     let collectionsWrapper = CollectionsWrapper()
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-      let confIndex = 4 * numAnchors + j
-      let confidence = pointerWrapper.pointer[confIndex]
+      let confidence = pointerWrapper.pointer[4 * numAnchors + j]
+      guard confidence > confidenceThreshold else { return }
 
-      if confidence > confidenceThreshold {
-        let x = pointerWrapper.pointer[j]
-        let y = pointerWrapper.pointer[numAnchors + j]
-        let width = pointerWrapper.pointer[2 * numAnchors + j]
-        let height = pointerWrapper.pointer[3 * numAnchors + j]
+      let x = pointerWrapper.pointer[j]
+      let y = pointerWrapper.pointer[numAnchors + j]
+      let width = pointerWrapper.pointer[2 * numAnchors + j]
+      let height = pointerWrapper.pointer[3 * numAnchors + j]
 
-        let boxWidth = CGFloat(width)
-        let boxHeight = CGFloat(height)
-        let boxX = CGFloat(x - width / 2.0)
-        let boxY = CGFloat(y - height / 2.0)
-        let boundingBox = CGRect(
-          x: boxX, y: boxY,
-          width: boxWidth, height: boxHeight)
+      let boundingBox = CGRect(
+        x: CGFloat(x - width / 2),
+        y: CGFloat(y - height / 2),
+        width: CGFloat(width),
+        height: CGFloat(height))
 
-        var boxFeatures = [Float](repeating: 0, count: featureCount)
-        for k in 0..<featureCount {
-          let key = (5 + k) * numAnchors + j
-          boxFeatures[k] = pointerWrapper.pointer[key]
-        }
-
-        collectionsWrapper.append(box: boundingBox, score: confidence, feature: boxFeatures)
+      var boxFeatures = [Float](repeating: 0, count: featureCount)
+      for k in 0..<featureCount {
+        boxFeatures[k] = pointerWrapper.pointer[(5 + k) * numAnchors + j]
       }
+
+      collectionsWrapper.append(box: boundingBox, score: confidence, feature: boxFeatures)
     }
 
-    // Get collections from wrapper
-    let collections = collectionsWrapper.getCollections()
-    boxes = collections.boxes
-    scores = collections.scores
-    features = collections.features
+    let boxes = collectionsWrapper.boxes
+    let scores = collectionsWrapper.scores
+    let features = collectionsWrapper.features
 
     let selectedIndices = nonMaxSuppression(boxes: boxes, scores: scores, threshold: iouThreshold)
 

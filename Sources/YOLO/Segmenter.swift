@@ -165,30 +165,19 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let maskConfidenceLength = 32
     let numClasses = numFeatures - boxFeatureLength - maskConfidenceLength
 
-    // Pre-allocate result arrays with estimated capacity
-    let estimatedCapacity = min(numAnchors / 10, 100)  // Estimate ~10% detection rate
-    let resultsWrapper = ResultsWrapper(capacity: estimatedCapacity)
-
     // Wrapper for thread-safe results collection
     final class ResultsWrapper: @unchecked Sendable {
       private let lock = NSLock()
-      private var results: [(CGRect, Int, Float, MLMultiArray)]
-
-      init(capacity: Int) {
-        self.results = []
-        self.results.reserveCapacity(capacity)
-      }
+      private(set) var results: [(CGRect, Int, Float, MLMultiArray)] = []
 
       func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
         lock.lock()
         results.append(result)
         lock.unlock()
       }
-
-      func getResults() -> [(CGRect, Int, Float, MLMultiArray)] {
-        return results
-      }
     }
+
+    let resultsWrapper = ResultsWrapper()
 
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
@@ -244,18 +233,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
       }
     }
 
-    // Get results from wrapper
-    let collectedResults = resultsWrapper.getResults()
+    let collectedResults = resultsWrapper.results
 
-    // Optimize NMS by grouping results by class first
+    // Group results by class for per-class NMS
     var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
     for result in collectedResults {
-      let classIndex = result.1
-      if classBuckets[classIndex] == nil {
-        classBuckets[classIndex] = []
-        classBuckets[classIndex]!.reserveCapacity(collectedResults.count / numClasses + 1)
-      }
-      classBuckets[classIndex]?.append(result)
+      classBuckets[result.1, default: []].append(result)
     }
 
     var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []

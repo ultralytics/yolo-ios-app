@@ -35,14 +35,11 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
   /// Sets up the view and initializes the YOLO model.
   override func viewDidLoad() {
     super.viewDidLoad()
-    //      view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(presentPhPicker)))
-    // Initialize YOLO model with a segmentation task
-    // You can change the model or task type to use detection, classification, etc.
-    model = YOLO("yolo26n", task: .detect) { [self] result in
+    // Initialize YOLO model. Change modelPathOrName/task to use other model types.
+    model = YOLO("yolo26n", task: .detect) { [weak self] result in
       switch result {
-      case .success(_):
-        print("predictor initialized")
-        setupView()
+      case .success:
+        self?.setupView()
       case .failure(let error):
         fatalError(error.localizedDescription)
       }
@@ -50,26 +47,18 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
   }
 
   /// Handles the result from the photo picker and performs YOLO inference on the selected image.
-  ///
-  /// - Parameters:
-  ///   - picker: The photo picker view controller.
-  ///   - results: The array of selected photo picker results.
   func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
     picker.dismiss(animated: true)
-    guard let result = results.first else { return }
-    if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
-      result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-        if let image = image as? UIImage, let safeSelf = self {
-          let correctOrientImage = safeSelf.getCorrectOrientationUIImage(uiImage: image)
-          let date = Date()
-          let result = safeSelf.model(correctOrientImage)
-          let time = Date().timeIntervalSince(date)
-          print(result)
-          DispatchQueue.main.async {
-            UIImageWriteToSavedPhotosAlbum(result.annotatedImage!, self, nil, nil)
-            safeSelf.imageView.image = result.annotatedImage
-          }
-        }
+    guard let provider = results.first?.itemProvider,
+      provider.canLoadObject(ofClass: UIImage.self)
+    else { return }
+
+    provider.loadObject(ofClass: UIImage.self) { [weak self] image, _ in
+      guard let self = self, let image = image as? UIImage else { return }
+      let oriented = self.getCorrectOrientationUIImage(uiImage: image)
+      let inference = self.model(oriented)
+      DispatchQueue.main.async {
+        self.imageView.image = inference.annotatedImage
       }
     }
   }

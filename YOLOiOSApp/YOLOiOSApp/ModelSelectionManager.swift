@@ -23,17 +23,10 @@ struct ModelSelectionManager {
     let name: String
     let url: URL?
     let isLocal: Bool
-    let size: ModelSize?
   }
 
-  private static let modelSizeRegex: NSRegularExpression = {
-    do {
-      return try NSRegularExpression(pattern: "^\\d+([nsmxl])", options: [])
-    } catch {
-      print("Failed to create model size regex: \(error)")
-      return try! NSRegularExpression(pattern: "^$", options: [])
-    }
-  }()
+  private static let modelSizeRegex = try! NSRegularExpression(
+    pattern: "^\\d+([nsmxl])", options: [])
 
   static func categorizeModels(from models: [(name: String, url: URL?, isLocal: Bool)])
     -> [ModelSize: ModelInfo]
@@ -52,8 +45,7 @@ struct ModelSelectionManager {
           standardModels[size] = ModelInfo(
             name: model.name,
             url: model.url,
-            isLocal: model.isLocal,
-            size: size
+            isLocal: model.isLocal
           )
         }
       }
@@ -188,32 +180,21 @@ struct ModelSelectionManager {
   private static func setSegmentTextColor(
     _ control: UISegmentedControl, at index: Int, color: UIColor
   ) {
-    if #available(iOS 13.0, *) {
-      if let title = control.titleForSegment(at: index) {
-        control.setTitle(title, forSegmentAt: index)
+    guard let title = control.titleForSegment(at: index) else { return }
+    control.setTitle(title, forSegmentAt: index)
 
-        if let image = control.imageForSegment(at: index) {
-          control.setImage(
-            image.withTintColor(color, renderingMode: .alwaysOriginal), forSegmentAt: index)
-        }
+    if let image = control.imageForSegment(at: index) {
+      control.setImage(
+        image.withTintColor(color, renderingMode: .alwaysOriginal), forSegmentAt: index)
+    }
 
-        control.subviews.forEach { subview in
-          if subview.subviews.count > 0 {
-            subview.subviews.forEach { label in
-              if let label = label as? UILabel, label.text == title {
-                label.textColor = color
-              }
-            }
-          }
+    control.subviews.forEach { subview in
+      subview.subviews.forEach { label in
+        if let label = label as? UILabel, label.text == title {
+          label.textColor = color
         }
       }
     }
-  }
-
-  static func getModelForSelection(size: ModelSize, standardModels: [ModelSize: ModelInfo])
-    -> ModelInfo?
-  {
-    return standardModels[size]
   }
 
   private static func setupResponsiveFontSize(for control: UISegmentedControl) {

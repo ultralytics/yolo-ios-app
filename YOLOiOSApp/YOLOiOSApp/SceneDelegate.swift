@@ -64,27 +64,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   private func updateOrientationLock() {
-    // Force orientation update
-    if let windowScene = window?.windowScene {
-      if #available(iOS 16.0, *) {
-        windowScene.requestGeometryUpdate(
-          .iOS(interfaceOrientations: supportedInterfaceOrientations))
-
-        // Also force the view controller to update its orientation
-        if let rootVC = window?.rootViewController {
-          rootVC.setNeedsUpdateOfSupportedInterfaceOrientations()
-        }
-      } else {
-        // For older iOS versions, we need to trigger orientation update
-        UIViewController.attemptRotationToDeviceOrientation()
-
-        // Force the view to layout again
-        if let rootVC = window?.rootViewController {
-          rootVC.view.setNeedsLayout()
-          rootVC.view.layoutIfNeeded()
-        }
-      }
-    }
+    guard let windowScene = window?.windowScene else { return }
+    windowScene.requestGeometryUpdate(
+      .iOS(interfaceOrientations: supportedInterfaceOrientations))
+    window?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
   }
 
   var supportedInterfaceOrientations: UIInterfaceOrientationMask {
@@ -97,23 +80,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
   }
 
-  func sceneDidDisconnect(_ scene: UIScene) {
-    // Called as the scene is being released by the system.
-  }
-
-  func sceneDidBecomeActive(_ scene: UIScene) {
-    // Called when the scene has moved from an inactive state to an active state.
-  }
-
-  func sceneWillResignActive(_ scene: UIScene) {
-    // Called when the scene will move from an active state to an inactive state.
-  }
-
-  func sceneWillEnterForeground(_ scene: UIScene) {
-    // Called as the scene transitions from the background to the foreground.
-  }
-
-  func sceneDidEnterBackground(_ scene: UIScene) {
-    // Called as the scene transitions from the foreground to the background.
+  deinit {
+    NotificationCenter.default.removeObserver(self)
   }
 }

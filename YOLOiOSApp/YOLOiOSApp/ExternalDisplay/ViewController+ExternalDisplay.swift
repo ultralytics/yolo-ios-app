@@ -21,74 +21,42 @@ import YOLO
 // MARK: - External Display Support
 extension ViewController {
 
-  // Associated object key for tracking external display state
-  private struct AssociatedKeys {
-    static var isExternalDisplayConnected: UInt8 = 0
-  }
-
-  private var isExternalDisplayConnected: Bool {
-    get {
-      return objc_getAssociatedObject(self, &AssociatedKeys.isExternalDisplayConnected) as? Bool
-        ?? false
-    }
-    set {
-      objc_setAssociatedObject(
-        self, &AssociatedKeys.isExternalDisplayConnected, newValue,
-        .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-    }
-  }
-
-  // Helper function to check for external screens (iOS 16+ compatible)
-  private func hasExternalScreen() -> Bool {
-    if #available(iOS 16.0, *) {
-      return UIApplication.shared.connectedScenes
-        .compactMap { $0 as? UIWindowScene }
-        .contains { $0.screen != UIScreen.main }
-    } else {
-      return UIScreen.screens.count > 1
-    }
+  func hasExternalScreen() -> Bool {
+    UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .contains { $0.screen != UIScreen.main }
   }
 
   func setupExternalDisplayNotifications() {
-    print("Setting up external display notifications")
-
-    // Check if external display is already connected at startup
     if hasExternalScreen() {
-      print("External display already connected at startup - triggering connection handler")
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        guard let self = self else { return }
         self.handleExternalDisplayConnected(Notification(name: .externalDisplayConnected))
       }
     }
 
-    // Listen for external display connection
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleExternalDisplayConnected(_:)),
       name: .externalDisplayConnected,
       object: nil
     )
-
-    // Listen for external display disconnection
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleExternalDisplayDisconnected(_:)),
       name: .externalDisplayDisconnected,
       object: nil
     )
-
-    // Listen for when external display is ready
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleExternalDisplayReady(_:)),
       name: .externalDisplayReady,
       object: nil
     )
-
   }
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
     DispatchQueue.main.async {
-      self.isExternalDisplayConnected = true
       self.yoloView.stop()
       self.yoloView.setInferenceFlag(ok: false)
       self.showExternalDisplayStatus()
@@ -96,8 +64,6 @@ extension ViewController {
       self.requestLandscapeOrientation()
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        self.adjustLayoutForExternalDisplayIfNeeded()
-
         self.view.setNeedsLayout()
         self.view.layoutIfNeeded()
         [
@@ -132,13 +98,8 @@ extension ViewController {
 
   private func requestLandscapeOrientation() {
     guard let windowScene = view.window?.windowScene else { return }
-
-    if #available(iOS 16.0, *) {
-      windowScene.requestGeometryUpdate(
-        .iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
-    } else {
-      UIViewController.attemptRotationToDeviceOrientation()
-    }
+    windowScene.requestGeometryUpdate(
+      .iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
   }
 
   func notifyExternalDisplayOfCurrentModel() {
@@ -160,7 +121,6 @@ extension ViewController {
 
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
     DispatchQueue.main.async {
-      self.isExternalDisplayConnected = false
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
 
@@ -186,32 +146,13 @@ extension ViewController {
 
   private func requestPortraitOrientation() {
     guard let windowScene = view.window?.windowScene else { return }
+    windowScene.requestGeometryUpdate(
+      .iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
+    setNeedsUpdateOfSupportedInterfaceOrientations()
 
-    if #available(iOS 16.0, *) {
-      windowScene.requestGeometryUpdate(
-        .iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
-      setNeedsUpdateOfSupportedInterfaceOrientations()
-
-      if UIDevice.current.orientation.isLandscape {
-        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-      }
-    } else {
-      UIViewController.attemptRotationToDeviceOrientation()
-
-      if UIDevice.current.orientation.isLandscape {
-        UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-      }
+    if UIDevice.current.orientation.isLandscape {
+      UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
     }
-  }
-
-  // MARK: - Layout Adjustments for External Display
-
-  func adjustLayoutForExternalDisplayIfNeeded() {
-    let hasExternalDisplay = hasExternalScreen() || SceneDelegate.hasExternalDisplay
-
-    guard hasExternalDisplay else { return }
-
-    // Layout adjustments for external display mode if needed
   }
 
   @objc func handleExternalDisplayReady(_ notification: Notification) {
@@ -238,24 +179,10 @@ extension ViewController {
   }
 
   func checkAndNotifyExternalDisplayIfReady() {
-    let hasExternalDisplay = UIApplication.shared.connectedScenes
-      .compactMap({ $0 as? UIWindowScene })
-      .contains(where: { $0.screen != UIScreen.main })
-
-    if hasExternalDisplay {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        self.handleExternalDisplayReady(Notification(name: .externalDisplayReady))
-      }
-    }
-  }
-
-  func checkForExternalDisplays() {
-    let hasExternalDisplay = hasExternalScreen()
-
-    if hasExternalDisplay {
-      _ = UIApplication.shared.connectedScenes
-        .compactMap({ $0 as? UIWindowScene })
-        .first(where: { $0.screen != UIScreen.main })
+    guard hasExternalScreen() else { return }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+      guard let self = self else { return }
+      self.handleExternalDisplayReady(Notification(name: .externalDisplayReady))
     }
   }
 

@@ -21,23 +21,26 @@ import Foundation
 ///   - threshold: The minimum overlap ratio required to suppress a box.
 /// - Returns: Indices of the selected bounding boxes after suppression.
 public func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float) -> [Int] {
+  let count = boxes.count
   let sortedIndices = scores.enumerated().sorted { $0.element > $1.element }.map { $0.offset }
+  let areas = boxes.map { $0.area }
   var selectedIndices = [Int]()
-  var activeIndices = [Bool](repeating: true, count: boxes.count)
+  var activeIndices = [Bool](repeating: true, count: count)
+  let iouThreshold = CGFloat(threshold)
 
   for i in 0..<sortedIndices.count {
     let idx = sortedIndices[i]
-    if activeIndices[idx] {
-      selectedIndices.append(idx)
-      for j in i + 1..<sortedIndices.count {
-        let otherIdx = sortedIndices[j]
-        if activeIndices[otherIdx] {
-          let intersection = boxes[idx].intersection(boxes[otherIdx])
-          let union = boxes[idx].area + boxes[otherIdx].area - intersection.area
-          if union > 0 && intersection.area / union > CGFloat(threshold) {
-            activeIndices[otherIdx] = false
-          }
-        }
+    if !activeIndices[idx] { continue }
+    selectedIndices.append(idx)
+    let boxA = boxes[idx]
+    let areaA = areas[idx]
+    for j in (i + 1)..<sortedIndices.count {
+      let otherIdx = sortedIndices[j]
+      if !activeIndices[otherIdx] { continue }
+      let interArea = boxA.intersection(boxes[otherIdx]).area
+      let union = areaA + areas[otherIdx] - interArea
+      if union > 0 && interArea / union > iouThreshold {
+        activeIndices[otherIdx] = false
       }
     }
   }

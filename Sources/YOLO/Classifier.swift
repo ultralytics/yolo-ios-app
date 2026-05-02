@@ -74,13 +74,19 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
 
   /// Applies softmax to raw logits and returns the top-1/top-5 probabilities.
   private func softmaxProbs(from multiArray: MLMultiArray) -> Probs {
+    guard multiArray.dataType == .float32 else {
+      return Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
+    }
     let count = multiArray.count
-    var logits = [Float](repeating: 0, count: count)
-    for i in 0..<count { logits[i] = multiArray[i].floatValue }
+    let src = multiArray.dataPointer.assumingMemoryBound(to: Float.self)
 
     var output = [Float](repeating: 0, count: count)
+    var maxLogit: Float = 0
+    vDSP_maxv(src, 1, &maxLogit, vDSP_Length(count))
+    var negMax = -maxLogit
+    vDSP_vsadd(src, 1, &negMax, &output, 1, vDSP_Length(count))
     var n = Int32(count)
-    vvexpf(&output, logits, &n)
+    vvexpf(&output, output, &n)
     var sum: Float = 0
     vDSP_sve(output, 1, &sum, vDSP_Length(count))
     if sum > 0 {

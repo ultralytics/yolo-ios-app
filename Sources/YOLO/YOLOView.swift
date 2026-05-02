@@ -169,14 +169,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   public override func awakeFromNib() {
     super.awakeFromNib()
-    Task { @MainActor in
-      setUpOrientationChangeNotification()
-      setUpBoundingBoxViews()
-      setupUI()
-      videoCapture.delegate = self
-      start(position: .back)
-      setupOverlayLayer()
-    }
+    setUpOrientationChangeNotification()
+    setUpBoundingBoxViews()
+    setupUI()
+    videoCapture.delegate = self
+    start(position: .back)
+    setupOverlayLayer()
   }
 
   public func setModel(
@@ -229,41 +227,35 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func start(position: AVCaptureDevice.Position) {
-    if !busy {
-      busy = true
-      let orientation = UIDevice.current.orientation
-      videoCapture.setUp(sessionPreset: .photo, position: position, orientation: orientation) {
-        [weak self] success in
-        Task { @MainActor in
-          guard let self = self else { return }
-          if success {
-            // Add the video preview into the UI.
-            if let previewLayer = self.videoCapture.previewLayer {
-              self.layer.insertSublayer(previewLayer, at: 0)
-              self.videoCapture.previewLayer?.frame = self.bounds  // resize preview layer
-              for box in self.boundingBoxViews {
-                box.addToLayer(previewLayer)
-              }
-            }
-            self.videoCapture.previewLayer?.addSublayer(self.overlayLayer)
-            // Once everything is set up, we can start capturing live video.
-            self.videoCapture.start()
-
-            // Apply deferred camera position if set (e.g., front camera from SwiftUI)
-            if let pending = self.pendingCameraPosition, pending != .back {
-              self.pendingCameraPosition = nil
-              self.switchCameraTapped()
-            }
-            if let device = self.videoCapture.captureDevice {
-              self.lastZoomFactor = device.videoZoomFactor
-              self.labelZoom.text = self.zoomLabelText(
-                rawZoomFactor: self.lastZoomFactor, device: device)
-            }
-            self.updateLensControl()
-
-            self.busy = false
+    guard !busy else { return }
+    busy = true
+    let orientation = UIDevice.current.orientation
+    videoCapture.setUp(sessionPreset: .photo, position: position, orientation: orientation) {
+      [weak self] success in
+      Task { @MainActor in
+        guard let self = self else { return }
+        defer { self.busy = false }
+        guard success else { return }
+        if let previewLayer = self.videoCapture.previewLayer {
+          self.layer.insertSublayer(previewLayer, at: 0)
+          previewLayer.frame = self.bounds
+          for box in self.boundingBoxViews {
+            box.addToLayer(previewLayer)
           }
+          previewLayer.addSublayer(self.overlayLayer)
         }
+        self.videoCapture.start()
+
+        if let pending = self.pendingCameraPosition, pending != .back {
+          self.pendingCameraPosition = nil
+          self.switchCameraTapped()
+        }
+        if let device = self.videoCapture.captureDevice {
+          self.lastZoomFactor = device.videoZoomFactor
+          self.labelZoom.text = self.zoomLabelText(
+            rawZoomFactor: self.lastZoomFactor, device: device)
+        }
+        self.updateLensControl()
       }
     }
   }
@@ -428,9 +420,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       setupPoseLayerIfNeeded()
     case .obb:
       setupObbLayerIfNeeded()
-      if let obbLayer = obbLayer, obbLayer.superlayer !== overlayLayer {
-        overlayLayer.addSublayer(obbLayer)
-      }
       obbLayer?.isHidden = false
     default: break
     }
@@ -438,10 +427,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   func removeAllSubLayers(parentLayer: CALayer?) {
     guard let parentLayer = parentLayer else { return }
-    parentLayer.sublayers?.forEach { layer in
-      layer.removeFromSuperlayer()
-    }
-    parentLayer.sublayers = nil
+    parentLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
     parentLayer.contents = nil
   }
 
@@ -717,8 +703,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
 
-    // Apply consistent toolbar styling
-    applyToolbarStyling(isLandscape: isLandscape)
     updateLensControlVisibility()
 
     if isLandscape {
@@ -729,15 +713,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     self.videoCapture.previewLayer?.frame = self.bounds
     cameraTransitionView?.frame = self.bounds
-  }
-
-  /// Apply consistent toolbar and button styling
-  private func applyToolbarStyling(isLandscape: Bool) {
-    toolbar.backgroundColor = .black.withAlphaComponent(0.7)
-    let buttonColor: UIColor = isLandscape ? .white : .white
-    [playButton, pauseButton, switchCameraButton, shareButton, infoButton].forEach { button in
-      button.tintColor = buttonColor
-    }
   }
 
   /// Layout views for landscape orientation

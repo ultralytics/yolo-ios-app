@@ -217,10 +217,11 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     var candidateClasses = [Int]()
 
     for j in 0..<numAnchors {
+      let anchorOffset = j * anchorStride
       var bestScore: Float = 0
       var bestClass = 0
       for c in 0..<numClasses {
-        let score = pointer[(4 + c) * featureStride + j * anchorStride]
+        let score = pointer[(4 + c) * featureStride + anchorOffset]
         if score > bestScore {
           bestScore = score
           bestClass = c
@@ -228,10 +229,10 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
       guard bestScore > confThreshold else { continue }
 
-      let x = pointer[j * anchorStride]
-      let y = pointer[featureStride + j * anchorStride]
-      let w = pointer[2 * featureStride + j * anchorStride]
-      let h = pointer[3 * featureStride + j * anchorStride]
+      let x = pointer[anchorOffset]
+      let y = pointer[featureStride + anchorOffset]
+      let w = pointer[2 * featureStride + anchorOffset]
+      let h = pointer[3 * featureStride + anchorOffset]
       candidateBoxes.append(
         CGRect(x: CGFloat(x - w / 2), y: CGFloat(y - h / 2), width: CGFloat(w), height: CGFloat(h))
       )

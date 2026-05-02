@@ -464,7 +464,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
             fullModelPath = entry.identifier
             let documentsDirectory = FileManager.default.urls(
               for: .documentDirectory, in: .userDomainMask)[0]
-            let localModelURL = documentsDirectory
+            let localModelURL =
+              documentsDirectory
               .appendingPathComponent(entry.identifier)
               .appendingPathExtension("mlmodelc")
             if !FileManager.default.fileExists(atPath: localModelURL.path) { return }

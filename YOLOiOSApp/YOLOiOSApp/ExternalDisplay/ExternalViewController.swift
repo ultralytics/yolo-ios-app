@@ -277,7 +277,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       guard ModelCacheManager.shared.isModelDownloaded(key: modelName) else { return }
       let documentsDirectory = FileManager.default.urls(
         for: .documentDirectory, in: .userDomainMask)[0]
-      actualModelPath = documentsDirectory.appendingPathComponent(modelName)
+      actualModelPath =
+        documentsDirectory.appendingPathComponent(modelName)
         .appendingPathExtension("mlmodelc").path
     }
 

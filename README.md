@@ -42,7 +42,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 
 - Native iOS Performance — Maximum speed with Swift & Core ML
 - Optimized for Apple Silicon — Leverages the Neural Engine & GPU
-- Real-time Detection — 60+ FPS on recent iPhones
+- Real-time Inference — 60+ FPS on recent iPhones
 - Low Latency — Direct hardware access without framework overhead
 - iOS-First Design — Native UI/UX following Apple guidelines
 - Core ML Integration — Apple's optimized ML framework
@@ -62,7 +62,7 @@ This repository provides a comprehensive solution for running YOLO models on App
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time object detection using your device's camera or image library. Official Ultralytics models are downloaded on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. Official Ultralytics models are downloaded on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
@@ -74,7 +74,7 @@ let result = model(uiImage)
 ```
 
 ```swift
-// Use the built-in camera view for real-time detection
+// Use the built-in camera view for real-time inference
 var body: some View {
     YOLOCamera(
         url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip")!,
@@ -89,7 +89,7 @@ var body: some View {
 
 New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. Official models are downloaded on demand.
 
-- [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp): The easiest way to experience YOLO detection on iOS.
+- [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp): The easiest way to experience YOLO inference on iOS.
 
 Ready to integrate YOLO into your own project? Explore the Swift Package and example applications.
 
@@ -111,7 +111,7 @@ This repository includes comprehensive [unit tests](https://en.wikipedia.org/wik
 Tests require Core ML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
 
 1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files.
-2.  Download the required models from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
+2.  Download the required models from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
 3.  Convert the models to Core ML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
 4.  Add the exported `.mlpackage` files to your [Xcode](https://developer.apple.com/xcode/) project, ensuring they are included in the test targets.
 5.  Run the tests using Xcode's Test Navigator (Cmd+U).

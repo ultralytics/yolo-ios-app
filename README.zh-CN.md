@@ -42,7 +42,7 @@
 
 - 原生 iOS 性能 - 通过 Swift 与 Core ML 获得最高速度
 - 针对 Apple Silicon 优化 - 充分利用 Neural Engine 与 GPU
-- 实时检测 - 在最新款 iPhone 上可达 60+ FPS
+- 实时推理 - 在最新款 iPhone 上可达 60+ FPS
 - 低延迟 - 无框架额外开销，直接访问硬件能力
 - iOS 优先设计 - 原生 UI/UX，遵循 Apple 设计规范
 - Core ML 集成 - 使用 Apple 官方优化的机器学习框架
@@ -61,7 +61,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时目标检测。你还可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。官方模型会按需下载，你也可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
@@ -73,7 +73,7 @@ let result = model(uiImage)
 ```
 
 ```swift
-// 使用内置相机视图进行实时检测
+// 使用内置相机视图进行实时推理
 var body: some View {
     YOLOCamera(
         modelPathOrName: "yolo26n-seg", // 指定模型名称或路径
@@ -88,7 +88,7 @@ var body: some View {
 
 如果你刚接触移动端 YOLO，或想快速测试自己的模型，建议先从主应用 YOLOiOSApp 开始。
 
-- [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)：在 iOS 上体验 YOLO 检测的最简单方式。
+- [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)：在 iOS 上体验 YOLO 推理的最简单方式。
 
 如果你已经准备好将 YOLO 集成到自己的项目中，可以继续查看 Swift Package 和示例应用。
 
@@ -110,7 +110,7 @@ var body: some View {
 测试依赖 Core ML 模型文件（`.mlpackage`），但由于文件体积较大，仓库中不包含这些模型。若要执行带模型校验的测试，请按以下步骤操作：
 
 1. 在相关测试文件中将 `SKIP_MODEL_TESTS = false`。
-2. 从 [Ultralytics 发布页](https://github.com/ultralytics/ultralytics/releases)下载所需模型，或通过 [Ultralytics Platform](https://platform.ultralytics.com) 训练你自己的模型。
+2. 从 [YOLO iOS App 发布页](https://github.com/ultralytics/yolo-ios-app/releases)下载所需模型，或通过 [Ultralytics Platform](https://platform.ultralytics.com) 训练你自己的模型。
 3. 使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 将模型转换为 Core ML 格式。
 4. 将导出的 `.mlpackage` 文件添加到你的 [Xcode](https://developer.apple.com/xcode/) 项目中，并确保它们已加入对应的测试 target。
 5. 通过 Xcode 的 Test Navigator（Cmd+U）运行测试。

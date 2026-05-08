@@ -191,10 +191,7 @@ class BasePredictorTests: XCTestCase {
 
     XCTAssertEqual(
       predictor.inputRect(fromModelRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
-    XCTAssertEqual(
-      predictor.normalizedRect(fromInputRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
     XCTAssertEqual(predictor.inputPoint(fromModelPoint: CGPoint(x: 1, y: 2)), .zero)
-    XCTAssertEqual(predictor.normalizedPoint(fromInputPoint: CGPoint(x: 1, y: 2)), .zero)
 
     let box = predictor.inputOBB(fromModelOBB: OBB(cx: 1, cy: 2, w: 3, h: 4, angle: 5))
     XCTAssertEqual(box.cx, 0, accuracy: 0.001)
@@ -202,6 +199,11 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(box.w, 0, accuracy: 0.001)
     XCTAssertEqual(box.h, 0, accuracy: 0.001)
     XCTAssertEqual(box.angle, 0, accuracy: 0.001)
+
+    predictor.inputSize = .zero
+    XCTAssertEqual(
+      predictor.normalizedRect(fromInputRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
+    XCTAssertEqual(predictor.normalizedPoint(fromInputPoint: CGPoint(x: 1, y: 2)), .zero)
   }
 }
 

@@ -38,6 +38,11 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let capturedT2 = self.t2
     let capturedT4 = self.t4
     let capturedLabels = self.labels
+    let capturedMaskCropRect = inputMaskCropRect(
+      maskWidth: capturedMasks.shape[3].intValue,
+      maskHeight: capturedMasks.shape[2].intValue,
+      inputSize: capturedInputSize,
+      modelInputSize: capturedModelInputSize)
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard
@@ -46,22 +51,17 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           protos: capturedMasks,
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
-          threshold: 0.5
+          threshold: 0.5,
+          cropRect: capturedMaskCropRect
         ) as? (CGImage?, [[[Float]]])
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
       }
-      let maskImage: CGImage? =
-        self?.inputMask(
-          fromModelMask: processed.0,
-          inputSize: capturedInputSize,
-          modelInputSize: capturedModelInputSize
-        ) ?? processed.0
       let result = YOLOResult(
         orig_shape: capturedInputSize,
         boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: maskImage),
+        masks: Masks(masks: processed.1, combinedMask: processed.0),
         speed: capturedT2, fps: 1 / capturedT4, names: capturedLabels)
       self?.currentOnResultsListener?.on(result: result)
     }
@@ -87,23 +87,23 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         let processed = generateCombinedMaskImage(
           detectedObjects: limitedObjects, protos: parsed.masks,
           inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
-          threshold: 0.5
+          threshold: 0.5,
+          cropRect: inputMaskCropRect(
+            maskWidth: parsed.masks.shape[3].intValue,
+            maskHeight: parsed.masks.shape[2].intValue,
+            inputSize: inputSize,
+            modelInputSize: modelInputSize)
         ) as? (CGImage?, [[[Float]]])
       else {
         return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
       }
-      let maskImage = inputMask(
-        fromModelMask: processed.0,
-        inputSize: inputSize,
-        modelInputSize: modelInputSize
-      )
 
       updateTime()
       result = YOLOResult(
         orig_shape: inputSize, boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: maskImage),
+        masks: Masks(masks: processed.1, combinedMask: processed.0),
         annotatedImage: drawYOLOSegmentationWithBoxes(
-          ciImage: image, boxes: boxes, maskImage: maskImage),
+          ciImage: image, boxes: boxes, maskImage: processed.0),
         speed: self.t2, fps: 1 / self.t4, names: labels)
     } catch {
       YOLOLog.error("Segmentation failed: \(error)")

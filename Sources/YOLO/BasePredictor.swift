@@ -464,18 +464,18 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       angle: box.angle)
   }
 
-  func inputMask(
-    fromModelMask mask: CGImage?,
+  func inputMaskCropRect(
+    maskWidth: Int,
+    maskHeight: Int,
     inputSize: CGSize,
     modelInputSize: (width: Int, height: Int)
-  ) -> CGImage? {
-    guard let mask else { return nil }
+  ) -> CGRect? {
     guard
       let transform = letterboxTransform(inputSize: inputSize, modelInputSize: modelInputSize)
-    else { return mask }
+    else { return nil }
 
-    let maskWidth = CGFloat(mask.width)
-    let maskHeight = CGFloat(mask.height)
+    let maskWidth = CGFloat(maskWidth)
+    let maskHeight = CGFloat(maskHeight)
     let modelWidth = CGFloat(modelInputSize.width)
     let modelHeight = CGFloat(modelInputSize.height)
     let padWidth = modelWidth - (inputSize.width * transform.gain).rounded()
@@ -488,9 +488,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       maskHeight - ((padHeight / 2 + 0.1).rounded() / modelHeight * maskHeight).rounded()
     let cropRect = CGRect(x: left, y: top, width: right - left, height: bottom - top)
       .intersection(CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight))
-    guard cropRect.width > 0, cropRect.height > 0 else { return mask }
-    if cropRect == CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight) { return mask }
-    return mask.cropping(to: cropRect) ?? mask
+    guard cropRect.width > 0, cropRect.height > 0 else { return nil }
+    if cropRect == CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight) { return nil }
+    return cropRect
   }
 
   /// Updates the smoothed inference time and FPS, then notifies the timing listener.

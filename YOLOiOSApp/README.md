@@ -78,12 +78,12 @@ Ensure you have the following before you begin:
     ):
         """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
         for model_type in model_types:
-            imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
+            imgsz = 224 if "cls" in model_type else 1024 if "obb" in model_type else 640
             nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
             for size in model_sizes:
                 model_name = f"yolo26{size}{model_type}"
                 model = YOLO(f"{model_name}.pt")
-                model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
+                model.export(format="coreml", int8=True, imgsz=[imgsz, imgsz], nms=nms)
                 zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 

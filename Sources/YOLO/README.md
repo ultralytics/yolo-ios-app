@@ -262,13 +262,13 @@ for size in ("n", "s", "m", "l", "x"):
     model = YOLO(f"yolo26{size}.pt")  # Assumes you have the .pt file locally or downloads it
 
     # Export the PyTorch model to Core ML INT8 format (YOLO26 is NMS-free)
-    # imgsz can be adjusted based on expected input size
-    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
+    # Use square inputs so the same model runs consistently in portrait and landscape.
+    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 640])
     print(f"Exported yolo26{size}.mlmodel (NMS-free)")
 
 # Example: Export a YOLO26 segmentation model (without Core ML NMS)
 seg_model = YOLO("yolo26n-seg.pt")
-seg_model.export(format="coreml", int8=True, imgsz=[640, 384])  # NMS=False (or omitted) for non-detection tasks
+seg_model.export(format="coreml", int8=True, imgsz=[640, 640])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo26n-seg.mlmodel without NMS")
 
 # Similarly for other tasks:
@@ -276,10 +276,10 @@ print("Exported yolo26n-seg.mlmodel without NMS")
 # cls_model.export(format="coreml", int8=True, imgsz=[224, 224]) # Classification often uses smaller imgsz
 
 # pose_model = YOLO("yolo26n-pose.pt")
-# pose_model.export(format="coreml", int8=True, imgsz=[640, 384])
+# pose_model.export(format="coreml", int8=True, imgsz=[640, 640])
 
 # obb_model = YOLO("yolo26n-obb.pt")
-# obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
+# obb_model.export(format="coreml", int8=True, imgsz=[1024, 1024])
 ```
 
 This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).

@@ -29,6 +29,13 @@ TASKS = {
     "-pose": "Pose",
     "-obb": "OBB",
 }
+IMGSZ = {
+    "": 640,
+    "-cls": 224,
+    "-seg": 640,
+    "-pose": 640,
+    "-obb": 1024,
+}
 
 
 def main():
@@ -38,7 +45,8 @@ def main():
             model_name = f"yolo26{size}{suffix}.pt"
             print(f"\nExporting {model_name} to Core ML...")
             model = YOLO(model_name)
-            exported = model.export(format="coreml", int8=True, nms=False)
+            imgsz = IMGSZ[suffix]
+            exported = model.export(format="coreml", int8=True, nms=False, imgsz=[imgsz, imgsz])
 
             # Copy exported .mlpackage to app Models directory
             src = Path(exported)

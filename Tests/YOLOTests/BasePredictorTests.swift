@@ -148,6 +148,28 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(rect.height, 192, accuracy: 0.001)
   }
 
+  func testLetterboxRectMappingNonSquareModelsUseModelAspect() {
+    let predictor = BasePredictor()
+
+    predictor.modelInputSize = (width: 640, height: 384)
+    predictor.inputSize = CGSize(width: 1920, height: 1080)
+    let landscape = predictor.inputRect(fromModelRect: CGRect(x: 320, y: 192, width: 64, height: 32))
+
+    XCTAssertEqual(landscape.minX, 960, accuracy: 0.001)
+    XCTAssertEqual(landscape.minY, 540, accuracy: 0.001)
+    XCTAssertEqual(landscape.width, 192, accuracy: 0.001)
+    XCTAssertEqual(landscape.height, 96, accuracy: 0.001)
+
+    predictor.modelInputSize = (width: 384, height: 640)
+    predictor.inputSize = CGSize(width: 1080, height: 1920)
+    let portrait = predictor.inputRect(fromModelRect: CGRect(x: 192, y: 320, width: 32, height: 64))
+
+    XCTAssertEqual(portrait.minX, 540, accuracy: 0.001)
+    XCTAssertEqual(portrait.minY, 960, accuracy: 0.001)
+    XCTAssertEqual(portrait.width, 96, accuracy: 0.001)
+    XCTAssertEqual(portrait.height, 192, accuracy: 0.001)
+  }
+
   func testLetterboxOBBMappingKeepsAngleInInputSpace() {
     let predictor = BasePredictor()
     predictor.modelInputSize = (width: 640, height: 640)

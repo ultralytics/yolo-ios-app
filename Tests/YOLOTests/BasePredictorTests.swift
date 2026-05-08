@@ -153,7 +153,8 @@ class BasePredictorTests: XCTestCase {
 
     predictor.modelInputSize = (width: 640, height: 384)
     predictor.inputSize = CGSize(width: 1920, height: 1080)
-    let landscape = predictor.inputRect(fromModelRect: CGRect(x: 320, y: 192, width: 64, height: 32))
+    let landscape = predictor.inputRect(
+      fromModelRect: CGRect(x: 320, y: 192, width: 64, height: 32))
 
     XCTAssertEqual(landscape.minX, 960, accuracy: 0.001)
     XCTAssertEqual(landscape.minY, 540, accuracy: 0.001)

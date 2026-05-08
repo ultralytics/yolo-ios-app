@@ -410,7 +410,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   func inputRect(fromModelRect rect: CGRect) -> CGRect {
-    guard let transform = letterboxTransform() else { return rect }
+    guard let transform = letterboxTransform() else { return .zero }
     let x1 = (rect.minX - transform.padX) / transform.gain
     let y1 = (rect.minY - transform.padY) / transform.gain
     let x2 = (rect.maxX - transform.padX) / transform.gain
@@ -424,7 +424,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   func normalizedRect(fromInputRect rect: CGRect) -> CGRect {
-    guard inputSize.width > 0, inputSize.height > 0 else { return rect }
+    guard inputSize.width > 0, inputSize.height > 0 else { return .zero }
     return CGRect(
       x: rect.minX / inputSize.width,
       y: rect.minY / inputSize.height,
@@ -433,7 +433,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   func inputPoint(fromModelPoint point: CGPoint) -> CGPoint {
-    guard let transform = letterboxTransform() else { return point }
+    guard let transform = letterboxTransform() else { return .zero }
     let x = (point.x - transform.padX) / transform.gain
     let y = (point.y - transform.padY) / transform.gain
     return CGPoint(
@@ -442,13 +442,13 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   func normalizedPoint(fromInputPoint point: CGPoint) -> CGPoint {
-    guard inputSize.width > 0, inputSize.height > 0 else { return point }
+    guard inputSize.width > 0, inputSize.height > 0 else { return .zero }
     return CGPoint(x: point.x / inputSize.width, y: point.y / inputSize.height)
   }
 
   func inputOBB(fromModelOBB box: OBB) -> OBB {
     guard let transform = letterboxTransform(), inputSize.width > 0, inputSize.height > 0 else {
-      return box
+      return OBB(cx: 0, cy: 0, w: 0, h: 0, angle: 0)
     }
     let modelWidth = CGFloat(modelInputSize.width)
     let modelHeight = CGFloat(modelInputSize.height)

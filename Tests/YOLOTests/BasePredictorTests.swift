@@ -121,6 +121,113 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(predictor.t4, 1.0, accuracy: 0.001)  // non-zero to avoid infinity FPS on first frame
     XCTAssertGreaterThan(predictor.t3, 0)  // Should be initialized with current time
   }
+
+  func testLetterboxRectMappingLandscapePadsTopBottom() {
+    let predictor = BasePredictor()
+    predictor.modelInputSize = (width: 640, height: 640)
+    predictor.inputSize = CGSize(width: 1920, height: 1080)
+
+    let rect = predictor.inputRect(fromModelRect: CGRect(x: 320, y: 300, width: 64, height: 32))
+
+    XCTAssertEqual(rect.minX, 960, accuracy: 0.001)
+    XCTAssertEqual(rect.minY, 480, accuracy: 0.001)
+    XCTAssertEqual(rect.width, 192, accuracy: 0.001)
+    XCTAssertEqual(rect.height, 96, accuracy: 0.001)
+  }
+
+  func testLetterboxRectMappingPortraitPadsLeftRight() {
+    let predictor = BasePredictor()
+    predictor.modelInputSize = (width: 640, height: 640)
+    predictor.inputSize = CGSize(width: 1080, height: 1920)
+
+    let rect = predictor.inputRect(fromModelRect: CGRect(x: 300, y: 320, width: 32, height: 64))
+
+    XCTAssertEqual(rect.minX, 480, accuracy: 0.001)
+    XCTAssertEqual(rect.minY, 960, accuracy: 0.001)
+    XCTAssertEqual(rect.width, 96, accuracy: 0.001)
+    XCTAssertEqual(rect.height, 192, accuracy: 0.001)
+  }
+
+  func testLetterboxRectMappingNonSquareModelsUseModelAspect() {
+    let predictor = BasePredictor()
+
+    predictor.modelInputSize = (width: 640, height: 384)
+    predictor.inputSize = CGSize(width: 1920, height: 1080)
+    let landscape = predictor.inputRect(
+      fromModelRect: CGRect(x: 320, y: 192, width: 64, height: 32))
+
+    XCTAssertEqual(landscape.minX, 960, accuracy: 0.001)
+    XCTAssertEqual(landscape.minY, 540, accuracy: 0.001)
+    XCTAssertEqual(landscape.width, 192, accuracy: 0.001)
+    XCTAssertEqual(landscape.height, 96, accuracy: 0.001)
+
+    predictor.modelInputSize = (width: 384, height: 640)
+    predictor.inputSize = CGSize(width: 1080, height: 1920)
+    let portrait = predictor.inputRect(fromModelRect: CGRect(x: 192, y: 320, width: 32, height: 64))
+
+    XCTAssertEqual(portrait.minX, 540, accuracy: 0.001)
+    XCTAssertEqual(portrait.minY, 960, accuracy: 0.001)
+    XCTAssertEqual(portrait.width, 96, accuracy: 0.001)
+    XCTAssertEqual(portrait.height, 192, accuracy: 0.001)
+  }
+
+  func testLetterboxOBBMappingKeepsAngleInInputSpace() {
+    let predictor = BasePredictor()
+    predictor.modelInputSize = (width: 640, height: 640)
+    predictor.inputSize = CGSize(width: 1920, height: 1080)
+
+    let box = predictor.inputOBB(
+      fromModelOBB: OBB(cx: 0.5, cy: 0.5, w: 0.25, h: 0.125, angle: 0.7))
+
+    XCTAssertEqual(box.cx, 0.5, accuracy: 0.001)
+    XCTAssertEqual(box.cy, 0.5, accuracy: 0.001)
+    XCTAssertEqual(box.w, 0.25, accuracy: 0.001)
+    XCTAssertEqual(box.h, 0.222_222, accuracy: 0.001)
+    XCTAssertEqual(box.angle, 0.7, accuracy: 0.001)
+  }
+
+  func testLetterboxMaskCropRectMatchesPaddingAxis() {
+    let predictor = BasePredictor()
+    predictor.modelInputSize = (width: 640, height: 640)
+
+    let landscape = predictor.inputMaskCropRect(
+      maskWidth: 160, maskHeight: 160,
+      inputSize: CGSize(width: 1920, height: 1080),
+      modelInputSize: predictor.modelInputSize)
+    XCTAssertEqual(landscape?.minX ?? -1, 0, accuracy: 0.001)
+    XCTAssertEqual(landscape?.minY ?? -1, 35, accuracy: 0.001)
+    XCTAssertEqual(landscape?.width ?? -1, 160, accuracy: 0.001)
+    XCTAssertEqual(landscape?.height ?? -1, 90, accuracy: 0.001)
+
+    let portrait = predictor.inputMaskCropRect(
+      maskWidth: 160, maskHeight: 160,
+      inputSize: CGSize(width: 1080, height: 1920),
+      modelInputSize: predictor.modelInputSize)
+    XCTAssertEqual(portrait?.minX ?? -1, 35, accuracy: 0.001)
+    XCTAssertEqual(portrait?.minY ?? -1, 0, accuracy: 0.001)
+    XCTAssertEqual(portrait?.width ?? -1, 90, accuracy: 0.001)
+    XCTAssertEqual(portrait?.height ?? -1, 160, accuracy: 0.001)
+  }
+
+  func testInvalidLetterboxTransformReturnsEmptyGeometry() {
+    let predictor = BasePredictor()
+
+    XCTAssertEqual(
+      predictor.inputRect(fromModelRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
+    XCTAssertEqual(predictor.inputPoint(fromModelPoint: CGPoint(x: 1, y: 2)), .zero)
+
+    let box = predictor.inputOBB(fromModelOBB: OBB(cx: 1, cy: 2, w: 3, h: 4, angle: 5))
+    XCTAssertEqual(box.cx, 0, accuracy: 0.001)
+    XCTAssertEqual(box.cy, 0, accuracy: 0.001)
+    XCTAssertEqual(box.w, 0, accuracy: 0.001)
+    XCTAssertEqual(box.h, 0, accuracy: 0.001)
+    XCTAssertEqual(box.angle, 0, accuracy: 0.001)
+
+    predictor.inputSize = .zero
+    XCTAssertEqual(
+      predictor.normalizedRect(fromInputRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
+    XCTAssertEqual(predictor.normalizedPoint(fromInputPoint: CGPoint(x: 1, y: 2)), .zero)
+  }
 }
 
 // MARK: - Mock Classes

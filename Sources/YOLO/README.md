@@ -261,25 +261,30 @@ for size in ("n", "s", "m", "l", "x"):
     # Load a YOLO26 PyTorch model
     model = YOLO(f"yolo26{size}.pt")  # Assumes you have the .pt file locally or downloads it
 
-    # Export the PyTorch model to Core ML INT8 format (YOLO26 is NMS-free)
-    # imgsz can be adjusted based on expected input size
-    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 384])
+    # Export the PyTorch model to Core ML INT8 format (YOLO26 is NMS-free).
+    # Square [640, 640] works best when one model must run in both portrait and landscape.
+    # Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or [384, 640] for landscape-only.
+    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 640])
     print(f"Exported yolo26{size}.mlmodel (NMS-free)")
 
 # Example: Export a YOLO26 segmentation model (without Core ML NMS)
 seg_model = YOLO("yolo26n-seg.pt")
-seg_model.export(format="coreml", int8=True, imgsz=[640, 384])  # NMS=False (or omitted) for non-detection tasks
+# Use [640, 640] for mixed portrait/landscape; [640, 384] for portrait-only; [384, 640] for landscape-only.
+seg_model.export(format="coreml", int8=True, imgsz=[640, 640])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo26n-seg.mlmodel without NMS")
 
 # Similarly for other tasks:
 # cls_model = YOLO("yolo26n-cls.pt")
+# Classification usually remains square because it uses center-crop preprocessing.
 # cls_model.export(format="coreml", int8=True, imgsz=[224, 224]) # Classification often uses smaller imgsz
 
 # pose_model = YOLO("yolo26n-pose.pt")
-# pose_model.export(format="coreml", int8=True, imgsz=[640, 384])
+# Use [640, 640] for mixed portrait/landscape; [640, 384] for portrait-only; [384, 640] for landscape-only.
+# pose_model.export(format="coreml", int8=True, imgsz=[640, 640])
 
 # obb_model = YOLO("yolo26n-obb.pt")
-# obb_model.export(format="coreml", int8=True, imgsz=[640, 384])
+# OBB uses a larger square input by default; use [1024, 576] for portrait-only or [576, 1024] for landscape-only.
+# obb_model.export(format="coreml", int8=True, imgsz=[1024, 1024])
 ```
 
 This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).

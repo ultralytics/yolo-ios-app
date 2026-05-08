@@ -29,6 +29,16 @@ TASKS = {
     "-pose": "Pose",
     "-obb": "OBB",
 }
+# Square exports are best when the same model is used for both portrait and landscape.
+# Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or [384, 640] for landscape-only.
+# Use orientation-only shapes only when inference is locked to that orientation.
+IMGSZ = {
+    "": 640,
+    "-cls": 224,
+    "-seg": 640,
+    "-pose": 640,
+    "-obb": 1024,
+}
 
 
 def main():
@@ -38,7 +48,8 @@ def main():
             model_name = f"yolo26{size}{suffix}.pt"
             print(f"\nExporting {model_name} to Core ML...")
             model = YOLO(model_name)
-            exported = model.export(format="coreml", int8=True, nms=False)
+            imgsz = IMGSZ[suffix]
+            exported = model.export(format="coreml", int8=True, nms=False, imgsz=[imgsz, imgsz])
 
             # Copy exported .mlpackage to app Models directory
             src = Path(exported)

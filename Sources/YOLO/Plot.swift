@@ -189,6 +189,7 @@ func generateCombinedMaskImage(
   inputWidth: Int,
   inputHeight: Int,
   threshold: Float = 0.5,
+  cropRect: CGRect? = nil,
   returnIndividualMasks: Bool = true
 ) -> (CGImage?, [[[Float]]]?)? {
   let maskHeight = protos.shape[2].intValue  // e.g. 160
@@ -252,14 +253,21 @@ func generateCombinedMaskImage(
   var mergedPixels = [UInt8](repeating: 0, count: HW * 4)
   let scaleX = Float(maskWidth) / Float(inputWidth)
   let scaleY = Float(maskHeight) / Float(inputHeight)
+  let maskBounds = CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight)
+  let outputRect = (cropRect ?? maskBounds).intersection(maskBounds).integral
+  let outputX = Int(outputRect.minX)
+  let outputY = Int(outputRect.minY)
+  let outputWidth = Int(outputRect.width)
+  let outputHeight = Int(outputRect.height)
+  guard outputWidth > 0, outputHeight > 0 else { return nil }
 
   // 8) Whether to keep individual probability maps
   var probabilityMasks: [[[Float]]]? = nil
   if returnIndividualMasks {
     probabilityMasks = Array(
       repeating: Array(
-        repeating: Array(repeating: Float(0.0), count: maskWidth),
-        count: maskHeight
+        repeating: Array(repeating: Float(0.0), count: outputWidth),
+        count: outputHeight
       ),
       count: N
     )
@@ -308,10 +316,10 @@ func generateCombinedMaskImage(
   if returnIndividualMasks, var masksArray = probabilityMasks {
     for i in 0..<N {
       let startIdx = i * HW
-      for k in 0..<HW {
-        let row = k / maskWidth
-        let col = k % maskWidth
-        masksArray[i][row][col] = combinedMask[startIdx + k]
+      for y in 0..<outputHeight {
+        for x in 0..<outputWidth {
+          masksArray[i][y][x] = combinedMask[startIdx + (outputY + y) * maskWidth + outputX + x]
+        }
       }
     }
     probabilityMasks = masksArray
@@ -344,7 +352,10 @@ func generateCombinedMaskImage(
     return nil
   }
 
-  return (mergedCGImage, probabilityMasks)
+  let outputImage =
+    outputRect == maskBounds
+    ? mergedCGImage : (mergedCGImage.cropping(to: outputRect) ?? mergedCGImage)
+  return (outputImage, probabilityMasks)
 }
 
 public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {

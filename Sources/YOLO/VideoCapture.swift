@@ -166,7 +166,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   public func setUp(
     sessionPreset: AVCaptureSession.Preset = .hd1280x720,
     position: AVCaptureDevice.Position,
-    orientation: UIDeviceOrientation,
+    videoOrientation: AVCaptureVideoOrientation,
     completion: @escaping @Sendable (Bool) -> Void
   ) {
     cameraQueue.async { [weak self] in
@@ -177,7 +177,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         return
       }
       let success = self.setUpCamera(
-        sessionPreset: sessionPreset, position: position, orientation: orientation)
+        sessionPreset: sessionPreset, position: position, videoOrientation: videoOrientation)
       DispatchQueue.main.async {
         completion(success)
       }
@@ -186,7 +186,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
   func setUpCamera(
     sessionPreset: AVCaptureSession.Preset, position: AVCaptureDevice.Position,
-    orientation: UIDeviceOrientation
+    videoOrientation: AVCaptureVideoOrientation
   ) -> Bool {
     captureSession.beginConfiguration()
     defer {
@@ -212,7 +212,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     } else {
       YOLOLog.warning("Cannot add video input to session")
     }
-    let videoOrientation = AVCaptureVideoOrientation(orientation) ?? .portrait
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
     previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     previewLayer.connection?.videoOrientation = videoOrientation
@@ -229,8 +228,8 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     if captureSession.canAddOutput(videoOutput) {
       captureSession.addOutput(videoOutput)
     }
-    // We want the buffers to be in portrait orientation otherwise they are
-    // rotated by 90 degrees. Need to set this _after_ addOutput()!
+    // Keep preview and inference buffers in the current interface orientation.
+    // AVCaptureVideoDataOutput physically rotates buffers for this connection.
     let connection = videoOutput.connection(with: AVMediaType.video)
     connection?.videoOrientation = videoOrientation
     configureVideoMirroring(connection, isMirrored: position == .front)

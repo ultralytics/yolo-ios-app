@@ -38,6 +38,11 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let capturedT2 = self.t2
     let capturedT4 = self.t4
     let capturedLabels = self.labels
+    let capturedMaskCropRect = inputMaskCropRect(
+      maskWidth: capturedMasks.shape[3].intValue,
+      maskHeight: capturedMasks.shape[2].intValue,
+      inputSize: capturedInputSize,
+      modelInputSize: capturedModelInputSize)
 
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
       guard
@@ -46,7 +51,8 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           protos: capturedMasks,
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
-          threshold: 0.5
+          threshold: 0.5,
+          cropRect: capturedMaskCropRect
         ) as? (CGImage?, [[[Float]]])
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
@@ -81,7 +87,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         let processed = generateCombinedMaskImage(
           detectedObjects: limitedObjects, protos: parsed.masks,
           inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
-          threshold: 0.5
+          threshold: 0.5,
+          cropRect: inputMaskCropRect(
+            maskWidth: parsed.masks.shape[3].intValue,
+            maskHeight: parsed.masks.shape[2].intValue,
+            inputSize: inputSize,
+            modelInputSize: modelInputSize)
         ) as? (CGImage?, [[[Float]]])
       else {
         return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
@@ -124,18 +135,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   /// Converts post-processed (rect, class, score, maskCoeffs) tuples into `Box` values
   /// mapped from model-space to the current input-image coordinate space.
   private func buildBoxes(from objects: [(CGRect, Int, Float, MLMultiArray)]) -> [Box] {
-    let modelWidth = CGFloat(modelInputSize.width)
-    let modelHeight = CGFloat(modelInputSize.height)
-    let inputWidth = Int(inputSize.width)
-    let inputHeight = Int(inputSize.height)
     var boxes: [Box] = []
     boxes.reserveCapacity(objects.count)
     for (box, classIndex, confidence, _) in objects {
       guard classIndex < labels.count else { continue }
-      let rect = CGRect(
-        x: box.minX / modelWidth, y: box.minY / modelHeight,
-        width: box.width / modelWidth, height: box.height / modelHeight)
-      let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+      let xywh = inputRect(fromModelRect: box)
+      let rect = normalizedRect(fromInputRect: xywh)
       boxes.append(
         Box(
           index: classIndex, cls: labels[classIndex], conf: confidence,

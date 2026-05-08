@@ -48,12 +48,12 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 - Core ML Integration — Apple's optimized ML framework
 - YOLO26 (NMS-free) and YOLO11 models both supported
 
-| Feature                              | iOS | Details                                       |
-| ------------------------------------ | --- | --------------------------------------------- |
-| Object Detection                     | ✅  | Bounding boxes, labels, and confidence scores |
-| Image Classification                 | ✅  | Top class predictions and scores              |
-| Instance Segmentation                | ✅  | Instance masks with boxes and classes         |
-| Pose Estimation                      | ✅  | Keypoints with boxes and confidence scores    |
+| Feature                               | iOS | Details                                       |
+| ------------------------------------- | --- | --------------------------------------------- |
+| Object Detection                      | ✅  | Bounding boxes, labels, and confidence scores |
+| Image Classification                  | ✅  | Top class predictions and scores              |
+| Instance Segmentation                 | ✅  | Instance masks with boxes and classes         |
+| Pose Estimation                       | ✅  | Keypoints with boxes and confidence scores    |
 | Oriented Bounding Box (OBB) Detection | ✅  | Rotated boxes and polygon corners             |
 
 ## 📂 Repository Content

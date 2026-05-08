@@ -59,8 +59,19 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
         let invertedBox = CGRect(
           x: prediction.boundingBox.minX, y: 1 - prediction.boundingBox.maxY,
           width: prediction.boundingBox.width, height: prediction.boundingBox.height)
-        let imageRect = VNImageRectForNormalizedRect(
-          invertedBox, Int(inputSize.width), Int(inputSize.height))
+        let imageRect: CGRect
+        if modelInputSize.width > 0, modelInputSize.height > 0 {
+          let modelRect = CGRect(
+            x: invertedBox.minX * CGFloat(modelInputSize.width),
+            y: invertedBox.minY * CGFloat(modelInputSize.height),
+            width: invertedBox.width * CGFloat(modelInputSize.width),
+            height: invertedBox.height * CGFloat(modelInputSize.height))
+          imageRect = inputRect(fromModelRect: modelRect)
+        } else {
+          imageRect = VNImageRectForNormalizedRect(
+            invertedBox, Int(inputSize.width), Int(inputSize.height))
+        }
+        let normalizedBox = normalizedRect(fromInputRect: imageRect)
 
         // The labels array is a list of VNClassificationObservation objects,
         // with the highest scoring class first in the list.
@@ -68,7 +79,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
         let index = self.labels.firstIndex(of: label) ?? 0
         let confidence = prediction.labels[0].confidence
         boxes.append(
-          Box(index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox))
+          Box(index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: normalizedBox))
       }
       return boxes
     }
@@ -128,8 +139,6 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     let strides = prediction.strides.map { $0.intValue }
     let pointer = prediction.dataPointer.assumingMemoryBound(to: Float.self)
     let confThreshold = Float(confidenceThreshold)
-    let modelW = CGFloat(modelInputSize.width)
-    let modelH = CGFloat(modelInputSize.height)
 
     // Detect format: end2end [1, max_det, 6] vs traditional [1, 4+nc, num_anchors]
     guard shape.count == 3 else { return [] }
@@ -138,11 +147,11 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     if isEnd2End {
       return processEnd2EndResults(
         pointer: pointer, shape: shape, strides: strides,
-        confThreshold: confThreshold, modelW: modelW, modelH: modelH)
+        confThreshold: confThreshold)
     } else {
       return processTraditionalResults(
         pointer: pointer, shape: shape, strides: strides,
-        confThreshold: confThreshold, modelW: modelW, modelH: modelH)
+        confThreshold: confThreshold)
     }
   }
 
@@ -153,12 +162,10 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///   - shape: The tensor shape [1, max_det, 6].
   ///   - strides: The tensor strides for correct indexing.
   ///   - confThreshold: Minimum confidence to include a detection.
-  ///   - modelW: Model input width for coordinate normalization.
-  ///   - modelH: Model input height for coordinate normalization.
   /// - Returns: An array of detected boxes.
   private func processEnd2EndResults(
     pointer: UnsafeMutablePointer<Float>, shape: [Int], strides: [Int],
-    confThreshold: Float, modelW: CGFloat, modelH: CGFloat
+    confThreshold: Float
   ) -> [Box] {
     let numDetections = shape[1]
     let numFields = shape[2]
@@ -177,11 +184,9 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       let y2 = CGFloat(pointer[base + 3 * fieldStride])
       let classIndex = numFields > 5 ? Int(pointer[base + 5 * fieldStride]) : 0
 
-      let normalizedBox = CGRect(
-        x: x1 / modelW, y: y1 / modelH,
-        width: (x2 - x1) / modelW, height: (y2 - y1) / modelH)
-      let imageRect = VNImageRectForNormalizedRect(
-        normalizedBox, Int(inputSize.width), Int(inputSize.height))
+      let imageRect = inputRect(
+        fromModelRect: CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1))
+      let normalizedBox = normalizedRect(fromInputRect: imageRect)
       let label = classIndex < labels.count ? labels[classIndex] : "\(classIndex)"
 
       boxes.append(
@@ -198,12 +203,10 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///   - shape: The tensor shape [1, 4+nc, num_anchors].
   ///   - strides: The tensor strides for correct indexing.
   ///   - confThreshold: Minimum confidence to include a detection.
-  ///   - modelW: Model input width for coordinate normalization.
-  ///   - modelH: Model input height for coordinate normalization.
   /// - Returns: An array of detected boxes after non-maximum suppression.
   private func processTraditionalResults(
     pointer: UnsafeMutablePointer<Float>, shape: [Int], strides: [Int],
-    confThreshold: Float, modelW: CGFloat, modelH: CGFloat
+    confThreshold: Float
   ) -> [Box] {
     let numFeatures = shape[1]
     let numAnchors = shape[2]
@@ -246,11 +249,8 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     var boxes = [Box]()
     for i in selectedIndices.prefix(numItemsThreshold) {
       let rect = candidateBoxes[i]
-      let normalizedBox = CGRect(
-        x: rect.minX / modelW, y: rect.minY / modelH,
-        width: rect.width / modelW, height: rect.height / modelH)
-      let imageRect = VNImageRectForNormalizedRect(
-        normalizedBox, Int(inputSize.width), Int(inputSize.height))
+      let imageRect = inputRect(fromModelRect: rect)
+      let normalizedBox = normalizedRect(fromInputRect: imageRect)
       let classIndex = candidateClasses[i]
       let label = classIndex < labels.count ? labels[classIndex] : "\(classIndex)"
       boxes.append(

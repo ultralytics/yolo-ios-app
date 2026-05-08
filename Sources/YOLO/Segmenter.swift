@@ -52,10 +52,15 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
       }
+      let maskImage: CGImage? = self?.inputMask(
+        fromModelMask: processed.0,
+        inputSize: capturedInputSize,
+        modelInputSize: capturedModelInputSize
+      ) ?? processed.0
       let result = YOLOResult(
         orig_shape: capturedInputSize,
         boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: processed.0),
+        masks: Masks(masks: processed.1, combinedMask: maskImage),
         speed: capturedT2, fps: 1 / capturedT4, names: capturedLabels)
       self?.currentOnResultsListener?.on(result: result)
     }
@@ -86,13 +91,18 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
       else {
         return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
       }
+      let maskImage = inputMask(
+        fromModelMask: processed.0,
+        inputSize: inputSize,
+        modelInputSize: modelInputSize
+      )
 
       updateTime()
       result = YOLOResult(
         orig_shape: inputSize, boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: processed.0),
+        masks: Masks(masks: processed.1, combinedMask: maskImage),
         annotatedImage: drawYOLOSegmentationWithBoxes(
-          ciImage: image, boxes: boxes, maskImage: processed.0),
+          ciImage: image, boxes: boxes, maskImage: maskImage),
         speed: self.t2, fps: 1 / self.t4, names: labels)
     } catch {
       YOLOLog.error("Segmentation failed: \(error)")
@@ -124,18 +134,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   /// Converts post-processed (rect, class, score, maskCoeffs) tuples into `Box` values
   /// mapped from model-space to the current input-image coordinate space.
   private func buildBoxes(from objects: [(CGRect, Int, Float, MLMultiArray)]) -> [Box] {
-    let modelWidth = CGFloat(modelInputSize.width)
-    let modelHeight = CGFloat(modelInputSize.height)
-    let inputWidth = Int(inputSize.width)
-    let inputHeight = Int(inputSize.height)
     var boxes: [Box] = []
     boxes.reserveCapacity(objects.count)
     for (box, classIndex, confidence, _) in objects {
       guard classIndex < labels.count else { continue }
-      let rect = CGRect(
-        x: box.minX / modelWidth, y: box.minY / modelHeight,
-        width: box.width / modelWidth, height: box.height / modelHeight)
-      let xywh = VNImageRectForNormalizedRect(rect, inputWidth, inputHeight)
+      let xywh = inputRect(fromModelRect: box)
+      let rect = normalizedRect(fromInputRect: xywh)
       boxes.append(
         Box(
           index: classIndex, cls: labels[classIndex], conf: confidence,

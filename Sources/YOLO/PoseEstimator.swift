@@ -183,16 +183,8 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     let results: [(Box, Keypoints)] = zip(boxScorePairs, filteredFeatures).map {
       (pair, boxFeatures) in
       let (box, score) = pair
-      let Nx = box.origin.x / CGFloat(modelInputSize.width)
-      let Ny = box.origin.y / CGFloat(modelInputSize.height)
-      let Nw = box.size.width / CGFloat(modelInputSize.width)
-      let Nh = box.size.height / CGFloat(modelInputSize.height)
-      let ix = Nx * inputSize.width
-      let iy = Ny * inputSize.height
-      let iw = Nw * inputSize.width
-      let ih = Nh * inputSize.height
-      let normalizedBox = CGRect(x: Nx, y: Ny, width: Nw, height: Nh)
-      let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
+      let imageSizeBox = inputRect(fromModelRect: box)
+      let normalizedBox = normalizedRect(fromInputRect: imageSizeBox)
       let boxResult = Box(
         index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
       let numKeypoints = boxFeatures.count / 3
@@ -206,13 +198,10 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         let ky = boxFeatures[3 * i + 1]
         let kc = boxFeatures[3 * i + 2]
 
-        let nX = kx / Float(modelInputSize.width)
-        let nY = ky / Float(modelInputSize.height)
-        xynArray.append((x: nX, y: nY))
-
-        let x = nX * Float(inputSize.width)
-        let y = nY * Float(inputSize.height)
-        xyArray.append((x: x, y: y))
+        let imagePoint = inputPoint(fromModelPoint: CGPoint(x: CGFloat(kx), y: CGFloat(ky)))
+        let pointNorm = normalizedPoint(fromInputPoint: imagePoint)
+        xynArray.append((x: Float(pointNorm.x), y: Float(pointNorm.y)))
+        xyArray.append((x: Float(imagePoint.x), y: Float(imagePoint.y)))
 
         confArray.append(kc)
       }
@@ -260,17 +249,9 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
       let x2 = CGFloat(pointer[base + 2 * fieldStride])
       let y2 = CGFloat(pointer[base + 3 * fieldStride])
 
-      // Convert xyxy to normalized and image coordinates
-      let Nx = x1 / CGFloat(modelInputSize.width)
-      let Ny = y1 / CGFloat(modelInputSize.height)
-      let Nw = (x2 - x1) / CGFloat(modelInputSize.width)
-      let Nh = (y2 - y1) / CGFloat(modelInputSize.height)
-      let ix = Nx * inputSize.width
-      let iy = Ny * inputSize.height
-      let iw = Nw * inputSize.width
-      let ih = Nh * inputSize.height
-      let normalizedBox = CGRect(x: Nx, y: Ny, width: Nw, height: Nh)
-      let imageSizeBox = CGRect(x: ix, y: iy, width: iw, height: ih)
+      let imageSizeBox = inputRect(
+        fromModelRect: CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1))
+      let normalizedBox = normalizedRect(fromInputRect: imageSizeBox)
       let boxResult = Box(
         index: 0, cls: "person", conf: conf, xywh: imageSizeBox, xywhn: normalizedBox)
 
@@ -284,13 +265,10 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         let ky = pointer[base + (kpStartField + 3 * k + 1) * fieldStride]
         let kc = pointer[base + (kpStartField + 3 * k + 2) * fieldStride]
 
-        let nX = kx / Float(modelInputSize.width)
-        let nY = ky / Float(modelInputSize.height)
-        xynArray.append((x: nX, y: nY))
-
-        let x = nX * Float(inputSize.width)
-        let y = nY * Float(inputSize.height)
-        xyArray.append((x: x, y: y))
+        let imagePoint = inputPoint(fromModelPoint: CGPoint(x: CGFloat(kx), y: CGFloat(ky)))
+        let pointNorm = normalizedPoint(fromInputPoint: imagePoint)
+        xynArray.append((x: Float(pointNorm.x), y: Float(pointNorm.y)))
+        xyArray.append((x: Float(imagePoint.x), y: Float(imagePoint.y)))
 
         confArray.append(kc)
       }

@@ -67,7 +67,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     return nmsResults.prefix(self.numItemsThreshold).compactMap { result in
       guard result.cls < labels.count else { return nil }
       return OBBResult(
-        box: result.box, confidence: result.score,
+        box: inputOBB(fromModelOBB: result.box), confidence: result.score,
         cls: labels[result.cls], index: result.cls)
     }
   }

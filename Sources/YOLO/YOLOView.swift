@@ -229,8 +229,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func start(position: AVCaptureDevice.Position) {
     guard !busy else { return }
     busy = true
-    let orientation = UIDevice.current.orientation
-    videoCapture.setUp(sessionPreset: .photo, position: position, orientation: orientation) {
+    videoCapture.setUp(
+      sessionPreset: .photo, position: position, videoOrientation: currentVideoOrientation()
+    ) {
       [weak self] success in
       Task { @MainActor in
         guard let self = self else { return }
@@ -435,8 +436,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let width = self.bounds.width
     let height = self.bounds.height
     let maxVisible = min(predictions.boxes.count, 50, boundingBoxViews.count)
+    let videoOrientation = currentVideoOrientation()
 
-    if UIDevice.current.orientation.isLandscape {
+    if videoOrientation == .landscapeLeft || videoOrientation == .landscapeRight {
       let frameAspect = videoCapture.longSide / videoCapture.shortSide
       let viewAspect = width / height
       let scale: CGFloat
@@ -471,10 +473,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       for i in 0..<maxVisible {
         let prediction = predictions.boxes[i]
         var displayRect = flippedNormalizedRect(prediction.xywhn)
-        if UIDevice.current.orientation == .portraitUpsideDown {
+        if videoOrientation == .portraitUpsideDown {
           displayRect.origin.x = 1.0 - displayRect.origin.x - displayRect.width
-        } else if UIDevice.current.orientation == .unknown {
-          YOLOLog.warning("Device orientation is unknown; predictions may be affected")
         }
         if ratio >= 1 {
           let offset = (1 - ratio) * (0.5 - displayRect.minX)
@@ -715,6 +715,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     cameraTransitionView?.frame = self.bounds
   }
 
+  public override func didMoveToWindow() {
+    super.didMoveToWindow()
+    guard window != nil else { return }
+    videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
+    videoCapture.frameSizeCaptured = false
+  }
+
   /// Layout views for landscape orientation
   private func layoutLandscape() {
     let width = bounds.width
@@ -888,11 +895,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return videoOrientation
     }
 
-    if let videoOrientation = AVCaptureVideoOrientation(UIDevice.current.orientation) {
+    if let videoOrientation = videoCapture.previewLayer?.connection?.videoOrientation {
       return videoOrientation
     }
 
-    return videoCapture.previewLayer?.connection?.videoOrientation ?? .portrait
+    return AVCaptureVideoOrientation(UIDevice.current.orientation) ?? .portrait
   }
 
   @objc public func sliderChanged(_ sender: Any) {

@@ -36,6 +36,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The Vision request that processes images using the Core ML model.
   var visionRequest: VNCoreMLRequest?
 
+  /// Vision preprocessing mode for this predictor. Localization tasks use Ultralytics
+  /// LetterBox-style aspect-fit preprocessing; classification overrides this to center crop.
+  var imageCropAndScaleOption: VNImageCropAndScaleOption { .scaleFit }
+
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
@@ -219,7 +223,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
                 predictor.processObservations(for: request, error)
               }
             })
-          request.imageCropAndScaleOption = .scaleFill
+          request.imageCropAndScaleOption = predictor.imageCropAndScaleOption
           return request
         }()
 
@@ -380,6 +384,113 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
     YOLOLog.warning("Could not determine model input size")
     return (0, 0)
+  }
+
+  private func letterboxTransform(
+    inputSize: CGSize,
+    modelInputSize: (width: Int, height: Int)
+  ) -> (gain: CGFloat, padX: CGFloat, padY: CGFloat)? {
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let inputWidth = inputSize.width
+    let inputHeight = inputSize.height
+    guard modelWidth > 0, modelHeight > 0, inputWidth > 0, inputHeight > 0 else { return nil }
+
+    let gain = min(modelHeight / inputHeight, modelWidth / inputWidth)
+    guard gain > 0 else { return nil }
+    let resizedWidth = (inputWidth * gain).rounded()
+    let resizedHeight = (inputHeight * gain).rounded()
+    let padX = ((modelWidth - resizedWidth) / 2 - 0.1).rounded()
+    let padY = ((modelHeight - resizedHeight) / 2 - 0.1).rounded()
+    return (gain, padX, padY)
+  }
+
+  private func letterboxTransform() -> (gain: CGFloat, padX: CGFloat, padY: CGFloat)? {
+    letterboxTransform(inputSize: inputSize, modelInputSize: modelInputSize)
+  }
+
+  func inputRect(fromModelRect rect: CGRect) -> CGRect {
+    guard let transform = letterboxTransform() else { return rect }
+    let x1 = (rect.minX - transform.padX) / transform.gain
+    let y1 = (rect.minY - transform.padY) / transform.gain
+    let x2 = (rect.maxX - transform.padX) / transform.gain
+    let y2 = (rect.maxY - transform.padY) / transform.gain
+
+    let minX = min(max(min(x1, x2), 0), inputSize.width)
+    let minY = min(max(min(y1, y2), 0), inputSize.height)
+    let maxX = min(max(max(x1, x2), 0), inputSize.width)
+    let maxY = min(max(max(y1, y2), 0), inputSize.height)
+    return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+  }
+
+  func normalizedRect(fromInputRect rect: CGRect) -> CGRect {
+    guard inputSize.width > 0, inputSize.height > 0 else { return rect }
+    return CGRect(
+      x: rect.minX / inputSize.width,
+      y: rect.minY / inputSize.height,
+      width: rect.width / inputSize.width,
+      height: rect.height / inputSize.height)
+  }
+
+  func inputPoint(fromModelPoint point: CGPoint) -> CGPoint {
+    guard let transform = letterboxTransform() else { return point }
+    let x = (point.x - transform.padX) / transform.gain
+    let y = (point.y - transform.padY) / transform.gain
+    return CGPoint(
+      x: min(max(x, 0), inputSize.width),
+      y: min(max(y, 0), inputSize.height))
+  }
+
+  func normalizedPoint(fromInputPoint point: CGPoint) -> CGPoint {
+    guard inputSize.width > 0, inputSize.height > 0 else { return point }
+    return CGPoint(x: point.x / inputSize.width, y: point.y / inputSize.height)
+  }
+
+  func inputOBB(fromModelOBB box: OBB) -> OBB {
+    guard let transform = letterboxTransform(), inputSize.width > 0, inputSize.height > 0 else {
+      return box
+    }
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let centerX = (CGFloat(box.cx) * modelWidth - transform.padX) / transform.gain
+    let centerY = (CGFloat(box.cy) * modelHeight - transform.padY) / transform.gain
+    let width = CGFloat(box.w) * modelWidth / transform.gain
+    let height = CGFloat(box.h) * modelHeight / transform.gain
+    return OBB(
+      cx: Float(centerX / inputSize.width),
+      cy: Float(centerY / inputSize.height),
+      w: Float(width / inputSize.width),
+      h: Float(height / inputSize.height),
+      angle: box.angle)
+  }
+
+  func inputMask(
+    fromModelMask mask: CGImage?,
+    inputSize: CGSize,
+    modelInputSize: (width: Int, height: Int)
+  ) -> CGImage? {
+    guard let mask else { return nil }
+    guard
+      let transform = letterboxTransform(inputSize: inputSize, modelInputSize: modelInputSize)
+    else { return mask }
+
+    let maskWidth = CGFloat(mask.width)
+    let maskHeight = CGFloat(mask.height)
+    let modelWidth = CGFloat(modelInputSize.width)
+    let modelHeight = CGFloat(modelInputSize.height)
+    let padWidth = modelWidth - (inputSize.width * transform.gain).rounded()
+    let padHeight = modelHeight - (inputSize.height * transform.gain).rounded()
+    let left = ((padWidth / 2 - 0.1).rounded() / modelWidth * maskWidth).rounded()
+    let top = ((padHeight / 2 - 0.1).rounded() / modelHeight * maskHeight).rounded()
+    let right =
+      maskWidth - ((padWidth / 2 + 0.1).rounded() / modelWidth * maskWidth).rounded()
+    let bottom =
+      maskHeight - ((padHeight / 2 + 0.1).rounded() / modelHeight * maskHeight).rounded()
+    let cropRect = CGRect(x: left, y: top, width: right - left, height: bottom - top)
+      .intersection(CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight))
+    guard cropRect.width > 0, cropRect.height > 0 else { return mask }
+    if cropRect == CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight) { return mask }
+    return mask.cropping(to: cropRect) ?? mask
   }
 
   /// Updates the smoothed inference time and FPS, then notifies the timing listener.

@@ -52,11 +52,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
       }
-      let maskImage: CGImage? = self?.inputMask(
-        fromModelMask: processed.0,
-        inputSize: capturedInputSize,
-        modelInputSize: capturedModelInputSize
-      ) ?? processed.0
+      let maskImage: CGImage? =
+        self?.inputMask(
+          fromModelMask: processed.0,
+          inputSize: capturedInputSize,
+          modelInputSize: capturedModelInputSize
+        ) ?? processed.0
       let result = YOLOResult(
         orig_shape: capturedInputSize,
         boxes: boxes,

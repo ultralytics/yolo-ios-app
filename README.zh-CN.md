@@ -12,11 +12,11 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-欢迎来到 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App 的 GitHub 仓库！📖 这个项目可将你的 iOS 设备变成强大的[实时推理](https://www.ultralytics.com/glossary/real-time-inference)工具，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、分割、分类、姿态估计以及旋转框检测。该 SDK 同时支持传统的 [YOLO11](https://docs.ultralytics.com/models/yolo11/)（使用 Core ML NMS）和最新的 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以直接从 [App Store](https://apps.apple.com/us/app/idetection/id1452689527) 下载应用，也可以参考本指南，将 YOLO 能力集成到你自己的 Swift 应用中。
+欢迎来到 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App 的 GitHub 仓库！📖 这个项目可将你的 iOS 设备变成强大的[实时推理](https://www.ultralytics.com/glossary/real-time-inference)工具，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、分割、分类、姿态估计以及旋转框检测。该 SDK 同时支持传统的 [YOLO11](https://docs.ultralytics.com/models/yolo11/)（使用 Core ML NMS）和最新的 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以直接从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，也可以参考本指南，将 YOLO 能力集成到你自己的 Swift 应用中。
 
 <div align="center">
   <br>
-  <a href="https://apps.apple.com/us/app/idetection/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <br>
   <a href="https://github.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-github.png" width="3%" alt="Ultralytics GitHub"></a>
@@ -34,7 +34,7 @@
   <a href="https://discord.com/invite/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
   <br>
   <br>
-  <a href="https://apps.apple.com/us/app/idetection/id1452689527" style="text-decoration:none;">
+  <a href="https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 

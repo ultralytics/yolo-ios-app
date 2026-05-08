@@ -78,6 +78,9 @@ Ensure you have the following before you begin:
     ):
         """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
         for model_type in model_types:
+            # Square exports are best when the same model is used for both portrait and landscape.
+            # Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or
+            # [384, 640] for landscape-only. Use orientation-only shapes only when locked to that orientation.
             imgsz = 224 if "cls" in model_type else 1024 if "obb" in model_type else 640
             nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
             for size in model_sizes:

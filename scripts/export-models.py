@@ -29,6 +29,9 @@ TASKS = {
     "-pose": "Pose",
     "-obb": "OBB",
 }
+# Square exports are best when the same model is used for both portrait and landscape.
+# Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or [384, 640] for landscape-only.
+# Use orientation-only shapes only when inference is locked to that orientation.
 IMGSZ = {
     "": 640,
     "-cls": 224,

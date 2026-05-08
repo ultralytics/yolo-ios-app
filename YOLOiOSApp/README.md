@@ -11,7 +11,7 @@ The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralyti
 
 <div align="center">
   <br>
-  <a href="https://apps.apple.com/us/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <br>
   <a href="https://github.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-github.png" width="3%" alt="Ultralytics GitHub"></a>
@@ -29,7 +29,7 @@ The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralyti
   <a href="https://discord.com/invite/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
   <br>
   <br>
-  <a href="https://apps.apple.com/us/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">
+  <a href="https://apps.apple.com/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Download on the Apple App Store"></a>
 </div>
 

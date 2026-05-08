@@ -12,11 +12,11 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11/) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/us/app/ultralytics-yolo/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
+Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11/) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
   <br>
-  <a href="https://apps.apple.com/us/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <br>
   <a href="https://github.com/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-github.png" width="3%" alt="Ultralytics GitHub"></a>
@@ -34,7 +34,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
   <a href="https://discord.com/invite/ultralytics"><img src="https://github.com/ultralytics/assets/raw/main/social/logo-social-discord.png" width="3%" alt="Ultralytics Discord"></a>
   <br>
   <br>
-  <a href="https://apps.apple.com/us/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">
+  <a href="https://apps.apple.com/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/app-store.svg" width="15%" alt="Apple App store"></a>
 </div>
 

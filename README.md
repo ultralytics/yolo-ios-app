@@ -40,14 +40,6 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 
 ## ✨ Why Choose YOLO iOS Native?
 
-| Feature         | iOS |
-| --------------- | --- |
-| Detection       | ✅  |
-| Classification  | ✅  |
-| Segmentation    | ✅  |
-| Pose Estimation | ✅  |
-| OBB Detection   | ✅  |
-
 - Native iOS Performance — Maximum speed with Swift & Core ML
 - Optimized for Apple Silicon — Leverages the Neural Engine & GPU
 - Real-time Detection — 60+ FPS on recent iPhones
@@ -55,6 +47,14 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 - iOS-First Design — Native UI/UX following Apple guidelines
 - Core ML Integration — Apple's optimized ML framework
 - YOLO26 (NMS-free) and YOLO11 models both supported
+
+| Feature         | iOS | Details                                      |
+| --------------- | --- | -------------------------------------------- |
+| Detection       | ✅  | Bounding boxes, labels, and confidence scores |
+| Classification  | ✅  | Top class predictions and scores             |
+| Segmentation    | ✅  | Instance masks with boxes and classes        |
+| Pose Estimation | ✅  | Keypoints with boxes and confidence scores   |
+| OBB Detection   | ✅  | Rotated boxes and polygon corners            |
 
 ## 📂 Repository Content
 

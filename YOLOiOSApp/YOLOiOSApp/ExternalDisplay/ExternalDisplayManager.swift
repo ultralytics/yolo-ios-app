@@ -12,12 +12,12 @@ class ExternalDisplayManager {
   private init() {}
 
   static func registerDefaults() {
-    UserDefaults.standard.register(defaults: [dedicatedModeKey: true])
+    UserDefaults.standard.register(defaults: [dedicatedModeKey: false])
   }
 
   static var isDedicatedModeEnabled: Bool {
     UserDefaults.standard.synchronize()
-    return UserDefaults.standard.object(forKey: dedicatedModeKey) as? Bool ?? true
+    return UserDefaults.standard.object(forKey: dedicatedModeKey) as? Bool ?? false
   }
 
   static func refreshModeIfNeeded() {

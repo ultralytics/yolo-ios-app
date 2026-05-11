@@ -44,7 +44,7 @@
                 <key>Key</key>
                 <string>dedicated_external_display</string>
                 <key>DefaultValue</key>
-                <true/>
+                <false/>
             </dict>
         </array>
     </dict>

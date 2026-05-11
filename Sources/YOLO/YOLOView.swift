@@ -15,6 +15,26 @@ import AVFoundation
 import UIKit
 import Vision
 
+func aspectFillDisplayRect(for normalizedRect: CGRect, imageSize: CGSize, viewSize: CGSize)
+  -> CGRect
+{
+  guard imageSize.width > 0, imageSize.height > 0, viewSize.width > 0, viewSize.height > 0 else {
+    return .zero
+  }
+  let scale = max(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
+  let scaledImageSize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+  let offset = CGPoint(
+    x: (scaledImageSize.width - viewSize.width) / 2,
+    y: (scaledImageSize.height - viewSize.height) / 2
+  )
+  return CGRect(
+    x: normalizedRect.minX * imageSize.width * scale - offset.x,
+    y: normalizedRect.minY * imageSize.height * scale - offset.y,
+    width: normalizedRect.width * imageSize.width * scale,
+    height: normalizedRect.height * imageSize.height * scale
+  )
+}
+
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
@@ -53,7 +73,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           return
         }
         maskLayer.isHidden = false
-        maskLayer.frame = self.overlayLayer.bounds
+        maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       }
       self.videoCapture.predictor?.isUpdating = false
@@ -69,16 +89,20 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         confsList.append(keypoint.conf)
       }
       guard let poseLayer = poseLayer else { return }
+      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      poseLayer.frame = imageFrame
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
-        on: poseLayer, imageViewSize: overlayLayer.frame.size)
+        on: poseLayer, imageViewSize: imageFrame.size)
     } else if task == .obb {
       guard let obbLayer = self.obbLayer else { return }
+      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      obbLayer.frame = imageFrame
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
         obbDetections: obbDetections,
         on: obbLayer,
-        imageViewSize: self.overlayLayer.frame.size
+        imageViewSize: imageFrame.size
       )
     }
   }
@@ -146,7 +170,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.setupUI()
     self.videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   /// Initialize YOLOView without a model (camera only)
@@ -159,7 +183,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.setupUI()
     self.videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   required init?(coder: NSCoder) {
@@ -174,7 +198,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     setupUI()
     videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   public func setModel(
@@ -344,29 +368,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  func setupOverlayLayer() {
-    let width = self.bounds.width
-    let height = self.bounds.height
-
-    var ratio: CGFloat = 1.0
-    if videoCapture.captureSession.sessionPreset == .photo {
-      ratio = (4.0 / 3.0)
-    } else {
-      ratio = (16.0 / 9.0)
-    }
-    var offSet = CGFloat.zero
-    var margin = CGFloat.zero
-    if self.bounds.width < self.bounds.height {
-      offSet = height / ratio
-      margin = (offSet - self.bounds.width) / 2
-      self.overlayLayer.frame = CGRect(
-        x: -margin, y: 0, width: offSet, height: self.bounds.height)
-    } else {
-      offSet = width / ratio
-      margin = (offSet - self.bounds.height) / 2
-      self.overlayLayer.frame = CGRect(
-        x: 0, y: -margin, width: self.bounds.width, height: offSet)
-    }
+  private func imageFrameInOverlay(for imageSize: CGSize) -> CGRect {
+    aspectFillDisplayRect(
+      for: CGRect(x: 0, y: 0, width: 1, height: 1),
+      imageSize: imageSize,
+      viewSize: bounds.size
+    )
   }
 
   func setupMaskLayerIfNeeded() {
@@ -433,75 +440,22 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   func showBoxes(predictions: YOLOResult) {
-    let width = self.bounds.width
-    let height = self.bounds.height
     let maxVisible = min(predictions.boxes.count, 50, boundingBoxViews.count)
-    let videoOrientation = currentVideoOrientation()
 
-    if videoOrientation == .landscapeLeft || videoOrientation == .landscapeRight {
-      let frameAspect = videoCapture.longSide / videoCapture.shortSide
-      let viewAspect = width / height
-      let scale: CGFloat
-      let offsetX: CGFloat
-      let offsetY: CGFloat
-      if frameAspect > viewAspect {
-        scale = height / videoCapture.shortSide
-        offsetX = (videoCapture.longSide * scale - width) / 2
-        offsetY = 0
-      } else {
-        scale = width / videoCapture.longSide
-        offsetX = 0
-        offsetY = (videoCapture.shortSide * scale - height) / 2
-      }
-      for i in 0..<maxVisible {
-        let prediction = predictions.boxes[i]
-        var rect = flippedNormalizedRect(prediction.xywhn)
-        rect.origin.x = rect.origin.x * videoCapture.longSide * scale - offsetX
-        rect.origin.y =
-          height
-          - (rect.origin.y * videoCapture.shortSide * scale
-            - offsetY
-            + rect.size.height * videoCapture.shortSide * scale)
-        rect.size.width *= videoCapture.longSide * scale
-        rect.size.height *= videoCapture.shortSide * scale
-        showBox(at: i, prediction: prediction, frame: rect)
-      }
-    } else {
-      let aspect: CGFloat =
-        videoCapture.captureSession.sessionPreset == .photo ? (4.0 / 3.0) : (16.0 / 9.0)
-      var ratio = (height / width) / aspect
-      for i in 0..<maxVisible {
-        let prediction = predictions.boxes[i]
-        var displayRect = flippedNormalizedRect(prediction.xywhn)
-        if videoOrientation == .portraitUpsideDown {
-          displayRect.origin.x = 1.0 - displayRect.origin.x - displayRect.width
-        }
-        if ratio >= 1 {
-          let offset = (1 - ratio) * (0.5 - displayRect.minX)
-          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-          displayRect = displayRect.applying(transform)
-          displayRect.size.width *= ratio
-        } else {
-          let offset = (ratio - 1) * (0.5 - displayRect.maxY)
-          let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-          displayRect = displayRect.applying(transform)
-          ratio = (height / width) / (3.0 / 4.0)
-          displayRect.size.height /= ratio
-        }
-        displayRect = VNImageRectForNormalizedRect(displayRect, Int(width), Int(height))
-        showBox(at: i, prediction: prediction, frame: displayRect)
-      }
+    let viewSize = bounds.size
+    for i in 0..<maxVisible {
+      let prediction = predictions.boxes[i]
+      let rect = aspectFillDisplayRect(
+        for: prediction.xywhn,
+        imageSize: predictions.orig_shape,
+        viewSize: viewSize
+      )
+      showBox(at: i, prediction: prediction, frame: rect)
     }
 
     for i in maxVisible..<boundingBoxViews.count {
       boundingBoxViews[i].hide()
     }
-  }
-
-  /// Flips a normalized Vision rect from bottom-origin to top-origin for display.
-  @inline(__always)
-  private func flippedNormalizedRect(_ r: CGRect) -> CGRect {
-    CGRect(x: r.minX, y: 1 - r.maxY, width: r.width, height: r.height)
   }
 
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
@@ -699,7 +653,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   public override func layoutSubviews() {
     super.layoutSubviews()
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
 
@@ -889,6 +843,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func currentVideoOrientation() -> AVCaptureVideoOrientation {
+    if window?.screen != UIScreen.main {
+      return AVCaptureVideoOrientation(UIDevice.current.orientation)
+        ?? videoCapture.previewLayer?.connection?.videoOrientation
+        ?? .portrait
+    }
+
     if let interfaceOrientation = window?.windowScene?.interfaceOrientation,
       let videoOrientation = AVCaptureVideoOrientation(interfaceOrientation)
     {

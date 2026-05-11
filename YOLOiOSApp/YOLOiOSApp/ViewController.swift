@@ -22,23 +22,8 @@ import YOLO
 class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - External Display Support (Optional)
-  // NOTE: The following orientation overrides are part of the OPTIONAL external display feature.
-  // These features remain dormant until an external display is connected.
+  // NOTE: The following external display features remain dormant until connected.
   // See ExternalDisplay/ directory for implementation details.
-
-  // Override supported orientations based on external display connection
-  override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    // Use SceneDelegate's state to determine orientation support
-    if SceneDelegate.hasExternalDisplay {
-      return [.landscapeLeft, .landscapeRight]
-    } else {
-      return [.portrait, .landscapeLeft, .landscapeRight]
-    }
-  }
-
-  override var shouldAutorotate: Bool {
-    return true
-  }
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet weak var View0: UIView!
@@ -287,7 +272,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     // Check if external display is connected
-    let hasExternalDisplay = hasExternalScreen() || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = hasExternalScreen()
 
     // Only reset YOLOView if no external display is connected
     if !hasExternalDisplay {
@@ -323,7 +308,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
           // Check if external display is connected
-          let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+          let hasExternalDisplay = self.hasExternalScreen()
 
           if hasExternalDisplay {
             self.finishLoadingModel(success: true, modelName: entry.displayName)
@@ -396,7 +381,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
       // Check if external display is connected
-      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen()
 
       if hasExternalDisplay {
         self.finishLoadingModel(success: true, modelName: displayName)
@@ -429,7 +414,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.setLoadingState(false)
       self.isLoadingModel = false
       self.resetDownloadProgress()
-      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen()
 
       if success {
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect

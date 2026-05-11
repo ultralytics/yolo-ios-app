@@ -10,6 +10,13 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
     _ scene: UIScene, willConnectTo session: UISceneSession,
     options connectionOptions: UIScene.ConnectionOptions
   ) {
+    guard ExternalDisplayManager.isDedicatedModeEnabled else {
+      NotificationCenter.default.post(name: .externalDisplayDisconnected, object: nil)
+      UIApplication.shared.requestSceneSessionDestruction(
+        session, options: nil, errorHandler: nil)
+      return
+    }
+
     guard let windowScene = scene as? UIWindowScene else { return }
 
     let externalScreen = windowScene.screen

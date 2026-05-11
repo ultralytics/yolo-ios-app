@@ -170,7 +170,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.setupUI()
     self.videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   /// Initialize YOLOView without a model (camera only)
@@ -183,7 +183,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.setupUI()
     self.videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   required init?(coder: NSCoder) {
@@ -198,7 +198,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     setupUI()
     videoCapture.delegate = self
     start(position: .back)
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
   }
 
   public func setModel(
@@ -366,10 +366,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
       boundingBoxViews.append(boxView)
     }
-  }
-
-  func setupOverlayLayer() {
-    overlayLayer.frame = bounds
   }
 
   private func imageFrameInOverlay(for imageSize: CGSize) -> CGRect {
@@ -657,7 +653,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   public override func layoutSubviews() {
     super.layoutSubviews()
-    setupOverlayLayer()
+    overlayLayer.frame = bounds
     let isLandscape = bounds.width > bounds.height
     activityIndicator.frame = CGRect(x: center.x - 50, y: center.y - 50, width: 100, height: 100)
 

@@ -272,7 +272,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     // Check if external display is connected
-    let hasExternalDisplay = hasExternalScreen() || SceneDelegate.hasExternalDisplay
+    let hasExternalDisplay = hasExternalScreen()
 
     // Only reset YOLOView if no external display is connected
     if !hasExternalDisplay {
@@ -308,7 +308,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
           // Check if external display is connected
-          let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+          let hasExternalDisplay = self.hasExternalScreen()
 
           if hasExternalDisplay {
             self.finishLoadingModel(success: true, modelName: entry.displayName)
@@ -381,7 +381,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
       // Check if external display is connected
-      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen()
 
       if hasExternalDisplay {
         self.finishLoadingModel(success: true, modelName: displayName)
@@ -414,7 +414,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.setLoadingState(false)
       self.isLoadingModel = false
       self.resetDownloadProgress()
-      let hasExternalDisplay = self.hasExternalScreen() || SceneDelegate.hasExternalDisplay
+      let hasExternalDisplay = self.hasExternalScreen()
 
       if success {
         let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect

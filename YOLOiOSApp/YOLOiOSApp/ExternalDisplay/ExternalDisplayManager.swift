@@ -16,11 +16,11 @@ class ExternalDisplayManager {
   }
 
   static var isDedicatedModeEnabled: Bool {
-    UserDefaults.standard.synchronize()
-    return UserDefaults.standard.object(forKey: dedicatedModeKey) as? Bool ?? false
+    UserDefaults.standard.object(forKey: dedicatedModeKey) as? Bool ?? false
   }
 
   static func refreshModeIfNeeded() {
+    UserDefaults.standard.synchronize()
     let externalSessions = UIApplication.shared.openSessions.filter { $0.role.isExternalDisplay }
 
     if !isDedicatedModeEnabled {

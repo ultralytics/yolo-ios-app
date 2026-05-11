@@ -41,7 +41,8 @@ class ExternalDisplayManager {
     if #available(iOS 17.0, *) {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         guard isDedicatedModeEnabled else { return }
-        let role = UISceneSession.Role(rawValue: "UIWindowSceneSessionRoleExternalDisplayNonInteractive")
+        let role = UISceneSession.Role(
+          rawValue: "UIWindowSceneSessionRoleExternalDisplayNonInteractive")
         let request = UISceneSessionActivationRequest(role: role)
         UIApplication.shared.activateSceneSession(for: request, errorHandler: nil)
       }

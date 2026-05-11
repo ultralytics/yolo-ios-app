@@ -36,6 +36,16 @@
                 <key>DefaultValue</key>
                 <false/>
             </dict>
+            <dict>
+                <key>Type</key>
+                <string>PSToggleSwitchSpecifier</string>
+                <key>Title</key>
+                <string>Dedicated External Display</string>
+                <key>Key</key>
+                <string>dedicated_external_display</string>
+                <key>DefaultValue</key>
+                <true/>
+            </dict>
         </array>
     </dict>
 </plist>

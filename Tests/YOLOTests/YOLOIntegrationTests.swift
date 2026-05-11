@@ -7,6 +7,32 @@ import XCTest
 /// Integration tests combining multiple components
 class YOLOIntegrationTests: XCTestCase {
 
+  func testAspectFillDisplayRectForLandscapeImage() {
+    let rect = aspectFillDisplayRect(
+      for: CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5),
+      imageSize: CGSize(width: 1280, height: 720),
+      viewSize: CGSize(width: 1920, height: 1080)
+    )
+
+    XCTAssertEqual(rect.origin.x, 480, accuracy: 0.001)
+    XCTAssertEqual(rect.origin.y, 270, accuracy: 0.001)
+    XCTAssertEqual(rect.width, 960, accuracy: 0.001)
+    XCTAssertEqual(rect.height, 540, accuracy: 0.001)
+  }
+
+  func testAspectFillDisplayRectForPortraitImageOnLandscapeView() {
+    let rect = aspectFillDisplayRect(
+      for: CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5),
+      imageSize: CGSize(width: 720, height: 1280),
+      viewSize: CGSize(width: 1920, height: 1080)
+    )
+
+    XCTAssertEqual(rect.midX, 960, accuracy: 0.001)
+    XCTAssertEqual(rect.midY, 540, accuracy: 0.001)
+    XCTAssertEqual(rect.width, 960, accuracy: 0.001)
+    XCTAssertEqual(rect.height, 1706.667, accuracy: 0.001)
+  }
+
   func testYOLOWorkflowWithMockComponents() {
     // Test complete YOLO workflow with mock components
     // This test simulates a complete workflow without requiring actual models

@@ -53,31 +53,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     )
   }
 
+  func sceneDidBecomeActive(_ scene: UIScene) {
+    ExternalDisplayManager.refreshModeIfNeeded()
+  }
+
   @objc private func handleExternalDisplayConnected() {
     SceneDelegate.hasExternalDisplay = true
-    updateOrientationLock()
   }
 
   @objc private func handleExternalDisplayDisconnected() {
     SceneDelegate.hasExternalDisplay = false
-    updateOrientationLock()
-  }
-
-  private func updateOrientationLock() {
-    guard let windowScene = window?.windowScene else { return }
-    windowScene.requestGeometryUpdate(
-      .iOS(interfaceOrientations: supportedInterfaceOrientations))
-    window?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
-  }
-
-  var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    // Only support landscape when external display is connected
-    if SceneDelegate.hasExternalDisplay {
-      return [.landscapeLeft, .landscapeRight]
-    } else {
-      // Support all orientations when no external display
-      return [.portrait, .landscapeLeft, .landscapeRight]
-    }
   }
 
   deinit {

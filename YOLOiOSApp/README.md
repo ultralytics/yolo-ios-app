@@ -119,7 +119,7 @@ The app includes **optional** external display optimizations that enhance the us
 
 - **Automatic Display Detection:** The app detects when an external display is connected and automatically adjusts the interface
 - **Optimized Layout:** When connected to an external display, the camera feed is shown on the external screen while controls remain on the device
-- **Orientation Management:** Automatically switches to landscape mode for better viewing on external displays
+- **Orientation Management:** Adapts to portrait and landscape orientations on external displays
 - **Seamless Handoff:** Camera control automatically transfers between the device and external display
 
 #### Files Related to External Display (Optional):

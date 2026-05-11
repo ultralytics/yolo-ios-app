@@ -11,7 +11,6 @@
 // - UI adjustments for external display mode:
 //   * Hide switch camera and share buttons (not supported in external display mode)
 //   * Adjust model dropdown positioning to prevent overlap
-//   * Force landscape orientation for better external display experience
 // - Model and threshold synchronization with external display
 // - Camera session management (stop iPhone camera when external display is active)
 
@@ -22,7 +21,9 @@ import YOLO
 extension ViewController {
 
   func hasExternalScreen() -> Bool {
-    UIApplication.shared.connectedScenes
+    guard ExternalDisplayManager.isDedicatedModeEnabled else { return false }
+
+    return UIApplication.shared.connectedScenes
       .compactMap { $0 as? UIWindowScene }
       .contains { $0.screen != UIScreen.main }
   }
@@ -56,12 +57,12 @@ extension ViewController {
   }
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
+    guard ExternalDisplayManager.isDedicatedModeEnabled else { return }
+
     DispatchQueue.main.async {
       self.yoloView.stop()
       self.yoloView.setInferenceFlag(ok: false)
       self.showExternalDisplayStatus()
-
-      self.requestLandscapeOrientation()
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
         self.view.setNeedsLayout()
@@ -94,12 +95,6 @@ extension ViewController {
         )
       }
     }
-  }
-
-  private func requestLandscapeOrientation() {
-    guard let windowScene = view.window?.windowScene else { return }
-    windowScene.requestGeometryUpdate(
-      .iOS(interfaceOrientations: [.landscapeLeft, .landscapeRight]))
   }
 
   func notifyExternalDisplayOfCurrentModel() {
@@ -139,23 +134,11 @@ extension ViewController {
       } else if !self.currentModels.isEmpty {
         self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
       }
-
-      self.requestPortraitOrientation()
-    }
-  }
-
-  private func requestPortraitOrientation() {
-    guard let windowScene = view.window?.windowScene else { return }
-    windowScene.requestGeometryUpdate(
-      .iOS(interfaceOrientations: [.portrait, .landscapeLeft, .landscapeRight]))
-    setNeedsUpdateOfSupportedInterfaceOrientations()
-
-    if UIDevice.current.orientation.isLandscape {
-      UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
     }
   }
 
   @objc func handleExternalDisplayReady(_ notification: Notification) {
+    guard ExternalDisplayManager.isDedicatedModeEnabled else { return }
     guard !currentTask.isEmpty && !currentModels.isEmpty else { return }
 
     let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
@@ -188,7 +171,7 @@ extension ViewController {
 
   func showExternalDisplayStatus() {
     let statusLabel = UILabel()
-    statusLabel.text = "📱 Camera is shown on external display\n🔄 Please use landscape orientation"
+    statusLabel.text = "📱 Camera is shown on external display"
     statusLabel.textColor = .white
     statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
     statusLabel.textAlignment = .center

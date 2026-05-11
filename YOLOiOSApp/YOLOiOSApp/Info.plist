@@ -51,15 +51,6 @@
 					<string>Main</string>
 				</dict>
 			</array>
-			<key>UIWindowSceneSessionRoleExternalDisplay</key>
-			<array>
-				<dict>
-					<key>UISceneConfigurationName</key>
-					<string>External Display Configuration</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).ExternalSceneDelegate</string>
-				</dict>
-			</array>
 		</dict>
 	</dict>
 	<key>UIFileSharingEnabled</key>
@@ -86,6 +77,8 @@
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 </dict>

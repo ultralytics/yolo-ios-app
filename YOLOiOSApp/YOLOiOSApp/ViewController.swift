@@ -22,23 +22,8 @@ import YOLO
 class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - External Display Support (Optional)
-  // NOTE: The following orientation overrides are part of the OPTIONAL external display feature.
-  // These features remain dormant until an external display is connected.
+  // NOTE: The following external display features remain dormant until connected.
   // See ExternalDisplay/ directory for implementation details.
-
-  // Override supported orientations based on external display connection
-  override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    // Use SceneDelegate's state to determine orientation support
-    if SceneDelegate.hasExternalDisplay {
-      return [.landscapeLeft, .landscapeRight]
-    } else {
-      return [.portrait, .landscapeLeft, .landscapeRight]
-    }
-  }
-
-  override var shouldAutorotate: Bool {
-    return true
-  }
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet weak var View0: UIView!

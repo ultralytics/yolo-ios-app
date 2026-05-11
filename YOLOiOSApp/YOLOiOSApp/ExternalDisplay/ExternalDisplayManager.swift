@@ -31,7 +31,9 @@ class ExternalDisplayManager {
       return
     }
 
-    guard externalSessions.contains(where: { $0.configuration.delegateClass == nil }) else { return }
+    guard externalSessions.contains(where: { $0.configuration.delegateClass == nil }) else {
+      return
+    }
 
     externalSessions.forEach {
       UIApplication.shared.requestSceneSessionDestruction($0, options: nil, errorHandler: nil)

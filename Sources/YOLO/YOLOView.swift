@@ -371,35 +371,25 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   func setupOverlayLayer() {
-    let width = self.bounds.width
-    let height = self.bounds.height
+    overlayLayer.frame = bounds
+  }
 
-    var ratio: CGFloat = 1.0
-    if videoCapture.captureSession.sessionPreset == .photo {
-      ratio = (4.0 / 3.0)
-    } else {
-      ratio = (16.0 / 9.0)
+  private func displayRect(for normalizedRect: CGRect, imageSize: CGSize) -> CGRect {
+    if let previewLayer = videoCapture.previewLayer {
+      return previewLayer.layerRectConverted(fromMetadataOutputRect: normalizedRect)
     }
-    var offSet = CGFloat.zero
-    var margin = CGFloat.zero
-    if self.bounds.width < self.bounds.height {
-      offSet = height / ratio
-      margin = (offSet - self.bounds.width) / 2
-      self.overlayLayer.frame = CGRect(
-        x: -margin, y: 0, width: offSet, height: self.bounds.height)
-    } else {
-      offSet = width / ratio
-      margin = (offSet - self.bounds.height) / 2
-      self.overlayLayer.frame = CGRect(
-        x: 0, y: -margin, width: self.bounds.width, height: offSet)
-    }
+
+    return aspectFillDisplayRect(
+      for: normalizedRect,
+      imageSize: imageSize,
+      viewSize: bounds.size
+    )
   }
 
   private func imageFrameInOverlay(for imageSize: CGSize) -> CGRect {
-    aspectFillDisplayRect(
+    displayRect(
       for: CGRect(x: 0, y: 0, width: 1, height: 1),
-      imageSize: imageSize,
-      viewSize: self.bounds.size
+      imageSize: imageSize
     ).offsetBy(dx: -overlayLayer.frame.minX, dy: -overlayLayer.frame.minY)
   }
 
@@ -467,15 +457,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   func showBoxes(predictions: YOLOResult) {
-    let viewSize = self.bounds.size
     let maxVisible = min(predictions.boxes.count, 50, boundingBoxViews.count)
 
     for i in 0..<maxVisible {
       let prediction = predictions.boxes[i]
-      let rect = aspectFillDisplayRect(
+      let rect = displayRect(
         for: prediction.xywhn,
-        imageSize: predictions.orig_shape,
-        viewSize: viewSize
+        imageSize: predictions.orig_shape
       )
       showBox(at: i, prediction: prediction, frame: rect)
     }

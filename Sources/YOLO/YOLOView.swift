@@ -75,7 +75,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           return
         }
         maskLayer.isHidden = false
-        maskLayer.frame = self.overlayLayer.bounds
+        maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       }
       self.videoCapture.predictor?.isUpdating = false
@@ -91,16 +91,20 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         confsList.append(keypoint.conf)
       }
       guard let poseLayer = poseLayer else { return }
+      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      poseLayer.frame = imageFrame
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
-        on: poseLayer, imageViewSize: overlayLayer.frame.size)
+        on: poseLayer, imageViewSize: imageFrame.size)
     } else if task == .obb {
       guard let obbLayer = self.obbLayer else { return }
+      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      obbLayer.frame = imageFrame
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
         obbDetections: obbDetections,
         on: obbLayer,
-        imageViewSize: self.overlayLayer.frame.size
+        imageViewSize: imageFrame.size
       )
     }
   }
@@ -389,6 +393,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self.overlayLayer.frame = CGRect(
         x: 0, y: -margin, width: self.bounds.width, height: offSet)
     }
+  }
+
+  private func imageFrameInOverlay(for imageSize: CGSize) -> CGRect {
+    aspectFillDisplayRect(
+      for: CGRect(x: 0, y: 0, width: 1, height: 1),
+      imageSize: imageSize,
+      viewSize: self.bounds.size
+    ).offsetBy(dx: -overlayLayer.frame.minX, dy: -overlayLayer.frame.minY)
   }
 
   func setupMaskLayerIfNeeded() {

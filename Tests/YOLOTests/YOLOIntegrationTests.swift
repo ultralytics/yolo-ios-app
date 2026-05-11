@@ -31,6 +31,16 @@ class YOLOIntegrationTests: XCTestCase {
     XCTAssertEqual(rect.midY, 540, accuracy: 0.001)
     XCTAssertEqual(rect.width, 960, accuracy: 0.001)
     XCTAssertEqual(rect.height, 1706.667, accuracy: 0.001)
+
+    let imageRect = aspectFillDisplayRect(
+      for: CGRect(x: 0, y: 0, width: 1, height: 1),
+      imageSize: CGSize(width: 720, height: 1280),
+      viewSize: CGSize(width: 1920, height: 1080)
+    )
+    XCTAssertEqual(imageRect.origin.x, 0, accuracy: 0.001)
+    XCTAssertEqual(imageRect.origin.y, -1166.667, accuracy: 0.001)
+    XCTAssertEqual(imageRect.width, 1920, accuracy: 0.001)
+    XCTAssertEqual(imageRect.height, 3413.333, accuracy: 0.001)
   }
 
   func testYOLOWorkflowWithMockComponents() {

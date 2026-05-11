@@ -15,28 +15,6 @@ import AVFoundation
 import UIKit
 import Vision
 
-func aspectFillDisplayRect(for normalizedRect: CGRect, imageSize: CGSize, viewSize: CGSize)
-  -> CGRect
-{
-  guard imageSize.width > 0, imageSize.height > 0, viewSize.width > 0, viewSize.height > 0 else {
-    return .zero
-  }
-
-  let scale = max(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
-  let scaledImageSize = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
-  let offset = CGPoint(
-    x: (scaledImageSize.width - viewSize.width) / 2,
-    y: (scaledImageSize.height - viewSize.height) / 2
-  )
-
-  return CGRect(
-    x: normalizedRect.minX * imageSize.width * scale - offset.x,
-    y: normalizedRect.minY * imageSize.height * scale - offset.y,
-    width: normalizedRect.width * imageSize.width * scale,
-    height: normalizedRect.height * imageSize.height * scale
-  )
-}
-
 /// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
 public protocol YOLOViewDelegate: AnyObject {
   /// Called when performance metrics (FPS and inference time) are updated
@@ -75,7 +53,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           return
         }
         maskLayer.isHidden = false
-        maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
+        maskLayer.frame = imageFrameInOverlay()
         maskLayer.contents = maskImage
       }
       self.videoCapture.predictor?.isUpdating = false
@@ -91,14 +69,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         confsList.append(keypoint.conf)
       }
       guard let poseLayer = poseLayer else { return }
-      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      let imageFrame = imageFrameInOverlay()
       poseLayer.frame = imageFrame
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
         on: poseLayer, imageViewSize: imageFrame.size)
     } else if task == .obb {
       guard let obbLayer = self.obbLayer else { return }
-      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
+      let imageFrame = imageFrameInOverlay()
       obbLayer.frame = imageFrame
       let obbDetections = result.obb
       self.obbRenderer.drawObbDetectionsWithReuse(
@@ -374,23 +352,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     overlayLayer.frame = bounds
   }
 
-  private func displayRect(for normalizedRect: CGRect, imageSize: CGSize) -> CGRect {
-    if let previewLayer = videoCapture.previewLayer {
-      return previewLayer.layerRectConverted(fromMetadataOutputRect: normalizedRect)
-    }
-
-    return aspectFillDisplayRect(
-      for: normalizedRect,
-      imageSize: imageSize,
-      viewSize: bounds.size
-    )
+  private func displayRect(for normalizedRect: CGRect) -> CGRect {
+    videoCapture.previewLayer?.layerRectConverted(fromMetadataOutputRect: normalizedRect) ?? .zero
   }
 
-  private func imageFrameInOverlay(for imageSize: CGSize) -> CGRect {
-    displayRect(
-      for: CGRect(x: 0, y: 0, width: 1, height: 1),
-      imageSize: imageSize
-    ).offsetBy(dx: -overlayLayer.frame.minX, dy: -overlayLayer.frame.minY)
+  private func imageFrameInOverlay() -> CGRect {
+    displayRect(for: CGRect(x: 0, y: 0, width: 1, height: 1))
   }
 
   func setupMaskLayerIfNeeded() {
@@ -462,8 +429,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     for i in 0..<maxVisible {
       let prediction = predictions.boxes[i]
       let rect = displayRect(
-        for: prediction.xywhn,
-        imageSize: predictions.orig_shape
+        for: prediction.xywhn
       )
       showBox(at: i, prediction: prediction, frame: rect)
     }

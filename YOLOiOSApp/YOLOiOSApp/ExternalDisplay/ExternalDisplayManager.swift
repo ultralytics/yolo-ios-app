@@ -24,6 +24,7 @@ class ExternalDisplayManager {
     let externalSessions = UIApplication.shared.openSessions.filter { $0.role.isExternalDisplay }
 
     if !isDedicatedModeEnabled {
+      guard !externalSessions.isEmpty else { return }
       NotificationCenter.default.post(name: .externalDisplayDisconnected, object: nil)
       externalSessions.forEach {
         UIApplication.shared.requestSceneSessionDestruction($0, options: nil, errorHandler: nil)

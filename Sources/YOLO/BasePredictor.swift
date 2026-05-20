@@ -114,6 +114,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       Classifier.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
     case .segment:
       Segmenter.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .semantic:
+      SemanticSegmenter.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)

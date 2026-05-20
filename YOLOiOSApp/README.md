@@ -73,7 +73,7 @@ Ensure you have the following before you begin:
 
 
     def export_and_zip_yolo_models(
-        model_types=("", "-seg", "-cls", "-pose", "-obb"),
+        model_types=("", "-seg", "-sem", "-cls", "-pose", "-obb"),
         model_sizes=("n", "s", "m", "l", "x"),
     ):
         """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
@@ -105,7 +105,7 @@ Ensure you have the following before you begin:
 
 The Ultralytics YOLO iOS App offers an intuitive user experience:
 
-- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [image classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
+- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), [image classification](https://docs.ultralytics.com/tasks/classify/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
 - **Multiple AI Models:** Choose from a range of downloadable Ultralytics YOLO26 models, from the lightweight YOLO26n ('nano') optimized for edge devices to the powerful YOLO26x ('x-large') for maximum accuracy. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
 
@@ -151,7 +151,8 @@ The test suite is designed to run with or without the actual Core ML model files
 To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized Core ML models** in your project:
 
 - **Detection:** `yolo26n.mlpackage` (place in `YOLO/DetectModels`)
-- **Segmentation:** `yolo26n-seg.mlpackage` (place in `YOLO/SegmentModels`)
+- **Instance Segmentation:** `yolo26n-seg.mlpackage` (place in `YOLO/SegmentModels`)
+- **Semantic Segmentation:** `yolo26n-sem.mlpackage` (place in `YOLO/SemanticModels`)
 - **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `YOLO/PoseModels`)
 - **OBB Detection:** `yolo26n-obb.mlpackage` (place in `YOLO/OBBModels`)
 - **Classification:** `yolo26n-cls.mlpackage` (place in `YOLO/ClassifyModels`)

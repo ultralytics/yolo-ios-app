@@ -55,7 +55,7 @@ struct ModelSelectionManager {
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {
-    let taskSuffixes = ["-seg", "-cls", "-pose", "-obb"]
+    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
 
     var nameWithoutSuffix = baseName
     for suffix in taskSuffixes {
@@ -84,7 +84,7 @@ struct ModelSelectionManager {
   }
 
   private static func removeTaskSuffix(from name: String) -> String {
-    let taskSuffixes = ["-seg", "-cls", "-pose", "-obb"]
+    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
 
     var result = name
     for suffix in taskSuffixes {

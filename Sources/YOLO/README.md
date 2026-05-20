@@ -273,6 +273,11 @@ seg_model = YOLO("yolo26n-seg.pt")
 seg_model.export(format="coreml", int8=True, imgsz=[640, 640])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo26n-seg.mlmodel without NMS")
 
+# Example: Export a YOLO26 semantic segmentation model
+sem_model = YOLO("yolo26n-sem.pt")
+sem_model.export(format="coreml", int8=True, imgsz=[640, 640])  # Dense class-map output
+print("Exported yolo26n-sem.mlmodel without NMS")
+
 # Similarly for other tasks:
 # cls_model = YOLO("yolo26n-cls.pt")
 # Classification usually remains square because it uses center-crop preprocessing.

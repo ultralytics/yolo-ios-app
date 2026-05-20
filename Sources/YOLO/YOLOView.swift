@@ -66,8 +66,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     showBoxes(predictions: result)
     onDetection?(result)
 
-    if task == .segment {
-      if let maskImage = result.masks?.combinedMask {
+    if task == .segment || task == .semantic {
+      if let maskImage = task == .segment ? result.masks?.combinedMask : result.semanticMask?.maskImage {
         guard let maskLayer = self.maskLayer else {
           self.videoCapture.predictor?.isUpdating = false
           return
@@ -422,7 +422,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     resetLayers()
 
     switch task {
-    case .segment:
+    case .segment, .semantic:
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()

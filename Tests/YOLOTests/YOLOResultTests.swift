@@ -71,6 +71,20 @@ class YOLOResultTests: XCTestCase {
     XCTAssertNil(masks.combinedMask)
   }
 
+  func testSemanticMaskCreation() {
+    let semanticMask = SemanticMask(
+      classMap: [0, 1, 2, 1],
+      width: 2,
+      height: 2,
+      maskImage: nil
+    )
+
+    XCTAssertEqual(semanticMask.classMap, [0, 1, 2, 1])
+    XCTAssertEqual(semanticMask.width, 2)
+    XCTAssertEqual(semanticMask.height, 2)
+    XCTAssertNil(semanticMask.maskImage)
+  }
+
   func testKeypointsCreation() {
     // Test Keypoints struct for pose estimation
     let keypoints = Keypoints(

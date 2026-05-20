@@ -17,6 +17,7 @@ APP_DIR="$SCRIPT_DIR/../YOLOiOSApp"
 MODELS=(
   "yolo26n:Models/Detect"
   "yolo26n-seg:Models/Segment"
+  "yolo26n-sem:Models/Semantic"
   "yolo26n-cls:Models/Classify"
   "yolo26n-pose:Models/Pose"
   "yolo26n-obb:Models/OBB"

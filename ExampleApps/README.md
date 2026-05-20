@@ -59,7 +59,7 @@ Follow these steps to get the examples up and running:
 
 
       def export_and_zip_yolo_models(
-          model_types=("", "-seg", "-cls", "-pose", "-obb"),
+          model_types=("", "-seg", "-sem", "-cls", "-pose", "-obb"),
           model_sizes=("n", "s", "m", "l", "x"),
       ):
           """Exports YOLO26 models to Core ML format and optionally zips the output packages."""

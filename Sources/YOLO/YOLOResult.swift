@@ -37,6 +37,9 @@ public struct YOLOResult: @unchecked Sendable {
   /// Optional segmentation masks for instance segmentation results.
   public var masks: Masks?
 
+  /// Optional dense class map for semantic segmentation results.
+  public var semanticMask: SemanticMask?
+
   /// Optional probability distribution for classification results.
   public var probs: Probs?
 
@@ -98,6 +101,24 @@ public struct Masks: @unchecked Sendable {
 
   /// Pre-rendered combined mask image for visualization.
   public let combinedMask: CGImage?
+}
+
+/// Represents semantic segmentation mask data from a YOLO semantic model.
+///
+/// The class map stores one class index per output pixel after model letterbox padding
+/// has been removed. `maskImage` is a pre-rendered color overlay for visualization.
+public struct SemanticMask: @unchecked Sendable {
+  /// Dense class IDs in row-major order with `width * height` elements.
+  public let classMap: [Int]
+
+  /// Width of the dense class map.
+  public let width: Int
+
+  /// Height of the dense class map.
+  public let height: Int
+
+  /// Pre-rendered color overlay image for visualization.
+  public let maskImage: CGImage?
 }
 
 /// Represents classification probability results from a YOLO classification model.

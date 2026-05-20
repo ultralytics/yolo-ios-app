@@ -28,6 +28,7 @@ The tests require specific [Core ML](https://developer.apple.com/documentation/c
 
 - `yolo26n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
 - `yolo26n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
+- `yolo26n-sem.mlpackage`: Model for [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/).
 - `yolo26n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
 - `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
 - `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
@@ -47,7 +48,7 @@ from ultralytics.utils.downloads import zip_directory
 
 
 def export_and_zip_yolo_models(
-    model_types=("", "-seg", "-cls", "-pose", "-obb"),
+    model_types=("", "-seg", "-sem", "-cls", "-pose", "-obb"),
     model_sizes=("n", "s", "m", "l", "x"),
 ):
     """Exports YOLO26 models to Core ML format and optionally zips the output packages."""

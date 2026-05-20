@@ -35,6 +35,7 @@ let package = Package(
         .copy("Resources/yolo26n-obb.mlpackage"),
         .copy("Resources/yolo26n-pose.mlpackage"),
         .copy("Resources/yolo26n-seg.mlpackage"),
+        .copy("Resources/yolo26n-sem.mlpackage"),
       ]
     ),
   ]

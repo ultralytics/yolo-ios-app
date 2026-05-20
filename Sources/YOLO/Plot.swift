@@ -756,3 +756,20 @@ public func drawYOLOSegmentationWithBoxes(
     }
   }
 }
+
+/// Renders a semantic segmentation color map onto the source image.
+public func drawYOLOSemanticSegmentation(
+  ciImage: CIImage,
+  semanticMask: CGImage?
+) -> UIImage? {
+  renderWithBackground(ciImage) { ctx, size in
+    if let semanticMask = semanticMask {
+      ctx.saveGState()
+      ctx.setAlpha(0.5)
+      ctx.translateBy(x: 0, y: size.height)
+      ctx.scaleBy(x: 1, y: -1)
+      ctx.draw(semanticMask, in: CGRect(origin: .zero, size: size))
+      ctx.restoreGState()
+    }
+  }
+}

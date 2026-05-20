@@ -25,6 +25,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     ("Detect", .detect),
     ("Pose", .pose),
     ("OBB", .obb),
+    ("Semantic", .semantic),
   ]
 
   override func viewDidLoad() {
@@ -257,7 +258,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 
     let taskMap: [String: YOLOTask] = [
       "detect": .detect, "segment": .segment,
-      "classify": .classify, "pose": .pose, "obb": .obb,
+      "semantic": .semantic, "classify": .classify, "pose": .pose, "obb": .obb,
     ]
     let task = taskMap[taskString] ?? .detect
 

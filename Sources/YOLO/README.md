@@ -275,7 +275,7 @@ print("Exported yolo26n-seg.mlmodel without NMS")
 
 # Example: Export a YOLO26 semantic segmentation model
 sem_model = YOLO("yolo26n-sem.pt")
-sem_model.export(format="coreml", int8=True, imgsz=[640, 640])  # Dense class-map output
+sem_model.export(format="coreml", int8=True, imgsz=[640, 640])  # Semantic logits output
 print("Exported yolo26n-sem.mlmodel without NMS")
 
 # Similarly for other tasks:

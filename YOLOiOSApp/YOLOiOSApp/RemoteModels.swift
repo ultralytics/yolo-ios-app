@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The RemoteModels file defines a registry of downloadable YOLO models available for each task type.
-//  It provides a structured mapping between task categories (detection, segmentation, classification, etc.)
+//  It provides a structured mapping between task categories (detection, segmentation, semantic segmentation, classification, etc.)
 //  and the available models with their remote download URLs. These models are presented to users in the
 //  application interface, allowing them to download and use additional models beyond those bundled with
 //  the application. The dictionary structure enables easy filtering of models by task type and provides

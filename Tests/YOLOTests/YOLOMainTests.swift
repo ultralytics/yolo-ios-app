@@ -65,7 +65,7 @@ class YOLOMainTests: XCTestCase {
 
   func testYOLOAllTaskTypes() {
     // Test YOLO initialization for all task types with invalid paths
-    let tasks: [YOLOTask] = [.detect, .segment, .pose, .obb, .classify]
+    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .classify, .pose, .obb]
 
     for task in tasks {
       let expectation = XCTestExpectation(description: "Task \(task)")

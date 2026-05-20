@@ -17,7 +17,7 @@ import YOLO
 ///
 /// This view controller allows users to select an image from their photo library and performs
 /// YOLO model inference on the selected image. It uses a segmentation model by default but can be
-/// configured to use other YOLO task types like detection, classification, or pose estimation.
+/// configured to use other YOLO task types like detection, semantic segmentation, classification, or pose estimation.
 ///
 /// - Note: This example uses the PhotosUI framework for image selection and requires photo library access.
 /// - Important: The app requires at least iOS 16.0 or higher to run.

@@ -50,8 +50,9 @@
 | 功能                  | iOS | 详细说明                     |
 | --------------------- | --- | ---------------------------- |
 | 目标检测              | ✅  | 边界框、类别标签和置信度分数 |
-| 图像分类              | ✅  | 最高类别预测和分数           |
 | 实例分割              | ✅  | 实例掩膜、边界框和类别       |
+| 语义分割              | ✅  | 密集逐像素类别图             |
+| 图像分类              | ✅  | 最高类别预测和分数           |
 | 姿态估计              | ✅  | 关键点、边界框和置信度分数   |
 | 定向边界框（OBB）检测 | ✅  | 旋转框和多边形角点           |
 
@@ -77,7 +78,7 @@ let result = model(uiImage)
 var body: some View {
     YOLOCamera(
         modelPathOrName: "yolo26n-seg", // 指定模型名称或路径
-        task: .segment,                // 定义任务（detect、segment、classify、pose）
+        task: .segment,                // 定义任务（detect、segment、semantic、classify、pose、obb）
         cameraPosition: .back          // 选择摄像头（后置或前置）
     )
     .ignoresSafeArea()
@@ -99,7 +100,7 @@ var body: some View {
 
 - **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml/)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
 - **Apple 移动平台支持**：Swift Package 面向 iOS 和 iPadOS，并提供原生 Core ML 集成。
-- **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect/)、[分割](https://docs.ultralytics.com/tasks/segment/)、[分类](https://docs.ultralytics.com/tasks/classify/)、[姿态估计](https://docs.ultralytics.com/tasks/pose/)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb/)。
+- **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect/)、[实例分割](https://docs.ultralytics.com/tasks/segment/)、[语义分割](https://docs.ultralytics.com/tasks/semantic/)、[分类](https://docs.ultralytics.com/tasks/classify/)、[姿态估计](https://docs.ultralytics.com/tasks/pose/)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb/)。
 
 ## 🧪 测试流程
 

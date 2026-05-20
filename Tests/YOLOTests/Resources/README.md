@@ -25,11 +25,11 @@ The test resources follow this structure:
 Tests/YOLOTests/Resources/
 ├── README.md                      # This file
 ├── yolo26n.mlpackage/             # Detection model package
-├── yolo26n-cls.mlpackage/         # Classification model package
-├── yolo26n-obb.mlpackage/         # Oriented bounding box model package
-├── yolo26n-pose.mlpackage/        # Pose estimation model package
 ├── yolo26n-seg.mlpackage/         # Instance segmentation model package
-└── yolo26n-sem.mlpackage/         # Semantic segmentation model package
+├── yolo26n-sem.mlpackage/         # Semantic segmentation model package
+├── yolo26n-cls.mlpackage/         # Classification model package
+├── yolo26n-pose.mlpackage/        # Pose estimation model package
+└── yolo26n-obb.mlpackage/         # Oriented bounding box model package
 ```
 
 Each `.mlpackage` directory should contain a complete Core ML model package with the proper structure including `Manifest.json` and other required files. When downloading or converting models, ensure they maintain this structure.

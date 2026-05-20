@@ -9,7 +9,7 @@ class YOLOTaskTests: XCTestCase {
 
   func testAllTaskTypes() {
     // Test all YOLOTask enum cases exist and are distinct
-    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .pose, .obb, .classify]
+    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .classify, .pose, .obb]
 
     XCTAssertEqual(tasks.count, 6)
 

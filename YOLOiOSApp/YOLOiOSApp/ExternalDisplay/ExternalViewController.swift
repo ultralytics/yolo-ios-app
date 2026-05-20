@@ -20,12 +20,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 
   // Task info
   private let tasks: [(name: String, value: YOLOTask)] = [
-    ("Classify", .classify),
-    ("Segment", .segment),
     ("Detect", .detect),
+    ("Segment", .segment),
+    ("Semantic", .semantic),
+    ("Classify", .classify),
     ("Pose", .pose),
     ("OBB", .obb),
-    ("Semantic", .semantic),
   ]
 
   override func viewDidLoad() {
@@ -97,7 +97,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     for (index, taskInfo) in tasks.enumerated() {
       control.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
     }
-    control.selectedSegmentIndex = 2  // Default to Detect
+    control.selectedSegmentIndex = 0  // Default to Detect
 
     // Styling
     control.backgroundColor = UIColor(white: 0.2, alpha: 0.3)

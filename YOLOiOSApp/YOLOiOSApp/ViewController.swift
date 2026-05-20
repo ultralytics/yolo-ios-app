@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The ViewController serves as the primary interface for users to interact with YOLO models.
-//  It provides the ability to select different models, tasks (detection, segmentation, classification, etc.),
+//  It provides the ability to select different models, tasks (detection, segmentation, semantic segmentation, classification, etc.),
 //  and visualize results in real-time. The controller manages the loading of local and remote models,
 //  handles UI updates during model loading and inference, and provides functionality for capturing
 //  and sharing detection results. Advanced features include model download progress
@@ -75,12 +75,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   let tasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
-    ("Classify", "Cls", "Models/Classify", .classify),
-    ("Segment", "Seg", "Models/Segment", .segment),
     ("Detect", "Det", "Models/Detect", .detect),
+    ("Segment", "Seg", "Models/Segment", .segment),
+    ("Semantic", "Sem", "Models/Semantic", .semantic),
+    ("Classify", "Cls", "Models/Classify", .classify),
     ("Pose", "Pose", "Models/Pose", .pose),
     ("OBB", "OBB", "Models/OBB", .obb),
-    ("Semantic", "Sem", "Models/Semantic", .semantic),
   ]
 
   private var modelsForTask: [String: [String]] = [:]

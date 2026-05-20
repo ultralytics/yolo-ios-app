@@ -28,7 +28,7 @@ public struct YOLOCamera: View {
   ///   - modelPathOrName: A resource name to look up in the main bundle (e.g. `"yolo11n"` — the
   ///     initializer searches for `.mlmodelc` then `.mlpackage`) or an absolute filesystem path
   ///     to a `.mlmodel`/`.mlpackage` file.
-  ///   - task: The YOLO task to run (detect/segment/classify/pose/obb). Defaults to `.detect`.
+  ///   - task: The YOLO task to run (detect/segment/semantic/classify/pose/obb). Defaults to `.detect`.
   ///   - cameraPosition: Which camera to use. Defaults to `.back`.
   ///   - onDetection: Optional callback fired with each frame's inference result.
   public init(
@@ -49,7 +49,7 @@ public struct YOLOCamera: View {
   /// - Parameters:
   ///   - url: Remote URL pointing at a zipped `.mlpackage` or `.mlmodel`. Cached locally by
   ///     `YOLOModelCache` so subsequent launches skip the download.
-  ///   - task: The YOLO task to run (detect/segment/classify/pose/obb). Defaults to `.detect`.
+  ///   - task: The YOLO task to run (detect/segment/semantic/classify/pose/obb). Defaults to `.detect`.
   ///   - cameraPosition: Which camera to use. Defaults to `.back`.
   ///   - onDetection: Optional callback fired with each frame's inference result.
   public init(

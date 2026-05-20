@@ -28,7 +28,7 @@ class ViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     // Initialize YOLOView with a segmentation model
-    // You can change the model or task type to use detection, classification, etc.
+    // You can change the model or task type to use detection, semantic segmentation, classification, etc.
     yoloView = YOLOView(frame: view.bounds, modelPathOrName: "yolo26n", task: .detect)
     view.addSubview(yoloView)
   }

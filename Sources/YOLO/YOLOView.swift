@@ -67,7 +67,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     onDetection?(result)
 
     if task == .segment || task == .semantic {
-      if let maskImage = task == .segment ? result.masks?.combinedMask : result.semanticMask?.maskImage {
+      if let maskImage = task == .segment
+        ? result.masks?.combinedMask : result.semanticMask?.maskImage
+      {
         guard let maskLayer = self.maskLayer else {
           self.videoCapture.predictor?.isUpdating = false
           return

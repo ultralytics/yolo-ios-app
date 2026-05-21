@@ -24,7 +24,7 @@ enum DetectionLabelStyle {
   }
 
   static func alpha(confidence: CGFloat) -> CGFloat {
-    max(0.35, (confidence - 0.2) / (1.0 - 0.2) * 0.9)
+    max(0.6, (confidence - 0.2) / (1.0 - 0.2) * 0.9)
   }
 
   static func font(size: CGFloat) -> UIFont {

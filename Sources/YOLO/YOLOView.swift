@@ -535,7 +535,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     if maxDimension > 1000 {
       fontSize = max(24, viewBounds.height * 0.03)
     } else {
-      fontSize = 14
+      fontSize = 18
     }
 
     DetectionLabelStyle.configure(textLayer, fontSize: fontSize)

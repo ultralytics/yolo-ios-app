@@ -74,13 +74,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
-    ("Detect", "Models/Detect", .detect),
-    ("Segment", "Models/Segment", .segment),
-    ("Semantic", "Models/Semantic", .semantic),
-    ("Classify", "Models/Classify", .classify),
-    ("Pose", "Models/Pose", .pose),
-    ("OBB", "Models/OBB", .obb),
+  let tasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
+    ("Detect", "Det", "Models/Detect", .detect),
+    ("Segment", "Seg", "Models/Segment", .segment),
+    ("Semantic", "Sem", "Models/Semantic", .semantic),
+    ("Classify", "Cls", "Models/Classify", .classify),
+    ("Pose", "Pose", "Models/Pose", .pose),
+    ("OBB", "OBB", "Models/OBB", .obb),
   ]
 
   private var modelsForTask: [String: [String]] = [:]
@@ -113,7 +113,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
-      segmentedControl.insertSegment(withTitle: task.name, at: index, animated: false)
+      segmentedControl.insertSegment(withTitle: task.shortName, at: index, animated: false)
       modelsForTask[task.name] = getModelFiles(in: task.folder)
     }
     setupTaskSegmentedControl()
@@ -533,12 +533,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     segmentedControl.selectedSegmentTintColor = UIColor.white.withAlphaComponent(0.18)
     segmentedControl.setTitleTextAttributes(
       [
-        .font: UIFont.systemFont(ofSize: 11, weight: .semibold),
+        .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
         .foregroundColor: UIColor.white,
       ], for: .selected)
     segmentedControl.setTitleTextAttributes(
       [
-        .font: UIFont.systemFont(ofSize: 11, weight: .medium),
+        .font: UIFont.systemFont(ofSize: 12, weight: .medium),
         .foregroundColor: UIColor.white.withAlphaComponent(0.72),
       ], for: .normal)
   }

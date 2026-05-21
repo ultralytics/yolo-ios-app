@@ -7,6 +7,7 @@ import Vision
 
 /// Specialized predictor for YOLO semantic segmentation models that produce dense class maps.
 public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
+  private var colorCache: (classCount: Int, colors: [(red: UInt8, green: UInt8, blue: UInt8)])?
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     let semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
@@ -124,7 +125,11 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   }
 
   private func semanticColors(classCount: Int) -> [(red: UInt8, green: UInt8, blue: UInt8)] {
-    (0..<classCount).map { classIndex in
+    if let colorCache, colorCache.classCount == classCount {
+      return colorCache.colors
+    }
+
+    let colors = (0..<classCount).map { classIndex in
       let color = ultralyticsColors[classIndex % ultralyticsColors.count]
       var red: CGFloat = 0
       var green: CGFloat = 0
@@ -132,6 +137,8 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       color.getRed(&red, green: &green, blue: &blue, alpha: nil)
       return (UInt8(red * 255), UInt8(green * 255), UInt8(blue * 255))
     }
+    colorCache = (classCount, colors)
+    return colors
   }
 
   private func writeColor(

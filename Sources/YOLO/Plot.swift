@@ -401,7 +401,8 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
       let textPoint = CGPoint(
         x: labelRect.origin.x + DetectionLabelStyle.horizontalPadding / 2,
         y: labelRect.origin.y)
-      labelText.draw(at: textPoint, withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize))
+      labelText.draw(
+        at: textPoint, withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize))
     }
   } ?? UIImage()
 }

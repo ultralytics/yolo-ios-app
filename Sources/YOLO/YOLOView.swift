@@ -522,12 +522,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
     let color = ultralyticsColors[colorIndex]
 
-    let confidencePercent = round(top1Conf * 1000) / 10
-    let labelText = " \(top1) \(confidencePercent)% "
+    let confidence = CGFloat(top1Conf)
+    let labelText = DetectionLabelStyle.text(className: top1, confidence: confidence)
 
     let textLayer = CATextLayer()
-    textLayer.contentsScale = UIScreen.main.scale  // Retina display support
-    textLayer.alignmentMode = .left
 
     // Check if this is likely an external display and scale font accordingly
     let viewBounds = self.bounds
@@ -535,29 +533,24 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let fontSize: CGFloat
 
     if maxDimension > 1000 {
-      fontSize = max(36, viewBounds.height * 0.04)
+      fontSize = max(24, viewBounds.height * 0.03)
     } else {
-      fontSize = viewBounds.height * 0.035
+      fontSize = 14
     }
 
-    textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-    textLayer.fontSize = fontSize
-    textLayer.foregroundColor = UIColor.white.cgColor
-    textLayer.backgroundColor = color.cgColor
-    textLayer.cornerRadius = 4
-    textLayer.masksToBounds = true
-
+    DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
     textLayer.string = labelText
-    let textAttributes: [NSAttributedString.Key: Any] = [
-      .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-    ]
-    let textSize = (labelText as NSString).size(withAttributes: textAttributes)
-    let width: CGFloat = textSize.width + 10
-    let x: CGFloat = self.center.x - (width / 2)
-    let y: CGFloat = self.center.y - textSize.height
-    let height: CGFloat = textSize.height + 4
-
-    textLayer.frame = CGRect(x: x, y: y, width: width, height: height)
+    let alpha = DetectionLabelStyle.alpha(confidence: confidence)
+    textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
+    textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
+    let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
+    let margin = max(12, fontSize)
+    textLayer.frame = CGRect(
+      x: margin,
+      y: safeAreaInsets.top + margin,
+      width: textSize.width,
+      height: textSize.height
+    )
 
     overlayLayer.addSublayer(textLayer)
 

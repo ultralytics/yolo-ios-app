@@ -380,26 +380,28 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     for (i, candidate) in top5.enumerated() {
       let colorIndex = (result.names.firstIndex(of: candidate) ?? 0) % ultralyticsColors.count
       let color = ultralyticsColors[colorIndex]
-      let confidencePercent = round((result.probs?.top5Confs[i] ?? 0) * 1000) / 10
-      let labelText = " \(candidate) \(confidencePercent)% "
-      let font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-      let attrs: [NSAttributedString.Key: Any] = [
-        .font: font, .foregroundColor: UIColor.white,
-      ]
-      let textSize = labelText.size(withAttributes: attrs)
-      let labelHeight = textSize.height + 4
+      let labelText = DetectionLabelStyle.text(
+        className: candidate,
+        confidence: CGFloat(result.probs?.top5Confs[i] ?? 0)
+      )
+      let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
       let labelRect = CGRect(
         x: labelMargin,
-        y: labelMargin + (labelHeight + labelMargin) * CGFloat(i),
-        width: textSize.width + 10,
-        height: labelHeight)
+        y: labelMargin + (textSize.height + labelMargin) * CGFloat(i),
+        width: textSize.width,
+        height: textSize.height)
 
       ctx.setFillColor(color.cgColor)
-      ctx.fill(labelRect)
+      let labelPath = UIBezierPath(
+        roundedRect: labelRect,
+        cornerRadius: DetectionLabelStyle.cornerRadius
+      )
+      ctx.addPath(labelPath.cgPath)
+      ctx.fillPath()
       let textPoint = CGPoint(
-        x: labelRect.origin.x + 5,
-        y: labelRect.origin.y + (labelHeight - textSize.height) / 2)
-      labelText.draw(at: textPoint, withAttributes: attrs)
+        x: labelRect.origin.x + DetectionLabelStyle.horizontalPadding / 2,
+        y: labelRect.origin.y)
+      labelText.draw(at: textPoint, withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize))
     }
   } ?? UIImage()
 }

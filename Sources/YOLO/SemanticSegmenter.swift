@@ -143,13 +143,19 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let y1 = min(y0 + 1, height - 1)
     let wx = min(max(x - Float(x0), 0), 1)
     let wy = min(max(y - Float(y0), 0), 1)
-    let top = value(pointer: pointer, strides: strides, classIndex: classIndex, x: x0, y: y0, isNCHW: isNCHW)
+    let top =
+      value(
+        pointer: pointer, strides: strides, classIndex: classIndex, x: x0, y: y0, isNCHW: isNCHW)
       * (1 - wx)
-      + value(pointer: pointer, strides: strides, classIndex: classIndex, x: x1, y: y0, isNCHW: isNCHW)
+      + value(
+        pointer: pointer, strides: strides, classIndex: classIndex, x: x1, y: y0, isNCHW: isNCHW)
       * wx
-    let bottom = value(pointer: pointer, strides: strides, classIndex: classIndex, x: x0, y: y1, isNCHW: isNCHW)
+    let bottom =
+      value(
+        pointer: pointer, strides: strides, classIndex: classIndex, x: x0, y: y1, isNCHW: isNCHW)
       * (1 - wx)
-      + value(pointer: pointer, strides: strides, classIndex: classIndex, x: x1, y: y1, isNCHW: isNCHW)
+      + value(
+        pointer: pointer, strides: strides, classIndex: classIndex, x: x1, y: y1, isNCHW: isNCHW)
       * wx
     return top * (1 - wy) + bottom * wy
   }

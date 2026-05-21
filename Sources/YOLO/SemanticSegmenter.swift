@@ -51,7 +51,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let shape = logits.shape.map { $0.intValue }
     let strides = logits.strides.map { $0.intValue }
     guard shape.count == 4, shape[0] == 1 else {
-      YOLOLog.error("Invalid semantic output shape: \(logits.shape)")
+      YOLOLog.error(
+        "Invalid semantic output shape: expected logits [1, C, H, W] or [1, H, W, C], got \(logits.shape)"
+      )
       return nil
     }
 
@@ -77,20 +79,23 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
 
     let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
     var classMap = [Int](repeating: 0, count: outputWidth * outputHeight)
-    var pixels = [UInt8](repeating: 0, count: outputWidth * outputHeight * 4)
+    var pixels = Data(count: outputWidth * outputHeight * 4)
     let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
     let binaryThreshold = classCount == 1 ? singleChannelThreshold(pointer, count: logits.count) : 0
 
-    for y in 0..<outputHeight {
-      let sourceY = y + outputY
-      for x in 0..<outputWidth {
-        let sourceX = x + outputX
-        let classIndex = bestClass(
-          pointer: pointer, strides: strides, classCount: classCount,
-          x: sourceX, y: sourceY, isNCHW: isNCHW, binaryThreshold: binaryThreshold)
-        let outIndex = y * outputWidth + x
-        classMap[outIndex] = classIndex
-        writeColor(colors[classIndex], into: &pixels, at: outIndex * 4)
+    pixels.withUnsafeMutableBytes { rawBuffer in
+      let pixelBuffer = rawBuffer.bindMemory(to: UInt8.self)
+      for y in 0..<outputHeight {
+        let sourceY = y + outputY
+        for x in 0..<outputWidth {
+          let sourceX = x + outputX
+          let classIndex = bestClass(
+            pointer: pointer, strides: strides, classCount: classCount,
+            x: sourceX, y: sourceY, isNCHW: isNCHW, binaryThreshold: binaryThreshold)
+          let outIndex = y * outputWidth + x
+          classMap[outIndex] = classIndex
+          writeColor(colors[classIndex], into: pixelBuffer, at: outIndex * 4)
+        }
       }
     }
 
@@ -161,7 +166,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   }
 
   private func writeColor(
-    _ color: (red: UInt8, green: UInt8, blue: UInt8), into pixels: inout [UInt8], at offset: Int
+    _ color: (red: UInt8, green: UInt8, blue: UInt8),
+    into pixels: UnsafeMutableBufferPointer<UInt8>,
+    at offset: Int
   ) {
     pixels[offset] = color.red
     pixels[offset + 1] = color.green
@@ -169,9 +176,8 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     pixels[offset + 3] = 255
   }
 
-  private func makeImage(fromRGBA pixels: [UInt8], width: Int, height: Int) -> CGImage? {
-    let data = Data(pixels)
-    guard let provider = CGDataProvider(data: data as CFData) else { return nil }
+  private func makeImage(fromRGBA pixels: Data, width: Int, height: Int) -> CGImage? {
+    guard let provider = CGDataProvider(data: pixels as CFData) else { return nil }
     return CGImage(
       width: width,
       height: height,

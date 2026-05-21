@@ -26,6 +26,8 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 - ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
 - ✅ **Lightweight & Extensible**: Installs quickly via [Swift Package Manager](https://www.swift.org/package-manager/) with no external dependencies beyond Apple's frameworks.
 
+**Compatibility note:** `YOLOTask.semantic` is a public enum case added for semantic segmentation. Apps with exhaustive `switch` statements over `YOLOTask` should add this case or include a `default`.
+
 ## 📋 Requirements
 
 | Platform | Minimum Version | Notes                      |

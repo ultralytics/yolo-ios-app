@@ -60,6 +60,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let maskHeight = isNCHW ? shape[2] : shape[1]
     let maskWidth = isNCHW ? shape[3] : shape[2]
     guard classCount > 0, maskWidth > 0, maskHeight > 0 else { return nil }
+    if labels.isEmpty {
+      YOLOLog.warning("Semantic output axis inferred without labels from shape: \(logits.shape)")
+    }
 
     let crop = inputMaskCropRect(
       maskWidth: maskWidth, maskHeight: maskHeight, inputSize: inputSize,
@@ -75,7 +78,8 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
     var classMap = [Int](repeating: 0, count: outputWidth * outputHeight)
     var pixels = [UInt8](repeating: 0, count: outputWidth * outputHeight * 4)
-    let colors = semanticColors(classCount: classCount)
+    let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
+    let binaryThreshold = classCount == 1 ? singleChannelThreshold(pointer, count: logits.count) : 0
 
     for y in 0..<outputHeight {
       let sourceY = y + outputY
@@ -83,7 +87,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
         let sourceX = x + outputX
         let classIndex = bestClass(
           pointer: pointer, strides: strides, classCount: classCount,
-          x: sourceX, y: sourceY, isNCHW: isNCHW)
+          x: sourceX, y: sourceY, isNCHW: isNCHW, binaryThreshold: binaryThreshold)
         let outIndex = y * outputWidth + x
         classMap[outIndex] = classIndex
         writeColor(colors[classIndex], into: &pixels, at: outIndex * 4)
@@ -103,25 +107,40 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     classCount: Int,
     x: Int,
     y: Int,
-    isNCHW: Bool
+    isNCHW: Bool,
+    binaryThreshold: Float
   ) -> Int {
     if classCount == 1 {
-      return 0
+      let score =
+        isNCHW
+        ? pointer[y * strides[2] + x * strides[3]]
+        : pointer[y * strides[1] + x * strides[2]]
+      return score > binaryThreshold ? 1 : 0
     }
 
     var bestIndex = 0
     var bestScore = -Float.greatestFiniteMagnitude
+    let baseOffset = isNCHW ? y * strides[2] + x * strides[3] : y * strides[1] + x * strides[2]
+    let classStride = isNCHW ? strides[1] : strides[3]
     for c in 0..<classCount {
-      let score =
-        isNCHW
-        ? pointer[c * strides[1] + y * strides[2] + x * strides[3]]
-        : pointer[y * strides[1] + x * strides[2] + c * strides[3]]
+      let score = pointer[baseOffset + c * classStride]
       if score > bestScore {
         bestScore = score
         bestIndex = c
       }
     }
     return bestIndex
+  }
+
+  private func singleChannelThreshold(_ pointer: UnsafeMutablePointer<Float>, count: Int) -> Float {
+    var minValue = Float.greatestFiniteMagnitude
+    var maxValue = -Float.greatestFiniteMagnitude
+    for index in 0..<count {
+      let value = pointer[index]
+      minValue = min(minValue, value)
+      maxValue = max(maxValue, value)
+    }
+    return minValue >= 0 && maxValue <= 1 ? 0.5 : 0
   }
 
   private func semanticColors(classCount: Int) -> [(red: UInt8, green: UInt8, blue: UInt8)] {

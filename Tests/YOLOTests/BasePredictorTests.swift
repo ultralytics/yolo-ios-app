@@ -278,7 +278,7 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(mask?.classMap, Array(repeating: 1, count: 8))
   }
 
-  func testSemanticPostProcessSingleChannelStaysInRange() throws {
+  func testSemanticPostProcessSingleChannelThresholdsForeground() throws {
     let predictor = SemanticSegmenter()
     predictor.modelInputSize = (width: 2, height: 2)
     predictor.inputSize = CGSize(width: 2, height: 2)
@@ -292,7 +292,7 @@ class BasePredictorTests: XCTestCase {
 
     let mask = predictor.postProcessSemantic(logits)
 
-    XCTAssertEqual(mask?.classMap, [0, 0, 0, 0])
+    XCTAssertEqual(mask?.classMap, [1, 0, 1, 0])
   }
 }
 

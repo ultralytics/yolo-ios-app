@@ -120,13 +120,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setupModelSegmentedControl()
 
-    if let defaultTaskIndex = tasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) {
-      segmentedControl.selectedSegmentIndex = defaultTaskIndex
-      currentTask = tasks[defaultTaskIndex].name
+    let defaultTaskIndex = tasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
+    segmentedControl.selectedSegmentIndex = defaultTaskIndex
+    currentTask = tasks[defaultTaskIndex].name
 
-      // Always load models initially - external display handling will stop camera if needed
-      reloadModelEntriesAndLoadFirst(for: currentTask)
-    }
+    // Always load models initially - external display handling will stop camera if needed
+    reloadModelEntriesAndLoadFirst(for: currentTask)
 
     // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true

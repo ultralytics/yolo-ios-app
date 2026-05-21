@@ -141,25 +141,6 @@ class PlotTests: XCTestCase {
     XCTAssertGreaterThan(outputImage.size.width, 0)
   }
 
-  func testOBBShapeLayerBundleInitialization() {
-    // Test OBBShapeLayerBundle initialization
-    let bundle = OBBShapeLayerBundle()
-
-    XCTAssertNotNil(bundle.shapeLayer)
-    XCTAssertNotNil(bundle.textLayer)
-    XCTAssertEqual(bundle.shapeLayer.strokeColor, UIColor.red.cgColor)
-    XCTAssertEqual(bundle.shapeLayer.fillColor, UIColor.clear.cgColor)
-    XCTAssertEqual(bundle.textLayer.fontSize, 14)
-  }
-
-  func testOBBRendererInitialization() {
-    // Test OBBRenderer initialization
-    let renderer = OBBRenderer()
-
-    // Should not crash on initialization
-    XCTAssertNotNil(renderer)
-  }
-
   func testDrawOBBsOnCIImageWithEmptyDetections() {
     // Test drawOBBsOnCIImage with empty detections
     let inputImage = CIImage(color: CIColor(red: 0.5, green: 0.0, blue: 0.5, alpha: 1.0)).cropped(
@@ -187,11 +168,7 @@ class PlotTests: XCTestCase {
     XCTAssertEqual(outputImage?.size.height, 200)
   }
 
-  func testDrawObbDetectionsWithReuse() {
-    // Test OBBRenderer initialization and OBB polygon computation
-    let renderer = OBBRenderer()
-    XCTAssertNotNil(renderer)
-
+  func testOBBPolygonPixelConversion() {
     let obb = OBB(cx: 0.5, cy: 0.5, w: 0.3, h: 0.2, angle: 0.2)
     let obbResult = OBBResult(box: obb, confidence: 0.9, cls: "plane", index: 0)
     XCTAssertEqual(obbResult.cls, "plane")

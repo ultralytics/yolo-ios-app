@@ -63,7 +63,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
-    showBoxes(predictions: result)
+    task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
     onDetection?(result)
 
     if task == .segment || task == .semantic {
@@ -96,16 +96,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
         on: poseLayer, imageViewSize: imageFrame.size)
-    } else if task == .obb {
-      guard let obbLayer = self.obbLayer else { return }
-      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
-      obbLayer.frame = imageFrame
-      let obbDetections = result.obb
-      self.obbRenderer.drawObbDetectionsWithReuse(
-        obbDetections: obbDetections,
-        on: obbLayer,
-        imageViewSize: imageFrame.size
-      )
     }
   }
 
@@ -142,9 +132,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private var overlayLayer = CALayer()
   private var maskLayer: CALayer?
   private var poseLayer: CALayer?
-  private var obbLayer: CALayer?
-
-  let obbRenderer = OBBRenderer()
 
   private let minimumZoom: CGFloat = 1.0
   private let maximumZoom: CGFloat = 10.0
@@ -242,7 +229,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           self.videoCapture.predictor = predictor
           predictor.setNumItemsThreshold(numItems: self.getNumItemsThreshold())
           self.labelName.text = processString(self.modelName)
-          if task == .obb { self.obbLayer?.isHidden = false }
           completion?(.success(()))
         case .failure(let error):
           YOLOLog.error("Failed to load model: \(error)")
@@ -401,25 +387,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  func setupObbLayerIfNeeded() {
-    if obbLayer == nil {
-      let layer = CALayer()
-      layer.frame = self.overlayLayer.bounds
-      layer.opacity = 0.5
-      self.overlayLayer.addSublayer(layer)
-      self.obbLayer = layer
-    }
-  }
-
   public func resetLayers() {
     removeAllSubLayers(parentLayer: maskLayer)
     removeAllSubLayers(parentLayer: poseLayer)
-    removeAllSubLayers(parentLayer: obbLayer)
     removeAllSubLayers(parentLayer: overlayLayer)
 
     maskLayer = nil
     poseLayer = nil
-    obbLayer = nil
   }
 
   func setupSublayers() {
@@ -430,9 +404,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()
-    case .obb:
-      setupObbLayerIfNeeded()
-      obbLayer?.isHidden = false
     default: break
     }
   }
@@ -462,14 +433,64 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  func showOBBs(predictions: YOLOResult) {
+    let maxVisible = min(predictions.obb.count, 50, boundingBoxViews.count)
+
+    let viewSize = bounds.size
+    for i in 0..<maxVisible {
+      let detection = predictions.obb[i]
+      let box = detection.box
+      let rect = CGRect(
+        x: CGFloat(box.cx - box.w / 2),
+        y: CGFloat(box.cy - box.h / 2),
+        width: CGFloat(box.w),
+        height: CGFloat(box.h)
+      )
+      let frame = aspectFillDisplayRect(
+        for: rect,
+        imageSize: predictions.orig_shape,
+        viewSize: viewSize
+      )
+      showBox(
+        at: i,
+        className: detection.cls,
+        confidence: CGFloat(detection.confidence),
+        classIndex: detection.index,
+        frame: frame,
+        angle: CGFloat(box.angle)
+      )
+    }
+
+    for i in maxVisible..<boundingBoxViews.count {
+      boundingBoxViews[i].hide()
+    }
+  }
+
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
   @inline(__always)
   private func showBox(at index: Int, prediction: Box, frame: CGRect) {
-    let confidence = CGFloat(prediction.conf)
-    let color = ultralyticsColors[prediction.index % ultralyticsColors.count]
-    let label = String(format: "%@ %.1f", prediction.cls, confidence * 100)
-    let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-    boundingBoxViews[index].show(frame: frame, label: label, color: color, alpha: alpha)
+    showBox(
+      at: index,
+      className: prediction.cls,
+      confidence: CGFloat(prediction.conf),
+      classIndex: prediction.index,
+      frame: frame
+    )
+  }
+
+  @inline(__always)
+  private func showBox(
+    at index: Int,
+    className: String,
+    confidence: CGFloat,
+    classIndex: Int,
+    frame: CGRect,
+    angle: CGFloat? = nil
+  ) {
+    let color = ultralyticsColors[classIndex % ultralyticsColors.count]
+    let label = DetectionLabelStyle.text(className: className, confidence: confidence)
+    let alpha = DetectionLabelStyle.alpha(confidence: confidence)
+    boundingBoxViews[index].show(frame: frame, label: label, color: color, alpha: alpha, angle: angle)
   }
 
   func removeClassificationLayers() {

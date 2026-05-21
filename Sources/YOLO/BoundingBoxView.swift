@@ -12,6 +12,62 @@
 import Foundation
 import UIKit
 
+enum DetectionLabelStyle {
+  static let fontName = "Avenir"
+  static let maxTextSize = CGSize(width: 400, height: 100)
+  static let horizontalPadding: CGFloat = 12
+  static let verticalOffset: CGFloat = 2
+  static let cornerRadius: CGFloat = 3
+
+  static func text(className: String, confidence: CGFloat) -> String {
+    String(format: "%@ %.1f", className, confidence * 100)
+  }
+
+  static func alpha(confidence: CGFloat) -> CGFloat {
+    (confidence - 0.2) / (1.0 - 0.2) * 0.9
+  }
+
+  static func font(size: CGFloat) -> UIFont {
+    UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size)
+  }
+
+  static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
+    let font = font(size: fontSize)
+    textLayer.contentsScale = UIScreen.main.scale
+    textLayer.fontSize = fontSize
+    textLayer.font = font
+    textLayer.alignmentMode = .center
+    textLayer.cornerRadius = cornerRadius
+    textLayer.masksToBounds = true
+  }
+
+  static func attributes(fontSize: CGFloat, alpha: CGFloat = 1) -> [NSAttributedString.Key: Any] {
+    [
+      .font: font(size: fontSize),
+      .foregroundColor: UIColor.white.withAlphaComponent(alpha),
+    ]
+  }
+
+  static func size(for label: String, fontSize: CGFloat) -> CGSize {
+    let textRect = label.boundingRect(
+      with: maxTextSize,
+      options: .truncatesLastVisibleLine,
+      attributes: attributes(fontSize: fontSize),
+      context: nil
+    )
+    return CGSize(width: textRect.width + horizontalPadding, height: textRect.height)
+  }
+
+  static func frame(for label: String, fontSize: CGFloat, anchor: CGPoint) -> CGRect {
+    let textSize = size(for: label, fontSize: fontSize)
+    let origin = CGPoint(
+      x: anchor.x - verticalOffset,
+      y: anchor.y - textSize.height - verticalOffset
+    )
+    return CGRect(origin: origin, size: textSize)
+  }
+}
+
 /// Manages the visualization of bounding boxes and associated labels for object detection results.
 @MainActor
 public final class BoundingBoxView {
@@ -33,17 +89,13 @@ public final class BoundingBoxView {
 
     textLayer = CATextLayer()
     textLayer.isHidden = true  // Initially hidden; shown with label when a detection occurs
-    textLayer.contentsScale = UIScreen.main.scale  // Ensure the text is sharp on retina displays
-    textLayer.fontSize = baseFontSize  // Set font size for the label text
-    textLayer.font = UIFont(name: "Avenir", size: textLayer.fontSize)  // Use Avenir font for labels
-    textLayer.alignmentMode = .center  // Center-align the text within the layer
+    DetectionLabelStyle.configure(textLayer, fontSize: baseFontSize)
   }
 
   /// Sets the font size for the text layer (useful for external displays)
   func setFontSize(_ size: CGFloat) {
     baseFontSize = size
-    textLayer.fontSize = size
-    textLayer.font = UIFont(name: "Avenir", size: size)
+    DetectionLabelStyle.configure(textLayer, fontSize: size)
   }
 
   /// Sets the line width for the bounding box (useful for external displays)
@@ -64,11 +116,18 @@ public final class BoundingBoxView {
   ///   - label: The text label to display (e.g., object class and confidence).
   ///   - color: The color of the bounding box stroke and label background.
   ///   - alpha: The opacity level for the bounding box stroke and label background.
-  func show(frame: CGRect, label: String, color: UIColor, alpha: CGFloat) {
+  ///   - angle: Optional rotation angle in radians for oriented boxes.
+  func show(frame: CGRect, label: String, color: UIColor, alpha: CGFloat, angle: CGFloat? = nil) {
     CATransaction.begin()
     CATransaction.setDisableActions(true)  // Disable implicit animations
 
-    let path = UIBezierPath(roundedRect: frame, cornerRadius: 6.0)  // Rounded rectangle for the bounding box
+    let path = UIBezierPath(roundedRect: frame, cornerRadius: 6.0)
+    if let angle {
+      var transform = CGAffineTransform(translationX: frame.midX, y: frame.midY)
+      transform = transform.rotated(by: angle)
+      transform = transform.translatedBy(x: -frame.midX, y: -frame.midY)
+      path.apply(transform)
+    }
     shapeLayer.path = path.cgPath
     shapeLayer.strokeColor = color.withAlphaComponent(alpha).cgColor  // Apply color and alpha to the stroke
     shapeLayer.isHidden = false  // Make the shape layer visible
@@ -78,15 +137,11 @@ public final class BoundingBoxView {
     textLayer.isHidden = false  // Make the text layer visible
     textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor  // Set text color
 
-    // Calculate the text size and position based on the label content
-    let attributes = [NSAttributedString.Key.font: textLayer.font as Any]
-    let textRect = label.boundingRect(
-      with: CGSize(width: 400, height: 100),
-      options: .truncatesLastVisibleLine,
-      attributes: attributes, context: nil)
-    let textSize = CGSize(width: textRect.width + 12, height: textRect.height)  // Add padding to the text size
-    let textOrigin = CGPoint(x: frame.origin.x - 2, y: frame.origin.y - textSize.height - 2)  // Position above the bounding box
-    textLayer.frame = CGRect(origin: textOrigin, size: textSize)  // Set the text layer frame
+    textLayer.frame = DetectionLabelStyle.frame(
+      for: label,
+      fontSize: textLayer.fontSize,
+      anchor: angle == nil ? frame.origin : path.bounds.origin
+    )
     CATransaction.commit()
   }
 
@@ -177,8 +232,7 @@ func makeBoundingBoxInfos(from boxViews: [BoundingBoxView]) -> [BoundingBoxInfo]
       let labelTextColor = UIColor(cgColor: fgCG)
 
       let fontSize = textLayer.fontSize
-      let fontName = "Avenir"
-      let labelFont = UIFont(name: fontName, size: fontSize) ?? UIFont.systemFont(ofSize: fontSize)
+      let labelFont = DetectionLabelStyle.font(size: fontSize)
 
       let finalAlpha = strokeAlpha
 

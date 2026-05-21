@@ -18,7 +18,7 @@ We provide several sample apps built with both [SwiftUI](https://developer.apple
 
 ### YOLORealTimeSwiftUI
 
-- An example SwiftUI app performing real-time [object detection](https://www.ultralytics.com/glossary/object-detection), segmentation, or other tasks using the device's camera feed.
+- An example SwiftUI app performing real-time [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, or OBB detection using the device's camera feed.
 
 ### YOLORealTimeUIKit
 
@@ -42,7 +42,7 @@ Follow these steps to get the examples up and running:
     #### Obtaining YOLO Core ML Models
 
     You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
-    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [Ultralytics YOLO GitHub releases](https://github.com/ultralytics/ultralytics/releases). Place the downloaded model file into your Xcode project.
+    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases). Unzip the downloaded `.mlpackage.zip` asset and place the model package into your Xcode project.
     - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
     - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):

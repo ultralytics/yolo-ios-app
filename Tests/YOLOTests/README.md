@@ -69,9 +69,9 @@ def export_and_zip_yolo_models(
 export_and_zip_yolo_models()
 ```
 
-#### Method 2: Use Ultralytics Pre-Exported Models (If Available)
+#### Method 2: Download Pre-Exported Core ML Models
 
-Check the [Ultralytics YOLO26 model page](https://platform.ultralytics.com/ultralytics/yolo26) or the [Ultralytics Platform](https://platform.ultralytics.com) for potentially available pre-exported Core ML models. Note that direct downloads of `.mlpackage` files might not always be provided, making Method 1 the more reliable approach.
+Download pre-exported Core ML models from the [YOLO iOS App releases page](https://github.com/ultralytics/yolo-ios-app/releases). If you download zipped `.mlpackage` assets, unzip them before placing the model packages in `Tests/YOLOTests/Resources/`.
 
 ### 4. Place the Model Files
 

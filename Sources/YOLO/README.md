@@ -236,11 +236,11 @@ You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) model
 
 ### 1. Download Pre-Exported Models
 
-You can download pre-exported Core ML models (compiled `.mlmodelc` directories or `.mlmodel` files) directly from the Assets section of the [Ultralytics YOLO releases page](https://github.com/ultralytics/ultralytics/releases). Look for files ending in `.mlpackage` or `.mlmodel`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
+You can download pre-exported Core ML models from the Assets section of the [YOLO iOS App releases page](https://github.com/ultralytics/yolo-ios-app/releases). Look for zipped `.mlpackage` assets such as `yolo26n.mlpackage.zip` or `yolo26n-sem.mlpackage.zip`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
 
-[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/ultralytics/releases)
+[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/yolo-ios-app/releases)
 
-After downloading, add the `.mlmodel` file or the `.mlmodelc` directory (often within an `.mlpackage`) to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
+After downloading, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
 
 ### 2. Export Using the Ultralytics Python Package
 

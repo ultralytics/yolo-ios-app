@@ -490,7 +490,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let color = ultralyticsColors[classIndex % ultralyticsColors.count]
     let label = DetectionLabelStyle.text(className: className, confidence: confidence)
     let alpha = DetectionLabelStyle.alpha(confidence: confidence)
-    boundingBoxViews[index].show(frame: frame, label: label, color: color, alpha: alpha, angle: angle)
+    boundingBoxViews[index].show(
+      frame: frame, label: label, color: color, alpha: alpha, angle: angle)
   }
 
   func removeClassificationLayers() {

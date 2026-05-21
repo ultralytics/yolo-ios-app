@@ -384,6 +384,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       layer.frame = self.overlayLayer.bounds
       layer.opacity = 0.5
       layer.name = "maskLayer"
+      layer.magnificationFilter = .linear
+      layer.minificationFilter = .linear
       self.overlayLayer.addSublayer(layer)
       self.maskLayer = layer
     }

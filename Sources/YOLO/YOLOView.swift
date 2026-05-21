@@ -544,10 +544,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
     textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
     let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
-    let margin = max(12, fontSize)
     textLayer.frame = CGRect(
-      x: margin,
-      y: safeAreaInsets.top + margin,
+      x: (viewBounds.width - textSize.width) / 2,
+      y: (viewBounds.height - textSize.height) / 2,
       width: textSize.width,
       height: textSize.height
     )

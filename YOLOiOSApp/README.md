@@ -65,7 +65,7 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Add YOLO26 Models:**
-    The app does not ship Core ML models by default. Official Ultralytics models are downloaded on demand and cached on device. You need models in the [Core ML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized Core ML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `YOLO/{TaskName}Models` directory within the Xcode project (e.g., `YOLO/DetectModels`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
+    The app does not ship Core ML models by default. Official Ultralytics models are downloaded on demand and cached on device. You need models in the [Core ML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized Core ML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `Models/{TaskName}` directory within the Xcode project (e.g., `Models/Detect`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
 
     ```python
     from ultralytics import YOLO
@@ -150,12 +150,12 @@ The test suite is designed to run with or without the actual Core ML model files
 
 To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized Core ML models** in your project:
 
-- **Detection:** `yolo26n.mlpackage` (place in `YOLO/DetectModels`)
-- **Instance Segmentation:** `yolo26n-seg.mlpackage` (place in `YOLO/SegmentModels`)
-- **Semantic Segmentation:** `yolo26n-sem.mlpackage` (place in `YOLO/SemanticModels`)
-- **Classification:** `yolo26n-cls.mlpackage` (place in `YOLO/ClassifyModels`)
-- **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `YOLO/PoseModels`)
-- **OBB Detection:** `yolo26n-obb.mlpackage` (place in `YOLO/OBBModels`)
+- **Detection:** `yolo26n.mlpackage` (place in `Models/Detect`)
+- **Instance Segmentation:** `yolo26n-seg.mlpackage` (place in `Models/Segment`)
+- **Semantic Segmentation:** `yolo26n-sem.mlpackage` (place in `Models/Semantic`)
+- **Classification:** `yolo26n-cls.mlpackage` (place in `Models/Classify`)
+- **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `Models/Pose`)
+- **OBB Detection:** `yolo26n-obb.mlpackage` (place in `Models/OBB`)
 
 You can export these models using the Python script provided in the [Installation section](#add-yolo26-models) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
 

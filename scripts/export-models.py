@@ -6,7 +6,7 @@ Usage:
     pip install ultralytics
     python scripts/export-models.py
 
-Exports YOLO models (5 sizes x 5 tasks = 25 models) to Core ML .mlpackage
+Exports YOLO models (5 sizes x 6 tasks = 30 models) to Core ML .mlpackage
 format and copies them into the app's Models/ directories.
 """
 
@@ -24,8 +24,9 @@ APP_MODELS = ROOT / "YOLOiOSApp" / "Models"
 SIZES = ["n", "s", "m", "l", "x"]
 TASKS = {
     "": "Detect",
-    "-cls": "Classify",
     "-seg": "Segment",
+    "-sem": "Semantic",
+    "-cls": "Classify",
     "-pose": "Pose",
     "-obb": "OBB",
 }
@@ -34,8 +35,9 @@ TASKS = {
 # Use orientation-only shapes only when inference is locked to that orientation.
 IMGSZ = {
     "": 640,
-    "-cls": 224,
     "-seg": 640,
+    "-sem": 640,
+    "-cls": 224,
     "-pose": 640,
     "-obb": 1024,
 }

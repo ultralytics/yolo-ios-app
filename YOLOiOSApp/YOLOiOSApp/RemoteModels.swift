@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The RemoteModels file defines a registry of downloadable YOLO models available for each task type.
-//  It provides a structured mapping between task categories (detection, segmentation, classification, etc.)
+//  It provides a structured mapping between task categories (detection, segmentation, semantic segmentation, classification, etc.)
 //  and the available models with their remote download URLs. These models are presented to users in the
 //  application interface, allowing them to download and use additional models beyond those bundled with
 //  the application. The dictionary structure enables easy filtering of models by task type and provides
@@ -18,7 +18,8 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
   let sizes = ["n", "s", "m", "l", "x"]
   let tasks = [
-    ("Detect", ""), ("Segment", "-seg"), ("Classify", "-cls"), ("Pose", "-pose"), ("OBB", "-obb"),
+    ("Detect", ""), ("Segment", "-seg"), ("Semantic", "-sem"), ("Classify", "-cls"),
+    ("Pose", "-pose"), ("OBB", "-obb"),
   ]
   return tasks.reduce(into: [:]) { result, task in
     result[task.0] = sizes.map { size in

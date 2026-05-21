@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The ViewController serves as the primary interface for users to interact with YOLO models.
-//  It provides the ability to select different models, tasks (detection, segmentation, classification, etc.),
+//  It provides the ability to select different models, tasks (detection, segmentation, semantic segmentation, classification, etc.),
 //  and visualize results in real-time. The controller manages the loading of local and remote models,
 //  handles UI updates during model loading and inference, and provides functionality for capturing
 //  and sharing detection results. Advanced features include model download progress
@@ -47,7 +47,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - Constants
   private struct Constants {
-    static let defaultTaskIndex = 2  // Detect
+    static let defaultTask = YOLOTask.detect
     static let logoURL = "https://www.ultralytics.com"
     static let progressViewWidth: CGFloat = 200
   }
@@ -74,12 +74,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  let tasks: [(name: String, folder: String, yoloTask: YOLOTask)] = [
-    ("Classify", "Models/Classify", .classify),
-    ("Segment", "Models/Segment", .segment),
-    ("Detect", "Models/Detect", .detect),
-    ("Pose", "Models/Pose", .pose),
-    ("OBB", "Models/OBB", .obb),
+  let tasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
+    ("Detect", "Det", "Models/Detect", .detect),
+    ("Segment", "Seg", "Models/Segment", .segment),
+    ("Semantic", "Sem", "Models/Semantic", .semantic),
+    ("Classify", "Cls", "Models/Classify", .classify),
+    ("Pose", "Pose", "Models/Pose", .pose),
+    ("OBB", "OBB", "Models/OBB", .obb),
   ]
 
   private var modelsForTask: [String: [String]] = [:]
@@ -112,19 +113,19 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Setup segmented control and load models
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
-      segmentedControl.insertSegment(withTitle: task.name, at: index, animated: false)
+      segmentedControl.insertSegment(withTitle: task.shortName, at: index, animated: false)
       modelsForTask[task.name] = getModelFiles(in: task.folder)
     }
+    setupTaskSegmentedControl()
 
     setupModelSegmentedControl()
 
-    if tasks.indices.contains(Constants.defaultTaskIndex) {
-      segmentedControl.selectedSegmentIndex = Constants.defaultTaskIndex
-      currentTask = tasks[Constants.defaultTaskIndex].name
+    let defaultTaskIndex = tasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
+    segmentedControl.selectedSegmentIndex = defaultTaskIndex
+    currentTask = tasks[defaultTaskIndex].name
 
-      // Always load models initially - external display handling will stop camera if needed
-      reloadModelEntriesAndLoadFirst(for: currentTask)
-    }
+    // Always load models initially - external display handling will stop camera if needed
+    reloadModelEntriesAndLoadFirst(for: currentTask)
 
     // Setup gestures and delegates
     logoImage.isUserInteractionEnabled = true
@@ -523,6 +524,22 @@ class ViewController: UIViewController, YOLOViewDelegate {
       modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
       modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
     ])
+  }
+
+  private func setupTaskSegmentedControl() {
+    segmentedControl.overrideUserInterfaceStyle = .dark
+    segmentedControl.apportionsSegmentWidthsByContent = false
+    segmentedControl.selectedSegmentTintColor = UIColor.white.withAlphaComponent(0.18)
+    segmentedControl.setTitleTextAttributes(
+      [
+        .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
+        .foregroundColor: UIColor.white,
+      ], for: .selected)
+    segmentedControl.setTitleTextAttributes(
+      [
+        .font: UIFont.systemFont(ofSize: 12, weight: .medium),
+        .foregroundColor: UIColor.white.withAlphaComponent(0.72),
+      ], for: .normal)
   }
 
   @objc private func modelSizeChanged(_ sender: UISegmentedControl) {

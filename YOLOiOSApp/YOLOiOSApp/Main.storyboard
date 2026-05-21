@@ -36,12 +36,13 @@
                                         <color key="textColor" systemColor="groupTableViewBackgroundColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="2" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" apportionsSegmentWidthsByContent="YES" segmentControlStyle="plain" selectedSegmentIndex="0" springLoaded="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9cm-Nq-b3N">
                                         <rect key="frame" x="19" y="180" width="355" height="32"/>
                                         <segments>
-                                            <segment title="Classify" width="69"/>
-                                            <segment title="Segment" width="75"/>
                                             <segment title="Detect" width="69"/>
+                                            <segment title="Segment" width="75"/>
+                                            <segment title="Semantic" width="75"/>
+                                            <segment title="Classify" width="69"/>
                                             <segment title="Pose" width="69"/>
                                             <segment title="OBB" width="69"/>
                                         </segments>

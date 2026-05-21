@@ -228,6 +228,72 @@ class BasePredictorTests: XCTestCase {
       predictor.normalizedRect(fromInputRect: CGRect(x: 1, y: 2, width: 3, height: 4)), .zero)
     XCTAssertEqual(predictor.normalizedPoint(fromInputPoint: CGPoint(x: 1, y: 2)), .zero)
   }
+
+  func testSemanticPostProcessBuildsDenseClassMap() throws {
+    let predictor = SemanticSegmenter()
+    predictor.modelInputSize = (width: 2, height: 2)
+    predictor.inputSize = CGSize(width: 2, height: 2)
+    predictor.labels = ["road", "car", "sky"]
+
+    let logits = try MLMultiArray(shape: [1, 3, 2, 2], dataType: .float32)
+    let values: [Float] = [
+      9, 1, 1, 1,
+      1, 8, 1, 7,
+      1, 1, 6, 1,
+    ]
+    let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
+    for (index, value) in values.enumerated() {
+      pointer[index] = value
+    }
+
+    let mask = predictor.postProcessSemantic(logits)
+
+    XCTAssertEqual(mask?.width, 2)
+    XCTAssertEqual(mask?.height, 2)
+    XCTAssertEqual(mask?.classMap, [0, 1, 2, 1])
+    XCTAssertNotNil(mask?.maskImage)
+  }
+
+  func testSemanticPostProcessRemovesLetterboxPadding() throws {
+    let predictor = SemanticSegmenter()
+    predictor.modelInputSize = (width: 4, height: 4)
+    predictor.inputSize = CGSize(width: 4, height: 2)
+    predictor.labels = ["pad", "scene"]
+
+    let logits = try MLMultiArray(shape: [1, 2, 4, 4], dataType: .float32)
+    let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
+    let strides = logits.strides.map { $0.intValue }
+    for y in 0..<4 {
+      for x in 0..<4 {
+        let classOneWins = y == 1 || y == 2
+        pointer[y * strides[2] + x * strides[3]] = classOneWins ? 0 : 10
+        pointer[strides[1] + y * strides[2] + x * strides[3]] = classOneWins ? 10 : 0
+      }
+    }
+
+    let mask = predictor.postProcessSemantic(logits)
+
+    XCTAssertEqual(mask?.width, 4)
+    XCTAssertEqual(mask?.height, 2)
+    XCTAssertEqual(mask?.classMap, Array(repeating: 1, count: 8))
+  }
+
+  func testSemanticPostProcessSingleChannelThresholdsForeground() throws {
+    let predictor = SemanticSegmenter()
+    predictor.modelInputSize = (width: 2, height: 2)
+    predictor.inputSize = CGSize(width: 2, height: 2)
+    predictor.labels = ["foreground"]
+
+    let logits = try MLMultiArray(shape: [1, 1, 2, 2], dataType: .float32)
+    let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
+    for index in 0..<4 {
+      pointer[index] = index.isMultiple(of: 2) ? 1 : -1
+    }
+
+    let mask = predictor.postProcessSemantic(logits)
+
+    XCTAssertEqual(mask?.classMap, [1, 0, 1, 0])
+  }
 }
 
 // MARK: - Mock Classes

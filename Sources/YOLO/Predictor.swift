@@ -7,7 +7,7 @@
 //  The Predictor protocol and related interfaces define the contract for all YOLO model prediction
 //  implementations. This includes methods for processing images and camera frames, as well as
 //  listener protocols for receiving prediction results and performance metrics. The protocol-based
-//  design enables a consistent API across different model types (detection, segmentation, classification)
+//  design enables a consistent API across different model types (detection, segmentation, semantic segmentation, classification)
 //  while allowing for specialized implementations. Error types related to prediction processes
 //  are also defined here, providing standardized error handling throughout the application.
 

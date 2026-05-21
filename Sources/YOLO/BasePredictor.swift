@@ -9,7 +9,7 @@
 //  model loading, class label extraction, and inference timing. The class provides an asynchronous
 //  model loading mechanism that runs on background threads and includes support for configuring
 //  model parameters like confidence thresholds and IoU thresholds. Specific task implementations
-//  (detection, segmentation, classification, etc.) inherit from this base class and override
+//  (detection, segmentation, semantic segmentation, classification, etc.) inherit from this base class and override
 //  the prediction-specific methods.
 
 import Foundation
@@ -114,6 +114,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       Classifier.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
     case .segment:
       Segmenter.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+    case .semantic:
+      SemanticSegmenter.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)

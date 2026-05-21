@@ -29,6 +29,12 @@ public enum YOLOTask {
   /// providing more detailed boundaries than rectangular bounding boxes.
   case segment
 
+  /// Semantic segmentation task that assigns a class label to each image pixel.
+  ///
+  /// Semantic segmentation models produce one dense class map for the full scene without
+  /// separating individual object instances.
+  case semantic
+
   /// Human pose estimation task that identifies key points of human figures.
   ///
   /// Pose estimation models detect human figures and identify the positions of key body

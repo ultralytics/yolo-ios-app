@@ -2,7 +2,7 @@
 
 # YOLO Swift Package: Simple, Powerful YOLO Integration in Swift
 
-The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect/), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment/), [Image Classification](https://docs.ultralytics.com/tasks/classify/), [Pose Estimation](https://docs.ultralytics.com/tasks/pose/), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
+The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect/), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment/), [Semantic Segmentation](https://docs.ultralytics.com/tasks/semantic/), [Image Classification](https://docs.ultralytics.com/tasks/classify/), [Pose Estimation](https://docs.ultralytics.com/tasks/pose/), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
@@ -21,10 +21,12 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 ## ✨ Features
 
 - ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
-- ✅ **Multiple Task Support**: Handles Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
+- ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
 - ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
 - ✅ **Lightweight & Extensible**: Installs quickly via [Swift Package Manager](https://www.swift.org/package-manager/) with no external dependencies beyond Apple's frameworks.
+
+**Compatibility note:** `YOLOTask.semantic` is a public enum case added for semantic segmentation. Apps with exhaustive `switch` statements over `YOLOTask` should add this case or include a `default`.
 
 ## 📋 Requirements
 
@@ -82,7 +84,7 @@ import YOLO
 
 ### YOLO Class (Inference)
 
-Use the `YOLO` class for performing inference on static images ([`UIImage`](https://developer.apple.com/documentation/uikit/uiimage), `CIImage`, `CGImage`), image file paths, or URLs. It supports various tasks like Object Detection, Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
+Use the `YOLO` class for performing inference on static images ([`UIImage`](https://developer.apple.com/documentation/uikit/uiimage), `CIImage`, `CGImage`), image file paths, or URLs. It supports Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
 
 Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format. You can load an official model from a remote URL, point to your own local `.mlpackage` or `.mlmodelc`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
 
@@ -132,6 +134,7 @@ for box in output.boxes {
 
 // Task-specific fields on YOLOResult:
 //   .masks           — Segmenter  (combined mask CGImage + per-instance mask arrays)
+//   .semanticMask    — SemanticSegmenter (dense class map + overlay CGImage)
 //   .probs           — Classifier (top1 / top5 labels and scores)
 //   .keypointsList   — PoseEstimator
 //   .obb             — ObbDetector (oriented bounding boxes)
@@ -235,11 +238,11 @@ You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) model
 
 ### 1. Download Pre-Exported Models
 
-You can download pre-exported Core ML models (compiled `.mlmodelc` directories or `.mlmodel` files) directly from the Assets section of the [Ultralytics YOLO releases page](https://github.com/ultralytics/ultralytics/releases). Look for files ending in `.mlpackage` or `.mlmodel`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
+You can download pre-exported Core ML models from the Assets section of the [YOLO iOS App releases page](https://github.com/ultralytics/yolo-ios-app/releases). Look for zipped `.mlpackage` assets such as `yolo26n.mlpackage.zip` or `yolo26n-sem.mlpackage.zip`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
 
-[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/ultralytics/releases)
+[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/yolo-ios-app/releases)
 
-After downloading, add the `.mlmodel` file or the `.mlmodelc` directory (often within an `.mlpackage`) to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
+After downloading, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
 
 ### 2. Export Using the Ultralytics Python Package
 
@@ -272,6 +275,11 @@ seg_model = YOLO("yolo26n-seg.pt")
 # Use [640, 640] for mixed portrait/landscape; [640, 384] for portrait-only; [384, 640] for landscape-only.
 seg_model.export(format="coreml", int8=True, imgsz=[640, 640])  # NMS=False (or omitted) for non-detection tasks
 print("Exported yolo26n-seg.mlmodel without NMS")
+
+# Example: Export a YOLO26 semantic segmentation model
+sem_model = YOLO("yolo26n-sem.pt")
+sem_model.export(format="coreml", int8=True, imgsz=[640, 640])  # Semantic logits output
+print("Exported yolo26n-sem.mlmodel without NMS")
 
 # Similarly for other tasks:
 # cls_model = YOLO("yolo26n-cls.pt")

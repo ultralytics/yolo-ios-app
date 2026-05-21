@@ -63,11 +63,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
-    showBoxes(predictions: result)
+    task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
     onDetection?(result)
 
-    if task == .segment {
-      if let maskImage = result.masks?.combinedMask {
+    if task == .segment || task == .semantic {
+      if let maskImage = task == .segment
+        ? result.masks?.combinedMask : result.semanticMask?.maskImage
+      {
         guard let maskLayer = self.maskLayer else {
           self.videoCapture.predictor?.isUpdating = false
           return
@@ -94,16 +96,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       drawKeypoints(
         keypointsList: keypointList, confsList: confsList, boundingBoxes: result.boxes,
         on: poseLayer, imageViewSize: imageFrame.size)
-    } else if task == .obb {
-      guard let obbLayer = self.obbLayer else { return }
-      let imageFrame = imageFrameInOverlay(for: result.orig_shape)
-      obbLayer.frame = imageFrame
-      let obbDetections = result.obb
-      self.obbRenderer.drawObbDetectionsWithReuse(
-        obbDetections: obbDetections,
-        on: obbLayer,
-        imageViewSize: imageFrame.size
-      )
     }
   }
 
@@ -140,9 +132,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private var overlayLayer = CALayer()
   private var maskLayer: CALayer?
   private var poseLayer: CALayer?
-  private var obbLayer: CALayer?
-
-  let obbRenderer = OBBRenderer()
 
   private let minimumZoom: CGFloat = 1.0
   private let maximumZoom: CGFloat = 10.0
@@ -240,7 +229,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           self.videoCapture.predictor = predictor
           predictor.setNumItemsThreshold(numItems: self.getNumItemsThreshold())
           self.labelName.text = processString(self.modelName)
-          if task == .obb { self.obbLayer?.isHidden = false }
           completion?(.success(()))
         case .failure(let error):
           YOLOLog.error("Failed to load model: \(error)")
@@ -382,6 +370,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       layer.frame = self.overlayLayer.bounds
       layer.opacity = 0.5
       layer.name = "maskLayer"
+      layer.magnificationFilter = .linear
+      layer.minificationFilter = .linear
       self.overlayLayer.addSublayer(layer)
       self.maskLayer = layer
     }
@@ -397,38 +387,23 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
-  func setupObbLayerIfNeeded() {
-    if obbLayer == nil {
-      let layer = CALayer()
-      layer.frame = self.overlayLayer.bounds
-      layer.opacity = 0.5
-      self.overlayLayer.addSublayer(layer)
-      self.obbLayer = layer
-    }
-  }
-
   public func resetLayers() {
     removeAllSubLayers(parentLayer: maskLayer)
     removeAllSubLayers(parentLayer: poseLayer)
-    removeAllSubLayers(parentLayer: obbLayer)
     removeAllSubLayers(parentLayer: overlayLayer)
 
     maskLayer = nil
     poseLayer = nil
-    obbLayer = nil
   }
 
   func setupSublayers() {
     resetLayers()
 
     switch task {
-    case .segment:
+    case .segment, .semantic:
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()
-    case .obb:
-      setupObbLayerIfNeeded()
-      obbLayer?.isHidden = false
     default: break
     }
   }
@@ -458,14 +433,65 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  func showOBBs(predictions: YOLOResult) {
+    let maxVisible = min(predictions.obb.count, 50, boundingBoxViews.count)
+
+    let viewSize = bounds.size
+    for i in 0..<maxVisible {
+      let detection = predictions.obb[i]
+      let box = detection.box
+      let rect = CGRect(
+        x: CGFloat(box.cx - box.w / 2),
+        y: CGFloat(box.cy - box.h / 2),
+        width: CGFloat(box.w),
+        height: CGFloat(box.h)
+      )
+      let frame = aspectFillDisplayRect(
+        for: rect,
+        imageSize: predictions.orig_shape,
+        viewSize: viewSize
+      )
+      showBox(
+        at: i,
+        className: detection.cls,
+        confidence: CGFloat(detection.confidence),
+        classIndex: detection.index,
+        frame: frame,
+        angle: CGFloat(box.angle)
+      )
+    }
+
+    for i in maxVisible..<boundingBoxViews.count {
+      boundingBoxViews[i].hide()
+    }
+  }
+
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
   @inline(__always)
   private func showBox(at index: Int, prediction: Box, frame: CGRect) {
-    let confidence = CGFloat(prediction.conf)
-    let color = ultralyticsColors[prediction.index % ultralyticsColors.count]
-    let label = String(format: "%@ %.1f", prediction.cls, confidence * 100)
-    let alpha = CGFloat((confidence - 0.2) / (1.0 - 0.2) * 0.9)
-    boundingBoxViews[index].show(frame: frame, label: label, color: color, alpha: alpha)
+    showBox(
+      at: index,
+      className: prediction.cls,
+      confidence: CGFloat(prediction.conf),
+      classIndex: prediction.index,
+      frame: frame
+    )
+  }
+
+  @inline(__always)
+  private func showBox(
+    at index: Int,
+    className: String,
+    confidence: CGFloat,
+    classIndex: Int,
+    frame: CGRect,
+    angle: CGFloat? = nil
+  ) {
+    let color = ultralyticsColors[classIndex % ultralyticsColors.count]
+    let label = DetectionLabelStyle.text(className: className, confidence: confidence)
+    let alpha = DetectionLabelStyle.alpha(confidence: confidence)
+    boundingBoxViews[index].show(
+      frame: frame, label: label, color: color, alpha: alpha, angle: angle)
   }
 
   func removeClassificationLayers() {
@@ -496,12 +522,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
     let color = ultralyticsColors[colorIndex]
 
-    let confidencePercent = round(top1Conf * 1000) / 10
-    let labelText = " \(top1) \(confidencePercent)% "
+    let confidence = CGFloat(top1Conf)
+    let labelText = DetectionLabelStyle.text(className: top1, confidence: confidence)
 
     let textLayer = CATextLayer()
-    textLayer.contentsScale = UIScreen.main.scale  // Retina display support
-    textLayer.alignmentMode = .left
 
     // Check if this is likely an external display and scale font accordingly
     let viewBounds = self.bounds
@@ -509,29 +533,23 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let fontSize: CGFloat
 
     if maxDimension > 1000 {
-      fontSize = max(36, viewBounds.height * 0.04)
+      fontSize = max(24, viewBounds.height * 0.03)
     } else {
-      fontSize = viewBounds.height * 0.035
+      fontSize = 18
     }
 
-    textLayer.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-    textLayer.fontSize = fontSize
-    textLayer.foregroundColor = UIColor.white.cgColor
-    textLayer.backgroundColor = color.cgColor
-    textLayer.cornerRadius = 4
-    textLayer.masksToBounds = true
-
+    DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
     textLayer.string = labelText
-    let textAttributes: [NSAttributedString.Key: Any] = [
-      .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold)
-    ]
-    let textSize = (labelText as NSString).size(withAttributes: textAttributes)
-    let width: CGFloat = textSize.width + 10
-    let x: CGFloat = self.center.x - (width / 2)
-    let y: CGFloat = self.center.y - textSize.height
-    let height: CGFloat = textSize.height + 4
-
-    textLayer.frame = CGRect(x: x, y: y, width: width, height: height)
+    let alpha = DetectionLabelStyle.alpha(confidence: confidence)
+    textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
+    textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
+    let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
+    textLayer.frame = CGRect(
+      x: (viewBounds.width - textSize.width) / 2,
+      y: (viewBounds.height - textSize.height) / 2,
+      width: textSize.width,
+      height: textSize.height
+    )
 
     overlayLayer.addSublayer(textLayer)
 

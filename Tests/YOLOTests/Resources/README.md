@@ -9,7 +9,8 @@ This directory is designated for storing model files required to run the Ultraly
 To execute the test suite successfully, ensure the following [Core ML](https://developer.apple.com/documentation/coreml) model files are placed within this directory. These models cover various computer vision tasks supported by Ultralytics YOLO:
 
 - `yolo26n.mlpackage` - [Detection](https://docs.ultralytics.com/tasks/detect/) model
-- `yolo26n-seg.mlpackage` - [Segmentation](https://docs.ultralytics.com/tasks/segment/) model
+- `yolo26n-seg.mlpackage` - [Instance segmentation](https://docs.ultralytics.com/tasks/segment/) model
+- `yolo26n-sem.mlpackage` - [Semantic segmentation](https://docs.ultralytics.com/tasks/semantic/) model
 - `yolo26n-cls.mlpackage` - [Classification](https://docs.ultralytics.com/tasks/classify/) model
 - `yolo26n-pose.mlpackage` - [Pose estimation](https://docs.ultralytics.com/tasks/pose/) model
 - `yolo26n-obb.mlpackage` - [Oriented bounding box](https://docs.ultralytics.com/tasks/obb/) model
@@ -24,10 +25,11 @@ The test resources follow this structure:
 Tests/YOLOTests/Resources/
 ├── README.md                      # This file
 ├── yolo26n.mlpackage/             # Detection model package
+├── yolo26n-seg.mlpackage/         # Instance segmentation model package
+├── yolo26n-sem.mlpackage/         # Semantic segmentation model package
 ├── yolo26n-cls.mlpackage/         # Classification model package
-├── yolo26n-obb.mlpackage/         # Oriented bounding box model package
 ├── yolo26n-pose.mlpackage/        # Pose estimation model package
-└── yolo26n-seg.mlpackage/         # Segmentation model package
+└── yolo26n-obb.mlpackage/         # Oriented bounding box model package
 ```
 
 Each `.mlpackage` directory should contain a complete Core ML model package with the proper structure including `Manifest.json` and other required files. When downloading or converting models, ensure they maintain this structure.

@@ -162,7 +162,7 @@ class YOLOIntegrationTests: XCTestCase {
     }
 
     XCTAssertGreaterThan(smoothedSpeed, 0)
-    XCTAssertLessThan(smoothedSpeed, 1.0)  // Should be reasonable inference time
+    XCTAssertLessThan(smoothedSpeed, 1.0)  // Smoothed inference time stays below 1s
   }
 
   func testCoordinateTransformations() {

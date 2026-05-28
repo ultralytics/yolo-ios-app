@@ -89,8 +89,6 @@ class YOLOMainTests: XCTestCase {
     XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
   }
 
-  // MARK: - Helper Methods
-  // (removed createMockYOLO - not needed for simplified tests)
 }
 
 // MARK: - Mock Classes for Testing

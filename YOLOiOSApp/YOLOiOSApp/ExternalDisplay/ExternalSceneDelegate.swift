@@ -21,7 +21,7 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     let externalScreen = windowScene.screen
 
-    // Select highest resolution
+    // Pick the highest-resolution mode the external display supports.
     if let bestMode = externalScreen.availableModes.max(by: {
       $0.size.width * $0.size.height < $1.size.width * $1.size.height
     }) {
@@ -30,7 +30,7 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     externalScreen.overscanCompensation = .scale
 
-    // Setup window and controller
+    // Create the window and root view controller for the external scene.
     window = UIWindow(windowScene: windowScene)
     window?.frame = externalScreen.bounds
 
@@ -42,7 +42,7 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
     window?.insetsLayoutMarginsFromSafeArea = false
     window?.makeKeyAndVisible()
 
-    // Notify connection
+    // Notify the main app that the external display is up.
     NotificationCenter.default.post(
       name: .externalDisplayConnected,
       object: nil,
@@ -51,7 +51,7 @@ class ExternalSceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 
   func sceneDidDisconnect(_ scene: UIScene) {
-    // Notify main app that external display is disconnected
+    // Notify the main app that the external display has gone away.
     NotificationCenter.default.post(name: .externalDisplayDisconnected, object: nil)
     window = nil
   }

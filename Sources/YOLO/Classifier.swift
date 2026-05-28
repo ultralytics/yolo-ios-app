@@ -1,16 +1,12 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO Package, implementing image classification functionality.
+//  This file is part of the Ultralytics YOLO SDK, implementing image classification.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The Classifier class implements image classification using YOLO models. Unlike object detection
-//  or segmentation, it focuses on identifying the primary subject of an image rather than locating
-//  objects within it. The class processes model outputs to extract classification probabilities,
-//  identifying the top predicted class and confidence score. It supports multiple output formats
-//  from Vision framework requests, handling both VNCoreMLFeatureValueObservation and
-//  VNClassificationObservation result types. The implementation extracts both the top prediction
-//  and the top 5 predictions with their confidence scores, enabling rich user feedback.
+//  Classifier identifies the primary subject of an image rather than locating objects within it. It accepts both
+//  `VNCoreMLFeatureValueObservation` (raw logits requiring softmax) and `VNClassificationObservation` (already
+//  normalized) result types, and reports the top-1 plus top-5 predictions with confidence scores.
 
 import Accelerate
 import Foundation
@@ -52,10 +48,9 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     return result
   }
 
-  /// Extracts top-1 and top-5 probabilities from a Vision request result.
-  ///
-  /// Handles both `VNCoreMLFeatureValueObservation` (raw logits that require softmax) and
-  /// `VNClassificationObservation` (already-normalized scores).
+  /// Extracts top-1 and top-5 probabilities from a Vision request result, handling both
+  /// `VNCoreMLFeatureValueObservation` (raw logits requiring softmax) and `VNClassificationObservation` (already
+  /// normalized scores).
   private func extractProbs(from request: VNRequest) -> Probs {
     if let observations = request.results as? [VNCoreMLFeatureValueObservation],
       let multiArray = observations.first?.featureValue.multiArrayValue

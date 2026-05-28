@@ -1,26 +1,23 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO app, handling machine learning model management.
+//  This file is part of the Ultralytics YOLO app and manages the machine learning model lifecycle.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ModelDownloadManager and related classes provide a complete system for managing YOLO models.
-//  This includes downloading models from remote URLs, caching loaded models in memory, handling model
-//  extraction from ZIP archives, and managing the lifecycle of models on the device. The implementation
-//  includes progress tracking for downloads, prioritization of download tasks, and memory management
-//  for loaded models to ensure optimal performance on resource-constrained devices. These utilities
-//  allow the application to dynamically load models based on user selection while maintaining a responsive
-//  user experience.
+//  ModelCacheManager and ModelDownloadManager together handle the YOLO model lifecycle: downloading from remote URLs,
+//  extracting ZIP archives, compiling MLModels, caching loaded models in memory, and tracking what is on disk. The
+//  in-memory cache is bounded to keep memory in check on resource-constrained devices, while progress callbacks keep
+//  the UI responsive during downloads.
 
 import CoreML
 import Foundation
 import ZIPFoundation
 
-/// Shared documents directory accessor.
+/// URL of the app's Documents directory; used for storing compiled models and download archives.
 private let documentsDirectory = FileManager.default.urls(
   for: .documentDirectory, in: .userDomainMask)[0]
 
-/// A structure representing a YOLO model with metadata for display and loading.
+/// Metadata describing a selectable YOLO model entry (local bundle or downloadable remote).
 struct ModelEntry {
   let displayName: String
   let identifier: String
@@ -139,7 +136,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       try FileManager.default.moveItem(at: location, to: zipURL)
       downloadTasks.removeValue(forKey: downloadTask)
 
-      // Extract to model-specific temporary directory to avoid conflicts
+      // Extract to a per-key temp directory to avoid collisions between concurrent downloads.
       let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
       if FileManager.default.fileExists(atPath: tempExtractionURL.path) {
         try FileManager.default.removeItem(at: tempExtractionURL)
@@ -147,19 +144,19 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
 
       try unzipSkippingMacOSX(at: zipURL, to: tempExtractionURL)
 
-      // Find the model file in the extracted contents (search recursively)
+      // Recursively locate the model file inside the extracted contents.
       func findModelFile(in directory: URL) throws -> URL? {
         let contents = try FileManager.default.contentsOfDirectory(
           at: directory, includingPropertiesForKeys: [.isDirectoryKey])
 
-        // First, look for model files in current directory
+        // Prefer model files in the current directory before descending.
         for url in contents {
           if ["mlmodel", "mlpackage"].contains(url.pathExtension) {
             return url
           }
         }
 
-        // Then search subdirectories
+        // Otherwise search subdirectories.
         for url in contents {
           let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
           if resourceValues.isDirectory == true {
@@ -179,7 +176,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       }
 
       loadModel(from: foundModelURL, key: key) { model in
-        // Clean up temp directory and zip file
+        // Clean up temp extraction directory and downloaded zip.
         try? FileManager.default.removeItem(at: tempExtractionURL)
         try? FileManager.default.removeItem(at: zipURL)
         self.completeTask(downloadTask, model: model, key: key)

@@ -4,12 +4,10 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLO class serves as the primary interface for loading and using YOLO machine learning models.
-//  It supports a variety of input formats including UIImage, CIImage, CGImage, and resource files.
-//  The class handles model loading, format conversion, and inference execution, offering a simple yet
-//  powerful API through Swift's callable object pattern. Users can load models from local bundles or
-//  file paths and perform inference with a single function call syntax, making integration into iOS
-//  applications straightforward.
+//  YOLO is the primary entry point for loading a model and running inference. It accepts UIImage, CIImage, CGImage,
+//  bundle resources, file paths, remote URLs, and SwiftUI images, and exposes them through `callAsFunction`
+//  overloads so callers can invoke a YOLO instance like a function. Models can be loaded from the app bundle, a
+//  filesystem path, or downloaded and cached from a remote URL.
 
 import Foundation
 import SwiftUI
@@ -17,9 +15,9 @@ import UIKit
 
 /// The primary interface for working with YOLO models, supporting multiple input types and inference methods.
 ///
-/// Model loading is asynchronous. Calling a `callAsFunction` overload before the init completion
-/// handler has fired returns an empty `YOLOResult`. Use `isLoaded` to check readiness, or perform
-/// inference from inside the completion handler.
+/// Model loading is asynchronous. Calling a `callAsFunction` overload before the init completion handler has fired
+/// returns an empty `YOLOResult`. Use `isLoaded` to check readiness, or perform inference from inside the completion
+/// handler.
 public final class YOLO: @unchecked Sendable {
   var predictor: Predictor?
   private var modelDownloader: YOLOModelDownloader?
@@ -36,7 +34,7 @@ public final class YOLO: @unchecked Sendable {
     (predictor as? BasePredictor)?.isModelLoaded ?? false
   }
 
-  /// Initialize YOLO with remote URL for automatic download and caching
+  /// Initializes YOLO from a remote model URL, downloading and caching it as needed.
   public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
     modelDownloader = YOLOModelDownloader()
     modelDownloader?.download(from: url, task: task) { [weak self] result in
@@ -61,7 +59,7 @@ public final class YOLO: @unchecked Sendable {
     loadModel(from: modelURL, task: task, completion: completion)
   }
 
-  /// Load model from URL with task-specific predictor creation
+  /// Creates the task-specific predictor for the given model URL and applies any pending thresholds.
   private func loadModel(
     from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
   ) {
@@ -86,15 +84,15 @@ public final class YOLO: @unchecked Sendable {
 
   // MARK: - Threshold Configuration Methods
 
-  /// Sets the maximum number of detection items to include in results.
-  /// - Parameter numItems: The maximum number of items to include (default is 30).
+  /// Sets the maximum number of detection items to include in results (default 30 inside the predictor).
+  /// - Parameter numItems: The maximum number of items to include per inference.
   public func setNumItemsThreshold(_ numItems: Int) {
     pendingNumItems = numItems
     (predictor as? BasePredictor)?.setNumItemsThreshold(numItems: numItems)
   }
 
-  /// Gets the current maximum number of detection items.
-  /// - Returns: The current threshold value, or nil if not applicable.
+  /// Returns the current maximum number of detection items.
+  /// - Returns: The active threshold, or `nil` if no value has been set and the model hasn't loaded yet.
   public func getNumItemsThreshold() -> Int? {
     (predictor as? BasePredictor)?.numItemsThreshold ?? pendingNumItems
   }
@@ -107,8 +105,8 @@ public final class YOLO: @unchecked Sendable {
     (predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
   }
 
-  /// Gets the current confidence threshold.
-  /// - Returns: The current threshold value, or nil if not applicable.
+  /// Returns the current confidence threshold.
+  /// - Returns: The active threshold, or `nil` if no value has been set and the model hasn't loaded yet.
   public func getConfidenceThreshold() -> Double? {
     (predictor as? BasePredictor)?.confidenceThreshold ?? pendingConfidence
   }
@@ -121,8 +119,8 @@ public final class YOLO: @unchecked Sendable {
     (predictor as? BasePredictor)?.setIouThreshold(iou: iou)
   }
 
-  /// Gets the current IoU threshold.
-  /// - Returns: The current threshold value, or nil if not applicable.
+  /// Returns the current IoU threshold.
+  /// - Returns: The active threshold, or `nil` if no value has been set and the model hasn't loaded yet.
   public func getIouThreshold() -> Double? {
     (predictor as? BasePredictor)?.iouThreshold ?? pendingIou
   }

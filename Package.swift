@@ -1,5 +1,5 @@
 // swift-tools-version: 5.10
-// WARNING: <=5.10 requires for GitHub Actions CI
+// WARNING: <=5.10 required for GitHub Actions CI
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription

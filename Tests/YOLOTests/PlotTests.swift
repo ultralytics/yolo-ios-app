@@ -48,7 +48,7 @@ class PlotTests: XCTestCase {
 
     let clearColor = UIColor.clear
     let clearComponents = clearColor.toRGBComponents()
-    XCTAssertNotNil(clearComponents)  // Should still work
+    XCTAssertNotNil(clearComponents)  // Clear color still resolves to RGB components
   }
 
   func testDrawYOLODetections() {
@@ -137,7 +137,7 @@ class PlotTests: XCTestCase {
     let outputImage = drawYOLOClassifications(on: inputImage, result: result)
 
     XCTAssertNotNil(outputImage)
-    // Should return an image based on the original
+    // Falls back to the original image when probs are absent
     XCTAssertGreaterThan(outputImage.size.width, 0)
   }
 

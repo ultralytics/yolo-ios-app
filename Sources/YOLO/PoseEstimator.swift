@@ -4,13 +4,10 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The PoseEstimator class extends the BasePredictor to provide human pose and keypoint detection.
-//  It processes model outputs to identify human subjects and their body keypoints (joints such as
-//  eyes, shoulders, elbows, wrists, hips, knees, ankles, etc.). The class converts the model's raw
-//  output into structured data representing each detected person's bounding box and associated
-//  keypoints with their confidence scores. This implementation supports both real-time processing
-//  for camera feeds and single image analysis, producing visualizable results that can be overlaid
-//  on the source image to show the detected pose skeleton.
+//  PoseEstimator extends BasePredictor to detect human subjects and their body keypoints (eyes, shoulders, elbows,
+//  wrists, hips, knees, ankles, etc.). It converts raw model output into per-person bounding boxes and keypoints
+//  with confidence scores, and supports both real-time camera frames and single-image inference. The results can be
+//  overlaid on the source image to draw the pose skeleton.
 
 import Accelerate
 import CoreML

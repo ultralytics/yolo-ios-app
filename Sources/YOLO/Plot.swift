@@ -4,13 +4,9 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The Plot module provides visualization utilities for rendering YOLO model results.
-//  It includes functions for drawing bounding boxes, segmentation masks, pose keypoints,
-//  classification results, and oriented bounding boxes on images. The module implements
-//  specialized rendering algorithms for each type of prediction, handles color management
-//  for different classes, and supports both static image and real-time visualization scenarios.
-//  Each visualization function is optimized for the specific task to provide clear and
-//  informative visual feedback to users with minimal performance impact.
+//  The Plot module renders YOLO inference results. It draws bounding boxes, segmentation masks, pose keypoints,
+//  classification labels, and oriented bounding boxes onto images, with per-class color management and support for
+//  both static-image and real-time scenarios.
 
 import Accelerate
 import CoreImage
@@ -92,8 +88,8 @@ let skeleton = [
 
 /// Executes `body` inside a bitmap graphics context rendered at pixel scale.
 ///
-/// Flips the y-axis so drawing matches UIKit's top-left origin and draws `cgImage` as the
-/// background. The same boilerplate appeared across every `draw…` visualization helper.
+/// Flips the y-axis so drawing matches UIKit's top-left origin and draws the source image as the background, then
+/// invokes `body` with the context and pixel size for callers to add their overlays.
 private func renderWithBackground(
   _ ciImage: CIImage,
   targetSize: CGSize? = nil,

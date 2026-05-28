@@ -4,8 +4,8 @@ import OSLog
 
 /// Unified logger for the Ultralytics YOLO SDK.
 ///
-/// Routes diagnostic output through Apple's unified logging system so messages appear in
-/// Console.app and can be filtered by subsystem. Debug builds also echo to stdout.
+/// Routes diagnostic output through Apple's unified logging system so messages appear in Console.app and can be
+/// filtered by subsystem. Debug builds also echo to stdout.
 enum YOLOLog {
   private static let logger = Logger(subsystem: "com.ultralytics.yolo", category: "YOLO")
 

@@ -115,8 +115,7 @@ struct ModelSelectionManager {
         let fullName = (model.name as NSString).deletingPathExtension
         let displayTitle = removeTaskSuffix(from: fullName)
 
-        // Check if model is downloaded using ModelCacheManager for remote models
-        // Use the model name without extension as the key (e.g., "yolo26n", "yolo26m-seg")
+        // For remote models, check the on-disk cache. The key is the model name without extension (e.g. "yolo26n").
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal
@@ -159,8 +158,7 @@ struct ModelSelectionManager {
       guard index < control.numberOfSegments else { break }
 
       if let model = standardModels[size] {
-        // Check if model is downloaded using ModelCacheManager for remote models
-        // Use the model name without extension as the key (e.g., "yolo26n", "yolo26m-seg")
+        // For remote models, check the on-disk cache. The key is the model name without extension (e.g. "yolo26n").
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal

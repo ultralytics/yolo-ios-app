@@ -1,18 +1,14 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 // MARK: - OPTIONAL External Display Support
-// This extension provides optional external display functionality for the YOLO iOS app.
-// It enhances the user experience when connected to an external monitor or TV but is
-// NOT required for the core app functionality. The features remain dormant until
-// an external display is connected.
+// Optional extension that adds external monitor/TV support to the main ViewController. Dormant unless a display is
+// connected and dedicated mode is enabled in ExternalDisplayManager.
 //
-// Features handled in this extension:
-// - External display connection/disconnection detection
-// - UI adjustments for external display mode:
-//   * Hide switch camera and share buttons (not supported in external display mode)
-//   * Adjust model dropdown positioning to prevent overlap
-// - Model and threshold synchronization with external display
-// - Camera session management (stop iPhone camera when external display is active)
+// Responsibilities:
+// - Detect external display connection/disconnection
+// - Hide controls that don't apply in external-display mode (switch camera, share)
+// - Mirror model and threshold changes to the external scene
+// - Stop the iPhone camera while the external display is active
 
 import UIKit
 import YOLO

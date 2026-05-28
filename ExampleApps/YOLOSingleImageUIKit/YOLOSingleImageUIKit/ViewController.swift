@@ -1,13 +1,14 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a UIKit example for single image object detection.
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a UIKit example for single image object
+//  detection.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ViewController demonstrates how to implement static image analysis using YOLO models in UIKit.
-//  It provides a user interface for selecting images from the device's photo library and displays
-//  both the original and processed images with detection results. The example shows how to initialize
-//  a YOLO model for segmentation, handle image orientation correction, and run inference on selected images.
+//  The ViewController shows how to run static image analysis with YOLO models in UIKit. It provides a user interface
+//  for selecting images from the device's photo library and displays both the original and processed images with
+//  detection results. The example covers initializing a YOLO detection model, correcting image orientation, and
+//  running inference on selected images.
 
 import PhotosUI
 import UIKit
@@ -15,12 +16,12 @@ import YOLO
 
 /// A view controller that demonstrates YOLO model inference on a single image using UIKit.
 ///
-/// This view controller allows users to select an image from their photo library and performs
-/// YOLO model inference on the selected image. It uses a segmentation model by default but can be
-/// configured to use other YOLO task types like detection, semantic segmentation, classification, or pose estimation.
+/// Allows users to select an image from their photo library and runs YOLO model inference on the selected image. Uses
+/// a detection model by default but can be configured to use other YOLO task types like segmentation, semantic
+/// segmentation, classification, pose estimation, or OBB.
 ///
 /// - Note: This example uses the PhotosUI framework for image selection and requires photo library access.
-/// - Important: The app requires at least iOS 16.0 or higher to run.
+/// - Important: The app requires at least iOS 16.0 to run.
 class ViewController: UIViewController, PHPickerViewControllerDelegate {
 
   /// The YOLO model instance used for inference.
@@ -73,7 +74,7 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
     self.present(picker, animated: true)
   }
 
-  /// Corrects the orientation of the image to ensure proper processing by the YOLO model.
+  /// Corrects the orientation of the image for processing by the YOLO model.
   ///
   /// - Parameter uiImage: The input image that may have incorrect orientation metadata.
   /// - Returns: A UIImage with the correct orientation for processing.

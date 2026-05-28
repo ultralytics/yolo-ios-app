@@ -1,16 +1,13 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO Package, implementing object detection functionality.
+//  This file is part of the Ultralytics YOLO SDK, implementing object detection.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ObjectDetector class provides specialized functionality for detecting objects in images
-//  using YOLO models. It processes Vision framework results to extract bounding boxes, class labels,
-//  and confidence scores from model predictions. The class handles both real-time frame processing
-//  and single image analysis, converting the Vision API's normalized coordinates to image coordinates,
-//  and packaging the results in the standardized YOLOResult format. It includes performance monitoring
-//  for inference time and frame rate, and offers runtime adjustable parameters such as confidence
-//  threshold and IoU threshold for non-maximum suppression.
+//  ObjectDetector extracts bounding boxes, class labels, and confidence scores from YOLO detection model outputs,
+//  handling both real-time camera frames and single-image analysis. It supports the traditional Vision NMS pipeline
+//  (YOLO11, returning `VNRecognizedObjectObservation`) and NMS-free end2end models (YOLO26, returning raw
+//  `MLMultiArray` tensors), converting model coordinates to input-image space and packaging results as `YOLOResult`.
 
 import CoreML
 import Foundation
@@ -19,20 +16,17 @@ import Vision
 
 /// Specialized predictor for YOLO object detection models that identifies and localizes objects in images.
 ///
-/// This class processes the outputs from YOLO object detection models, extracting bounding boxes,
-/// class labels, and confidence scores. It handles both real-time camera feed processing and
-/// single image analysis, converting the normalized coordinates from the Vision framework
-/// to image coordinates and applying non-maximum suppression to filter duplicative detections.
+/// Handles both real-time camera frames and single-image analysis, converting Vision-normalized coordinates to
+/// image-space rectangles. Traditional models pass through the Vision NMS pipeline; NMS-free YOLO26 models are
+/// decoded directly from raw `MLMultiArray` tensors with optional Swift-side NMS.
 ///
-/// - Note: Object detection models output rectangular bounding boxes around detected objects.
-/// - SeeAlso: `Segmenter` for models that produce pixel-level masks for objects.
+/// - SeeAlso: `Segmenter` for models that also produce pixel-level masks.
 public final class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Processes the results from the Vision framework's object detection request.
   ///
-  /// This method extracts bounding boxes, class labels, and confidence scores from the
-  /// Vision object detection results, converts coordinates to the original image space,
-  /// and notifies listeners with the structured detection results.
+  /// Decodes boxes from `request.results`, converts them to image-space coordinates, and notifies the results
+  /// listener.
   ///
   /// - Parameters:
   ///   - request: The completed Vision request containing object detection results.
@@ -47,8 +41,8 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   /// Decodes detection boxes from a completed Vision request.
   ///
-  /// Handles both NMS-pipelined models (`VNRecognizedObjectObservation`, e.g. YOLO11)
-  /// and NMS-free models (`VNCoreMLFeatureValueObservation` raw tensors, e.g. YOLO26).
+  /// Handles both NMS-pipelined models (`VNRecognizedObjectObservation`, e.g. YOLO11) and NMS-free models
+  /// (`VNCoreMLFeatureValueObservation` raw tensors, e.g. YOLO26).
   private func decodeBoxes(from request: VNRequest) -> [Box] {
     // NMS-pipelined models (YOLO11 etc.) return VNRecognizedObjectObservation
     if let results = request.results as? [VNRecognizedObjectObservation] {
@@ -62,8 +56,8 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
         let imageRect = VNImageRectForNormalizedRect(
           invertedBox, Int(inputSize.width), Int(inputSize.height))
 
-        // The labels array is a list of VNClassificationObservation objects,
-        // with the highest scoring class first in the list.
+        // The labels array is a list of VNClassificationObservation objects, with the highest scoring class first in
+        // the list.
         let label = prediction.labels[0].identifier
         let index = self.labels.firstIndex(of: label) ?? 0
         let confidence = prediction.labels[0].confidence
@@ -81,11 +75,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     return []
   }
 
-  /// Processes a static image and returns object detection results.
-  ///
-  /// This method performs object detection on a static image and returns the
-  /// detection results synchronously. It handles the entire inference pipeline
-  /// from setting up the Vision request to processing the detection results.
+  /// Runs synchronous object detection on a static image and returns the results.
   ///
   /// - Parameter image: The CIImage to analyze for object detection.
   /// - Returns: A YOLOResult containing the detected objects with bounding boxes, class labels, and confidence scores.
@@ -119,7 +109,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
 
   // MARK: - Raw tensor processing (NMS-free YOLO26)
 
-  /// Dispatches raw MLMultiArray tensor to the appropriate processing method based on output format.
+  /// Dispatches a raw `MLMultiArray` tensor to the appropriate decoder based on output shape (end2end vs traditional).
   ///
   /// - Parameter prediction: The raw MLMultiArray output from the model.
   /// - Returns: An array of detected boxes.

@@ -4,29 +4,23 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLOResult and related structures define the data models for storing and processing
-//  the output from YOLO model inference. This includes bounding boxes for object detection,
-//  masks for segmentation, probability distributions for classification, keypoints for pose estimation,
-//  and oriented bounding boxes for rotated object detection. These structures maintain the
-//  results in a consistent format across different tasks, making it easier to process and
-//  visualize the information in the application's UI components.
+//  YOLOResult and its supporting structs hold the output of a YOLO inference: bounding boxes for detection,
+//  instance and semantic masks for segmentation, top-k probabilities for classification, keypoints for pose, and
+//  oriented bounding boxes for OBB. The shared shape keeps result handling consistent across tasks.
 
 import CoreGraphics
 import Foundation
 import UIKit
 
-/// Represents the complete results from a YOLO model inference, containing task-specific outputs.
+/// The complete output of a single YOLO inference, with optional task-specific fields populated as needed.
 ///
-/// This structure consolidates all outputs from YOLO model inference across different task types.
-/// It can store bounding boxes for object detection, masks for segmentation, probability
-/// distributions for classification, keypoints for pose estimation, and oriented
-/// bounding boxes for rotated object detection. The structure also maintains performance
-/// metrics and visualization data.
+/// Holds bounding boxes, instance and semantic masks, classification probabilities, keypoints, oriented bounding
+/// boxes, an annotated preview image, and timing metrics.
 ///
-/// - Note: Not all fields will be populated for every task type. For example, object detection
-///   models will only populate the `boxes` array, while segmentation models will populate
-///   both `boxes` and `masks`.
-/// - Important: This structure is marked as `@unchecked Sendable` to support concurrent operations.
+/// - Note: Not every field is populated for every task — detection populates `boxes`, segmentation also populates
+///   `masks`, classification populates `probs`, pose populates `keypointsList`, and OBB populates `obb`.
+/// - Important: Marked `@unchecked Sendable` so results can cross actor boundaries; fields are written once during
+///   construction and treated as read-only thereafter.
 public struct YOLOResult: @unchecked Sendable {
   /// The original dimensions of the input image that was processed.
   public let orig_shape: CGSize
@@ -65,13 +59,10 @@ public struct YOLOResult: @unchecked Sendable {
   public static let empty = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
 }
 
-/// Represents a single bounding box detection from a YOLO model.
+/// A single bounding-box detection from a YOLO model.
 ///
-/// This structure contains the information for a single detected object,
-/// including its class, confidence score, and location in both normalized
-/// and image coordinates.
-///
-/// - Note: This structure is marked as `@unchecked Sendable` to support concurrent operations.
+/// Holds the class index and label, the confidence score, and the rectangle in both image-space (`xywh`) and
+/// normalized (`xywhn`) coordinates.
 public struct Box: @unchecked Sendable {
   /// The index of the class in the model's class list.
   public let index: Int
@@ -89,12 +80,9 @@ public struct Box: @unchecked Sendable {
   public let xywhn: CGRect
 }
 
-/// Represents segmentation mask data from a YOLO segmentation model.
+/// Instance-segmentation mask data from a YOLO segmentation model.
 ///
-/// This structure contains both the raw per-pixel mask data for each detected object
-/// and an optional pre-rendered combined mask as a CGImage for visualization.
-///
-/// - Note: This structure is marked as `@unchecked Sendable` to support concurrent operations.
+/// Holds raw per-instance probability masks plus an optional pre-rendered composite for display.
 public struct Masks: @unchecked Sendable {
   /// The raw mask data as a 3D array [instance][height][width] with float values.
   public let masks: [[[Float]]]
@@ -103,10 +91,10 @@ public struct Masks: @unchecked Sendable {
   public let combinedMask: CGImage?
 }
 
-/// Represents semantic segmentation mask data from a YOLO semantic model.
+/// Semantic-segmentation mask data from a YOLO semantic model.
 ///
-/// The class map stores one class index per output pixel after model letterbox padding
-/// has been removed. `maskImage` is a pre-rendered color overlay for visualization.
+/// `classMap` holds one class index per output pixel after letterbox padding has been removed. `maskImage` is a
+/// pre-rendered color overlay for display.
 public struct SemanticMask: @unchecked Sendable {
   /// Dense class IDs in row-major order with `width * height` elements.
   public let classMap: [Int]
@@ -121,12 +109,9 @@ public struct SemanticMask: @unchecked Sendable {
   public let maskImage: CGImage?
 }
 
-/// Represents classification probability results from a YOLO classification model.
+/// Classification probability results from a YOLO classification model.
 ///
-/// This structure contains the top predicted classes and their confidence scores,
-/// providing both the single highest confidence prediction and the top 5 predictions.
-///
-/// - Note: This structure is marked as `@unchecked Sendable` to support concurrent operations.
+/// Holds both the single highest-confidence prediction and the top-5 predictions with their scores.
 public struct Probs: @unchecked Sendable {
   /// The class label with the highest confidence score.
   public var top1: String
@@ -141,10 +126,10 @@ public struct Probs: @unchecked Sendable {
   public var top5Confs: [Float]
 }
 
-/// Represents keypoint detection results from a YOLO pose estimation model.
+/// Keypoint detection results from a YOLO pose estimation model.
 ///
-/// This structure contains the detected keypoints (e.g., body joints) for a human figure,
-/// storing both normalized and image-space coordinates along with confidence values.
+/// Holds the detected body joints for a single subject in both normalized (`xyn`) and image-space (`xy`)
+/// coordinates, along with a confidence score per keypoint.
 public struct Keypoints {
   /// The keypoint coordinates in normalized space (0.0 to 1.0).
   public let xyn: [(x: Float, y: Float)]
@@ -156,10 +141,9 @@ public struct Keypoints {
   public let conf: [Float]
 }
 
-/// Represents a single oriented bounding box detection result.
+/// A single oriented bounding-box detection.
 ///
-/// This structure contains the information for a single detected object with an oriented
-/// (rotated) bounding box, including its class, confidence score, and OBB parameters.
+/// Holds the rotated box, its confidence, and the detected class as both an index and a label.
 public struct OBBResult {
   /// The oriented bounding box parameters.
   public var box: OBB
@@ -174,11 +158,9 @@ public struct OBBResult {
   public var index: Int
 }
 
-/// Represents an oriented (rotated) bounding box.
+/// An oriented (rotated) bounding box stored as center, size, and rotation angle.
 ///
-/// This structure defines a bounding box with rotation, storing the center coordinates,
-/// width, height, and rotation angle. OBBs provide better fitting boundaries for objects
-/// that are not aligned with the image axes.
+/// OBBs fit objects that aren't axis-aligned more tightly than a standard `Box`.
 public struct OBB {
   /// The x-coordinate of the center of the box.
   public var cx: Float
@@ -195,14 +177,14 @@ public struct OBB {
   /// The rotation angle of the box in radians.
   public var angle: Float
 
-  /// Creates a new oriented bounding box with the specified parameters.
+  /// Creates an oriented bounding box.
   ///
   /// - Parameters:
-  ///   - cx: The x-coordinate of the center of the box.
-  ///   - cy: The y-coordinate of the center of the box.
-  ///   - w: The width of the box.
-  ///   - h: The height of the box.
-  ///   - angle: The rotation angle of the box in radians.
+  ///   - cx: Center x-coordinate.
+  ///   - cy: Center y-coordinate.
+  ///   - w: Box width.
+  ///   - h: Box height.
+  ///   - angle: Rotation angle in radians.
   public init(cx: Float, cy: Float, w: Float, h: Float, angle: Float) {
     self.cx = cx
     self.cy = cy
@@ -212,21 +194,18 @@ public struct OBB {
   }
 }
 
-/// A polygon represented as an array of points (x, y).
+/// A polygon represented as an array of `CGPoint` corners.
 ///
-/// This type is used to represent the corners of an oriented bounding box
-/// after conversion from the center/width/height/angle representation.
+/// Used to express OBB corners after converting from the center/size/angle form.
 public typealias Polygon = [CGPoint]
 
-/// Extension to provide additional functionality for oriented bounding boxes.
 extension OBB {
-  /// Converts the OBB to an array of 4 corner points (polygon).
+  /// Converts the OBB to its four corner points in normalized space.
   ///
-  /// This method transforms the center, width, height, and angle representation
-  /// of an oriented bounding box into the four corner points of the rectangle.
-  /// The corners are returned in clockwise or counter-clockwise order.
+  /// Use this overload for NMS/IoU work where the result must be scale-invariant. For rendering on a non-square
+  /// image, prefer `toPolygon(imageSize:)` to avoid aspect-ratio distortion.
   ///
-  /// - Returns: An array of four CGPoints representing the corners of the oriented bounding box.
+  /// - Returns: The four corners of the oriented bounding box, in clockwise order.
   public func toPolygon() -> Polygon {
     // Half extents
     let halfW = w / 2
@@ -263,11 +242,11 @@ extension OBB {
 
   /// Converts the OBB to pixel-space corner points.
   ///
-  /// OBB values are normalized to the input image after preprocessing padding has been
-  /// removed, so the stored angle can be applied directly in pixel space.
+  /// OBB values are normalized to the input image after preprocessing padding is removed, so the stored angle can
+  /// be applied directly in pixel space without aspect-ratio correction.
   ///
-  /// - Parameter imageSize: The target image/view size in pixels.
-  /// - Returns: An array of four CGPoints in pixel coordinates.
+  /// - Parameter imageSize: Target image or view size in pixels.
+  /// - Returns: The four corners of the oriented bounding box in pixel coordinates.
   public func toPolygon(imageSize: CGSize) -> Polygon {
     let cosA = CGFloat(cos(Double(angle)))
     let sinA = CGFloat(sin(Double(angle)))
@@ -290,12 +269,7 @@ extension OBB {
     }
   }
 
-  /// Calculates the area of the oriented bounding box.
-  ///
-  /// The area of an oriented bounding box is simply the product of its width and height,
-  /// regardless of the rotation angle.
-  ///
-  /// - Returns: The area of the bounding box in square pixels.
+  /// The area of the oriented bounding box (`w * h`, rotation-independent).
   public var area: CGFloat {
     return CGFloat(w * h)
   }

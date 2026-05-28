@@ -4,9 +4,9 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLOModelDownloader class handles the downloading, extraction, and processing of YOLO models
-//  from remote URLs. It supports progress tracking, ZIP file extraction with proper handling of
-//  directory structures, and automatic caching of downloaded models for offline use.
+//  YOLOModelDownloader downloads, extracts, and compiles YOLO models from remote URLs. It reports fractional
+//  progress, unpacks ZIP archives while skipping macOS metadata, and stores the compiled `.mlmodelc` in
+//  YOLOModelCache for offline reuse.
 
 import CoreML
 import Foundation
@@ -18,7 +18,7 @@ public final class YOLOModelDownloader: NSObject {
   public typealias ProgressHandler = (Double) -> Void
   public typealias CompletionHandler = (Result<URL, Error>) -> Void
 
-  /// Error types for download operations
+  /// Errors that can be reported during a download.
   public enum DownloadError: LocalizedError {
     case invalidURL, invalidZipFile, modelNotFoundInArchive
     case downloadFailed(Error)
@@ -98,7 +98,7 @@ public final class YOLOModelDownloader: NSObject {
     downloadTask?.resume()
   }
 
-  /// Cancel current download
+  /// Cancels the in-flight download, if any.
   public func cancelDownload() {
     downloadTask?.cancel()
   }
@@ -122,7 +122,7 @@ public final class YOLOModelDownloader: NSObject {
     completionHandler?(result)
   }
 
-  /// Process downloaded file
+  /// Extracts, locates, compiles, and caches the model from a freshly downloaded archive.
   private func processDownloadedFile(at location: URL, originalURL: URL) {
     // Use the stored originalURL if available (for task-aware downloads)
     let url = self.originalURL ?? originalURL
@@ -157,7 +157,7 @@ public final class YOLOModelDownloader: NSObject {
     }
   }
 
-  /// Find model file in extracted contents
+  /// Locates the model file (or mlpackage) inside the extracted archive.
   private func findModelPath(in extractedPath: URL, for url: URL) throws -> URL {
     let contents = try FileManager.default.contentsOfDirectory(
       at: extractedPath, includingPropertiesForKeys: [.isDirectoryKey])
@@ -178,7 +178,7 @@ public final class YOLOModelDownloader: NSObject {
     }
   }
 
-  /// Cache compiled model
+  /// Moves the compiled model into the shared cache and returns its final URL.
   private func cacheModel(_ compiledPath: URL, for url: URL) throws -> URL {
     let key = YOLOModelCache.shared.cacheKey(for: url, task: currentTask)
     let cachedPath = YOLOModelCache.shared.cacheDirectory.appendingPathComponent(key)
@@ -192,7 +192,7 @@ public final class YOLOModelDownloader: NSObject {
     return cachedPath
   }
 
-  /// Extract ZIP file while skipping macOS metadata
+  /// Extracts a ZIP archive into `destinationURL`, skipping macOS resource-fork metadata.
   private func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
     let archive: Archive
     do {
@@ -219,7 +219,7 @@ public final class YOLOModelDownloader: NSObject {
     }
   }
 
-  /// Recursively find model file in directory
+  /// Recursively searches `directory` for an `.mlpackage`, `.mlmodel`, or `.mlmodelc` and returns the first match.
   private func findModelFile(in directory: URL) throws -> URL? {
     let contents = try FileManager.default.contentsOfDirectory(
       at: directory, includingPropertiesForKeys: [.isDirectoryKey])
@@ -245,7 +245,7 @@ public final class YOLOModelDownloader: NSObject {
     return nil
   }
 
-  /// Compile model if needed
+  /// Compiles `.mlmodel` / `.mlpackage` files via Core ML and returns the resulting `.mlmodelc` URL.
   private func compileModelIfNeeded(at modelURL: URL) throws -> URL {
     switch modelURL.pathExtension {
     case "mlmodel", "mlpackage":

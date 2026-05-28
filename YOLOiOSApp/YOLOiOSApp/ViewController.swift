@@ -1,15 +1,15 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO app, providing the main user interface for model selection and visualization.
+//  This file is part of the Ultralytics YOLO app and provides the main user interface for model selection and
+//  visualization.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ViewController serves as the primary interface for users to interact with YOLO models.
-//  It provides the ability to select different models, tasks (detection, segmentation, semantic segmentation, classification, etc.),
-//  and visualize results in real-time. The controller manages the loading of local and remote models,
-//  handles UI updates during model loading and inference, and provides functionality for capturing
-//  and sharing detection results. Advanced features include model download progress
-//  tracking, and adaptive UI layout for different device orientations.
+//  The ViewController is the primary interface for users to interact with YOLO models. Users can select different
+//  models and tasks (detection, segmentation, semantic segmentation, classification, pose, OBB) and visualize results
+//  in real-time. The controller manages loading of local and remote models, updates UI state during loading and
+//  inference, and handles capturing and sharing detection results. It also tracks model download progress and adapts
+//  the layout to different device orientations.
 
 import AVFoundation
 import AudioToolbox
@@ -22,8 +22,7 @@ import YOLO
 class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - External Display Support (Optional)
-  // NOTE: The following external display features remain dormant until connected.
-  // See ExternalDisplay/ directory for implementation details.
+  // External display features remain dormant until a display is connected. See ExternalDisplay/ for details.
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet weak var View0: UIView!
@@ -37,7 +36,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   let selection = UISelectionFeedbackGenerator()
 
-  // Store current loading entry for external display notification (Optional feature)
+  // Tracks the currently loading model for external display notification.
   var currentLoadingEntry: ModelEntry?
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
@@ -97,20 +96,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // MARK: External Display Setup (Optional)
-    // NOTE: The following external display setup is OPTIONAL and not required for core app functionality.
-    // This code enhances the app for external monitor/TV connections and remains dormant when not in use.
-    // See ExternalDisplay/ directory and README for more information.
-
-    // Setup external display notifications
+    // Optional external display setup — dormant unless a monitor/TV is connected. See ExternalDisplay/ for details.
     setupExternalDisplayNotifications()
-
-    // If external display is already connected, ensure YOLOView doesn't interfere
     if hasExternalScreen() {
       yoloView.isHidden = true
     }
 
-    // Setup segmented control and load models
+    // Populate the task segmented control and discover bundled models per task.
     segmentedControl.removeAllSegments()
     tasks.enumerated().forEach { index, task in
       segmentedControl.insertSegment(withTitle: task.shortName, at: index, animated: false)
@@ -124,10 +116,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     segmentedControl.selectedSegmentIndex = defaultTaskIndex
     currentTask = tasks[defaultTaskIndex].name
 
-    // Always load models initially - external display handling will stop camera if needed
+    // Always load models initially; external display handling will stop the camera if needed.
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
-    // Setup gestures and delegates
+    // Wire up gestures and delegates.
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
@@ -135,11 +127,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     yoloView.delegate = self
     [yoloView.labelName, yoloView.labelFPS].forEach { $0?.isHidden = true }
 
-    // Add target to sliders to monitor changes
+    // Observe slider changes to forward thresholds to an external display.
     yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
     yoloView.sliderIoU.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
 
-    // Setup labels and version
+    // Style labels and stamp the app version.
     [labelName, labelFPS, labelVersion].forEach {
       $0?.textColor = .white
       $0?.overrideUserInterfaceStyle = .dark
@@ -150,7 +142,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       labelVersion.text = "v\(version) (\(build))"
     }
 
-    // Setup progress views
+    // Install the download progress views.
     [downloadProgressView, downloadProgressLabel].forEach {
       $0.isHidden = true
       $0.translatesAutoresizingMaskIntoConstraints = false
@@ -272,10 +264,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
     isLoadingModel = true
 
-    // Check if external display is connected
+    // Skip the local YOLOView reset when an external display owns the camera.
     let hasExternalDisplay = hasExternalScreen()
-
-    // Only reset YOLOView if no external display is connected
     if !hasExternalDisplay {
       yoloView.resetLayers()
       yoloView.setInferenceFlag(ok: false)
@@ -283,8 +273,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
-
-    // Store current entry for external display notification
     currentLoadingEntry = entry
 
     let yoloTask = tasks.first(where: { $0.name == task })?.yoloTask ?? .detect
@@ -308,10 +296,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.downloadProgressLabel.isHidden = false
           self.downloadProgressLabel.text = "Loading \(entry.displayName)"
 
-          // Check if external display is connected
-          let hasExternalDisplay = self.hasExternalScreen()
-
-          if hasExternalDisplay {
+          // External display path: notify it instead of loading into the local YOLOView.
+          if self.hasExternalScreen() {
             self.finishLoadingModel(success: true, modelName: entry.displayName)
           } else {
             self.yoloView.setModel(modelPathOrName: modelURL.path, task: yoloTask) {
@@ -330,7 +316,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
     } else {
-      let key = entry.identifier  // "yolov8n", "yolov8m-seg", etc.
+      let key = entry.identifier  // e.g. "yolo26n", "yolo26m-seg"
 
       if ModelCacheManager.shared.isModelDownloaded(key: key) {
         loadCachedModelAndSetToYOLOView(
@@ -345,10 +331,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.downloadProgressView.isHidden = false
         self.downloadProgressLabel.isHidden = false
 
-        // Set initial downloading message with proper model name
+        // Show the initial download message with a properly formatted model name.
         self.downloadProgressLabel.text = "Downloading \(processString(entry.displayName))"
 
-        let localZipFileName = remoteURL.lastPathComponent  // ex. "yolov8n.mlpackage.zip"
+        let localZipFileName = remoteURL.lastPathComponent  // e.g. "yolo26n.mlpackage.zip"
 
         ModelCacheManager.shared.loadModel(
           from: localZipFileName,
@@ -381,10 +367,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.downloadProgressLabel.isHidden = false
       self.downloadProgressLabel.text = "Loading \(displayName)"
 
-      // Check if external display is connected
-      let hasExternalDisplay = self.hasExternalScreen()
-
-      if hasExternalDisplay {
+      // External display path: notify it instead of loading into the local YOLOView.
+      if self.hasExternalScreen() {
         self.finishLoadingModel(success: true, modelName: displayName)
       } else {
         self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) {
@@ -464,7 +448,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
 
-      // Only set inference flag on YOLOView if no external display
+      // Only toggle the local YOLOView inference flag when no external display is active.
       if !hasExternalDisplay {
         self.yoloView.setInferenceFlag(ok: success)
       }
@@ -496,7 +480,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     currentTask = newTask
 
-    // Notify external display of task change immediately (Optional external display feature)
+    // Notify the external display (if any) of the task change before reloading models.
     NotificationCenter.default.post(
       name: .taskDidChange,
       object: nil,
@@ -586,7 +570,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   @objc func sliderValueChanged(_ sender: UISlider) {
-    // Send threshold values to external display (Optional external display feature)
+    // Forward threshold values to the external display (no-op if none is connected).
     let conf = Double(round(100 * yoloView.sliderConf.value)) / 100
     let iou = Double(round(100 * yoloView.sliderIoU.value)) / 100
     let maxItems = Int(yoloView.sliderNumItems.value)

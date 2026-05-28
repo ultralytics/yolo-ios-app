@@ -4,12 +4,10 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The VideoCapture component manages the camera and video processing pipeline for real-time
-//  object detection. It handles setting up the AVCaptureSession, managing camera devices,
-//  configuring camera properties like focus and exposure, and processing video frames for
-//  model inference. The class delivers capture frames to the predictor component for real-time
-//  analysis and returns results through delegate callbacks. It also supports camera controls
-//  such as switching between front and back cameras, zooming, and capturing still photos.
+//  VideoCapture wraps AVCaptureSession to drive real-time inference. It sets up the session, selects camera
+//  devices, configures focus and exposure, and forwards each video frame to a Predictor. Results are returned to
+//  callers through delegate callbacks. The class also handles switching between front and back cameras, zooming,
+//  and capturing still frames.
 
 import AVFoundation
 import CoreVideo

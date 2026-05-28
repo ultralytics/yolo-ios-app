@@ -4,25 +4,25 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLOModelCache class manages the caching of downloaded YOLO models to improve performance
-//  and reduce network usage. It provides functionality to store, retrieve, and manage cached models
-//  in the device's documents directory, with URL-based cache key generation for unique identification.
+//  YOLOModelCache stores compiled YOLO models in `Library/Caches/YOLOModels/` so subsequent launches can skip the
+//  download and compilation. Each entry is keyed by the SHA-256 of the source URL (plus optional task) so the same
+//  archive can be cached separately per task.
 
 import CryptoKit
 import Foundation
 
-/// Manages caching of downloaded YOLO models in the documents directory.
+/// Manages caching of downloaded YOLO models in `Library/Caches/YOLOModels/`.
 public final class YOLOModelCache {
-  /// Shared singleton instance
+  /// Shared singleton instance.
   public static let shared = YOLOModelCache()
 
-  /// Cache directory URL
+  /// Root cache directory for compiled models.
   let cacheDirectory: URL
 
-  /// Lock for thread-safe file system access
+  /// Lock that serializes file-system access from concurrent callers.
   private let lock = NSLock()
 
-  /// Error types for cache operations
+  /// Errors that can be reported by cache operations.
   public enum CacheError: LocalizedError {
     case failedToCreateDirectory
     case failedToSaveModel
@@ -57,19 +57,19 @@ public final class YOLOModelCache {
     }
   }
 
-  /// Generate cache key from URL with optional task type
+  /// Returns the SHA-256 cache key for the given URL and optional task.
   public func cacheKey(for url: URL, task: YOLOTask? = nil) -> String {
     let urlString =
       task.map { url.absoluteString + "_" + String(describing: $0) } ?? url.absoluteString
     return Data(urlString.utf8).sha256()
   }
 
-  /// Check if model is cached
+  /// Returns `true` if a compiled model for the given URL (and optional task) is already cached.
   public func isCached(url: URL, task: YOLOTask? = nil) -> Bool {
     getCachedModelPath(url: url, task: task) != nil
   }
 
-  /// Get cached model path if available
+  /// Returns the cached model URL for the given source URL (and optional task), or `nil` if none is present.
   public func getCachedModelPath(url: URL, task: YOLOTask? = nil) -> URL? {
     lock.lock()
     defer { lock.unlock() }
@@ -92,7 +92,7 @@ public final class YOLOModelCache {
     return nil
   }
 
-  /// Clear all cached models
+  /// Removes every entry from the cache directory.
   public func clearCache() throws {
     let contents = try FileManager.default.contentsOfDirectory(
       at: cacheDirectory, includingPropertiesForKeys: nil)
@@ -101,7 +101,7 @@ public final class YOLOModelCache {
     }
   }
 
-  /// Get cache size in bytes
+  /// Returns the total cache size in bytes.
   public func getCacheSize() throws -> Int64 {
     let contents = try FileManager.default.contentsOfDirectory(
       at: cacheDirectory,
@@ -120,14 +120,14 @@ public final class YOLOModelCache {
     return size
   }
 
-  /// List all cached models
+  /// Returns the cache keys for every cached model.
   public func listCachedModels() throws -> [String] {
     let contents = try FileManager.default.contentsOfDirectory(
       at: cacheDirectory, includingPropertiesForKeys: nil)
     return contents.map { $0.deletingPathExtension().lastPathComponent }
   }
 
-  /// Calculate directory size recursively
+  /// Recursively sums the file sizes inside `url`.
   private func directorySize(at url: URL) throws -> Int64 {
     let enumerator = FileManager.default.enumerator(
       at: url,

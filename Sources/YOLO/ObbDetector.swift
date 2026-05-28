@@ -1,16 +1,13 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO Package, implementing oriented bounding box detection.
+//  This file is part of the Ultralytics YOLO SDK, implementing oriented bounding box (OBB) detection.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ObbDetector class provides functionality for detecting objects with oriented (rotated)
-//  bounding boxes. Unlike standard object detection that uses axis-aligned boxes, this implementation
-//  handles objects at arbitrary orientations by predicting the center, width, height, and rotation
-//  angle of each bounding box. The class includes specialized algorithms for non-maximum suppression
-//  of oriented boxes, computing polygon intersections using the Sutherland-Hodgman algorithm, and
-//  efficient IoU calculations. These optimizations enable real-time performance even when dealing
-//  with the computational complexity of rotated geometry operations.
+//  ObbDetector detects objects at arbitrary orientations, predicting center, width, height, and rotation angle for
+//  each box. Supports both traditional and YOLO26 end2end OBB output formats and includes a fast NMS that caches each
+//  box's polygon, area, and axis-aligned bounding box, using AABB overlap as a cheap filter before computing polygon
+//  intersection via the Sutherland–Hodgman algorithm.
 
 import Accelerate
 import CoreML
@@ -172,10 +169,9 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     return results
   }
 
-  /// Processes YOLO26 end2end OBB output: [1, max_det, 7].
-  /// Each detection: [cx, cy, w, h, conf, class_id, angle] in xywh pixel coords.
-  /// OBB uses dist2rbox() which always outputs center-based xywh (NOT xyxy like detect).
-  /// NMS is already applied by the model.
+  /// Processes YOLO26 end2end OBB output `[1, max_det, 7]` where each detection is
+  /// `[cx, cy, w, h, conf, class_id, angle]` in pixel coords. OBB uses `dist2rbox()` which always outputs center-based
+  /// xywh (not xyxy like detect). NMS is already applied by the model.
   private func postProcessEnd2EndOBB(
     feature: MLMultiArray,
     shape: [Int],
@@ -215,9 +211,8 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     return results
   }
 
-  /// Fast NMS for oriented bounding boxes.
-  /// Internally, it caches each box's polygon, area, and axis-aligned bounding box.
-  /// Then it does a quick AABB overlap check before polygon intersection to skip expensive IoU.
+  /// Fast NMS for oriented bounding boxes. Caches each box's polygon, area, and axis-aligned bounding box, then uses a
+  /// cheap AABB overlap check before computing polygon intersection IoU.
   public func nonMaxSuppressionOBB(
     boxes: [OBB],
     scores: [Float],
@@ -267,14 +262,12 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
 }
 
-/// Returns the polygon formed by clipping subjectPolygon to clipPolygon using
-/// the Sutherland–Hodgman algorithm.
+/// Returns the polygon formed by clipping subjectPolygon to clipPolygon using the Sutherland–Hodgman algorithm.
 func polygonIntersection(subjectPolygon: Polygon, clipPolygon: Polygon) -> Polygon {
   var outputList = subjectPolygon
   let clipEdgeCount = clipPolygon.count
 
-  // If the polygon is not closed, append the first point at the end
-  // so we can iterate edges easily.
+  // Close the polygon by appending the first point so we can iterate edges easily.
   let closedClipPolygon = clipPolygon + [clipPolygon[0]]
 
   for i in 0..<clipEdgeCount {
@@ -334,40 +327,32 @@ func polygonIntersection(subjectPolygon: Polygon, clipPolygon: Polygon) -> Polyg
   return outputList
 }
 
-/// Determine if a point is inside the "half-plane" defined by the directed edge
-/// from edgeStart -> edgeEnd. We treat "left-turn" or "right-turn" checks.
+/// Returns true if `point` lies in the half-plane to the left of (or on) the directed edge `edgeStart` → `edgeEnd`.
+///
+/// Sutherland–Hodgman keeps the polygon on the left of each clip edge, assuming a clockwise clip polygon.
 func isInside(
   point: CGPoint,
   edgeStart: CGPoint,
   edgeEnd: CGPoint
 ) -> Bool {
-  // We can use cross product to check which side of the directed edge we are on.
-  // For a standard "clip left" convention, use the sign of the cross product:
-  // Vector(edgeEnd - edgeStart) x Vector(point - edgeStart).
+  // Sign of the 2D cross product (edgeEnd - edgeStart) x (point - edgeStart) indicates the side.
   let cross =
     (edgeEnd.x - edgeStart.x) * (point.y - edgeStart.y)
     - (edgeEnd.y - edgeStart.y) * (point.x - edgeStart.x)
-  // If cross >= 0, point is to the left or on the line.
-  // This depends on which side we treat as "inside".
-  // Sutherland–Hodgman typically keeps polygon inside to the left of each edge
-  // (assuming a clockwise clip polygon).
   return cross >= 0
 }
 
-/// Compute intersection between the line segment p1->p2 and the infinite line
-/// defined by clipStart->clipEnd.
+/// Returns the intersection point between the line segment `p1`→`p2` and the infinite line through
+/// `clipStart`→`clipEnd`, or `nil` if the lines are parallel.
+///
+/// Sutherland–Hodgman uses this in a context that already classifies endpoints as inside/outside, so `t` is not
+/// clamped to `[0, 1]`.
 func computeIntersection(
   p1: CGPoint,
   p2: CGPoint,
   clipStart: CGPoint,
   clipEnd: CGPoint
 ) -> CGPoint? {
-  // Solve for parametric intersection.
-  // Parametric line eqn:
-  //   p1 + t (p2 - p1)
-  //   clipStart + u (clipEnd - clipStart)
-  // We want to find t where lines intersect in 2D. Then check if 0..1 for the segment.
-
   let x1 = p1.x
   let y1 = p1.y
   let x2 = p2.x
@@ -379,19 +364,11 @@ func computeIntersection(
 
   let denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
   if abs(denom) < 1e-10 {
-    // Lines are parallel or extremely close to parallel
+    // Lines are parallel (or nearly so)
     return nil
   }
-  // Intersection parameter t on p1->p2
+  // Parametric intersection on p1→p2
   let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
-
-  // We only need the point, not strictly to check 0<=t<=1,
-  // because Sutherland–Hodgman calls this in a context where
-  // it decides how to treat inside vs outside.
-  // But it's nice to be consistent:
-  // if t < 0 or t > 1 => intersection not on the segment p1->p2.
-  // For standard polygon clipping, we still use the intersection anyway.
-  // So we won't clamp T here, but you can if you want to discard outside segments.
 
   let ix = x1 + t * (x2 - x1)
   let iy = y1 + t * (y2 - y1)
@@ -410,7 +387,7 @@ func polygonArea(_ poly: Polygon) -> CGFloat {
   return abs(area) * 0.5
 }
 
-/// Store cached geometry for faster OBB IoU checks.
+/// Cached geometry (polygon, area, axis-aligned bounding box) for faster OBB IoU checks.
 public struct OBBInfo {
   let polygon: Polygon  // The 4 corners in order
   let area: CGFloat
@@ -422,13 +399,13 @@ public struct OBBInfo {
     self.aabb = obb.toAABB()
   }
 
-  /// Quickly check if the axis-aligned bounding boxes intersect.
-  /// If not, the IoU is 0, so we can skip the expensive polygon intersection.
+  /// Returns true if the axis-aligned bounding boxes overlap. If false, IoU is 0 and the expensive polygon
+  /// intersection can be skipped.
   func aabbIntersects(with other: OBBInfo) -> Bool {
     return aabb.intersects(other.aabb)
   }
 
-  /// Compute actual IoU using polygon intersection if bounding boxes overlap.
+  /// Computes IoU between two OBBs using their polygon intersection.
   func iou(with other: OBBInfo) -> Float {
     let interPoly = polygonIntersection(
       subjectPolygon: polygon,
@@ -441,7 +418,7 @@ public struct OBBInfo {
 }
 
 extension OBB {
-  /// Return the axis-aligned bounding box around this rotated box
+  /// Returns the axis-aligned bounding box enclosing this rotated box.
   func toAABB() -> CGRect {
     let poly = toPolygon()
     var minX = CGFloat.infinity

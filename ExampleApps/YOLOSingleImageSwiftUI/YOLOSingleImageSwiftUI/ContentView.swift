@@ -1,15 +1,15 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a SwiftUI example for single image object detection.
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing a SwiftUI example for single image
+//  object detection.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The ContentView demonstrates how to implement static image analysis using YOLO models in SwiftUI.
-//  It provides a user interface with a PhotosPicker for selecting images from the device's photo library
-//  and displays both the original and processed images with detection results. The example shows how to
-//  initialize a YOLO model for segmentation, load images from the photo picker, handle image orientation
-//  correction, and run inference on the selected image. This pattern can be adapted for other model
-//  types by changing the task parameter and model name during initialization.
+//  The ContentView shows how to run static image analysis with YOLO models in SwiftUI. It provides a user interface
+//  with a PhotosPicker for selecting images from the device's photo library and displays both the original and
+//  processed images with detection results. The example covers initializing a YOLO detection model, loading images from
+//  the photo picker, correcting image orientation, and running inference on the selected image. The pattern can be
+//  adapted for other task types by changing the task parameter and model name during initialization.
 
 import PhotosUI
 import SwiftUI
@@ -65,10 +65,10 @@ struct ContentView: View {
   }
 }
 
-/// Corrects the orientation of an image to ensure proper processing by the YOLO model.
+/// Corrects the orientation of an image for processing by the YOLO model.
 ///
-/// Images from the photo library might have orientation metadata rather than correctly oriented pixels.
-/// This function ensures the image is properly oriented for processing by the YOLO model.
+/// Images from the photo library may carry orientation metadata rather than correctly oriented pixels. This function
+/// applies the orientation so the returned image has its pixels in the correct order for inference.
 ///
 /// - Parameter uiImage: The input image that may have incorrect orientation metadata.
 /// - Returns: A new UIImage with the correct orientation for processing.

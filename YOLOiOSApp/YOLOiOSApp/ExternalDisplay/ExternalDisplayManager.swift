@@ -4,7 +4,7 @@ import CoreMedia
 import UIKit
 import YOLO
 
-/// Manager for external display communication
+/// Coordinates the optional external display: scene activation, mode preference, and pub/sub of updates.
 class ExternalDisplayManager {
   static let shared = ExternalDisplayManager()
   private static let dedicatedModeKey = "dedicated_external_display"
@@ -50,7 +50,7 @@ class ExternalDisplayManager {
     }
   }
 
-  /// Posts YOLO results for external display
+  /// Broadcasts a YOLO inference result so the external display can render it.
   func shareResults(_ results: YOLOResult) {
     NotificationCenter.default.post(
       name: .yoloResultsAvailable,
@@ -59,7 +59,7 @@ class ExternalDisplayManager {
     )
   }
 
-  /// Posts model change notification with task type and model name
+  /// Notifies the external display that the selected task or model has changed.
   func notifyModelChange(task: YOLOTask, modelName: String) {
     let taskString = String(describing: task).lowercased()
 

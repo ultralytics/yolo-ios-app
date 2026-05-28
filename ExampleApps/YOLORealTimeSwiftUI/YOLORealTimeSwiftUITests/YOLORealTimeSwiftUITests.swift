@@ -1,6 +1,7 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Example Apps of Ultralytics YOLO Package, providing unit tests for the real-time SwiftUI example.
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing unit tests for the real-time SwiftUI
+//  example.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 
@@ -13,11 +14,10 @@ import XCTest
 @testable import YOLO
 @testable import YOLORealTimeSwiftUI
 
-/// Unit tests for the YOLO RealTime SwiftUI example application.
+/// Unit tests for the YOLO real-time SwiftUI example application.
 ///
-/// This test suite verifies the functionality of the real-time object detection application
-/// that uses SwiftUI and the YOLO framework. It contains tests that validate the core features
-/// of the app, including model initialization, camera preview functionality, and UI interactions.
+/// Verifies the real-time object detection app built with SwiftUI and the YOLO framework, covering model
+/// initialization, camera preview functionality, and UI interactions.
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests require the YOLO26 OBB model to be available in the project.

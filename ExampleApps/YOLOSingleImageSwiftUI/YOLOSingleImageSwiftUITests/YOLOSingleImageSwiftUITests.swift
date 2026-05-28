@@ -1,6 +1,7 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Example Apps of Ultralytics YOLO Package, providing unit tests for the single image SwiftUI example.
+//  This file is part of the Example Apps of Ultralytics YOLO Package, providing unit tests for the single image SwiftUI
+//  example.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 
@@ -13,11 +14,10 @@ import XCTest
 @testable import YOLO
 @testable import YOLOSingleImageSwiftUI
 
-/// Unit tests for the YOLO Single Image SwiftUI example application.
+/// Unit tests for the YOLO single image SwiftUI example application.
 ///
-/// This test suite verifies the functionality of the single image processing application
-/// that uses SwiftUI and the YOLO framework. It contains tests that validate the core features
-/// of the app, including model initialization, image processing, and UI interactions.
+/// Verifies the single image processing app built with SwiftUI and the YOLO framework, covering model initialization,
+/// image processing, and UI interactions.
 ///
 /// - Note: These tests require the application to be built with testing enabled.
 /// - Important: Some tests may require the YOLO26 segmentation model to be available.

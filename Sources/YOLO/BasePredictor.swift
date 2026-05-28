@@ -1,16 +1,13 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-//  This file is part of the Ultralytics YOLO Package, providing the base infrastructure for model prediction.
+//  This file is part of the Ultralytics YOLO SDK, providing the base infrastructure for model prediction.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The BasePredictor class is the foundation for all task-specific predictors in the YOLO framework.
-//  It manages the loading and initialization of Core ML models, handling common operations such as
-//  model loading, class label extraction, and inference timing. The class provides an asynchronous
-//  model loading mechanism that runs on background threads and includes support for configuring
-//  model parameters like confidence thresholds and IoU thresholds. Specific task implementations
-//  (detection, segmentation, semantic segmentation, classification, etc.) inherit from this base class and override
-//  the prediction-specific methods.
+//  BasePredictor is the foundation for all task-specific predictors. It loads Core ML models asynchronously on a
+//  background thread, extracts class labels, measures inference timing, and exposes confidence and IoU thresholds.
+//  Task-specific subclasses (detection, segmentation, semantic segmentation, classification, pose, OBB) override the
+//  prediction methods to handle their own output formats.
 
 import Foundation
 import UIKit
@@ -18,14 +15,11 @@ import Vision
 
 /// Base class for all YOLO model predictors, handling common model loading and inference logic.
 ///
-/// The BasePredictor serves as the foundation for all task-specific YOLO model predictors.
-/// It manages Core ML model loading, initialization, and common inference operations.
-/// Specialized predictors (for detection, segmentation, etc.) inherit from this class
-/// and override the prediction-specific methods to handle task-specific processing.
+/// Manages Core ML model loading, initialization, and shared inference operations. Specialized subclasses (detection,
+/// segmentation, classification, pose, OBB) override the prediction methods to handle task-specific processing.
 ///
-/// - Note: This class is marked as `@unchecked Sendable` to support concurrent operations.
-/// - Important: Task-specific implementations must override the `processObservations` and
-///   `predictOnImage` methods to provide proper functionality.
+/// - Note: Marked `@unchecked Sendable` to support concurrent use across threads.
+/// - Important: Subclasses must override `processObservations` and `predictOnImage`.
 public class BasePredictor: Predictor, @unchecked Sendable {
   /// Flag indicating if the model has been successfully loaded and is ready for inference.
   private(set) var isModelLoaded: Bool = false
@@ -36,8 +30,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The Vision request that processes images using the Core ML model.
   var visionRequest: VNCoreMLRequest?
 
-  /// Vision preprocessing mode for this predictor. Localization tasks use Ultralytics
-  /// LetterBox-style aspect-fit preprocessing; classification overrides this to center crop.
+  /// Vision preprocessing mode for this predictor. Localization tasks use Ultralytics LetterBox-style aspect-fit
+  /// preprocessing; classification overrides this to center crop.
   var imageCropAndScaleOption: VNImageCropAndScaleOption { .scaleFit }
 
   /// The class labels used by the model for categorizing detections.
@@ -85,24 +79,17 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Flag indicating whether the predictor is currently processing an update.
   public var isUpdating: Bool = false
 
-  /// Required initializer for creating predictor instances.
-  ///
-  /// This empty initializer is required for the factory pattern used in the `create` method.
-  /// Subclasses may override this to perform additional initialization.
+  /// Required initializer for the factory pattern used by `create`. Subclasses may override to add initialization.
   required init() {
     // Intentionally left empty
   }
 
-  /// Performs cleanup when the predictor is deallocated.
-  ///
-  /// Releases the Vision request so its completion handler can no longer retain `self`.
+  /// Releases the Vision request on deinit so its completion handler can no longer retain `self`.
   deinit {
     visionRequest = nil
   }
 
-  /// Dispatches `create` to the concrete predictor type for the given task.
-  ///
-  /// Centralizes the task → predictor mapping so callers don't duplicate the switch.
+  /// Dispatches `create` to the concrete predictor type for the given task, centralizing the task → predictor mapping.
   public static func create(
     for task: YOLOTask,
     modelURL: URL,
@@ -129,17 +116,15 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     }
   }
 
-  /// Factory method to asynchronously create and initialize a predictor with the specified model.
+  /// Asynchronously creates and initializes a predictor with the specified model.
   ///
-  /// This method loads the Core ML model in a background thread and sets up the prediction
-  /// infrastructure. The completion handler is called on the main thread with either a
-  /// successfully initialized predictor or an error.
+  /// Loads the Core ML model on a background thread, then invokes the completion handler on the main thread with the
+  /// initialized predictor or an error.
   ///
   /// - Parameters:
   ///   - unwrappedModelURL: The URL of the Core ML model file to load.
-  ///   - isRealTime: Flag indicating if the predictor will be used for real-time processing (camera feed).
+  ///   - isRealTime: Pass `true` when the predictor will be driven by a camera feed.
   ///   - completion: Callback that receives the initialized predictor or an error.
-  /// - Note: Model loading happens on a background thread to avoid blocking the main thread.
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
@@ -246,11 +231,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     }
   }
 
-  /// Processes a camera frame buffer and delivers results via callbacks.
+  /// Runs inference on a camera frame buffer and delivers results via callbacks.
   ///
-  /// This method takes a camera sample buffer, performs inference using the Vision framework,
-  /// and notifies listeners with the results and performance metrics. It's designed to be
-  /// called repeatedly with frames from a camera feed.
+  /// Called repeatedly with frames from a camera feed; runs the Vision request and notifies listeners with the
+  /// detection results and performance metrics.
   ///
   /// - Parameters:
   ///   - sampleBuffer: The camera frame buffer to process.
@@ -268,8 +252,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       currentOnInferenceTimeListener = onInferenceTime
 
       /// - Tag: MappingOrientation
-      // The frame is always oriented based on the camera sensor,
-      // so in most cases Vision needs to rotate it for the model to work as expected.
+      // The frame is always oriented based on the camera sensor, so in most cases Vision needs to rotate it for the
+      // model to work as expected.
       let imageOrientation: CGImagePropertyOrientation = .up
 
       // Invoke a VNRequestHandler with that image
@@ -305,8 +289,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
-  ///
-  /// Used to filter overlapping detections during non-maximum suppression.
   var iouThreshold = 0.7
 
   /// Sets the IoU threshold for non-maximum suppression.
@@ -320,8 +302,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The maximum number of detections to return in results (default: 30).
-  ///
-  /// Limits the number of detection items in the final results to prevent overwhelming processing.
   var numItemsThreshold = 30
 
   /// Sets the maximum number of detection items to include in results.
@@ -333,9 +313,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Processes Vision framework observations from model inference.
   ///
-  /// This method is called when Vision completes a request with the model's outputs.
-  /// Subclasses must override this method to implement task-specific processing of the
-  /// model's output features (e.g., parsing detection boxes, segmentation masks, etc.).
+  /// Invoked when Vision completes a request with the model's outputs. Subclasses must override to parse task-specific
+  /// outputs (detection boxes, segmentation masks, etc.).
   ///
   /// - Parameters:
   ///   - request: The completed Vision request containing model outputs.
@@ -344,10 +323,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     // Base implementation is empty - must be overridden by subclasses
   }
 
-  /// Processes a static image and returns results synchronously.
-  ///
-  /// This method performs model inference on a static image and returns the results.
-  /// Subclasses must override this method to implement task-specific processing.
+  /// Runs synchronous inference on a static image. Subclasses must override to implement task-specific processing.
   ///
   /// - Parameter image: The CIImage to process.
   /// - Returns: A YOLOResult containing the prediction outputs.
@@ -356,11 +332,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     return .empty
   }
 
-  /// Extracts the required input dimensions from the model description.
-  ///
-  /// This utility method determines the expected input size for the Core ML model
-  /// by examining its input description, which is essential for properly sizing
-  /// and formatting images before inference.
+  /// Extracts the required input dimensions from the model description, used to properly size images before inference.
   ///
   /// - Parameter model: The Core ML model to analyze.
   /// - Returns: A tuple containing the width and height in pixels required by the model.
@@ -498,8 +470,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Updates the smoothed inference time and FPS, then notifies the timing listener.
   ///
-  /// Call this once per processed frame after `t1` is set. Uses an EMA with
-  /// `emaAlpha` weight on new samples and skips obvious outliers above `maxValidDt`.
+  /// Call this once per processed frame after `t1` is set. Uses an EMA with `emaAlpha` weight on new samples and skips
+  /// obvious outliers above `maxValidDt`.
   func updateTime() {
     let alpha = Self.emaAlpha
     if self.t1 < Self.maxValidDt {  // valid dt

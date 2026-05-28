@@ -4,13 +4,10 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The Segmenter class extends BasePredictor to provide instance segmentation capabilities.
-//  Instance segmentation not only detects objects but also identifies the precise pixels
-//  belonging to each object. The class processes complex model outputs including prototype masks
-//  and detection results, performs non-maximum suppression to filter detections, and combines
-//  results into visualizable mask images. It leverages the Accelerate framework for efficient
-//  matrix operations and includes parallel processing to optimize performance on mobile devices.
-//  The results include both bounding boxes and pixel-level masks that can be overlaid on images.
+//  Segmenter extends BasePredictor for instance segmentation, where each detection has both a bounding box and a
+//  per-pixel mask. It parses prototype masks and detection features from the model output, runs non-maximum
+//  suppression, and combines results into a single mask image. Accelerate's vDSP and parallel dispatch keep
+//  per-frame cost low on mobile devices.
 
 import Accelerate
 @preconcurrency import CoreML
@@ -111,9 +108,9 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     return result
   }
 
-  /// Pulls the `(pred, masks, detectedObjects)` tuple out of a completed Vision request.
-  /// The shape-4 output is the prototype masks and the other is the detection features;
-  /// their order depends on the exported model.
+  /// Pulls the `(masks, detectedObjects)` tuple out of a completed Vision request. The shape-4 output is the
+  /// prototype masks and the other is the detection features; their order in `request.results` depends on the
+  /// exported model.
   private func parseSegmentationRequest(
     _ request: VNRequest
   ) -> (masks: MLMultiArray, detectedObjects: [(CGRect, Int, Float, MLMultiArray)])? {

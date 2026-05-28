@@ -12,13 +12,13 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   private var currentTask: YOLOTask = .detect
   private var currentModelName: String = "yolo26n"
 
-  // UI Elements with proper scaling
+  // Scaled UI overlays drawn on top of the YOLOView.
   private var labelName: UILabel!
   private var labelFPS: UILabel!
   private var segmentedControl: UISegmentedControl!
   private var logoImageView: UIImageView!
 
-  // Task info
+  // Task list shared with the iPhone controller for index lookup on task-change notifications.
   private let tasks: [(name: String, value: YOLOTask)] = [
     ("Detect", .detect),
     ("Segment", .segment),
@@ -43,11 +43,10 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     let screenSize = view.bounds.size
     let scaleFactor = calculateScaleFactor(for: screenSize)
 
-    // Proportional font sizes
+    // Font sizes scale with display height.
     let baseFontSizeModelName = screenSize.height * 0.1
     let baseFontSizeFPS = screenSize.height * 0.04
 
-    // Model name label
     labelName = createLabel(
       text: currentModelName,
       fontSize: baseFontSizeModelName,
@@ -55,7 +54,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     )
     view.addSubview(labelName)
 
-    // FPS label
     labelFPS = createLabel(
       text: "0.0 FPS - 0.0 ms",
       fontSize: baseFontSizeFPS,
@@ -63,11 +61,9 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     )
     view.addSubview(labelFPS)
 
-    // Task segmented control
     segmentedControl = createSegmentedControl()
     view.addSubview(segmentedControl)
 
-    // Logo ImageView
     logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
     logoImageView.contentMode = .scaleAspectFit
     logoImageView.alpha = 1.0
@@ -97,9 +93,8 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     for (index, taskInfo) in tasks.enumerated() {
       control.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
     }
-    control.selectedSegmentIndex = 0  // Default to Detect
+    control.selectedSegmentIndex = 0  // default to Detect
 
-    // Styling
     control.backgroundColor = UIColor(white: 0.2, alpha: 0.3)
     control.selectedSegmentTintColor = UIColor(white: 0.4, alpha: 0.8)
     control.layer.cornerRadius = 12
@@ -192,7 +187,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func setupYOLOView() {
-    // Create YOLOView without model initially - will be set when main app notifies
+    // Create the YOLOView without a model; the main app will supply one via .modelDidChange.
     yoloView = YOLOView(frame: view.bounds)
     yoloView?.delegate = self
     yoloView?.backgroundColor = .clear
@@ -209,7 +204,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       yoloView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
 
-    // Re-add UI elements on top
+    // Re-add overlays so they sit above the YOLOView.
     [logoImageView, labelName, labelFPS].forEach {
       $0?.removeFromSuperview()
       if let view = $0 { self.view.addSubview(view) }
@@ -225,23 +220,19 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func setupNotifications() {
-    // Listen for model changes
+    // Mirror model, threshold, and task changes from the iPhone-side ViewController.
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleModelChange(_:)),
       name: .modelDidChange,
       object: nil
     )
-
-    // Listen for threshold changes from iPhone
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleThresholdChange(_:)),
       name: .thresholdDidChange,
       object: nil
     )
-
-    // Listen for task changes from iPhone
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleTaskChange(_:)),
@@ -301,7 +292,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
     }
 
-    // Use processString to properly format the model name (handles YOLO11n-seg -> YOLO11n Seg, etc.)
+    // Format for display (e.g. "yolo26n-seg" -> "YOLO26n Seg").
     labelName.text = processString(nameWithoutExtension)
   }
 
@@ -315,7 +306,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       return
     }
 
-    // Use the new updateThresholds method to properly sync all threshold values
+    // Sync confidence, IoU, and max-items thresholds in a single call.
     yoloView.updateThresholds(conf: conf, iou: iou, numItems: maxItems)
   }
 
@@ -341,7 +332,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     return true
   }
 
-  // Support all orientations for external display
+  // External displays can be rotated; allow all orientations.
   override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
     return .all
   }

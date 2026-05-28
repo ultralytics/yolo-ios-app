@@ -4,12 +4,10 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  The YOLOView class is the primary UI component for displaying real-time YOLO model results.
-//  It handles camera setup, model loading, video frame processing, rendering of detection results,
-//  and user interactions such as pinch-to-zoom. The view can display bounding boxes, masks for segmentation,
-//  pose estimation keypoints, and oriented bounding boxes depending on the active task. It includes
-//  UI elements for controlling inference settings such as confidence threshold and IoU threshold,
-//  and provides functionality for capturing photos with detection results overlaid.
+//  YOLOView is the primary UIView for real-time YOLO inference. It owns the camera session, loads the model, runs
+//  the video frame pipeline, and renders detection overlays — bounding boxes, segmentation masks, pose skeletons,
+//  or oriented boxes depending on the active task. It also exposes UI controls for confidence/IoU/max-detections
+//  and supports pinch-to-zoom and photo capture with overlays burned in.
 
 import AVFoundation
 import UIKit
@@ -35,23 +33,22 @@ func aspectFillDisplayRect(for normalizedRect: CGRect, imageSize: CGSize, viewSi
   )
 }
 
-/// YOLOView Delegate Protocol - Provides performance metrics and YOLO results for each frame
+/// Delegate that receives per-frame performance metrics and YOLO inference results from a `YOLOView`.
 public protocol YOLOViewDelegate: AnyObject {
-  /// Called when performance metrics (FPS and inference time) are updated
+  /// Called when performance metrics (FPS and inference time) are updated.
   func yoloView(_: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double)
 
-  /// Called when detection results are available
+  /// Called when a new inference result is available.
   func yoloView(_: YOLOView, didReceiveResult result: YOLOResult)
-
 }
 
 private let defaultMaxDetectionItems = 100
 
-/// A UIView component that provides real-time object detection, segmentation, and pose estimation capabilities.
+/// A UIView that runs real-time YOLO inference and renders detection, segmentation, pose, or OBB overlays.
 @MainActor
 public final class YOLOView: UIView, VideoCaptureDelegate {
 
-  /// Delegate object - Receives performance metrics and YOLO detection results
+  /// Delegate receiving performance metrics and YOLO inference results for each frame.
   public weak var delegate: YOLOViewDelegate?
 
   public func onInferenceTime(speed: Double, fps: Double) {
@@ -162,7 +159,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     overlayLayer.frame = bounds
   }
 
-  /// Initialize YOLOView without a model (camera only)
+  /// Creates a YOLOView with no model attached; starts the camera preview only.
   public override init(frame: CGRect) {
     self.videoCapture = VideoCapture()
     self.task = .detect  // Default task
@@ -625,7 +622,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     self.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinch)))
   }
 
-  /// Configure a slider with common settings
+  /// Applies the shared slider styling and wires up `sliderChanged` as the value-changed handler.
   private func configureSlider(_ slider: UISlider, min: Float, max: Float, value: Float) {
     slider.minimumValue = min
     slider.maximumValue = max
@@ -635,7 +632,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
   }
 
-  /// Setup toolbar with consistent styling
+  /// Configures the toolbar background and adds the play/pause/camera/share/info buttons as subviews.
   private func setupToolbar() {
     toolbar.backgroundColor = .black.withAlphaComponent(0.7)
     [playButton, pauseButton, switchCameraButton, shareButton, infoButton].forEach { button in
@@ -694,7 +691,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     videoCapture.frameSizeCaptured = false
   }
 
-  /// Layout views for landscape orientation
+  /// Lays out the controls and overlays for landscape orientation.
   private func layoutLandscape() {
     let width = bounds.width
     let height = bounds.height
@@ -748,7 +745,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     layoutLensControl(width: width, height: height)
   }
 
-  /// Layout views for portrait orientation
+  /// Lays out the controls and overlays for portrait orientation.
   private func layoutPortrait() {
     let width = bounds.width
     let height = bounds.height
@@ -801,7 +798,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     layoutLensControl(width: width, height: height)
   }
 
-  /// Layout toolbar buttons (shared between orientations)
+  /// Lays out toolbar buttons; shared between portrait and landscape layouts.
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75

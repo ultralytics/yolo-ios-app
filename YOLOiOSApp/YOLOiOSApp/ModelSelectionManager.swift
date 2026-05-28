@@ -66,16 +66,16 @@ struct ModelSelectionManager {
     }
 
     if nameWithoutSuffix.hasPrefix("yolo") && !nameWithoutSuffix.dropFirst(4).isEmpty {
-      let afterYolo = nameWithoutSuffix.dropFirst(4)
-      let afterYoloString = String(afterYolo)
-      let range = NSRange(location: 0, length: afterYoloString.count)
+      let afterYOLO = nameWithoutSuffix.dropFirst(4)
+      let afterYOLOString = String(afterYOLO)
+      let range = NSRange(location: 0, length: afterYOLOString.count)
 
-      if let match = modelSizeRegex.firstMatch(in: afterYoloString, options: [], range: range),
+      if let match = modelSizeRegex.firstMatch(in: afterYOLOString, options: [], range: range),
         match.numberOfRanges > 1
       {
         let sizeRange = match.range(at: 1)
-        if let range = Range(sizeRange, in: afterYoloString) {
-          return afterYoloString[range].first
+        if let range = Range(sizeRange, in: afterYOLOString) {
+          return afterYOLOString[range].first
         }
       }
     }
@@ -95,8 +95,8 @@ struct ModelSelectionManager {
     }
 
     if result.lowercased().hasPrefix("yolo") {
-      let afterYolo = result.dropFirst(4)
-      result = "YOLO" + afterYolo
+      let afterYOLO = result.dropFirst(4)
+      result = "YOLO" + afterYOLO
     }
 
     return result

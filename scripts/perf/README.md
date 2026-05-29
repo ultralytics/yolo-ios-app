@@ -54,9 +54,21 @@ array marshaling around them. Each was validated with a `swiftc -O` micro-benchm
 | segment  | Per-instance probability maps (`Masks.masks`, `[[[Float]]]`) built by element-wise nested-array subscripting → bulk row copies from the contiguous buffer. Bit-identical, no API change. `generateCombinedMaskImage` in `Plot.swift`. | **2.35 ms → 0.18 ms** (30×160×160)                   |
 | segment  | Per-detection mask coefficients held in a heavyweight `MLMultiArray` → plain `[Float]`. Also removes a force-`try` and simplifies the code. `Segmenter.swift`.                                                                        | **0.144 ms → 0.026 ms** (300 dets)                   |
 | semantic | Per-pixel class argmax over NCHW logits (each class read `H*W` apart, cache-thrashing) → cache-friendly class-major pass. `postProcessSemantic` in `SemanticSegmenter.swift`.                                                         | **1.11 ms → 0.80 ms** (19×320×320); smaller at 80×80 |
+| classify | Top-5 computed by fully sorting the whole class vector (`O(n log n)` + `enumerated()` tuple-array alloc) → single linear pass with a 5-element insertion buffer. Bit-identical (ties keep lowest index). `Classifier.swift`.          | **0.057 ms → 0.001 ms** (1000 classes)               |
+
+**Engine selection (helps all tasks).** `MLModelConfiguration.computeUnits` was `.all` (CPU + GPU + ANE) and is
+now `.cpuAndNeuralEngine`. The compute plan shows the conv backbone belongs on the ANE; excluding the GPU prevents
+CoreML from contending with the camera preview + overlay compositing that already occupies the GPU in the live
+app. Output is bit-identical. This is reasoned from the compute plan and **should be confirmed with an on-device
+A/B** (fps + frame-time jitter under heavy-overlay load) — the macOS host cannot measure the iPhone GPU-contention
+effect.
 
 **General lesson for this repo:** the model runs on the ANE and is already fast; the Swift-side hotspots are
-nested-array / heavyweight-object marshaling in per-frame postprocessing, not the numeric decode loops.
+nested-array / heavyweight-object marshaling in per-frame postprocessing, not the numeric decode loops. A
+six-way fan-out (detect / classify / pose / OBB / preprocessing / ultralytics export) confirmed this: the
+detect/pose/OBB end2end decode paths are already sub-microsecond, and on the export side neither palettization,
+int8 activations, in-graph-postprocess removal, nor newer `minimum_deployment_target` values (iOS17/18/26, which
+actually *regress* latency by adding casts) yield an ANE speedup — the exported model is already ANE-optimal.
 
 ## Reproducing the micro-benchmarks
 

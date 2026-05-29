@@ -91,15 +91,15 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     var pixels = Data(count: outCount * 4)
     let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
     let binaryThreshold = classCount == 1 ? singleChannelThreshold(pointer, count: logits.count) : 0
+    let classStride = isNCHW ? strides[1] : strides[3]
+    let rowStride = isNCHW ? strides[2] : strides[1]
+    let colStride = isNCHW ? strides[3] : strides[2]
 
-    // Phase 1 — argmax over classes into `classMap`. The access pattern is chosen per layout: for NCHW the
-    // class planes are far apart in memory, so a per-pixel inner loop over classes thrashes the cache; iterating
-    // class-major (one contiguous plane at a time, updating running best/index buffers) keeps reads sequential.
-    // NHWC keeps classes contiguous per pixel, so the per-pixel loop is already cache-friendly. Tie-breaking
-    // (lowest class index wins) is identical to the previous per-pixel implementation in all branches.
+    // Phase 1 — argmax over classes into `classMap`, iterating class-major: for each class plane sweep the output
+    // pixels, keeping a running best score/index. For NCHW (the YOLO export layout) each plane is contiguous, so
+    // reads stay sequential — far cheaper than a per-pixel inner loop over classes, which reads H*W apart. Ties
+    // keep the lowest class index (argmax semantics). Strides keep it correct for an NHWC layout too.
     if classCount == 1 {
-      let rowStride = isNCHW ? strides[2] : strides[1]
-      let colStride = isNCHW ? strides[3] : strides[2]
       for y in 0..<outputHeight {
         let srcRow = (y + outputY) * rowStride + outputX * colStride
         let outRow = y * outputWidth
@@ -107,10 +107,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
           classMap[outRow + x] = pointer[srcRow + x * colStride] > binaryThreshold ? 1 : 0
         }
       }
-    } else if isNCHW {
-      let classStride = strides[1]
-      let rowStride = strides[2]
-      let colStride = strides[3]
+    } else {
       var best = [Float](repeating: -.greatestFiniteMagnitude, count: outCount)
       classMap.withUnsafeMutableBufferPointer { cm in
         best.withUnsafeMutableBufferPointer { bb in
@@ -129,27 +126,6 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
               }
             }
           }
-        }
-      }
-    } else {
-      let rowStride = strides[1]
-      let colStride = strides[2]
-      let classStride = strides[3]
-      for y in 0..<outputHeight {
-        let srcRow = (y + outputY) * rowStride + outputX * colStride
-        let outRow = y * outputWidth
-        for x in 0..<outputWidth {
-          let base = srcRow + x * colStride
-          var bestIndex = 0
-          var bestScore = -Float.greatestFiniteMagnitude
-          for c in 0..<classCount {
-            let score = pointer[base + c * classStride]
-            if score > bestScore {
-              bestScore = score
-              bestIndex = c
-            }
-          }
-          classMap[outRow + x] = bestIndex
         }
       }
     }

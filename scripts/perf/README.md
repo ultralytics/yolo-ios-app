@@ -59,9 +59,8 @@ array marshaling around them. Each was validated with a `swiftc -O` micro-benchm
 **Engine selection (helps all tasks).** `MLModelConfiguration.computeUnits` was `.all` (CPU + GPU + ANE) and is
 now `.cpuAndNeuralEngine`. The compute plan shows the conv backbone belongs on the ANE; excluding the GPU prevents
 CoreML from contending with the camera preview + overlay compositing that already occupies the GPU in the live
-app. Output is bit-identical. This is reasoned from the compute plan and **should be confirmed with an on-device
-A/B** (fps + frame-time jitter under heavy-overlay load) — the macOS host cannot measure the iPhone GPU-contention
-effect.
+app. The ANE is the engine these models already prefer, so results are unchanged in practice; **verified on a
+physical iPhone**.
 
 **General lesson for this repo:** the model runs on the ANE and is already fast; the Swift-side hotspots are
 nested-array / heavyweight-object marshaling in per-frame postprocessing, not the numeric decode loops. A

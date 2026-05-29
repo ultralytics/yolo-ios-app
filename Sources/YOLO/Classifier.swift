@@ -95,7 +95,8 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
 
     // Select the top-5 with a single linear pass and a tiny sorted insertion buffer instead of sorting the whole
     // vector. For a 1000-class head this avoids an O(n log n) sort and the enumerated() tuple-array allocation
-    // every frame. Ties keep the lower class index first, matching the previous full-sort behavior.
+    // every frame. Equal scores resolve to the lower class index (deterministic; exact ties don't occur for real
+    // softmax outputs).
     let k = min(5, count)
     var topIdx = [Int](repeating: -1, count: k)
     var topVal = [Float](repeating: -.greatestFiniteMagnitude, count: k)

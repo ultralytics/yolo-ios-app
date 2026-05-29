@@ -249,6 +249,19 @@ class PlotTests: XCTestCase {
     }
   }
 
+  func testGenerateCombinedMaskImageEmptyDetectionsReturnsGracefully() {
+    // Zero detections must not crash on the unsafe-buffer paths; it returns no image and empty masks.
+    let protos = try! MLMultiArray(shape: [1, 2, 4, 4] as [NSNumber], dataType: .float32)
+    let result =
+      generateCombinedMaskImage(
+        detectedObjects: [], protos: protos,
+        inputWidth: 4, inputHeight: 4, threshold: 0.5,
+        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?)
+    XCTAssertNotNil(result)
+    XCTAssertNil(result?.0)
+    XCTAssertEqual(result?.1?.count, 0)
+  }
+
   func testDrawYOLOSegmentationWithBoxes() {
     // Test integrated segmentation with boxes rendering
     let inputImage = CIImage(color: .magenta).cropped(

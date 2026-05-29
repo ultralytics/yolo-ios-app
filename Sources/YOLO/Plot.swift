@@ -218,6 +218,10 @@ func generateCombinedMaskImage(
   let HW = maskHeight * maskWidth
   let N = detectedObjects.count
 
+  // No detections: nothing to composite. Return early so the empty-buffer unsafe-pointer paths below
+  // (vDSP_mmul, the row copies) are never reached with a nil base address.
+  guard N > 0 else { return (nil, returnIndividualMasks ? [] : nil) }
+
   // 2) Prepare matrix A: (N, C) at once (number of objects x mask channels)
   var coeffsArray = [Float](repeating: 0, count: N * maskChannels)
   for i in 0..<N {
@@ -317,7 +321,7 @@ func generateCombinedMaskImage(
   //     for typical sizes (e.g. 30 instances × 160×160) while producing bit-identical values.
   if returnIndividualMasks {
     probabilityMasks = combinedMask.withUnsafeBufferPointer { buf -> [[[Float]]] in
-      let base = buf.baseAddress!
+      guard let base = buf.baseAddress else { return [] }
       var masksArray = [[[Float]]]()
       masksArray.reserveCapacity(N)
       for i in 0..<N {

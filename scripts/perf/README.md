@@ -68,7 +68,7 @@ nested-array / heavyweight-object marshaling in per-frame postprocessing, not th
 six-way fan-out (detect / classify / pose / OBB / preprocessing / ultralytics export) confirmed this: the
 detect/pose/OBB end2end decode paths are already sub-microsecond, and on the export side neither palettization,
 int8 activations, in-graph-postprocess removal, nor newer `minimum_deployment_target` values (iOS17/18/26, which
-actually *regress* latency by adding casts) yield an ANE speedup — the exported model is already ANE-optimal.
+actually _regress_ latency by adding casts) yield an ANE speedup — the exported model is already ANE-optimal.
 
 ## Reproducing the micro-benchmarks
 

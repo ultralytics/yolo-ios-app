@@ -213,7 +213,10 @@ class PlotTests: XCTestCase {
 
   func testGenerateCombinedMaskImageProducesCorrectPerInstanceMasks() {
     // Prototype masks: shape [1, C=2, H=4, W=4]. Channel 0 = index value, channel 1 = constant 0.
-    let C = 2, H = 4, W = 4, HW = 16
+    let C = 2
+    let H = 4
+    let W = 4
+    let HW = 16
     let protos = try! MLMultiArray(shape: [1, C, H, W] as [NSNumber], dataType: .float32)
     let pPtr = protos.dataPointer.assumingMemoryBound(to: Float.self)
     for i in 0..<HW { pPtr[i] = Float(i) }  // channel 0: 0..15

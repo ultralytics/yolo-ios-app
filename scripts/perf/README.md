@@ -39,10 +39,10 @@ Baseline per-model ANE latency (median ms): detect 2.5, seg 3.3, pose 2.9, cls 0
   still computes in fp16, palettized weights are just decompressed at load. Worth adopting for download size, not
   for speed.
 - The in-graph end2end decode (`topk` / `gather` / index math in the NMS-free head) shows up as ~20% of the
-  static *cost estimate* on the CPU across all tasks, but removing it entirely only improves wall-clock latency by
+  static _cost estimate_ on the CPU across all tasks, but removing it entirely only improves wall-clock latency by
   **~4%** — the model is compute-bound on the ANE convolutions. The static cost share is **not** a reliable proxy
   for wall-clock here.
-- int8 *activation* quantization is not pursued: the ANE is fp16-native, so it rarely speeds up ANE latency and
+- int8 _activation_ quantization is not pursued: the ANE is fp16-native, so it rarely speeds up ANE latency and
   it risks accuracy.
 
 **Swift postprocessing side — where the win was:**

@@ -1,5 +1,4 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-
 """Profile a CoreML (.mlpackage / .mlmodelc) model's inference latency and Apple Neural Engine (ANE) residency.
 
 This is the measurement harness behind the YOLO iOS inference-performance work. It answers two questions for a
@@ -88,8 +87,10 @@ def _compute_plan(path: str, unit: str = "CPU_AND_NE") -> None:
             cpu_types[op.operator_name] += 1
 
     def short(name: str) -> str:
-        return name.replace("MLNeuralEngineComputeDevice", "ANE").replace("MLCPUComputeDevice", "CPU").replace(
-            "MLGPUComputeDevice", "GPU"
+        return (
+            name.replace("MLNeuralEngineComputeDevice", "ANE")
+            .replace("MLCPUComputeDevice", "CPU")
+            .replace("MLGPUComputeDevice", "GPU")
         )
 
     print(f"\nANE residency ({unit}):")

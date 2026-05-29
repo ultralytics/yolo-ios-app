@@ -45,16 +45,20 @@ Baseline per-model ANE latency (median ms): detect 2.5, seg 3.3, pose 2.9, cls 0
 - int8 _activation_ quantization is not pursued: the ANE is fp16-native, so it rarely speeds up ANE latency and
   it risks accuracy.
 
-**Swift postprocessing side — where the win was:**
+**Swift postprocessing side — where the wins are.** The decode loops for detect/pose/OBB (≤300 detections, raw
+pointer access) are already optimal, and the segmentation mask matmul already uses `vDSP_mmul`. The wins were in
+array marshalling around them. Each was validated with a `swiftc -O` micro-benchmark and locked with a test:
 
-- The instance-segmentation mask matmul already uses `vDSP_mmul` (optimal).
-- Building the per-instance probability maps (`Masks.masks`, a `[[[Float]]]`) by element-wise nested-array
-  subscripting cost **~2.35 ms** per segmentation frame for 30 instances at 160×160. Replacing it with bulk row
-  copies from the contiguous mask buffer is **~13× faster (~0.18 ms)** with bit-identical output and no API
-  change — see `generateCombinedMaskImage` in `Sources/YOLO/Plot.swift`. Since the seg model itself is ~3.3 ms,
-  this removed a large chunk of the non-model per-frame cost.
+| Task | Change | Before → After |
+|------|--------|----------------|
+| segment | Per-instance probability maps (`Masks.masks`, `[[[Float]]]`) built by element-wise nested-array subscripting → bulk row copies from the contiguous buffer. Bit-identical, no API change. `generateCombinedMaskImage` in `Plot.swift`. | **2.35 ms → 0.18 ms** (30×160×160) |
+| segment | Per-detection mask coefficients held in a heavyweight `MLMultiArray` → plain `[Float]`. Also removes a force-`try` and simplifies the code. `Segmenter.swift`. | **0.144 ms → 0.026 ms** (300 dets) |
+| semantic | Per-pixel class argmax over NCHW logits (each class read `H*W` apart, cache-thrashing) → cache-friendly class-major pass. `postProcessSemantic` in `SemanticSegmenter.swift`. | **1.11 ms → 0.80 ms** (19×320×320); smaller at 80×80 |
 
-## Reproducing the mask-build benchmark
+**General lesson for this repo:** the model runs on the ANE and is already fast; the Swift-side hotspots are
+nested-array / heavyweight-object marshalling in per-frame postprocessing, not the numeric decode loops.
 
-The Swift micro-benchmark used to validate the segmentation change (current vs bulk-copy) is described in the PR;
-it builds with `swiftc -O` and reports ~2.35 ms → ~0.18 ms for 30×160×160.
+## Reproducing the micro-benchmarks
+
+Each change was validated by a standalone `swiftc -O` benchmark comparing the old and new implementation on
+representative shapes and asserting identical output. The numbers above are medians on Apple silicon.

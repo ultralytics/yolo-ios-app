@@ -192,7 +192,7 @@ public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIIma
 }
 
 func generateCombinedMaskImage(
-  detectedObjects: [(CGRect, Int, Float, MLMultiArray)],
+  detectedObjects: [(CGRect, Int, Float, [Float])],
   protos: MLMultiArray,  // shape: [1, C, H, W]
   inputWidth: Int,
   inputHeight: Int,
@@ -221,11 +221,10 @@ func generateCombinedMaskImage(
   // 2) Prepare matrix A: (N, C) at once (number of objects x mask channels)
   var coeffsArray = [Float](repeating: 0, count: N * maskChannels)
   for i in 0..<N {
-    let (_, _, _, coeffsMLArray) = detectedObjects[i]
-    let coeffsPtr = coeffsMLArray.dataPointer.assumingMemoryBound(to: Float.self)
+    let coeffs = detectedObjects[i].3
     // Row i of matrix A: write to coeffsArray[i*C .. i*C + C-1]
-    for c in 0..<maskChannels {
-      coeffsArray[i * maskChannels + c] = coeffsPtr[c]
+    for c in 0..<min(maskChannels, coeffs.count) {
+      coeffsArray[i * maskChannels + c] = coeffs[c]
     }
   }
 

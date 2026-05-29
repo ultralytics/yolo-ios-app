@@ -223,12 +223,8 @@ class PlotTests: XCTestCase {
     for i in 0..<HW { pPtr[HW + i] = 0 }  // channel 1: zeros
 
     // One detection with coefficients [1, 0] -> combinedMask == channel 0 of protos.
-    let coeffs = try! MLMultiArray(shape: [C] as [NSNumber], dataType: .float32)
-    let cPtr = coeffs.dataPointer.assumingMemoryBound(to: Float.self)
-    cPtr[0] = 1
-    cPtr[1] = 0
-    let detected: [(CGRect, Int, Float, MLMultiArray)] = [
-      (CGRect(x: 0, y: 0, width: 4, height: 4), 0, 0.9, coeffs)
+    let detected: [(CGRect, Int, Float, [Float])] = [
+      (CGRect(x: 0, y: 0, width: 4, height: 4), 0, 0.9, [1, 0])
     ]
 
     guard

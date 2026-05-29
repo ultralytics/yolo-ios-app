@@ -108,7 +108,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
         }
       }
     } else if isNCHW {
-      let classStride = strides[1], rowStride = strides[2], colStride = strides[3]
+      let classStride = strides[1]
+      let rowStride = strides[2]
+      let colStride = strides[3]
       var best = [Float](repeating: -.greatestFiniteMagnitude, count: outCount)
       classMap.withUnsafeMutableBufferPointer { cm in
         best.withUnsafeMutableBufferPointer { bb in
@@ -130,7 +132,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
         }
       }
     } else {
-      let rowStride = strides[1], colStride = strides[2], classStride = strides[3]
+      let rowStride = strides[1]
+      let colStride = strides[2]
+      let classStride = strides[3]
       for y in 0..<outputHeight {
         let srcRow = (y + outputY) * rowStride + outputX * colStride
         let outRow = y * outputWidth

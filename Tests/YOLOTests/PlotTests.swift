@@ -1,6 +1,7 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import CoreImage
+import CoreML
 import QuartzCore
 import UIKit
 import XCTest
@@ -208,6 +209,57 @@ class PlotTests: XCTestCase {
 
     XCTAssertNotNil(outputImage)
     XCTAssertGreaterThan(outputImage?.size.width ?? 0, 0)
+  }
+
+  func testGenerateCombinedMaskImageProducesCorrectPerInstanceMasks() {
+    // Prototype masks: shape [1, C=2, H=4, W=4]. Channel 0 = index value, channel 1 = constant 0.
+    let C = 2
+    let H = 4
+    let W = 4
+    let HW = 16
+    let protos = try! MLMultiArray(shape: [1, C, H, W] as [NSNumber], dataType: .float32)
+    let pPtr = protos.dataPointer.assumingMemoryBound(to: Float.self)
+    for i in 0..<HW { pPtr[i] = Float(i) }  // channel 0: 0..15
+    for i in 0..<HW { pPtr[HW + i] = 0 }  // channel 1: zeros
+
+    // One detection with coefficients [1, 0] -> combinedMask == channel 0 of protos.
+    let detected: [(CGRect, Int, Float, [Float])] = [
+      (CGRect(x: 0, y: 0, width: 4, height: 4), 0, 0.9, [1, 0])
+    ]
+
+    guard
+      let result = generateCombinedMaskImage(
+        detectedObjects: detected, protos: protos,
+        inputWidth: W, inputHeight: H, threshold: 0.5,
+        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?),
+      let masks = result.1
+    else {
+      XCTFail("generateCombinedMaskImage returned nil or wrong type")
+      return
+    }
+
+    XCTAssertEqual(masks.count, 1)
+    XCTAssertEqual(masks[0].count, H)
+    XCTAssertEqual(masks[0][0].count, W)
+    // Each entry must equal the matmul result (channel 0 = linear index).
+    for y in 0..<H {
+      for x in 0..<W {
+        XCTAssertEqual(masks[0][y][x], Float(y * W + x), accuracy: 1e-4)
+      }
+    }
+  }
+
+  func testGenerateCombinedMaskImageEmptyDetectionsReturnsGracefully() {
+    // Zero detections must not crash on the unsafe-buffer paths; it returns no image and empty masks.
+    let protos = try! MLMultiArray(shape: [1, 2, 4, 4] as [NSNumber], dataType: .float32)
+    let result =
+      generateCombinedMaskImage(
+        detectedObjects: [], protos: protos,
+        inputWidth: 4, inputHeight: 4, threshold: 0.5,
+        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?)
+    XCTAssertNotNil(result)
+    XCTAssertNil(result?.0)
+    XCTAssertEqual(result?.1?.count, 0)
   }
 
   func testDrawYOLOSegmentationWithBoxes() {

@@ -70,7 +70,7 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
   }
 
   /// Applies softmax to raw logits and returns the top-1/top-5 probabilities.
-  private func softmaxProbs(from multiArray: MLMultiArray) -> Probs {
+  func softmaxProbs(from multiArray: MLMultiArray) -> Probs {
     let count = multiArray.count
     var logits = [Float](repeating: 0, count: count)
     if multiArray.dataType == .float32, multiArray.strides.last?.intValue == 1 {
@@ -93,13 +93,36 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
       vDSP_vsdiv(output, 1, &sum, &output, 1, vDSP_Length(count))
     }
 
-    let sorted = output.enumerated().sorted { $0.element > $1.element }
-    let top = sorted.prefix(5).filter { $0.offset < labels.count }
+    // Select the top-5 with a single linear pass and a tiny sorted insertion buffer instead of sorting the whole
+    // vector. For a 1000-class head this avoids an O(n log n) sort and the enumerated() tuple-array allocation
+    // every frame. Equal scores resolve to the lower class index (deterministic; exact ties don't occur for real
+    // softmax outputs).
+    let k = min(5, count)
+    var topIdx = [Int](repeating: -1, count: k)
+    var topVal = [Float](repeating: -.greatestFiniteMagnitude, count: k)
+    for i in 0..<count {
+      let v = output[i]
+      if v <= topVal[k - 1] { continue }
+      var p = k - 1
+      while p > 0 && v > topVal[p - 1] {
+        topVal[p] = topVal[p - 1]
+        topIdx[p] = topIdx[p - 1]
+        p -= 1
+      }
+      topVal[p] = v
+      topIdx[p] = i
+    }
+    var topLabels = [String]()
+    var topConfs = [Float]()
+    for j in 0..<k where topIdx[j] >= 0 && topIdx[j] < labels.count {
+      topLabels.append(labels[topIdx[j]])
+      topConfs.append(topVal[j])
+    }
     return Probs(
-      top1: top.first.map { labels[$0.offset] } ?? "",
-      top5: top.map { labels[$0.offset] },
-      top1Conf: top.first?.element ?? 0,
-      top5Confs: top.map { $0.element }
+      top1: topLabels.first ?? "",
+      top5: topLabels,
+      top1Conf: topConfs.first ?? 0,
+      top5Confs: topConfs
     )
   }
 }

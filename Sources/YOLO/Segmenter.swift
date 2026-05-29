@@ -113,7 +113,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   /// exported model.
   private func parseSegmentationRequest(
     _ request: VNRequest
-  ) -> (masks: MLMultiArray, detectedObjects: [(CGRect, Int, Float, MLMultiArray)])? {
+  ) -> (masks: MLMultiArray, detectedObjects: [(CGRect, Int, Float, [Float])])? {
     guard let results = request.results as? [VNCoreMLFeatureValueObservation],
       results.count == 2,
       let out0 = results[0].featureValue.multiArrayValue,
@@ -131,7 +131,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
   /// Converts post-processed (rect, class, score, maskCoeffs) tuples into `Box` values
   /// mapped from model-space to the current input-image coordinate space.
-  private func buildBoxes(from objects: [(CGRect, Int, Float, MLMultiArray)]) -> [Box] {
+  private func buildBoxes(from objects: [(CGRect, Int, Float, [Float])]) -> [Box] {
     var boxes: [Box] = []
     boxes.reserveCapacity(objects.count)
     for (box, classIndex, confidence, _) in objects {
@@ -150,7 +150,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     feature: MLMultiArray,
     confidenceThreshold: Float,
     iouThreshold: Float
-  ) -> [(CGRect, Int, Float, MLMultiArray)] {
+  ) -> [(CGRect, Int, Float, [Float])] {
     let shape = feature.shape.map { $0.intValue }
     guard shape.count == 3 else { return [] }
 
@@ -170,9 +170,9 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     // Wrapper for thread-safe results collection
     final class ResultsWrapper: @unchecked Sendable {
       private let lock = NSLock()
-      private(set) var results: [(CGRect, Int, Float, MLMultiArray)] = []
+      private(set) var results: [(CGRect, Int, Float, [Float])] = []
 
-      func append(_ result: (CGRect, Int, Float, MLMultiArray)) {
+      func append(_ result: (CGRect, Int, Float, [Float])) {
         lock.lock()
         results.append(result)
         lock.unlock()
@@ -213,37 +213,26 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         localClassProbs.baseAddress!, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
 
       if maxClassValue > confidenceThreshold {
-        // Create MLMultiArray more efficiently
-        guard
-          let maskProbs = try? MLMultiArray(
-            shape: [NSNumber(value: maskConfidenceLength)], dataType: .float32)
-        else {
-          return
-        }
-
+        // Collect the 32 mask coefficients into a lightweight [Float] (no per-detection MLMultiArray object).
         let maskProbsPointer = pointerWrapper.pointer + (4 + numClasses) * numAnchors + j
-        let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
-
+        var maskProbs = [Float](repeating: 0, count: maskConfidenceLength)
         for i in 0..<maskConfidenceLength {
-          maskProbsData[i] = maskProbsPointer[i * numAnchors]
+          maskProbs[i] = maskProbsPointer[i * numAnchors]
         }
 
-        let result = (boundingBox, Int(maxClassIndex), maxClassValue, maskProbs)
-
-        resultsWrapper.append(result)
-
+        resultsWrapper.append((boundingBox, Int(maxClassIndex), maxClassValue, maskProbs))
       }
     }
 
     let collectedResults = resultsWrapper.results
 
     // Group results by class for per-class NMS
-    var classBuckets: [Int: [(CGRect, Int, Float, MLMultiArray)]] = [:]
+    var classBuckets: [Int: [(CGRect, Int, Float, [Float])]] = [:]
     for result in collectedResults {
       classBuckets[result.1, default: []].append(result)
     }
 
-    var selectedBoxesAndFeatures: [(CGRect, Int, Float, MLMultiArray)] = []
+    var selectedBoxesAndFeatures: [(CGRect, Int, Float, [Float])] = []
     selectedBoxesAndFeatures.reserveCapacity(collectedResults.count)
 
     for (_, classResults) in classBuckets {
@@ -269,7 +258,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     feature: MLMultiArray,
     shape: [Int],
     confidenceThreshold: Float
-  ) -> [(CGRect, Int, Float, MLMultiArray)] {
+  ) -> [(CGRect, Int, Float, [Float])] {
     let numDetections = shape[1]
     let numFields = shape[2]
     let maskCoefficients = 32
@@ -278,7 +267,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let detStride = strides[1]
     let fieldStride = strides[2]
 
-    var results: [(CGRect, Int, Float, MLMultiArray)] = []
+    var results: [(CGRect, Int, Float, [Float])] = []
 
     for i in 0..<numDetections {
       let base = i * detStride
@@ -293,15 +282,11 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
       let boundingBox = CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1)
 
-      // Extract mask coefficients (fields 6..37)
-      guard
-        let maskProbs = try? MLMultiArray(
-          shape: [NSNumber(value: maskCoefficients)], dataType: .float32)
-      else { continue }
-      let maskProbsData = maskProbs.dataPointer.assumingMemoryBound(to: Float.self)
+      // Extract mask coefficients (fields 6..37) into a lightweight [Float].
+      var maskProbs = [Float](repeating: 0, count: maskCoefficients)
       let maskStartField = numFields > 5 ? 6 : 5
       for m in 0..<min(maskCoefficients, numFields - maskStartField) {
-        maskProbsData[m] = pointer[base + (maskStartField + m) * fieldStride]
+        maskProbs[m] = pointer[base + (maskStartField + m) * fieldStride]
       }
 
       results.append((boundingBox, classId, conf, maskProbs))

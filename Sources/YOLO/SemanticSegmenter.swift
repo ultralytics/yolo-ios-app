@@ -86,24 +86,55 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     guard outputWidth > 0, outputHeight > 0 else { return nil }
 
     let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
-    var classMap = [Int](repeating: 0, count: outputWidth * outputHeight)
-    var pixels = Data(count: outputWidth * outputHeight * 4)
+    let outCount = outputWidth * outputHeight
+    var classMap = [Int](repeating: 0, count: outCount)
+    var pixels = Data(count: outCount * 4)
     let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
     let binaryThreshold = classCount == 1 ? singleChannelThreshold(pointer, count: logits.count) : 0
+    let classStride = isNCHW ? strides[1] : strides[3]
+    let rowStride = isNCHW ? strides[2] : strides[1]
+    let colStride = isNCHW ? strides[3] : strides[2]
 
+    // Phase 1 — argmax over classes into `classMap`, iterating class-major: for each class plane sweep the output
+    // pixels, keeping a running best score/index. For NCHW (the YOLO export layout) each plane is contiguous, so
+    // reads stay sequential — far cheaper than a per-pixel inner loop over classes, which reads H*W apart. Ties
+    // keep the lowest class index (argmax semantics). Strides keep it correct for an NHWC layout too.
+    if classCount == 1 {
+      for y in 0..<outputHeight {
+        let srcRow = (y + outputY) * rowStride + outputX * colStride
+        let outRow = y * outputWidth
+        for x in 0..<outputWidth {
+          classMap[outRow + x] = pointer[srcRow + x * colStride] > binaryThreshold ? 1 : 0
+        }
+      }
+    } else {
+      var best = [Float](repeating: -.greatestFiniteMagnitude, count: outCount)
+      classMap.withUnsafeMutableBufferPointer { cm in
+        best.withUnsafeMutableBufferPointer { bb in
+          for c in 0..<classCount {
+            let classBase = c * classStride
+            for y in 0..<outputHeight {
+              let srcRow = classBase + (y + outputY) * rowStride + outputX * colStride
+              let outRow = y * outputWidth
+              for x in 0..<outputWidth {
+                let score = pointer[srcRow + x * colStride]
+                let oi = outRow + x
+                if score > bb[oi] {
+                  bb[oi] = score
+                  cm[oi] = c
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Phase 2 — paint the RGBA buffer from the resolved class map in one sequential sweep.
     pixels.withUnsafeMutableBytes { rawBuffer in
       let pixelBuffer = rawBuffer.bindMemory(to: UInt8.self)
-      for y in 0..<outputHeight {
-        let sourceY = y + outputY
-        for x in 0..<outputWidth {
-          let sourceX = x + outputX
-          let classIndex = bestClass(
-            pointer: pointer, strides: strides, classCount: classCount,
-            x: sourceX, y: sourceY, isNCHW: isNCHW, binaryThreshold: binaryThreshold)
-          let outIndex = y * outputWidth + x
-          classMap[outIndex] = classIndex
-          writeColor(colors[classIndex], into: pixelBuffer, at: outIndex * 4)
-        }
+      for i in 0..<outCount {
+        writeColor(colors[classMap[i]], into: pixelBuffer, at: i * 4)
       }
     }
 
@@ -112,37 +143,6 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       width: outputWidth,
       height: outputHeight,
       maskImage: makeImage(fromRGBA: pixels, width: outputWidth, height: outputHeight))
-  }
-
-  private func bestClass(
-    pointer: UnsafeMutablePointer<Float>,
-    strides: [Int],
-    classCount: Int,
-    x: Int,
-    y: Int,
-    isNCHW: Bool,
-    binaryThreshold: Float
-  ) -> Int {
-    if classCount == 1 {
-      let score =
-        isNCHW
-        ? pointer[y * strides[2] + x * strides[3]]
-        : pointer[y * strides[1] + x * strides[2]]
-      return score > binaryThreshold ? 1 : 0
-    }
-
-    var bestIndex = 0
-    var bestScore = -Float.greatestFiniteMagnitude
-    let baseOffset = isNCHW ? y * strides[2] + x * strides[3] : y * strides[1] + x * strides[2]
-    let classStride = isNCHW ? strides[1] : strides[3]
-    for c in 0..<classCount {
-      let score = pointer[baseOffset + c * classStride]
-      if score > bestScore {
-        bestScore = score
-        bestIndex = c
-      }
-    }
-    return bestIndex
   }
 
   private func singleChannelThreshold(_ pointer: UnsafeMutablePointer<Float>, count: Int) -> Float {

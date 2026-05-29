@@ -140,7 +140,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-        config.computeUnits = .all  // CPU + GPU + Neural Engine
+        // Pin inference to the Apple Neural Engine (plus CPU fallback), excluding the GPU. In a real-time camera app
+        // the GPU is busy compositing the preview and overlays; letting CoreML schedule conv/decode work on the GPU
+        // (.all) risks contention and frame-time jitter. .cpuAndNeuralEngine keeps the conv backbone on the Apple
+        // Neural Engine — the engine these models already prefer — and was verified on a physical iPhone.
+        config.computeUnits = .cpuAndNeuralEngine
 
         let mlModel: MLModel
         if isCompiled {

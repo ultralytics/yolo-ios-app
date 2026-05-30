@@ -113,6 +113,7 @@ def main() -> None:
                     format="coreml",
                     int8=True,
                     nms=False,
+                    end2end=True,
                     imgsz=task.imgsz,
                 )
             )

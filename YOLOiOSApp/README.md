@@ -65,34 +65,17 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Add YOLO26 Models:**
-    The app does not ship Core ML models by default. Official Ultralytics models are downloaded on demand and cached on device. You need models in the [Core ML](https://developer.apple.com/documentation/coreml) format to run inference on iOS. Export INT8 quantized Core ML models using the `ultralytics` Python package (install via `pip install ultralytics` - see our [Quickstart Guide](https://docs.ultralytics.com/quickstart/)) or download pre-exported models from our [GitHub release assets](https://github.com/ultralytics/yolo-ios-app/releases). Place the `.mlpackage` files into the corresponding `Models/{TaskName}` directory within the Xcode project (e.g., `Models/Detect`). Refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/) for more details on exporting models for various deployment environments. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
+    The app does not ship Core ML models by default. Official Ultralytics models are downloaded automatically from [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) on first use and cached on device. The URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift), which enumerates YOLO26 `n/s/m/l/x` models for detect, segment, semantic, classify, pose, and OBB.
 
-    ```python
-    from ultralytics import YOLO
-    from ultralytics.utils.downloads import zip_directory
+    You can also prepare local model files for development or tests:
 
-
-    def export_and_zip_yolo_models(
-        model_types=("", "-seg", "-sem", "-cls", "-pose", "-obb"),
-        model_sizes=("n", "s", "m", "l", "x"),
-    ):
-        """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
-        for model_type in model_types:
-            # Square exports are best when the same model is used for both portrait and landscape.
-            # Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or
-            # [384, 640] for landscape-only. Use orientation-only shapes only when locked to that orientation.
-            imgsz = 224 if "cls" in model_type else 1024 if "obb" in model_type else 640
-            nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
-            for size in model_sizes:
-                model_name = f"yolo26{size}{model_type}"
-                model = YOLO(f"{model_name}.pt")
-                model.export(format="coreml", int8=True, imgsz=[imgsz, imgsz], nms=nms)
-                zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
-
-
-    # Execute with default parameters
-    export_and_zip_yolo_models()
+    ```bash
+    uv venv --python 3.13 .venv
+    uv pip install -e "../ultralytics[export]"
+    uv run python scripts/export-models.py --sizes n --copy-to-app
     ```
+
+    The full official asset workflow, including release upload, is documented in the repository root README and implemented in [`scripts/export-models.py`](../scripts/export-models.py).
 
 4.  **Run the App:**
     Connect your iOS device via USB. Select your device from the list of run targets in Xcode (next to the stop button). Click the Run button (▶) to build and install the app on your device.

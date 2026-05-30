@@ -18,12 +18,12 @@ Values are EMA-smoothed steady-state. Under sustained real-time use the device t
 
 The camera capture preset sets how much image data is scaled to the 640×640 model input every frame. The SDK previously captured at `.photo` (full sensor), which delivers ~2 MP frames that must be downscaled on every frame — the dominant preprocessing cost. Capturing at `.hd1280x720` roughly halves the per-frame data and doubles sustained throughput, with **no change to detection accuracy** (the model always receives a 640 input; a lower-resolution capture simply means less downscaling).
 
-| Camera preset            | Delivered frame | Preprocess | Frame time | FPS |
-| ------------------------ | --------------- | ---------- | ---------- | --- |
-| `.photo` (previous)      | 1206×1608       | Vision     | 15.9 ms    | 15  |
-| **`.hd1280x720` (current)** | 720×1280     | Vision     | **13.3 ms** | **30** |
-| `.vga640x480`            | 480×640         | Vision     | 13.3 ms    | 24  |
-| `.vga640x480`            | 480×640         | manual†    | 8.3 ms     | 25  |
+| Camera preset               | Delivered frame | Preprocess | Frame time  | FPS    |
+| --------------------------- | --------------- | ---------- | ----------- | ------ |
+| `.photo` (previous)         | 1206×1608       | Vision     | 15.9 ms     | 15     |
+| **`.hd1280x720` (current)** | 720×1280        | Vision     | **13.3 ms** | **30** |
+| `.vga640x480`               | 480×640         | Vision     | 13.3 ms     | 24     |
+| `.vga640x480`               | 480×640         | manual†    | 8.3 ms      | 25     |
 
 The SDK ships with **`.hd1280x720`**: it halves frame time versus `.photo` and doubles the sustained frame rate while keeping a crisp preview.
 

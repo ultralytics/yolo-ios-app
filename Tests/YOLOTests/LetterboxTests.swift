@@ -29,7 +29,9 @@ final class LetterboxTests: XCTestCase {
     let cases: [(w: CGFloat, h: CGFloat, activeRect: CGRect, desc: String)] = [
       (720, 1280, CGRect(x: 140, y: 0, width: 360, height: 640), "16:9 portrait → left/right bars"),
       (480, 640, CGRect(x: 80, y: 0, width: 480, height: 640), "4:3 portrait → left/right bars"),
-      (1280, 720, CGRect(x: 0, y: 140, width: 640, height: 360), "16:9 landscape → top/bottom bars"),
+      (
+        1280, 720, CGRect(x: 0, y: 140, width: 640, height: 360), "16:9 landscape → top/bottom bars"
+      ),
       (640, 480, CGRect(x: 0, y: 80, width: 640, height: 480), "4:3 landscape → top/bottom bars"),
     ]
     for c in cases {

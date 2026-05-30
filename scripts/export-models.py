@@ -24,7 +24,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from ultralytics import YOLO
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "exports" / "coreml"
 APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"

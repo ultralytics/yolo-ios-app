@@ -240,25 +240,25 @@ You can use the official hosted assets, export the official matrix yourself, or 
 
 Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0). They are int8 `.mlpackage.zip` archives named by model ID, for example `yolo26n.mlpackage.zip`, `yolo26n-seg.mlpackage.zip`, and `yolo26x-obb.mlpackage.zip`.
 
-| Consumer | Runtime format | Release asset source | Direct URL pattern |
-| --- | --- | --- | --- |
-| YOLO iOS app and Swift package | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
-| YOLO Flutter on iOS/macOS | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
-| YOLO Flutter on Android | TFLite int8 `.tflite` | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) | `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>.tflite` |
+| Consumer                       | Runtime format                | Release asset source                                                                             | Direct URL pattern                                                                           |
+| ------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| YOLO iOS app and Swift package | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
+| YOLO Flutter on iOS/macOS      | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
+| YOLO Flutter on Android        | TFLite int8 `.tflite`         | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) | `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>.tflite`    |
 
 The package can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
-| Property | Core ML official assets | TFLite official assets |
-| --- | --- | --- |
-| Model family | YOLO26 `n/s/m/l/x` | YOLO26 `n/s/m/l/x` |
-| Tasks | detect, segment, semantic, classify, pose, OBB | detect, segment, semantic, classify, pose, OBB |
-| Format | `.mlpackage.zip` | `.tflite` |
-| Quantization | int8 Core ML export | int8 TFLite export |
-| Export size | classify: `224`; OBB: `1024`; all other tasks: `640` | classify: `224`; all other tasks: `640` |
-| End-to-end / NMS export | `nms=False` | `nms=False` |
-| Calibration data | Core ML exporter default calibration | `data=coco128.yaml` |
-| Postprocessing | Swift package / iOS app postprocessing | Flutter native Android postprocessing |
-| Hosted release | `ultralytics/yolo-ios-app` `v8.3.0` | `ultralytics/yolo-flutter-app` `v0.3.5` |
+| Property                | Core ML official assets                              | TFLite official assets                         |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| Model family            | YOLO26 `n/s/m/l/x`                                   | YOLO26 `n/s/m/l/x`                             |
+| Tasks                   | detect, segment, semantic, classify, pose, OBB       | detect, segment, semantic, classify, pose, OBB |
+| Format                  | `.mlpackage.zip`                                     | `.tflite`                                      |
+| Quantization            | int8 Core ML export                                  | int8 TFLite export                             |
+| Export size             | classify: `224`; OBB: `1024`; all other tasks: `640` | classify: `224`; all other tasks: `640`        |
+| End-to-end / NMS export | `nms=False`                                          | `nms=False`                                    |
+| Calibration data        | Core ML exporter default calibration                 | `data=coco128.yaml`                            |
+| Postprocessing          | Swift package / iOS app postprocessing               | Flutter native Android postprocessing          |
+| Hosted release          | `ultralytics/yolo-ios-app` `v8.3.0`                  | `ultralytics/yolo-flutter-app` `v0.3.5`        |
 
 ### Reproduce The Official Core ML Assets
 

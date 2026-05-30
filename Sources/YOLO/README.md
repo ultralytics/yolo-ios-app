@@ -234,70 +234,45 @@ With just a few lines of code, you can integrate real-time, YOLO-based inference
 
 ## ⚙️ How to Obtain YOLO Core ML Models
 
-You can get [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) models compatible with this package in Core ML format using two methods:
+You can use the official hosted assets, export the official matrix yourself, or load your own fine-tuned Core ML model.
 
-### 1. Download Pre-Exported Models
+### Official Hosted Assets
 
-You can download pre-exported Core ML models from the Assets section of the [YOLO iOS App releases page](https://github.com/ultralytics/yolo-ios-app/releases). Look for zipped `.mlpackage` assets such as `yolo26n.mlpackage.zip` or `yolo26n-sem.mlpackage.zip`. We recommend using models quantized to [INT8](https://www.ultralytics.com/glossary/model-quantization) for better performance on mobile devices.
+Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0). They are int8 `.mlpackage.zip` archives named by model ID, for example `yolo26n.mlpackage.zip`, `yolo26n-seg.mlpackage.zip`, and `yolo26x-obb.mlpackage.zip`.
 
-[Download YOLO Core ML Models (GitHub Releases)](https://github.com/ultralytics/yolo-ios-app/releases)
+| Consumer                       | Runtime format                | Release asset source                                                                             | Direct URL pattern                                                                           |
+| ------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| YOLO iOS app and Swift package | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
+| YOLO Flutter on iOS/macOS      | Core ML int8 `.mlpackage.zip` | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         | `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip` |
+| YOLO Flutter on Android        | TFLite int8 `.tflite`         | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) | `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>.tflite`    |
 
-After downloading, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your Xcode project. Ensure it's included in your app target's "Copy Bundle Resources" build phase.
+The package can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
-### 2. Export Using the Ultralytics Python Package
+| Property                | Core ML official assets                              | TFLite official assets                         |
+| ----------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| Model family            | YOLO26 `n/s/m/l/x`                                   | YOLO26 `n/s/m/l/x`                             |
+| Tasks                   | detect, segment, semantic, classify, pose, OBB       | detect, segment, semantic, classify, pose, OBB |
+| Format                  | `.mlpackage.zip`                                     | `.tflite`                                      |
+| Quantization            | int8 Core ML export                                  | int8 TFLite export                             |
+| Export size             | classify: `224`; OBB: `1024`; all other tasks: `640` | classify: `224`; all other tasks: `640`        |
+| End-to-end / NMS export | `nms=False`                                          | `nms=False`                                    |
+| Calibration data        | Core ML exporter default calibration                 | `data=coco128.yaml`                            |
+| Postprocessing          | Swift package / iOS app postprocessing               | Flutter native Android postprocessing          |
+| Hosted release          | `ultralytics/yolo-ios-app` `v8.3.0`                  | `ultralytics/yolo-flutter-app` `v0.3.5`        |
 
-You can export models to the Core ML format yourself using the `ultralytics` Python package. This gives you more control over the export process, such as choosing different model sizes or export settings.
+### Reproduce The Official Core ML Assets
 
-First, install the `ultralytics` package using [pip](https://pip.pypa.io/en/stable/):
+The authoritative export workflow lives in [`scripts/export-models.py`](../../scripts/export-models.py) at the repository root. That script defines the official YOLO26 task/size matrix, Core ML int8 export settings, `.mlpackage.zip` packaging, optional local app-copy step, and optional GitHub release upload.
 
 ```bash
-pip install ultralytics
+uv venv --python 3.13 .venv
+uv pip install -e "../ultralytics[export]"
+uv run python scripts/export-models.py
 ```
 
-Then, use the following Python script to export your desired [YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) models. The example below exports YOLO26 detection models in various sizes to Core ML INT8 format. YOLO26 is NMS-free, so [NMS](https://www.ultralytics.com/glossary/non-maximum-suppression-nms) is not needed during export.
+Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing, and `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to publish the generated zip archives to the canonical release.
 
-```python
-from ultralytics import YOLO
-
-# Example: Export YOLO26 detection models (NMS-free)
-for size in ("n", "s", "m", "l", "x"):
-    # Load a YOLO26 PyTorch model
-    model = YOLO(f"yolo26{size}.pt")  # Assumes you have the .pt file locally or downloads it
-
-    # Export the PyTorch model to Core ML INT8 format (YOLO26 is NMS-free).
-    # Square [640, 640] works best when one model must run in both portrait and landscape.
-    # Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or [384, 640] for landscape-only.
-    model.export(format="coreml", int8=True, nms=False, imgsz=[640, 640])
-    print(f"Exported yolo26{size}.mlmodel (NMS-free)")
-
-# Example: Export a YOLO26 segmentation model (without Core ML NMS)
-seg_model = YOLO("yolo26n-seg.pt")
-# Use [640, 640] for mixed portrait/landscape; [640, 384] for portrait-only; [384, 640] for landscape-only.
-seg_model.export(format="coreml", int8=True, imgsz=[640, 640])  # NMS=False (or omitted) for non-detection tasks
-print("Exported yolo26n-seg.mlmodel without NMS")
-
-# Example: Export a YOLO26 semantic segmentation model
-sem_model = YOLO("yolo26n-sem.pt")
-sem_model.export(format="coreml", int8=True, imgsz=[640, 640])  # Semantic logits output
-print("Exported yolo26n-sem.mlmodel without NMS")
-
-# Similarly for other tasks:
-# cls_model = YOLO("yolo26n-cls.pt")
-# Classification usually remains square because it uses center-crop preprocessing.
-# cls_model.export(format="coreml", int8=True, imgsz=[224, 224]) # Classification often uses smaller imgsz
-
-# pose_model = YOLO("yolo26n-pose.pt")
-# Use [640, 640] for mixed portrait/landscape; [640, 384] for portrait-only; [384, 640] for landscape-only.
-# pose_model.export(format="coreml", int8=True, imgsz=[640, 640])
-
-# obb_model = YOLO("yolo26n-obb.pt")
-# OBB uses a larger square input by default; use [1024, 576] for portrait-only or [576, 1024] for landscape-only.
-# obb_model.export(format="coreml", int8=True, imgsz=[1024, 1024])
-```
-
-This script assumes you have the base [PyTorch](https://pytorch.org/) (`.pt`) models available. For detailed export options, refer to the [Ultralytics Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
-
-**Important Note on NMS:** The SDK supports both architectures. YOLO26 is NMS-free — export with `nms=False` (or omit the argument) and the Swift package applies postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) are also supported; the predictor detects the model's `nms` metadata flag at load time and dispatches to the correct path.
+YOLO26 is NMS-free in this SDK: official Core ML assets are exported with `nms=False`, and the Swift package applies postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) remain supported; the predictor detects the model's `nms` metadata flag at load time and dispatches to the correct path.
 
 ## 🤝 Contributing
 

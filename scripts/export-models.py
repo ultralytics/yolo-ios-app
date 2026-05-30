@@ -1,77 +1,135 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+"""Export official YOLO26 Core ML assets for the iOS app release.
+
+Usage from the repository root:
+
+    uv venv --python 3.13 .venv
+    uv pip install -e "../ultralytics[export]"
+    uv run python scripts/export-models.py
+
+The script exports the official YOLO26 task x size matrix to int8 Core ML
+`.mlpackage` directories, zips each package as `<model>.mlpackage.zip`, and
+optionally uploads the archives to the release used by RemoteModels.swift.
 """
-Export all YOLO models to Core ML format for the iOS app.
 
-Usage:
-    pip install ultralytics
-    python scripts/export-models.py
+from __future__ import annotations
 
-Exports YOLO models (5 sizes x 6 tasks = 30 models) to Core ML .mlpackage
-format and copies them into the app's Models/ directories.
-"""
-
+import argparse
+import os
 import shutil
-import zipfile
+import subprocess
+from dataclasses import dataclass
 from pathlib import Path
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from ultralytics import YOLO
 
-# Repository root (parent of scripts/)
-ROOT = Path(__file__).resolve().parent.parent
-APP_MODELS = ROOT / "YOLOiOSApp" / "Models"
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_DIR = ROOT / "exports" / "coreml"
+APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"
+DEFAULT_REPO = "ultralytics/yolo-ios-app"
+DEFAULT_TAG = "v8.3.0"
+SIZES = ("n", "s", "m", "l", "x")
 
-# All sizes and tasks
-SIZES = ["n", "s", "m", "l", "x"]
-TASKS = {
-    "": "Detect",
-    "-seg": "Segment",
-    "-sem": "Semantic",
-    "-cls": "Classify",
-    "-pose": "Pose",
-    "-obb": "OBB",
-}
-# Square exports are best when the same model is used for both portrait and landscape.
-# Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or [384, 640] for landscape-only.
-# Use orientation-only shapes only when inference is locked to that orientation.
-IMGSZ = {
-    "": 640,
-    "-seg": 640,
-    "-sem": 640,
-    "-cls": 224,
-    "-pose": 640,
-    "-obb": 1024,
+
+@dataclass(frozen=True)
+class TaskSpec:
+    suffix: str
+    model_dir: str
+    imgsz: int
+
+
+TASKS: dict[str, TaskSpec] = {
+    "detect": TaskSpec("", "Detect", 640),
+    "segment": TaskSpec("-seg", "Segment", 640),
+    "semantic": TaskSpec("-sem", "Semantic", 640),
+    "classify": TaskSpec("-cls", "Classify", 224),
+    "pose": TaskSpec("-pose", "Pose", 640),
+    "obb": TaskSpec("-obb", "OBB", 1024),
 }
 
 
-def main():
-    """Export YOLO26 models to Core ML format and prepare zips for release."""
-    for size in SIZES:
-        for suffix, task_dir in TASKS.items():
-            model_name = f"yolo26{size}{suffix}.pt"
-            print(f"\nExporting {model_name} to Core ML...")
-            model = YOLO(model_name)
-            imgsz = IMGSZ[suffix]
-            exported = model.export(format="coreml", int8=True, nms=False, imgsz=[imgsz, imgsz])
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--repo", default=DEFAULT_REPO)
+    parser.add_argument("--tag", default=DEFAULT_TAG)
+    parser.add_argument("--sizes", nargs="+", choices=SIZES, default=list(SIZES))
+    parser.add_argument("--tasks", nargs="+", choices=TASKS.keys(), default=list(TASKS))
+    parser.add_argument(
+        "--copy-to-app",
+        action="store_true",
+        help="Also copy exported .mlpackage directories into YOLOiOSApp/Models/<Task>/ for local testing.",
+    )
+    parser.add_argument(
+        "--upload",
+        action="store_true",
+        help="Upload generated .mlpackage.zip files to the GitHub release with gh release upload --clobber.",
+    )
+    return parser.parse_args()
 
-            # Copy exported .mlpackage to app Models directory
-            src = Path(exported)
-            dst = APP_MODELS / task_dir / src.name
-            dst.parent.mkdir(parents=True, exist_ok=True)
 
-            if dst.exists():
-                shutil.rmtree(dst)
+def zip_mlpackage(package: Path) -> Path:
+    zip_path = package.with_suffix(".mlpackage.zip")
+    if zip_path.exists():
+        zip_path.unlink()
+    with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
+        for path in package.rglob("*"):
+            archive.write(path, Path(package.name) / path.relative_to(package))
+    return zip_path
 
-            shutil.copytree(src, dst)
-            print(f"  Copied to {dst.relative_to(ROOT)}")
 
-            # Create zip for GitHub release upload
-            zip_path = src.with_suffix(".mlpackage.zip")
-            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                for file in src.rglob("*"):
-                    zf.write(file, file.relative_to(src.parent))
-            print(f"  Zipped to {zip_path.name}")
+def copy_to_app(package: Path, task: TaskSpec) -> None:
+    destination = APP_MODELS_DIR / task.model_dir / package.name
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(package, destination)
+    print(f"copied {package.name} -> {destination.relative_to(ROOT)}")
 
-    print("\nAll models exported, copied, and zipped successfully!")
+
+def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
+    if not assets:
+        return
+    command = ["gh", "release", "upload", tag, "--repo", repo, "--clobber", *(str(path) for path in assets)]
+    subprocess.run(command, check=True)
+
+
+def main() -> None:
+    args = parse_args()
+    output_dir = args.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    os.chdir(output_dir)
+
+    assets: list[Path] = []
+    for task_name in args.tasks:
+        task = TASKS[task_name]
+        for size in args.sizes:
+            model_id = f"yolo26{size}{task.suffix}"
+            print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
+            model = YOLO(f"{model_id}.pt")
+            exported = Path(
+                model.export(
+                    format="coreml",
+                    int8=True,
+                    nms=False,
+                    imgsz=task.imgsz,
+                )
+            )
+            package = exported.resolve()
+            manifest = package / "Manifest.json"
+            if not manifest.exists():
+                raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
+            if args.copy_to_app:
+                copy_to_app(package, task)
+            asset = zip_mlpackage(package)
+            assets.append(asset)
+            print(f"asset {asset.relative_to(ROOT)}")
+
+    if args.upload:
+        upload_assets(args.repo, args.tag, assets)
+
+    print(f"\nPrepared {len(assets)} Core ML release assets in {output_dir}")
 
 
 if __name__ == "__main__":

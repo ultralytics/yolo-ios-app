@@ -16,23 +16,23 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 ## Methodology (how to reproduce)
 
-| Tool | What it measures | Notes |
-| --- | --- | --- |
-| `coremltools` `MLModel.predict` per `MLComputeUnit`, subprocess-isolated, interleaved round-robin | host latency, relative deltas | Interleaving cancels thermal drift. `ALL` / `CPU_AND_GPU` `predict` **crash** the Mac host (MPSGraph compiler bug); only `CPU_ONLY` and `CPU_AND_NE` are usable host-side. |
-| `MLComputePlan.load_from_path` on a compiled `.mlmodelc` | per-op preferred device + estimated cost (ANE/GPU/CPU residency) | Static plan; the CPU **cost share** is **not** a wall-clock proxy. |
-| Xcode **Core ML Performance Report** (`.mlpackage` → Performance → device → All) | per-layer on-device compute-unit placement + prediction latency | Gold standard for absolute device numbers; exports `*.mlperf/report.json`. |
-| Instrumented app build | per-frame `preprocess / inference / postprocess` split, EMA + raw jitter | Tap the FPS label to A/B Vision↔manual; env `YOLO_PREPROCESS`, `YOLO_COMPUTE_UNITS`, `YOLO_CAMERA_PRESET`; `[perf]` to stdout (capture via `xcrun devicectl device process launch --console`) and `os_log` (`subsystem com.ultralytics.yolo`, category `perf`). |
+| Tool                                                                                              | What it measures                                                         | Notes                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coremltools` `MLModel.predict` per `MLComputeUnit`, subprocess-isolated, interleaved round-robin | host latency, relative deltas                                            | Interleaving cancels thermal drift. `ALL` / `CPU_AND_GPU` `predict` **crash** the Mac host (MPSGraph compiler bug); only `CPU_ONLY` and `CPU_AND_NE` are usable host-side.                                                                                       |
+| `MLComputePlan.load_from_path` on a compiled `.mlmodelc`                                          | per-op preferred device + estimated cost (ANE/GPU/CPU residency)         | Static plan; the CPU **cost share** is **not** a wall-clock proxy.                                                                                                                                                                                               |
+| Xcode **Core ML Performance Report** (`.mlpackage` → Performance → device → All)                  | per-layer on-device compute-unit placement + prediction latency          | Gold standard for absolute device numbers; exports `*.mlperf/report.json`.                                                                                                                                                                                       |
+| Instrumented app build                                                                            | per-frame `preprocess / inference / postprocess` split, EMA + raw jitter | Tap the FPS label to A/B Vision↔manual; env `YOLO_PREPROCESS`, `YOLO_COMPUTE_UNITS`, `YOLO_CAMERA_PRESET`; `[perf]` to stdout (capture via `xcrun devicectl device process launch --console`) and `os_log` (`subsystem com.ultralytics.yolo`, category `perf`). |
 
 ## What the app's "inference time" actually measures
 
 The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame — preprocess + model predict + Swift postprocess — not just the model. The decode runs synchronously inside `perform` (the `VNCoreMLRequest` completion handler). On A19, `yolo26n` detect at `.photo` capture:
 
-| Stage | Time | Notes |
-| --- | --- | --- |
-| Preprocess (camera buffer → 640 letterbox) | dominant | Cost scales with capture resolution — see below. |
-| Model inference | ≈7 ms | In-app; vs ≈1.8 ms in the isolated Performance Report (thermal + live-pipeline contention). |
-| Postprocess (Swift decode) | ≈0.18 ms | Raw-pointer reads; negligible. |
-| **Total** | **≈16 ms** | The "16 ms" is the pipeline, not the model head. |
+| Stage                                      | Time       | Notes                                                                                       |
+| ------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------- |
+| Preprocess (camera buffer → 640 letterbox) | dominant   | Cost scales with capture resolution — see below.                                            |
+| Model inference                            | ≈7 ms      | In-app; vs ≈1.8 ms in the isolated Performance Report (thermal + live-pipeline contention). |
+| Postprocess (Swift decode)                 | ≈0.18 ms   | Raw-pointer reads; negligible.                                                              |
+| **Total**                                  | **≈16 ms** | The "16 ms" is the pipeline, not the model head.                                            |
 
 ## Experiment: camera capture resolution
 
@@ -51,11 +51,11 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 **Q:** How much of the frame is Vision framework overhead vs. the model? **A:** Bypassing Vision with a manual `vImage` letterbox into a reused buffer fed directly to `MLModel.prediction` removes ~5 ms/frame of Vision overhead. (Device, `yolo26n` detect.)
 
-| Path                | Preprocess | Inference | Postprocess | Total      |
-| ------------------- | ---------- | --------- | ----------- | ---------- |
-| Vision (`.photo`)   | fused in `vis` (≈8 ms) | ≈7 ms (fused) | 0.18 ms | ≈16 ms |
-| Manual (`.photo`)   | 6.7 ms     | 7.0 ms    | 0.16 ms     | ≈13.4 ms   |
-| Manual (`.vga640x480`) | **0.48 ms** | 7.6 ms | 0.15 ms     | ≈8.3 ms    |
+| Path                   | Preprocess             | Inference     | Postprocess | Total    |
+| ---------------------- | ---------------------- | ------------- | ----------- | -------- |
+| Vision (`.photo`)      | fused in `vis` (≈8 ms) | ≈7 ms (fused) | 0.18 ms     | ≈16 ms   |
+| Manual (`.photo`)      | 6.7 ms                 | 7.0 ms        | 0.16 ms     | ≈13.4 ms |
+| Manual (`.vga640x480`) | **0.48 ms**            | 7.6 ms        | 0.15 ms     | ≈8.3 ms  |
 
 Manual preprocessing is ~10–15% faster on its own, and stacks with a small capture preset (VGA collapses the letterbox to 0.48 ms → ~8 ms total). It is **not shipped**: it is currently detect-only and its BGRA→model color order needs visual validation. Preserved as an experiment (`git stash`).
 
@@ -65,12 +65,12 @@ Manual preprocessing is ~10–15% faster on its own, and stacks with a small cap
 
 Device, `yolo26n` detect, 4-cell matrix (raw = un-smoothed per-frame ms):
 
-| Preprocess | Compute units         | Model `inf` | Total   | Raw min/p90/max  |
-| ---------- | --------------------- | ----------- | ------- | ---------------- |
-| Vision     | `.cpuAndNeuralEngine` | fused       | 16.0 ms | 13.2/17.3/17.8   |
+| Preprocess | Compute units         | Model `inf` | Total   | Raw min/p90/max    |
+| ---------- | --------------------- | ----------- | ------- | ------------------ |
+| Vision     | `.cpuAndNeuralEngine` | fused       | 16.0 ms | 13.2/17.3/17.8     |
 | Vision     | `.all`                | fused       | 16.4 ms | 12.7/17.6/**18.8** |
-| Manual     | `.cpuAndNeuralEngine` | 6.95 ms     | 14.0 ms | 10.7/15.0/18.5   |
-| Manual     | `.all`                | 6.80 ms     | 13.0 ms | 11.0/13.9/16.8   |
+| Manual     | `.cpuAndNeuralEngine` | 6.95 ms     | 14.0 ms | 10.7/15.0/18.5     |
+| Manual     | `.all`                | 6.80 ms     | 13.0 ms | 11.0/13.9/16.8     |
 
 Host (`coremltools`, `yolo26n`): `CPU_AND_NE` **2.6 ms** vs `CPU_ONLY` **8.6 ms** — the ANE is ~3× faster than CPU. (GPU-only is not measurable host-side; `ALL`/`CPU_AND_GPU` crash the Mac.)
 
@@ -82,11 +82,11 @@ Host (`coremltools`, `yolo26n`): `CPU_AND_NE` **2.6 ms** vs `CPU_ONLY` **8.6 ms*
 
 Host (`coremltools` NE median, interleaved, `yolo26n`):
 
-| Variant (`yolo26n`)                         | NE latency | ANE op-share |
-| ------------------------------------------- | ---------- | ------------ |
-| end2end (`end2end=True, nms=False`, shipped)| 2.60 ms    | 92.9%        |
-| legacy raw (`end2end=False, nms=False`)     | 2.26 ms    | 99.3%        |
-| legacy + Core ML NMS (`nms=True`)           | 2.37 ms    | (pipeline)   |
+| Variant (`yolo26n`)                          | NE latency | ANE op-share |
+| -------------------------------------------- | ---------- | ------------ |
+| end2end (`end2end=True, nms=False`, shipped) | 2.60 ms    | 92.9%        |
+| legacy raw (`end2end=False, nms=False`)      | 2.26 ms    | 99.3%        |
+| legacy + Core ML NMS (`nms=True`)            | 2.37 ms    | (pipeline)   |
 
 Host end2end penalty vs legacy+NMS: **n +9.4%, s +6.4%, m +3.9%** (fixed ~0.25 ms CPU decode cost, so a larger % on smaller models). Compute plan: end2end adds ~19 CPU ops (top-k/gather/decode), dropping ANE op-share 99.3%→92.9%.
 
@@ -105,15 +105,15 @@ Device (Xcode Performance Report, A19, `yolo26n`):
 
 ## Experiment: quantization & deployment target
 
-| Setting                              | Effect                                                                 |
-| ------------------------------------ | --------------------------------------------------------------------- |
-| int8 (8-bit palettization, shipped)  | ~½ model size, **no latency change** (ANE computes fp16; weights decompress at load). Size win only. |
-| int8 activation quantization         | No benefit (the ANE is fp16-native).                                  |
-| `minimum_deployment_target` iOS17/18+ | **Regresses** detect latency (adds casts / CPU ops). Leave unset; let `coremltools` choose. |
+| Setting                               | Effect                                                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| int8 (8-bit palettization, shipped)   | ~½ model size, **no latency change** (ANE computes fp16; weights decompress at load). Size win only. |
+| int8 activation quantization          | No benefit (the ANE is fp16-native).                                                                 |
+| `minimum_deployment_target` iOS17/18+ | **Regresses** detect latency (adds casts / CPU ops). Leave unset; let `coremltools` choose.          |
 
 ## Frame rate is camera-bound, not inference-bound
 
-`FPS` is the rate the camera delivers and the pipeline processes frames — **not** `1000 / inference_ms`. At ≤13 ms/frame the pipeline finishes well inside the camera's frame interval and idles until the next frame. Proof: manual+VGA (8.3 ms) ran at a *lower* FPS than Vision+720p (13.3 ms). The cap is set by the camera format (~30 fps default), reduced in dim light (auto-exposure lengthens frame duration) and under thermal load — and the SDK does not raise `activeVideoMinFrameDuration`. Faster inference therefore buys latency and power/thermal headroom, not FPS, unless the camera frame-rate cap is raised.
+`FPS` is the rate the camera delivers and the pipeline processes frames — **not** `1000 / inference_ms`. At ≤13 ms/frame the pipeline finishes well inside the camera's frame interval and idles until the next frame. Proof: manual+VGA (8.3 ms) ran at a _lower_ FPS than Vision+720p (13.3 ms). The cap is set by the camera format (~30 fps default), reduced in dim light (auto-exposure lengthens frame duration) and under thermal load — and the SDK does not raise `activeVideoMinFrameDuration`. Faster inference therefore buys latency and power/thermal headroom, not FPS, unless the camera frame-rate cap is raised.
 
 ## Aspect-ratio robustness (16:9 ↔ 4:3)
 

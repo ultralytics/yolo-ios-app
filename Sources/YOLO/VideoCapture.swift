@@ -219,7 +219,8 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       captureSession.sessionPreset = preset
       if preset != sessionPreset {
         YOLOLog.warning(
-          "Capture preset \(sessionPreset.rawValue) unsupported on this camera; using \(preset.rawValue)")
+          "Capture preset \(sessionPreset.rawValue) unsupported on this camera; using \(preset.rawValue)"
+        )
       }
     }
 

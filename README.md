@@ -155,7 +155,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 
 ## ✨ Key Highlights
 
-- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization).
+- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization). See [docs/performance.md](docs/performance.md) for on-device profiling and the camera/Core ML configuration rationale.
 - **Apple Mobile Support**: The Swift Package targets iOS and iPadOS with native Core ML integration.
 - **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/), [classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 

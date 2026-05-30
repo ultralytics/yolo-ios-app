@@ -190,7 +190,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     defer {
       captureSession.commitConfiguration()
     }
-    captureSession.sessionPreset = sessionPreset
 
     guard let device = bestCaptureDevice(position: position) else {
       return false
@@ -210,6 +209,21 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     } else {
       YOLOLog.warning("Cannot add video input to session")
     }
+
+    // Apply the requested capture preset only if the active camera supports it (checked after the input is added,
+    // when `canSetSessionPreset` reflects the device's real capabilities), otherwise fall back to a broadly
+    // supported preset so startup never regresses on a device/position that can't honor it (e.g. 720p). The
+    // letterbox pipeline is aspect-agnostic, so a fallback with a different aspect ratio is handled correctly.
+    let preferredPresets: [AVCaptureSession.Preset] = [sessionPreset, .high, .photo]
+    if let preset = preferredPresets.first(where: { captureSession.canSetSessionPreset($0) }) {
+      captureSession.sessionPreset = preset
+      if preset != sessionPreset {
+        YOLOLog.warning(
+          "Capture preset \(sessionPreset.rawValue) unsupported on this camera; using \(preset.rawValue)"
+        )
+      }
+    }
+
     let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
     previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
     previewLayer.connection?.videoOrientation = videoOrientation

@@ -23,6 +23,7 @@ public enum MiniZip {
     case unsupportedFeature(String)
     case inflateFailed(String)
     case unsafePath(String)
+    case entryTooLarge(String)
 
     public var errorDescription: String? {
       switch self {
@@ -33,6 +34,8 @@ public enum MiniZip {
       case .unsupportedFeature(let f): return "Unsupported ZIP feature: \(f)"
       case .inflateFailed(let path): return "Failed to inflate entry: \(path)"
       case .unsafePath(let path): return "Refusing to extract entry outside destination: \(path)"
+      case .entryTooLarge(let path):
+        return "Entry advertises an implausible decompressed size (possible ZIP bomb): \(path)"
       }
     }
   }
@@ -52,6 +55,10 @@ public enum MiniZip {
   private static let centralDirectorySignature: UInt32 = 0x0201_4b50
   private static let localFileHeaderSignature: UInt32 = 0x0403_4b50
   private static let zip64SizeSentinel: UInt32 = 0xFFFF_FFFF
+
+  // A single raw-DEFLATE stream cannot expand by more than ~1032:1; entries claiming more than this for
+  // their compressed size are rejected as decompression bombs before any allocation.
+  private static let maxDeflateExpansionRatio = 1032
 
   /// Extracts every entry of the ZIP at `archiveURL` into `destinationURL`.
   ///
@@ -109,7 +116,9 @@ public enum MiniZip {
     var eocd = -1
     var i = count - 22
     while i >= count - searchLimit {
-      if u32(data, i) == endOfCentralDirectorySignature {
+      // A real EOCD's comment-length field must point exactly at the end of the file. Verifying this
+      // rejects stray signature bytes that happen to appear inside a trailing archive comment.
+      if u32(data, i) == endOfCentralDirectorySignature, i + 22 + Int(u16(data, i + 20)) == count {
         eocd = i
         break
       }
@@ -189,7 +198,9 @@ public enum MiniZip {
       throw MiniZipError.unsupportedFeature("compression method \(entry.compressionMethod)")
     }
 
-    if entry.crc32 != 0, crc32(output) != entry.crc32 {
+    // The central directory always carries the real CRC-32, including the legitimate value 0 (e.g. empty
+    // files), so verify unconditionally rather than treating 0 as "absent".
+    if crc32(output) != entry.crc32 {
       throw MiniZipError.corruptArchive
     }
     return output
@@ -198,6 +209,12 @@ public enum MiniZip {
   /// Inflates a raw DEFLATE stream to `expectedSize` bytes using the Compression framework.
   private static func inflate(_ input: Data, expectedSize: Int, path: String) throws -> Data {
     guard expectedSize > 0 else { return Data() }
+
+    // Reject decompression bombs before allocating: a crafted header can advertise a huge uncompressed
+    // size to force an out-of-memory allocation. Bound the claim by DEFLATE's maximum expansion ratio.
+    guard expectedSize <= input.count * maxDeflateExpansionRatio else {
+      throw MiniZipError.entryTooLarge(path)
+    }
 
     var output = Data(count: expectedSize)
     let written = output.withUnsafeMutableBytes { destination -> Int in

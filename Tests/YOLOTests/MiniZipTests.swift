@@ -29,6 +29,15 @@ final class MiniZipTests: XCTestCase {
     cy50eHRQSwUGAAAAAAQABAAwAQAADwEAAAAA
     """
 
+  /// Writes an arbitrary base64-encoded archive to a temporary `.zip` and returns its URL.
+  private func writeZip(_ base64: String) throws -> URL {
+    let data = try XCTUnwrap(Data(base64Encoded: base64), "fixture must be valid base64")
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString).appendingPathExtension("zip")
+    try data.write(to: url)
+    return url
+  }
+
   /// Writes the embedded fixture to a temporary `.zip` and returns its URL.
   private func writeFixture() throws -> URL {
     let data = try XCTUnwrap(Data(base64Encoded: fixtureBase64), "fixture must be valid base64")
@@ -123,5 +132,69 @@ final class MiniZipTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: destination) }
 
     XCTAssertThrowsError(try MiniZip.extract(at: url, to: destination))
+  }
+
+  /// A valid archive whose trailing comment contains the EOCD signature bytes is still read correctly —
+  /// the end-of-central-directory scan must validate the comment length, not stop at the first match.
+  func testCommentContainingSignatureIsHandled() throws {
+    let url = try writeZip(
+      "UEsDBBQAAAAIAAOav1y2t1DJDwAAAFgAAAAaAAAAbW9kZWwubWxwYWNrYWdlL2xhYmVscy50eHTLSM3JyVeozAcSGdRk"
+        + "AgBQSwECFAMUAAAACAADmr9ctrdQyQ8AAABYAAAAGgAAAAAAAAAAAAAAgAEAAAAAbW9kZWwubWxwYWNrYWdlL2xhYmVs"
+        + "cy50eHRQSwUGAAAAAAEAAQBIAAAARwAAABkAUEsFBkNPTU1FTlRQQURESU5HUEFERElORw==")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: destination) }
+
+    try MiniZip.extract(at: url, to: destination)
+    XCTAssertEqual(
+      try String(
+        contentsOf: destination.appendingPathComponent("model.mlpackage/labels.txt"),
+        encoding: .utf8),
+      String(repeating: "hello yolo ", count: 8),
+      "EOCD scan must skip a signature embedded in the archive comment")
+  }
+
+  /// A zero-byte entry has a legitimate CRC-32 of 0; it must extract instead of being flagged corrupt.
+  func testEmptyFileEntryExtracts() throws {
+    let url = try writeZip(
+      "UEsDBBQAAAAIAAOav1wAAAAAAgAAAAAAAAAZAAAAbW9kZWwubWxwYWNrYWdlL2VtcHR5LmJpbgMAUEsDBBQAAAAIAAOav1xH"
+        + "3dx5BAAAAAIAAAAYAAAAbW9kZWwubWxwYWNrYWdlL25vdGUudHh0y88GAFBLAQIUAxQAAAAIAAOav1wAAAAAAgAAAAAAAAAZ"
+        + "AAAAAAAAAAAAAACAAQAAAABtb2RlbC5tbHBhY2thZ2UvZW1wdHkuYmluUEsBAhQDFAAAAAgAA5q/XEfd3HkEAAAAAgAAABgA"
+        + "AAAAAAAAAAAAAIABOQAAAG1vZGVsLm1scGFja2FnZS9ub3RlLnR4dFBLBQYAAAAAAgACAI0AAABzAAAAAAA=")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: destination) }
+
+    try MiniZip.extract(at: url, to: destination)
+    XCTAssertEqual(
+      try Data(contentsOf: destination.appendingPathComponent("model.mlpackage/empty.bin")).count,
+      0,
+      "empty entry should extract to a zero-byte file")
+    XCTAssertEqual(
+      try String(
+        contentsOf: destination.appendingPathComponent("model.mlpackage/note.txt"), encoding: .utf8),
+      "ok", "non-empty sibling should still extract")
+  }
+
+  /// An entry advertising an implausibly large uncompressed size is rejected before any allocation,
+  /// guarding against decompression-bomb out-of-memory attacks from untrusted download URLs.
+  func testDecompressionBombRejected() throws {
+    // A 4-byte payload whose central-directory uncompressed size has been patched to ~500 MB.
+    let url = try writeZip(
+      "UEsDBBQAAAAIAAOav1zJl7hQBgAAAAQAAAAZAAAAbW9kZWwubWxwYWNrYWdlL3NtYWxsLnR4dCvJzKsEAFBLAQIUAxQAAAAI"
+        + "AAOav1zJl7hQBgAAAABlzR0ZAAAAAAAAAAAAAACAAQAAAABtb2RlbC5tbHBhY2thZ2Uvc21hbGwudHh0UEsFBgAAAAABAAEA"
+        + "RwAAAD0AAAAAAA==")
+    defer { try? FileManager.default.removeItem(at: url) }
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: destination) }
+
+    XCTAssertThrowsError(try MiniZip.extract(at: url, to: destination)) { error in
+      guard case MiniZip.MiniZipError.entryTooLarge = error else {
+        return XCTFail("expected .entryTooLarge, got \(error)")
+      }
+    }
   }
 }

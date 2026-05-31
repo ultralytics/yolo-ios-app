@@ -62,7 +62,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。官方模型会按需下载，你也可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。应用会将全部六个 nano 模型（每个任务一个：检测、分割、语义分割、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）——这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 Xcode 构建阶段从 GitHub 发布资源下载，**绝不会提交到代码库**（`*.mlpackage` 已被 gitignore 忽略），更大的尺寸（s/m/l/x）则在应用内按需下载。你也可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 

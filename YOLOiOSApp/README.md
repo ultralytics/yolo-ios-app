@@ -65,7 +65,7 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Add YOLO26 Models:**
-    The app does not ship Core ML models by default. Official Ultralytics models are downloaded automatically from [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) on first use and cached on device. The URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift), which enumerates YOLO26 `n/s/m/l/x` models for detect, segment, semantic, classify, pose, and OBB.
+    The app ships with all six nano models (one per task: detect, segment, semantic, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](RemoteModels.swift).
 
     You can also prepare local model files for development or tests:
 

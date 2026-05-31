@@ -26,8 +26,10 @@ enum MiniZip {
 
     var errorDescription: String? {
       switch self {
-      case .notAZipFile: return "Not a valid ZIP archive (end-of-central-directory record not found)"
-      case .corruptArchive: return "Corrupt ZIP archive (unexpected record signature or truncated data)"
+      case .notAZipFile:
+        return "Not a valid ZIP archive (end-of-central-directory record not found)"
+      case .corruptArchive:
+        return "Corrupt ZIP archive (unexpected record signature or truncated data)"
       case .unsupportedFeature(let f): return "Unsupported ZIP feature: \(f)"
       case .inflateFailed(let path): return "Failed to inflate entry: \(path)"
       case .unsafePath(let path): return "Refusing to extract entry outside destination: \(path)"

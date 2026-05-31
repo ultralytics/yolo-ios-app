@@ -45,7 +45,8 @@ final class MiniZipTests: XCTestCase {
     let archive = try writeFixture()
     defer { try? FileManager.default.removeItem(at: archive) }
 
-    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: destination) }
 
     try MiniZip.extract(at: archive, to: destination) { path in
@@ -82,7 +83,8 @@ final class MiniZipTests: XCTestCase {
     let archive = try writeFixture()
     defer { try? FileManager.default.removeItem(at: archive) }
 
-    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: destination) }
 
     try MiniZip.extract(at: archive, to: destination)
@@ -100,7 +102,8 @@ final class MiniZipTests: XCTestCase {
     try Data(repeating: 0xAB, count: 4096).write(to: url)
     defer { try? FileManager.default.removeItem(at: url) }
 
-    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: destination) }
 
     XCTAssertThrowsError(try MiniZip.extract(at: url, to: destination)) { error in
@@ -116,7 +119,8 @@ final class MiniZipTests: XCTestCase {
     try full.prefix(full.count - 120).write(to: url)
     defer { try? FileManager.default.removeItem(at: url) }
 
-    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let destination = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: destination) }
 
     XCTAssertThrowsError(try MiniZip.extract(at: url, to: destination))

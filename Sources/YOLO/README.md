@@ -24,7 +24,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 - ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
 - ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
-- ✅ **Lightweight & Extensible**: Installs quickly via [Swift Package Manager](https://www.swift.org/package-manager/) with no external dependencies beyond Apple's frameworks.
+- ✅ **Zero Dependencies**: Pure Swift built only on Apple's first-party frameworks (Foundation, Core ML, Vision, Compression) — **no third-party packages** to vet, license, or keep up to date. Even ZIP extraction for downloaded models is handled by a small, self-contained extractor, so the package installs instantly via [Swift Package Manager](https://www.swift.org/package-manager/) with nothing to resolve.
 
 **Compatibility note:** `YOLOTask.semantic` is a public enum case added for semantic segmentation. Apps with exhaustive `switch` statements over `YOLOTask` should add this case or include a `default`.
 

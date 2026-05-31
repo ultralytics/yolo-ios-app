@@ -10,7 +10,6 @@
 
 import CoreML
 import Foundation
-import ZIPFoundation
 
 /// Handles downloading and processing of YOLO models from remote URLs.
 public final class YOLOModelDownloader: NSObject {
@@ -194,28 +193,16 @@ public final class YOLOModelDownloader: NSObject {
 
   /// Extracts a ZIP archive into `destinationURL`, skipping macOS resource-fork metadata.
   private func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
-    let archive: Archive
     do {
-      archive = try Archive(url: sourceURL, accessMode: .read)
-    } catch {
-      throw DownloadError.invalidZipFile
-    }
-
-    try FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true)
-
-    for entry in archive {
-      // Skip macOS metadata files
-      guard !entry.path.hasPrefix("__MACOSX") && !entry.path.contains("._") else { continue }
-
-      let destinationPath = destinationURL.appendingPathComponent(entry.path)
-
-      // Create parent directory if needed
-      let parentDir = destinationPath.deletingLastPathComponent()
-      if !FileManager.default.fileExists(atPath: parentDir.path) {
-        try FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: true)
+      try MiniZip.extract(at: sourceURL, to: destinationURL) { path in
+        // Skip macOS metadata files (resource forks and AppleDouble sidecars).
+        path.hasPrefix("__MACOSX") || path.contains("._")
       }
-
-      _ = try archive.extract(entry, to: destinationPath)
+    } catch let error as MiniZip.MiniZipError {
+      switch error {
+      case .notAZipFile, .corruptArchive: throw DownloadError.invalidZipFile
+      default: throw DownloadError.extractionFailed(error)
+      }
     }
   }
 

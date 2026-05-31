@@ -23,7 +23,6 @@
 		737AB2A12E3E6418003FA92B /* ExternalDisplayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */; };
 		737AB2A22E3E6418003FA92B /* ExternalSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
-		73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 73D95D182D45DAA50050E640 /* ZIPFoundation */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
 		73D95D1C2D45DB900050E640 /* ModelSelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1B2D45DB900050E640 /* ModelSelectionManager.swift */; };
 /* End PBXBuildFile section */
@@ -56,7 +55,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				73220ED32D373C2E00A94B92 /* YOLO in Frameworks */,
-				73D95D192D45DAA50050E640 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,7 +160,6 @@
 			mainGroup = 7BCB410E21C3096100BFC4D0;
 			packageReferences = (
 				73220ED12D373C2E00A94B92 /* XCLocalSwiftPackageReference "../" */,
-				73D95D172D45DAA50050E640 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			productRefGroup = 7BCB411821C3096100BFC4D0 /* Products */;
 			projectDirPath = "";
@@ -460,25 +457,12 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		73D95D172D45DAA50050E640 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.20;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		73220ED22D373C2E00A94B92 /* YOLO */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = YOLO;
-		};
-		73D95D182D45DAA50050E640 /* ZIPFoundation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 73D95D172D45DAA50050E640 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
-			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

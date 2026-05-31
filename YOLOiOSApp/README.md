@@ -9,6 +9,9 @@
 
 The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) object detection models directly on your Apple device. Explore real-time detection capabilities with various models, bringing state-of-the-art [computer vision](https://www.ultralytics.com/glossary/computer-vision-cv) to your fingertips.
 
+> [!NOTE]
+> **Zero third-party dependencies.** Both the app and the `YOLO` Swift package are built entirely on Apple's first-party frameworks — there are no external Swift packages to resolve, vet, or license. Even on-device extraction of downloaded model archives uses a small, self-contained ZIP extractor, so a fresh checkout builds with nothing to fetch.
+
 <div align="center">
   <br>
   <a href="https://apps.apple.com/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>

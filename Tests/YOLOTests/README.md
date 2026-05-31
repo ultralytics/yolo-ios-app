@@ -2,13 +2,23 @@
 
 # YOLO Test Guide
 
-Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the [Ultralytics YOLO](https://docs.ultralytics.com/) framework integration within the iOS environment. To execute these tests successfully, you'll need to download and correctly place the required model files first.
+Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the [Ultralytics YOLO](https://docs.ultralytics.com/) framework integration within the iOS environment. To execute model-backed tests successfully, run the repository model downloader first; it fetches the same six nano Core ML assets that the main app bundles at build time.
 
 ## 🧪 Preparation Before Testing
 
 Follow these steps to set up your testing environment.
 
-### 1. Check the Test Resource Directory
+### 1. Download the Required Nano Models
+
+From the repository root, run:
+
+```bash
+bash scripts/download-models.sh
+```
+
+The script downloads the six nano `.mlpackage` files into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` so the main app bundle uses the same assets. The `.mlpackage` directories are intentionally gitignored and are not committed to the repository.
+
+### 2. Check the Test Resource Directory
 
 Verify that the following directory exists within your project structure:
 
@@ -22,7 +32,7 @@ If this directory is missing, create it using the terminal:
 mkdir -p Tests/YOLOTests/Resources/
 ```
 
-### 2. Obtain the Required Model Files
+### 3. Confirm the Required Model Files
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
@@ -33,9 +43,9 @@ The tests require specific [Core ML](https://developer.apple.com/documentation/c
 - `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
 - `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
 
-### 3. Methods to Acquire Model Files
+### 4. Alternative Manual Acquisition
 
-You can obtain the necessary `.mlpackage` files using one of the following methods:
+The automated downloader is the recommended path. You can also obtain compatible `.mlpackage` files using one of the following manual methods:
 
 #### Method 1: Download and Convert Official Models
 
@@ -73,9 +83,9 @@ export_and_zip_yolo_models()
 
 Download pre-exported Core ML models from the [YOLO iOS App releases page](https://github.com/ultralytics/yolo-ios-app/releases). If you download zipped `.mlpackage` assets, unzip them before placing the model packages in `Tests/YOLOTests/Resources/`.
 
-### 4. Place the Model Files
+### 5. Place Manually Acquired Model Files
 
-After obtaining or exporting the `.mlpackage` files, move or copy them into the designated resource directory:
+If you do not use `scripts/download-models.sh`, move or copy the manually acquired `.mlpackage` files into the designated resource directory:
 
 ```
 Tests/YOLOTests/Resources/

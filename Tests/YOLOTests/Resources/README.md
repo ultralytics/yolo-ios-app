@@ -15,7 +15,7 @@ To execute the test suite successfully, ensure the following [Core ML](https://d
 - `yolo26n-pose.mlpackage` - [Pose estimation](https://docs.ultralytics.com/tasks/pose/) model
 - `yolo26n-obb.mlpackage` - [Oriented bounding box](https://docs.ultralytics.com/tasks/obb/) model
 
-**Note**: Due to their significant file sizes, these model files are not included directly in the source code repository. While the necessary directory structure is provided, you must manually add the actual `.mlpackage` files.
+**Note**: Due to their significant file sizes, these model files are not committed directly to the source code repository. Run `bash scripts/download-models.sh` from the repository root to populate this directory automatically; manually add `.mlpackage` files only when using custom or locally exported models.
 
 ## 📁 Directory Structure
 
@@ -47,7 +47,7 @@ bash scripts/download-models.sh
 This script will:
 
 - Download all nano-sized YOLO26 models to this test resources directory
-- Copy the models to the appropriate app model directories for use in the iOS app
+- Copy the models to the appropriate app model directories so the main iOS app bundles them at build time
 - Verify model integrity after download
 
 ### Manual Setup

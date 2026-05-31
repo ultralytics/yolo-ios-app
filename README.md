@@ -90,6 +90,8 @@ var body: some View {
 
 Official models are GitHub release assets, not large files committed to the repositories. The iOS app, Swift package examples, and Flutter package download official models automatically on first use and cache them locally.
 
+The main YOLOiOSApp additionally bundles its six nano models (one per task) by fetching them into `Models/` during the Xcode build via a **Download YOLO Models** build phase backed by [`scripts/download-app-models.sh`](scripts/download-app-models.sh), so a fresh clone builds an app that ships with all models and runs offline (App Store/archive builds included). The assets stay untracked (`*.mlpackage` is gitignored), the step is idempotent, and it is skipped on GitHub Actions CI to keep CI fast.
+
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |

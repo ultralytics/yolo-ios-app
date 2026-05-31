@@ -47,6 +47,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 - iOS-First Design — Native UI/UX following Apple guidelines
 - Core ML Integration — Apple's optimized ML framework
 - YOLO26 (NMS-free) and YOLO11 models both supported
+- Zero Dependencies — Pure Swift on Apple's first-party frameworks only; no third-party packages
 
 | Feature                               | iOS | Details                                       |
 | ------------------------------------- | --- | --------------------------------------------- |

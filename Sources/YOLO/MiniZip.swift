@@ -14,17 +14,17 @@ import Compression
 import Foundation
 
 /// A minimal, dependency-free extractor for standard PKZIP `.zip` archives.
-enum MiniZip {
+public enum MiniZip {
 
   /// Errors thrown while parsing or extracting a ZIP archive.
-  enum MiniZipError: LocalizedError {
+  public enum MiniZipError: LocalizedError {
     case notAZipFile
     case corruptArchive
     case unsupportedFeature(String)
     case inflateFailed(String)
     case unsafePath(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
       switch self {
       case .notAZipFile:
         return "Not a valid ZIP archive (end-of-central-directory record not found)"
@@ -62,7 +62,7 @@ enum MiniZip {
   ///   - archiveURL: The `.zip` file to read.
   ///   - destinationURL: The directory to extract into (created if absent).
   ///   - skip: Predicate evaluated against each entry's path; matching entries are not written.
-  static func extract(
+  public static func extract(
     at archiveURL: URL, to destinationURL: URL, skip: (String) -> Bool = { _ in false }
   ) throws {
     // Memory-map when safe so large model archives are not loaded wholesale into RAM.

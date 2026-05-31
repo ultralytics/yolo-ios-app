@@ -5,8 +5,7 @@ import XCTest
 
 @testable import YOLO
 
-/// Verifies `MiniZip`, the dependency-free ZIP extractor that replaced ZIPFoundation for unpacking downloaded
-/// model archives.
+/// Verifies `MiniZip`, the dependency-free ZIP extractor used for unpacking downloaded model archives.
 ///
 /// The fixture is a real archive produced by Python's `zipfile` (an independent PKZIP implementation), embedded
 /// as base64 so the test is self-contained and runs on the iOS simulator with no on-disk resources. It mixes a

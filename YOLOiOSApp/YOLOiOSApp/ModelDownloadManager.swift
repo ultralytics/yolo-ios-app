@@ -11,7 +11,7 @@
 
 import CoreML
 import Foundation
-import ZIPFoundation
+import YOLO
 
 /// URL of the app's Documents directory; used for storing compiled models and download archives.
 private let documentsDirectory = FileManager.default.urls(
@@ -215,24 +215,8 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
 }
 
 func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
-  let archive = try Archive(url: sourceURL, accessMode: .read)
-
-  if !FileManager.default.fileExists(atPath: destinationURL.path) {
-    try FileManager.default.createDirectory(
-      at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-  }
-
-  for entry in archive {
-    guard !entry.path.hasPrefix("__MACOSX") && !entry.path.contains("._") else { continue }
-
-    let entryDestinationURL = destinationURL.appendingPathComponent(entry.path)
-    let parentDir = entryDestinationURL.deletingLastPathComponent()
-
-    if !FileManager.default.fileExists(atPath: parentDir.path) {
-      try FileManager.default.createDirectory(
-        at: parentDir, withIntermediateDirectories: true, attributes: nil)
-    }
-
-    _ = try archive.extract(entry, to: entryDestinationURL)
+  // Extract via the SDK's dependency-free MiniZip, skipping macOS resource-fork metadata.
+  try MiniZip.extract(at: sourceURL, to: destinationURL) { path in
+    path.hasPrefix("__MACOSX") || path.contains("._")
   }
 }

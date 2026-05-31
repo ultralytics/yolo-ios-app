@@ -145,11 +145,17 @@ jobs:
           FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD)
           git reset --soft $FIRST_COMMIT
 
-          # Resolve dependencies and add to commit
+          # Resolve dependencies and include the SPM pin file when present. With no remote package
+          # dependencies, SPM does not emit a Package.resolved, so only force-add it if it exists.
           cd YOLOiOSApp
           xcodebuild -resolvePackageDependencies -project YOLOiOSApp.xcodeproj -scheme YOLOiOSApp
           cd ..
-          git add -f YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          RESOLVED="YOLOiOSApp/YOLOiOSApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
+          if [ -f "$RESOLVED" ]; then
+            git add -f "$RESOLVED"
+          else
+            echo "No Package.resolved (project has no remote SPM dependencies) — skipping"
+          fi
 
           # Single commit with version info
           MARKETING_VERSION="${{ needs.check.outputs.marketing_version }}"

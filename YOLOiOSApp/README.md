@@ -64,7 +64,7 @@ Ensure you have the following before you begin:
 
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
-3.  **Add YOLO26 Models:**
+3.  **Bundled and Optional YOLO26 Models:**
     The app ships with all six nano models (one per task: detect, segment, semantic, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](RemoteModels.swift).
 
     You can also prepare local model files for development or tests:
@@ -90,7 +90,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 - **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/), [image classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Choose from a range of downloadable Ultralytics YOLO26 models, from the lightweight YOLO26n ('nano') optimized for edge devices to the powerful YOLO26x ('x-large') for maximum accuracy. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
+- **Multiple AI Models:** Use the bundled YOLO26n ('nano') model for each supported task immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
 
 ### 📺 External Display Support (Optional)
 
@@ -127,11 +127,11 @@ The YOLO iOS App includes a suite of unit and integration tests to ensure functi
 The test suite is designed to run with or without the actual Core ML model files:
 
 - **Without Models:** Set `SKIP_MODEL_TESTS = true` in the test target's build settings (under `Build Settings` > `User-Defined`). This allows running tests that don't require model inference, such as UI tests or utility function tests.
-- **With Models:** Set `SKIP_MODEL_TESTS = false` and ensure the required model files are added to the project in their respective directories as described below. This enables the full test suite, including tests that perform actual model inference.
+- **With Models:** Set `SKIP_MODEL_TESTS = false` and run `bash scripts/download-models.sh` from the repository root, or build the main app target so the **Download YOLO Models** build phase prepares the app models. This enables the full test suite, including tests that perform actual model inference.
 
 ### Required Models for Full Testing
 
-To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized Core ML models** in your project:
+To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include the following **INT8 quantized Core ML models** in your project. The repository does not commit these `.mlpackage` directories; `scripts/download-models.sh` downloads them into the test resources and copies them into the app's `Models/<Task>/` directories.
 
 - **Detection:** `yolo26n.mlpackage` (place in `Models/Detect`)
 - **Instance Segmentation:** `yolo26n-seg.mlpackage` (place in `Models/Segment`)

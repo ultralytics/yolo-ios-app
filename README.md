@@ -63,7 +63,7 @@ This repository provides a comprehensive solution for running YOLO models on App
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. Official Ultralytics models are downloaded on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all six official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
 
@@ -88,7 +88,7 @@ var body: some View {
 
 ## 📦 Official Model Assets
 
-Official models are GitHub release assets, not large files committed to the repositories. The iOS app, Swift package examples, and Flutter package download official models automatically on first use and cache them locally.
+Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the six nano Core ML assets at build time and bundles them into the app; larger app models, Swift package examples, and Flutter package assets download official models on first use and cache them locally.
 
 The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segment, semantic, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
 
@@ -146,7 +146,7 @@ The Android assets used by the Flutter package are maintained in the Flutter rep
 
 ## 🛠️ Quickstart Guide
 
-New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. Official models are downloaded on demand.
+New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. The six nano task models are bundled at build time, so the app can run offline after installation; larger model sizes download on demand.
 
 - [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp): The easiest way to experience YOLO inference on iOS.
 
@@ -167,15 +167,13 @@ This repository includes comprehensive [unit tests](https://en.wikipedia.org/wik
 
 ### Running Tests
 
-Tests require Core ML model files (`.mlpackage`), which are not included in the repository due to their size. To run the tests with model validation:
+Tests require Core ML model files (`.mlpackage`), which are not committed to the repository due to their size. To run the package tests with model validation, first run the same downloader used by CI and the app build phase:
 
-1.  Set `SKIP_MODEL_TESTS = false` in the relevant test files.
-2.  Download the required models from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases) or train your own using tools like [Ultralytics Platform](https://platform.ultralytics.com).
-3.  Convert the models to Core ML format using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/).
-4.  Add the exported `.mlpackage` files to your [Xcode](https://developer.apple.com/xcode/) project, ensuring they are included in the test targets.
-5.  Run the tests using Xcode's Test Navigator (Cmd+U).
+```bash
+bash scripts/download-models.sh
+```
 
-If you don't have the model files, you can still run tests by keeping `SKIP_MODEL_TESTS = true`. This will skip tests that require loading and running a model.
+This downloads the six nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

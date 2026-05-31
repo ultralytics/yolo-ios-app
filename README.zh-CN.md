@@ -108,15 +108,13 @@ var body: some View {
 
 ### 运行测试
 
-测试依赖 Core ML 模型文件（`.mlpackage`），但由于文件体积较大，仓库中不包含这些模型。若要执行带模型校验的测试，请按以下步骤操作：
+测试依赖 Core ML 模型文件（`.mlpackage`），但由于文件体积较大，仓库中不会提交这些模型。若要执行带模型校验的测试，请先在仓库根目录运行与 CI 和应用构建阶段相同的下载脚本：
 
-1. 在相关测试文件中将 `SKIP_MODEL_TESTS = false`。
-2. 从 [YOLO iOS App 发布页](https://github.com/ultralytics/yolo-ios-app/releases)下载所需模型，或通过 [Ultralytics Platform](https://platform.ultralytics.com) 训练你自己的模型。
-3. 使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 将模型转换为 Core ML 格式。
-4. 将导出的 `.mlpackage` 文件添加到你的 [Xcode](https://developer.apple.com/xcode/) 项目中，并确保它们已加入对应的测试 target。
-5. 通过 Xcode 的 Test Navigator（Cmd+U）运行测试。
+```bash
+bash scripts/download-models.sh
+```
 
-如果你没有这些模型文件，也可以保持 `SKIP_MODEL_TESTS = true`。这样会跳过需要加载和运行模型的测试。
+该脚本会将六个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
 
 ### 测试覆盖范围
 

@@ -18,33 +18,27 @@ final class YOLOInfoViewController: UIViewController {
   private let resources: [Resource] = [
     Resource(
       title: "Ultralytics Docs",
-      subtitle: "Training, prediction, Core ML export, deployment, and licensing guides.",
+      subtitle: "Training, prediction, Core ML export, and deployment guides.",
       systemImage: "book",
       url: URL(string: "https://docs.ultralytics.com")!
     ),
     Resource(
       title: "YOLO Models",
-      subtitle: "Compare model families, supported tasks, sizes, and performance.",
+      subtitle: "Explore YOLO26 models, supported tasks, sizes, and performance.",
       systemImage: "square.stack.3d.up",
-      url: URL(string: "https://docs.ultralytics.com/models/")!
-    ),
-    Resource(
-      title: "Ultralytics Platform",
-      subtitle: "Manage datasets, train models, and deploy computer vision workflows.",
-      systemImage: "rectangle.3.group",
-      url: URL(string: "https://platform.ultralytics.com")!
+      url: URL(string: "https://platform.ultralytics.com/ultralytics/yolo26")!
     ),
     Resource(
       title: "GitHub",
-      subtitle: "Explore the iOS app source, Swift package, examples, and issues.",
+      subtitle: "Explore the main Ultralytics package, releases, and open-source tools.",
       systemImage: "chevron.left.forwardslash.chevron.right",
-      url: URL(string: "https://github.com/ultralytics/yolo-ios-app")!
+      url: URL(string: "https://github.com/ultralytics/ultralytics")!
     ),
     Resource(
-      title: "Community",
-      subtitle: "Ask questions and connect with the Ultralytics team and users.",
-      systemImage: "message",
-      url: URL(string: "https://discord.com/invite/ultralytics")!
+      title: "Licensing",
+      subtitle: "Review AGPL-3.0 and Enterprise License options for commercial use.",
+      systemImage: "doc.text",
+      url: URL(string: "https://www.ultralytics.com/licensing")!
     ),
   ]
 

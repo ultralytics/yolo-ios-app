@@ -996,15 +996,27 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
     guard let viewController = nearestViewController() else { return }
 
-    let infoViewController = YOLOInfoViewController()
-    let navigationController = UINavigationController(rootViewController: infoViewController)
-    navigationController.modalPresentationStyle = .pageSheet
-    if let sheet = navigationController.sheetPresentationController {
-      sheet.detents = [.medium(), .large()]
-      sheet.prefersGrabberVisible = true
-      sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+    let alert = UIAlertController(
+      title: "Ultralytics YOLO",
+      message:
+        "Run real-time YOLO models on iOS with Core ML. Explore docs, YOLO26 models, source code, and licensing.",
+      preferredStyle: .actionSheet
+    )
+    [
+      ("Docs", "https://docs.ultralytics.com"),
+      ("YOLO Models", "https://platform.ultralytics.com/ultralytics/yolo26"),
+      ("GitHub", "https://github.com/ultralytics/ultralytics"),
+      ("Licensing", "https://www.ultralytics.com/licensing"),
+    ].forEach { title, urlString in
+      alert.addAction(
+        UIAlertAction(title: title, style: .default) { _ in
+          UIApplication.shared.open(URL(string: urlString)!)
+        })
     }
-    viewController.present(navigationController, animated: true)
+    alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    alert.popoverPresentationController?.sourceView = infoButton
+    alert.popoverPresentationController?.sourceRect = infoButton.bounds
+    viewController.present(alert, animated: true)
   }
 
   private func nearestViewController() -> UIViewController? {

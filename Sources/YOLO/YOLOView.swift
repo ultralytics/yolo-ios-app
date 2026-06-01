@@ -994,9 +994,28 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc private func infoTapped() {
     selection.selectionChanged()
-    if let url = URL(string: "https://www.ultralytics.com") {
-      UIApplication.shared.open(url)
+    guard let viewController = nearestViewController() else { return }
+
+    let infoViewController = YOLOInfoViewController()
+    let navigationController = UINavigationController(rootViewController: infoViewController)
+    navigationController.modalPresentationStyle = .pageSheet
+    if let sheet = navigationController.sheetPresentationController {
+      sheet.detents = [.medium(), .large()]
+      sheet.prefersGrabberVisible = true
+      sheet.prefersScrollingExpandsWhenScrolledToEdge = true
     }
+    viewController.present(navigationController, animated: true)
+  }
+
+  private func nearestViewController() -> UIViewController? {
+    var responder: UIResponder? = self
+    while let currentResponder = responder {
+      if let viewController = currentResponder as? UIViewController {
+        return viewController
+      }
+      responder = currentResponder.next
+    }
+    return nil
   }
 
   private func switchToCamera(_ device: AVCaptureDevice) {

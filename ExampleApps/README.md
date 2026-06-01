@@ -10,7 +10,7 @@ We provide several sample apps built with both [SwiftUI](https://developer.apple
 
 ### YOLOSingleImageSwiftUI
 
-- A straightforward SwiftUI application demonstrating inference on a single image selected from the user's photo library using an [Ultralytics YOLO](https://docs.ultralytics.com/models/) Core ML model.
+- A straightforward SwiftUI application demonstrating inference on a single image selected from the user's photo library using an [Ultralytics YOLO](https://docs.ultralytics.com/models) Core ML model.
 
 ### YOLOSingleImageUIKit
 
@@ -41,9 +41,9 @@ Follow these steps to get the examples up and running:
 
     #### Obtaining YOLO Core ML Models
 
-    You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml/):
+    You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml):
     - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases). Unzip the downloaded `.mlpackage.zip` asset and place the model package into your Xcode project.
-    - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart/) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
+    - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
     - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
 
@@ -51,7 +51,7 @@ Follow these steps to get the examples up and running:
       pip install ultralytics
       ```
 
-    - Run a Python script to [export](https://docs.ultralytics.com/modes/export/):
+    - Run a Python script to [export](https://docs.ultralytics.com/modes/export):
 
       ```python
       from ultralytics import YOLO
@@ -111,4 +111,4 @@ Please consult the `README.md` file inside each example's `Tests` directory for 
 
 ## 🤝 Contributing
 
-Contributions to enhance these examples or add new ones are welcome! Please see the main [Ultralytics Contribution Guide](https://docs.ultralytics.com/help/contributing/) for guidelines on how to contribute to our [open-source](https://opensource.org/osd) projects. Let's build amazing [vision AI](https://www.ultralytics.com/glossary/artificial-intelligence-ai) applications together!
+Contributions to enhance these examples or add new ones are welcome! Please see the main [Ultralytics Contribution Guide](https://docs.ultralytics.com/help/contributing) for guidelines on how to contribute to our [open-source](https://opensource.org/osd) projects. Let's build amazing [vision AI](https://www.ultralytics.com/glossary/artificial-intelligence-ai) applications together!

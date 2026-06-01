@@ -2,7 +2,7 @@
 
 # YOLO Swift Package: Simple, Powerful YOLO Integration in Swift
 
-The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect/), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment/), [Semantic Segmentation](https://docs.ultralytics.com/tasks/semantic/), [Image Classification](https://docs.ultralytics.com/tasks/classify/), [Pose Estimation](https://docs.ultralytics.com/tasks/pose/), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb/). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
+The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com/) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment), [Semantic Segmentation](https://docs.ultralytics.com/tasks/semantic), [Image Classification](https://docs.ultralytics.com/tasks/classify), [Pose Estimation](https://docs.ultralytics.com/tasks/pose), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
@@ -21,7 +21,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 ## ✨ Features
 
 - ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
-- ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks/).
+- ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
 - ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
 - ✅ **Zero Dependencies**: Pure Swift built only on Apple's first-party frameworks (Foundation, Core ML, Vision, Compression) — **no third-party packages** to vet, license, or keep up to date. Even ZIP extraction for downloaded models is handled by a small, self-contained extractor, so the package installs instantly via [Swift Package Manager](https://www.swift.org/package-manager/) with nothing to resolve.
@@ -270,7 +270,7 @@ YOLO26 is NMS-free in this SDK: official Core ML assets are exported with `nms=F
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/ultralytics/yolo-ios-app). Check the [contributing guide](https://docs.ultralytics.com/help/contributing/) for more details on how to get involved. We appreciate your help in making this package better! You can also join the conversation on [Discord](https://discord.com/invite/ultralytics).
+Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, please feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/ultralytics/yolo-ios-app). Check the [contributing guide](https://docs.ultralytics.com/help/contributing) for more details on how to get involved. We appreciate your help in making this package better! You can also join the conversation on [Discord](https://discord.com/invite/ultralytics).
 
 ## 📜 License
 

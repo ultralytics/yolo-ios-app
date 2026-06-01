@@ -12,7 +12,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11/) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
+Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
 
 <div align="center">
   <br>
@@ -158,9 +158,9 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 
 ## ✨ Key Highlights
 
-- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml/), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization). See [docs/performance.md](docs/performance.md) for on-device profiling and the camera/Core ML configuration rationale.
+- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization). See [docs/performance.md](docs/performance.md) for on-device profiling and the camera/Core ML configuration rationale.
 - **Apple Mobile Support**: The Swift Package targets iOS and iPadOS with native Core ML integration.
-- **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/), [classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
+- **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), [classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb) detection.
 
 ## 🧪 Testing Procedures
 
@@ -174,7 +174,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the six nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export/). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the six nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 
@@ -192,7 +192,7 @@ Each test directory (e.g., `Tests/YOLOTests`) may include a `README.md` with spe
 
 ## 💡 Contribute
 
-We warmly welcome contributions to our open-source projects! Your support helps us push the boundaries of [Artificial Intelligence (AI)](https://www.ultralytics.com/glossary/artificial-intelligence-ai). Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) and sharing your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). Thank you 🙏 to all our contributors!
+We warmly welcome contributions to our open-source projects! Your support helps us push the boundaries of [Artificial Intelligence (AI)](https://www.ultralytics.com/glossary/artificial-intelligence-ai). Get involved by reviewing our [Contributing Guide](https://docs.ultralytics.com/help/contributing) and sharing your feedback through our [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey). Thank you 🙏 to all our contributors!
 
 [![Ultralytics open-source contributors](https://raw.githubusercontent.com/ultralytics/assets/main/im/image-contributors.png)](https://github.com/ultralytics/ultralytics/graphs/contributors)
 

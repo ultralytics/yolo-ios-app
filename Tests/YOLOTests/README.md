@@ -36,12 +36,12 @@ mkdir -p Tests/YOLOTests/Resources/
 
 The tests require specific [Core ML](https://developer.apple.com/documentation/coreml) model files (`.mlpackage`). Ensure you have the following files ready:
 
-- `yolo26n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect/) model.
-- `yolo26n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment/).
-- `yolo26n-sem.mlpackage`: Model for [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/).
-- `yolo26n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify/).
-- `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose/).
-- `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb/) detection.
+- `yolo26n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect) model.
+- `yolo26n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment).
+- `yolo26n-sem.mlpackage`: Model for [semantic segmentation](https://docs.ultralytics.com/tasks/semantic).
+- `yolo26n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify).
+- `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose).
+- `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb) detection.
 
 ### 4. Alternative Manual Acquisition
 
@@ -50,7 +50,7 @@ The automated downloader is the recommended path. You can also obtain compatible
 #### Method 1: Download and Convert Official Models
 
 1.  Download the base [PyTorch](https://pytorch.org/) (`.pt`) models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) releases or train your own.
-2.  Convert these models to the Core ML format using the Ultralytics [`export` mode](https://docs.ultralytics.com/modes/export/). You'll need a [Python](https://www.python.org/) environment with the `ultralytics` package installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart/) for installation).
+2.  Convert these models to the Core ML format using the Ultralytics [`export` mode](https://docs.ultralytics.com/modes/export). You'll need a [Python](https://www.python.org/) environment with the `ultralytics` package installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart) for installation).
 
 ```python
 from ultralytics import YOLO
@@ -137,8 +137,8 @@ If tests fail or you encounter other problems:
 2.  **iOS Target:** The package requires [iOS](https://www.apple.com/os/ios/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
 3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
-5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ/) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).
+5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).
 
 ## Contributing
 
-Contributions to enhance the tests or improve the iOS application are welcome! Please see the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more information on how to get started. Thank you for helping improve Ultralytics YOLO!
+Contributions to enhance the tests or improve the iOS application are welcome! Please see the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing) for more information on how to get started. Thank you for helping improve Ultralytics YOLO!

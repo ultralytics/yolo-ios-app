@@ -10,14 +10,14 @@ This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing)
 
 To execute the complete test suite, including tests involving model [inference](https://www.ultralytics.com/glossary/real-time-inference), you need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n-obb.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb/)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb/).
+- `yolo26n-obb.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) model optimized for Oriented Bounding Box ([OBB](https://docs.ultralytics.com/tasks/obb)) detection. Learn more about OBB in our [documentation](https://docs.ultralytics.com/tasks/obb).
 
 **Note**: This model file is not included in the repository due to its size.
 
 ### Obtaining the Model File
 
-1.  Download pretrained Ultralytics YOLO models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics). You can find various models on our [models page](https://docs.ultralytics.com/models/).
-2.  Convert the desired [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` mode. See the [Export documentation](https://docs.ultralytics.com/modes/export/) and our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml/) for more details.
+1.  Download pretrained Ultralytics YOLO models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics). You can find various models on our [models page](https://docs.ultralytics.com/models).
+2.  Convert the desired [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` mode. See the [Export documentation](https://docs.ultralytics.com/modes/export) and our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml) for more details.
 
 ```python
 from ultralytics import YOLO
@@ -60,7 +60,7 @@ These tests aim to verify several aspects of the application:
 
 #### Running Tests Without Models (Default)
 
-By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo26n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) environments where managing large model files might be complex. Check our [Quickstart guide](https://docs.ultralytics.com/quickstart/) for setting up your environment.
+By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This configuration allows you to run the tests **without** needing the `yolo26n-obb.mlpackage` file. Tests that depend on actual model inference will be skipped, but basic application functionality (UI, camera setup) will still be verified. This is useful for quick checks or in [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) environments where managing large model files might be complex. Check our [Quickstart guide](https://docs.ultralytics.com/quickstart) for setting up your environment.
 
 #### Running Tests With Models
 
@@ -75,4 +75,4 @@ This flexible approach ensures that both core application logic and [model deplo
 
 ## 🤝 Contributing
 
-Contributions to improve the tests or the application are welcome! If you find issues or have suggestions for improvements, please open an issue or submit a pull request on the main repository. See the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing/) for more details on how to get started.
+Contributions to improve the tests or the application are welcome! If you find issues or have suggestions for improvements, please open an issue or submit a pull request on the main repository. See the [Ultralytics Contributing Guide](https://docs.ultralytics.com/help/contributing) for more details on how to get started.

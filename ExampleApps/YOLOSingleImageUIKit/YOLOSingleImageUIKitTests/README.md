@@ -18,8 +18,8 @@ To execute the complete test suite, you will need the [Core ML](https://develope
 
 ### Obtaining the Model File
 
-1.  **Download**: Obtain the base PyTorch YOLO26 model (`yolo26n.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips/).
-2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml/).
+1.  **Download**: Obtain the base PyTorch YOLO26 model (`yolo26n.pt`) from the [Ultralytics releases](https://github.com/ultralytics/ultralytics/releases) or train your own following our [model training tips](https://docs.ultralytics.com/guides/model-training-tips).
+2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml).
 
 ```python
 from ultralytics import YOLO
@@ -57,14 +57,14 @@ These unit tests are designed to verify several key aspects of the application:
 
 - **Model Handling**: Correct initialization and loading of the Core ML model.
 - **Preprocessing**: Accurate image preprocessing steps, including orientation correction.
-- **Inference**: Validation of the inference results against expected outputs (when models are present). You can learn more about inference in our [Predict Mode documentation](https://docs.ultralytics.com/modes/predict/).
+- **Inference**: Validation of the inference results against expected outputs (when models are present). You can learn more about inference in our [Predict Mode documentation](https://docs.ultralytics.com/modes/predict).
 - **UI**: Basic functionality checks for relevant UI components.
 
 #### Running Tests Without Models
 
 The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent checks run by default.
 
-- **Benefits**: If you switch `SKIP_MODEL_TESTS` to `true`, developers can quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key. Check our [CI guide](https://docs.ultralytics.com/help/CI/) for more details.
+- **Benefits**: If you switch `SKIP_MODEL_TESTS` to `true`, developers can quickly verify the core application logic, UI interactions, and preprocessing steps without needing to download and manage large model files. It's particularly useful for [Continuous Integration (CI)](https://en.wikipedia.org/wiki/Continuous_integration) pipelines where efficiency is key. Check our [CI guide](https://docs.ultralytics.com/help/CI) for more details.
 - **Limitations**: Tests that specifically depend on running inference with the model will be skipped.
 
 #### Running Tests With Models
@@ -75,7 +75,7 @@ To run the full test suite, including tests that perform actual model inference:
 2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
 3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 
-This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options/) and explore platforms like [Ultralytics Platform](https://platform.ultralytics.com).
+This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options) and explore platforms like [Ultralytics Platform](https://platform.ultralytics.com).
 
 ## 🤝 Contributing
 

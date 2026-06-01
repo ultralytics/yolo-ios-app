@@ -97,6 +97,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var currentModelName: String = ""
 
   private var isLoadingModel = false
+  private var currentLoadingTask: String?
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -141,6 +142,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       $0?.textColor = .white
       $0?.overrideUserInterfaceStyle = .dark
     }
+    activityIndicator.style = .large
+    activityIndicator.color = .white
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
     {
@@ -154,10 +157,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
       view.addSubview($0)
     }
     downloadProgressLabel.textAlignment = .center
-    downloadProgressLabel.textColor = .systemGray
-    downloadProgressLabel.font = .systemFont(ofSize: 14)
-    cancelLoadingButton.setTitle("Cancel", for: .normal)
-    cancelLoadingButton.tintColor = .white
+    downloadProgressLabel.textColor = .white
+    downloadProgressLabel.font = .systemFont(ofSize: 15, weight: .medium)
+    downloadProgressView.progressTintColor = .white
+    downloadProgressView.trackTintColor = UIColor.white.withAlphaComponent(0.25)
+    var cancelButtonConfiguration = UIButton.Configuration.tinted()
+    cancelButtonConfiguration.title = "Cancel"
+    cancelButtonConfiguration.baseForegroundColor = .white
+    cancelButtonConfiguration.baseBackgroundColor = .white
+    cancelButtonConfiguration.contentInsets = NSDirectionalEdgeInsets(
+      top: 8, leading: 16, bottom: 8, trailing: 16)
+    cancelLoadingButton.configuration = cancelButtonConfiguration
     cancelLoadingButton.addTarget(self, action: #selector(cancelLoadingModel), for: .touchUpInside)
 
     NSLayoutConstraint.activate([
@@ -165,7 +175,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       downloadProgressView.topAnchor.constraint(
         equalTo: activityIndicator.bottomAnchor, constant: 8),
       downloadProgressView.widthAnchor.constraint(equalToConstant: Constants.progressViewWidth),
-      downloadProgressView.heightAnchor.constraint(equalToConstant: 2),
+      downloadProgressView.heightAnchor.constraint(equalToConstant: 3),
       downloadProgressLabel.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
       downloadProgressLabel.topAnchor.constraint(
         equalTo: downloadProgressView.bottomAnchor, constant: 8),
@@ -220,13 +230,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func reloadModelEntriesAndLoadFirst(for taskName: String) {
-    currentModels = makeModelEntries(for: taskName)
-    let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
-    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples)
-
-    let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
-    ModelSelectionManager.setupSegmentedControl(
-      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+    showModelEntries(for: taskName)
 
     if let firstSize = ModelSelectionManager.ModelSize.allCases.first,
       let model = standardModels[firstSize]
@@ -238,6 +242,44 @@ class ViewController: UIViewController, YOLOViewDelegate {
         remoteURL: model.url
       )
       loadModel(entry: entry, forTask: taskName)
+    }
+  }
+
+  private func showModelEntries(for taskName: String) {
+    currentModels = makeModelEntries(for: taskName)
+    let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
+    standardModels = ModelSelectionManager.categorizeModels(from: modelTuples)
+
+    let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
+    ModelSelectionManager.setupSegmentedControl(
+      modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
+  }
+
+  private func restoreCurrentModelSelection() {
+    guard !currentTask.isEmpty else { return }
+
+    if let taskIndex = tasks.firstIndex(where: { $0.name == currentTask }) {
+      segmentedControl.selectedSegmentIndex = taskIndex
+    }
+
+    showModelEntries(for: currentTask)
+
+    if let modelIndex = ModelSelectionManager.ModelSize.allCases.firstIndex(where: { size in
+      guard let model = standardModels[size] else { return false }
+      return processString((model.name as NSString).deletingPathExtension) == currentModelName
+    }) {
+      modelSegmentedControl.selectedSegmentIndex = modelIndex
+    }
+
+    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    ModelSelectionManager.updateSegmentAppearance(
+      modelSegmentedControl,
+      standardModels: standardModels,
+      currentTask: yoloTask
+    )
+
+    if !currentModelName.isEmpty {
+      labelName.text = currentModelName
     }
   }
 
@@ -288,6 +330,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     resetDownloadProgress()
     setLoadingState(true, showOverlay: true, canCancel: needsDownload)
     currentLoadingEntry = entry
+    currentLoadingTask = task
 
     let yoloTask = tasks.first(where: { $0.name == task })?.yoloTask ?? .detect
 
@@ -421,7 +464,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     setLoadingState(false)
     isLoadingModel = false
     currentLoadingEntry = nil
+    currentLoadingTask = nil
     resetDownloadProgress()
+    restoreCurrentModelSelection()
 
     if !hasExternalScreen(), !currentModelName.isEmpty {
       yoloView.setInferenceFlag(ok: true)
@@ -434,10 +479,28 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.setLoadingState(false)
       self.isLoadingModel = false
       self.resetDownloadProgress()
+      let loadedTask = self.currentLoadingTask ?? self.currentTask
       let hasExternalDisplay = self.hasExternalScreen()
+      let keptCurrentModel =
+        !success && !self.currentModelName.isEmpty
+        && (self.currentLoadingEntry.map {
+          !$0.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: $0.identifier)
+        } == true)
 
       if success {
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        let previousTask = self.currentTask
+        self.currentTask = loadedTask
+        if let taskIndex = self.tasks.firstIndex(where: { $0.name == loadedTask }) {
+          self.segmentedControl.selectedSegmentIndex = taskIndex
+        }
+        if previousTask != loadedTask {
+          NotificationCenter.default.post(
+            name: .taskDidChange,
+            object: nil,
+            userInfo: ["task": loadedTask]
+          )
+        }
+        let yoloTask = self.tasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
         self.currentModelName = processString(modelName)
 
         ModelSelectionManager.setupSegmentedControl(
@@ -452,15 +515,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
           standardModels: self.standardModels,
           currentTask: yoloTask
         )
+      } else {
+        self.restoreCurrentModelSelection()
       }
 
       if success && hasExternalDisplay {
-        let yoloTask = self.tasks.first(where: { $0.name == self.currentTask })?.yoloTask ?? .detect
+        let yoloTask = self.tasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
         var fullModelPath = ""
 
         if let entry = self.currentLoadingEntry {
           if entry.isLocalBundle {
-            if let folderURL = self.tasks.first(where: { $0.name == self.currentTask })?.folder,
+            if let folderURL = self.tasks.first(where: { $0.name == loadedTask })?.folder,
               let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
             {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
@@ -473,7 +538,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
               documentsDirectory
               .appendingPathComponent(entry.identifier)
               .appendingPathExtension("mlmodelc")
-            if !FileManager.default.fileExists(atPath: localModelURL.path) { return }
+            if !FileManager.default.fileExists(atPath: localModelURL.path) {
+              fullModelPath = ""
+            }
           }
         }
 
@@ -485,13 +552,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       // Only toggle the local YOLOView inference flag when no external display is active.
       if !hasExternalDisplay {
-        self.yoloView.setInferenceFlag(ok: success)
+        self.yoloView.setInferenceFlag(ok: success || keptCurrentModel)
       }
 
       if success {
         self.labelName.text = processString(modelName)
       }
       self.currentLoadingEntry = nil
+      self.currentLoadingTask = nil
     }
   }
 
@@ -514,15 +582,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       return
     }
 
-    currentTask = newTask
-
-    // Notify the external display (if any) of the task change before reloading models.
-    NotificationCenter.default.post(
-      name: .taskDidChange,
-      object: nil,
-      userInfo: ["task": newTask]
-    )
-    reloadModelEntriesAndLoadFirst(for: currentTask)
+    reloadModelEntriesAndLoadFirst(for: newTask)
   }
 
   @objc func logoButton() {

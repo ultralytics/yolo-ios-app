@@ -806,9 +806,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75
+    let horizontalInset = buttonHeight * 0.25
 
     toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-    playButton.frame = CGRect(x: 0, y: 0, width: buttonHeight, height: buttonHeight)
+    playButton.frame = CGRect(x: horizontalInset, y: 0, width: buttonHeight, height: buttonHeight)
     pauseButton.frame = CGRect(
       x: playButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
@@ -819,7 +820,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
     )
     infoButton.frame = CGRect(
-      x: width - buttonHeight, y: 0, width: buttonHeight, height: buttonHeight
+      x: width - buttonHeight - horizontalInset, y: 0, width: buttonHeight, height: buttonHeight
     )
   }
 

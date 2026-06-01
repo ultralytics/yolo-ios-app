@@ -18,7 +18,7 @@ final class YOLOInfoViewController: UIViewController {
   private let resources: [Resource] = [
     Resource(
       title: "Ultralytics Docs",
-      subtitle: "Guides for training, validation, prediction, export, and deployment.",
+      subtitle: "Training, prediction, Core ML export, deployment, and licensing guides.",
       systemImage: "book",
       url: URL(string: "https://docs.ultralytics.com")!
     ),
@@ -29,40 +29,22 @@ final class YOLOInfoViewController: UIViewController {
       url: URL(string: "https://docs.ultralytics.com/models/")!
     ),
     Resource(
-      title: "Core ML Export",
-      subtitle: "Convert Ultralytics models for optimized on-device iOS inference.",
-      systemImage: "cpu",
-      url: URL(string: "https://docs.ultralytics.com/integrations/coreml/")!
-    ),
-    Resource(
       title: "Ultralytics Platform",
       subtitle: "Manage datasets, train models, and deploy computer vision workflows.",
       systemImage: "rectangle.3.group",
       url: URL(string: "https://platform.ultralytics.com")!
     ),
     Resource(
-      title: "iOS App on GitHub",
-      subtitle: "Explore the app source, Swift package, examples, and issues.",
+      title: "GitHub",
+      subtitle: "Explore the iOS app source, Swift package, examples, and issues.",
       systemImage: "chevron.left.forwardslash.chevron.right",
       url: URL(string: "https://github.com/ultralytics/yolo-ios-app")!
-    ),
-    Resource(
-      title: "Ultralytics GitHub",
-      subtitle: "Find the main Ultralytics package, releases, and open-source tools.",
-      systemImage: "shippingbox",
-      url: URL(string: "https://github.com/ultralytics/ultralytics")!
     ),
     Resource(
       title: "Community",
       subtitle: "Ask questions and connect with the Ultralytics team and users.",
       systemImage: "message",
       url: URL(string: "https://discord.com/invite/ultralytics")!
-    ),
-    Resource(
-      title: "Licensing",
-      subtitle: "Review AGPL-3.0 and Enterprise License options for commercial use.",
-      systemImage: "doc.text",
-      url: URL(string: "https://www.ultralytics.com/license")!
     ),
   ]
 

@@ -38,7 +38,7 @@ final class YOLOInfoViewController: UIViewController {
       title: "Licensing",
       subtitle: "Review AGPL-3.0 and Enterprise License options for commercial use.",
       systemImage: "doc.text",
-      url: URL(string: "https://www.ultralytics.com/licensing")!
+      url: URL(string: "https://www.ultralytics.com/license")!
     ),
   ]
 

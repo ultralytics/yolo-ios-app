@@ -55,7 +55,7 @@ final class YOLOInfoViewController: UIViewController {
     Resource(
       title: "Community",
       subtitle: "Ask questions and connect with the Ultralytics team and users.",
-      systemImage: "person.3",
+      systemImage: "message",
       url: URL(string: "https://discord.com/invite/ultralytics")!
     ),
     Resource(
@@ -200,37 +200,56 @@ final class YOLOInfoViewController: UIViewController {
     let action = UIAction { [weak self] _ in
       self?.open(resource.url)
     }
-    var configuration = UIButton.Configuration.plain()
-    configuration.image = UIImage(systemName: resource.systemImage)
-    configuration.imagePlacement = .leading
-    configuration.imagePadding = 12
-    configuration.contentInsets = NSDirectionalEdgeInsets(
-      top: 12, leading: 12, bottom: 12, trailing: 12)
-    configuration.title = resource.title
-    configuration.subtitle = resource.subtitle
-    configuration.titleLineBreakMode = .byWordWrapping
-    configuration.subtitleLineBreakMode = .byWordWrapping
-    configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer {
-      incoming in
-      var outgoing = incoming
-      outgoing.font = .preferredFont(forTextStyle: .headline)
-      return outgoing
-    }
-    configuration.subtitleTextAttributesTransformer = UIConfigurationTextAttributesTransformer {
-      incoming in
-      var outgoing = incoming
-      outgoing.font = .preferredFont(forTextStyle: .footnote)
-      outgoing.foregroundColor = .secondaryLabel
-      return outgoing
-    }
-    configuration.baseForegroundColor = .label
-    configuration.background.backgroundColor = .secondarySystemGroupedBackground
-    configuration.background.cornerRadius = 8
-
-    let button = UIButton(configuration: .plain(), primaryAction: action)
-    button.configuration = configuration
-    button.contentHorizontalAlignment = .leading
+    let button = UIButton(type: .system, primaryAction: action)
+    button.backgroundColor = .secondarySystemGroupedBackground
+    button.layer.cornerRadius = 8
     button.accessibilityHint = "Opens \(resource.title)"
+
+    let iconView = UIImageView(image: UIImage(systemName: resource.systemImage))
+    iconView.tintColor = .systemBlue
+    iconView.contentMode = .scaleAspectFit
+    iconView.translatesAutoresizingMaskIntoConstraints = false
+
+    let titleLabel = UILabel()
+    titleLabel.text = resource.title
+    titleLabel.font = .preferredFont(forTextStyle: .headline)
+    titleLabel.adjustsFontForContentSizeCategory = true
+    titleLabel.textColor = .systemBlue
+
+    let subtitleLabel = UILabel()
+    subtitleLabel.text = resource.subtitle
+    subtitleLabel.font = .preferredFont(forTextStyle: .footnote)
+    subtitleLabel.adjustsFontForContentSizeCategory = true
+    subtitleLabel.textColor = .secondaryLabel
+    subtitleLabel.numberOfLines = 0
+
+    let textStackView = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+    textStackView.axis = .vertical
+    textStackView.spacing = 2
+
+    let externalLinkView = UIImageView(image: UIImage(systemName: "arrow.up.forward"))
+    externalLinkView.tintColor = .tertiaryLabel
+    externalLinkView.contentMode = .scaleAspectFit
+    externalLinkView.translatesAutoresizingMaskIntoConstraints = false
+
+    let rowStackView = UIStackView(arrangedSubviews: [iconView, textStackView, externalLinkView])
+    rowStackView.alignment = .center
+    rowStackView.spacing = 12
+    rowStackView.isUserInteractionEnabled = false
+    rowStackView.translatesAutoresizingMaskIntoConstraints = false
+
+    button.addSubview(rowStackView)
+    NSLayoutConstraint.activate([
+      iconView.widthAnchor.constraint(equalToConstant: 24),
+      iconView.heightAnchor.constraint(equalToConstant: 24),
+      externalLinkView.widthAnchor.constraint(equalToConstant: 16),
+      externalLinkView.heightAnchor.constraint(equalToConstant: 16),
+      rowStackView.topAnchor.constraint(equalTo: button.topAnchor, constant: 12),
+      rowStackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12),
+      rowStackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -12),
+      rowStackView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -12),
+    ])
+
     return button
   }
 

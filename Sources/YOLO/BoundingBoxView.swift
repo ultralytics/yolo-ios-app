@@ -1,9 +1,9 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
 
 //  BoundingBoxView for the Ultralytics YOLO SDK
 //  Visualizes bounding boxes and labels for detected objects using Core Animation layers drawn dynamically on the
 //  detection video feed.
-//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://www.ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  BoundingBoxView renders detection results — bounding box, class label, and confidence — for immediate visual

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 # Script to download and prepare YOLO model files for testing
 # Run from repository root: $ bash scripts/download-models.sh

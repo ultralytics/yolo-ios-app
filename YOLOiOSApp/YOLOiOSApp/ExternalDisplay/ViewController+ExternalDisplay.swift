@@ -1,4 +1,4 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 // MARK: - OPTIONAL External Display Support
 // Optional extension that adds external monitor/TV support to the main ViewController. Dormant unless a display is

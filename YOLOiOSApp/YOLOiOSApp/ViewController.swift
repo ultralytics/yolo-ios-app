@@ -1,4 +1,4 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 //  This file is part of the Ultralytics YOLO app and provides the main user interface for model selection and
 //  visualization.

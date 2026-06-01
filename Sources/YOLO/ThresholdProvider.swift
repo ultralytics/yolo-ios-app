@@ -1,4 +1,4 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 //  This file is part of the Ultralytics YOLO Package, supplying runtime IoU and confidence thresholds to YOLO models.
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://www.ultralytics.com/license

@@ -1,4 +1,4 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 import CoreImage
 import CoreML

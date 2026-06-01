@@ -1,4 +1,4 @@
-// Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 //  This file is part of the Example Apps of Ultralytics YOLO Package, providing unit tests for the single image UIKit
 //  example.

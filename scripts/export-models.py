@@ -1,4 +1,4 @@
-# Ultralytics 🚀 AGPL-3.0 License - https://www.ultralytics.com/license
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """Export official YOLO26 Core ML assets for the iOS app release.
 
 Usage from the repository root:

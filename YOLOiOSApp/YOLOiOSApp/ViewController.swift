@@ -53,7 +53,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   // MARK: - Loading State Management
-  private func setLoadingState(_ loading: Bool, showOverlay: Bool = false, canCancel: Bool = false) {
+  private func setLoadingState(_ loading: Bool, showOverlay: Bool = false, canCancel: Bool = false)
+  {
     loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
@@ -169,7 +170,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       downloadProgressLabel.topAnchor.constraint(
         equalTo: downloadProgressView.bottomAnchor, constant: 8),
       cancelLoadingButton.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
-      cancelLoadingButton.topAnchor.constraint(equalTo: downloadProgressLabel.bottomAnchor, constant: 10),
+      cancelLoadingButton.topAnchor.constraint(
+        equalTo: downloadProgressLabel.bottomAnchor, constant: 10),
     ])
 
     ModelDownloadManager.shared.progressHandler = { [weak self] progress in
@@ -404,7 +406,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func resetDownloadProgress() {
     downloadProgressView.progress = 0.0
     downloadProgressLabel.text = ""
-    [downloadProgressView, downloadProgressLabel, cancelLoadingButton].forEach { $0.isHidden = true }
+    [downloadProgressView, downloadProgressLabel, cancelLoadingButton].forEach {
+      $0.isHidden = true
+    }
   }
 
   @objc private func cancelLoadingModel() {

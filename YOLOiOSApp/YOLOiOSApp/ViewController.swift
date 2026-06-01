@@ -41,6 +41,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
+  private let cancelLoadingButton = UIButton(type: .system)
 
   private var loadingOverlayView: UIView?
 
@@ -52,21 +53,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   // MARK: - Loading State Management
-  private func setLoadingState(_ loading: Bool, showOverlay: Bool = false) {
+  private func setLoadingState(_ loading: Bool, showOverlay: Bool = false, canCancel: Bool = false) {
     loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
-    view.isUserInteractionEnabled = !loading
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
+    cancelLoadingButton.isHidden = !(loading && canCancel)
   }
 
   private func updateLoadingOverlay(_ show: Bool) {
     if show && loadingOverlayView == nil {
       let overlay = UIView(frame: view.bounds)
       overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+      overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
       view.addSubview(overlay)
       loadingOverlayView = overlay
+      view.bringSubviewToFront(activityIndicator)
       view.bringSubviewToFront(downloadProgressView)
       view.bringSubviewToFront(downloadProgressLabel)
+      view.bringSubviewToFront(cancelLoadingButton)
     } else if !show {
       loadingOverlayView?.removeFromSuperview()
       loadingOverlayView = nil
@@ -143,7 +147,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
 
     // Install the download progress views.
-    [downloadProgressView, downloadProgressLabel].forEach {
+    [downloadProgressView, downloadProgressLabel, cancelLoadingButton].forEach {
       $0.isHidden = true
       $0.translatesAutoresizingMaskIntoConstraints = false
       view.addSubview($0)
@@ -151,6 +155,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     downloadProgressLabel.textAlignment = .center
     downloadProgressLabel.textColor = .systemGray
     downloadProgressLabel.font = .systemFont(ofSize: 14)
+    cancelLoadingButton.setTitle("Cancel", for: .normal)
+    cancelLoadingButton.tintColor = .white
+    cancelLoadingButton.addTarget(self, action: #selector(cancelLoadingModel), for: .touchUpInside)
 
     NSLayoutConstraint.activate([
       downloadProgressView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -161,6 +168,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       downloadProgressLabel.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
       downloadProgressLabel.topAnchor.constraint(
         equalTo: downloadProgressView.bottomAnchor, constant: 8),
+      cancelLoadingButton.centerXAnchor.constraint(equalTo: downloadProgressView.centerXAnchor),
+      cancelLoadingButton.topAnchor.constraint(equalTo: downloadProgressLabel.bottomAnchor, constant: 10),
     ])
 
     ModelDownloadManager.shared.progressHandler = { [weak self] progress in
@@ -264,15 +273,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
     isLoadingModel = true
 
+    let needsDownload =
+      !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+
     // Skip the local YOLOView reset when an external display owns the camera.
     let hasExternalDisplay = hasExternalScreen()
-    if !hasExternalDisplay {
+    if !hasExternalDisplay && !needsDownload {
       yoloView.resetLayers()
       yoloView.setInferenceFlag(ok: false)
     }
 
-    setLoadingState(true, showOverlay: true)
     resetDownloadProgress()
+    setLoadingState(true, showOverlay: true, canCancel: needsDownload)
     currentLoadingEntry = entry
 
     let yoloTask = tasks.first(where: { $0.name == task })?.yoloTask ?? .detect
@@ -371,6 +383,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if self.hasExternalScreen() {
         self.finishLoadingModel(success: true, modelName: displayName)
       } else {
+        self.yoloView.resetLayers()
+        self.yoloView.setInferenceFlag(ok: false)
         self.yoloView.setModel(modelPathOrName: localModelURL.path, task: yoloTask) {
           [weak self] result in
           DispatchQueue.main.async {
@@ -390,7 +404,24 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func resetDownloadProgress() {
     downloadProgressView.progress = 0.0
     downloadProgressLabel.text = ""
-    [downloadProgressView, downloadProgressLabel].forEach { $0.isHidden = true }
+    [downloadProgressView, downloadProgressLabel, cancelLoadingButton].forEach { $0.isHidden = true }
+  }
+
+  @objc private func cancelLoadingModel() {
+    guard isLoadingModel, let entry = currentLoadingEntry else { return }
+
+    if !entry.isLocalBundle {
+      ModelDownloadManager.shared.cancelDownload(key: entry.identifier)
+    }
+
+    setLoadingState(false)
+    isLoadingModel = false
+    currentLoadingEntry = nil
+    resetDownloadProgress()
+
+    if !hasExternalScreen(), !currentModelName.isEmpty {
+      yoloView.setInferenceFlag(ok: true)
+    }
   }
 
   private func finishLoadingModel(success: Bool, modelName: String) {
@@ -456,6 +487,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if success {
         self.labelName.text = processString(modelName)
       }
+      self.currentLoadingEntry = nil
     }
   }
 
@@ -545,6 +577,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
+    loadingOverlayView?.frame = view.bounds
     alignLogoWithThresholdSliders()
   }
 

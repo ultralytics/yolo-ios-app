@@ -8,12 +8,12 @@ This directory is designated for storing model files required to run the Ultraly
 
 To execute the test suite successfully, ensure the following [Core ML](https://developer.apple.com/documentation/coreml) model files are placed within this directory. These models cover various computer vision tasks supported by Ultralytics YOLO:
 
-- `yolo26n.mlpackage` - [Detection](https://docs.ultralytics.com/tasks/detect/) model
-- `yolo26n-seg.mlpackage` - [Instance segmentation](https://docs.ultralytics.com/tasks/segment/) model
-- `yolo26n-sem.mlpackage` - [Semantic segmentation](https://docs.ultralytics.com/tasks/semantic/) model
-- `yolo26n-cls.mlpackage` - [Classification](https://docs.ultralytics.com/tasks/classify/) model
-- `yolo26n-pose.mlpackage` - [Pose estimation](https://docs.ultralytics.com/tasks/pose/) model
-- `yolo26n-obb.mlpackage` - [Oriented bounding box](https://docs.ultralytics.com/tasks/obb/) model
+- `yolo26n.mlpackage` - [Detection](https://docs.ultralytics.com/tasks/detect) model
+- `yolo26n-seg.mlpackage` - [Instance segmentation](https://docs.ultralytics.com/tasks/segment) model
+- `yolo26n-sem.mlpackage` - [Semantic segmentation](https://docs.ultralytics.com/tasks/semantic) model
+- `yolo26n-cls.mlpackage` - [Classification](https://docs.ultralytics.com/tasks/classify) model
+- `yolo26n-pose.mlpackage` - [Pose estimation](https://docs.ultralytics.com/tasks/pose) model
+- `yolo26n-obb.mlpackage` - [Oriented bounding box](https://docs.ultralytics.com/tasks/obb) model
 
 **Note**: Due to their significant file sizes, these model files are not committed directly to the source code repository. Run `bash scripts/download-models.sh` from the repository root to populate this directory automatically; manually add `.mlpackage` files only when using custom or locally exported models.
 
@@ -56,4 +56,4 @@ For comprehensive instructions on manually acquiring and placing these model fil
 
 ---
 
-We hope this information clarifies the setup process for the test resources. Your contributions towards improving this documentation or the overall testing framework are highly valued! Please refer to our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) for details on how to get involved.
+We hope this information clarifies the setup process for the test resources. Your contributions towards improving this documentation or the overall testing framework are highly valued! Please refer to our [Contributing Guide](https://docs.ultralytics.com/help/contributing) for details on how to get involved.

@@ -12,7 +12,7 @@ Follow these instructions to set up and run the unit tests for the application.
 
 To execute these tests, you will need the following [Core ML](https://developer.apple.com/documentation/coreml) model file:
 
-- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) [segmentation model](https://docs.ultralytics.com/tasks/segment/).
+- `yolo26n-seg.mlpackage` - An [Ultralytics YOLO26](https://platform.ultralytics.com/ultralytics/yolo26) [segmentation model](https://docs.ultralytics.com/tasks/segment).
 
 **Note**: This model file is **not included** in the repository due to its large size. You must obtain and add it manually.
 
@@ -31,7 +31,7 @@ model = YOLO("yolo26n-seg.pt")
 model.export(format="coreml")  # Creates yolo26n-seg.mlpackage
 ```
 
-For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export/).
+For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export).
 
 ### Adding Model Files to the Project
 
@@ -57,7 +57,7 @@ These unit tests verify several key aspects of the application:
 - **Model Initialization**: Checks if the Core ML model loads correctly.
 - **SwiftUI Views**: Ensures that the [SwiftUI](https://developer.apple.com/xcode/swiftui/) views render and handle layout as expected.
 - **Image Selection**: Validates the functionality for selecting images from the device.
-- **Inference Handling**: Tests how the application processes and displays the inference results from the [YOLO model](https://docs.ultralytics.com/models/).
+- **Inference Handling**: Tests how the application processes and displays the inference results from the [YOLO model](https://docs.ultralytics.com/models).
 
 #### Running Tests Without Models (CI/Basic Checks)
 
@@ -73,4 +73,4 @@ To run the complete test suite, including tests that perform actual model infere
 
 This comprehensive approach ensures that tests can validate both the fundamental application structure and the critical model integration and inference pathways, while still offering flexibility for environments without the large model files.
 
-We welcome contributions to improve these tests! Please see the [Ultralytics Contributing Guidelines](https://docs.ultralytics.com/help/contributing/) for more information on how to get involved.
+We welcome contributions to improve these tests! Please see the [Ultralytics Contributing Guidelines](https://docs.ultralytics.com/help/contributing) for more information on how to get involved.

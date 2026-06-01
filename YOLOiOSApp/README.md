@@ -91,7 +91,7 @@ Ensure you have the following before you begin:
 
 The Ultralytics YOLO iOS App offers an intuitive user experience:
 
-- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect/), [instance segmentation](https://docs.ultralytics.com/tasks/segment/), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic/), [image classification](https://docs.ultralytics.com/tasks/classify/), [pose estimation](https://docs.ultralytics.com/tasks/pose/), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb/) depending on the selected task and model.
+- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), [image classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
 - **Multiple AI Models:** Use the bundled YOLO26n ('nano') model for each supported task immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
 
@@ -158,7 +158,7 @@ Review the test files located within the `YOLOTests` directory for specific impl
 
 Contributions power the open-source community! We welcome your involvement in improving Ultralytics projects. Your efforts, whether reporting bugs via [GitHub Issues](https://github.com/ultralytics/yolo-ios-app/issues), suggesting features, or submitting code through Pull Requests, are greatly appreciated.
 
-- Check out our [Contributing Guide](https://docs.ultralytics.com/help/contributing/) for detailed instructions on how to get involved.
+- Check out our [Contributing Guide](https://docs.ultralytics.com/help/contributing) for detailed instructions on how to get involved.
 - Share your feedback and insights on your experience by participating in our brief [Survey](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey).
 - A big thank you 🙏 to all our contributors who help make our projects better!
 

@@ -12,7 +12,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-欢迎来到 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App 的 GitHub 仓库！📖 这个项目可将你的 iOS 设备变成强大的[实时推理](https://www.ultralytics.com/glossary/real-time-inference)工具，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持传统的 [YOLO11](https://docs.ultralytics.com/models/yolo11/)（使用 Core ML NMS）和最新的 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以直接从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，也可以参考本指南，将 YOLO 能力集成到你自己的 Swift 应用中。
+欢迎来到 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App 的 GitHub 仓库！📖 这个项目可将你的 iOS 设备变成强大的[实时推理](https://www.ultralytics.com/glossary/real-time-inference)工具，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持传统的 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和最新的 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以直接从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，也可以参考本指南，将 YOLO 能力集成到你自己的 Swift 应用中。
 
 <div align="center">
   <br>
@@ -99,9 +99,9 @@ var body: some View {
 
 ## ✨ 核心亮点
 
-- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml/)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
+- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
 - **Apple 移动平台支持**：Swift Package 面向 iOS 和 iPadOS，并提供原生 Core ML 集成。
-- **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect/)、[实例分割](https://docs.ultralytics.com/tasks/segment/)、[语义分割](https://docs.ultralytics.com/tasks/semantic/)、[分类](https://docs.ultralytics.com/tasks/classify/)、[姿态估计](https://docs.ultralytics.com/tasks/pose/)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb/)。
+- **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect)、[实例分割](https://docs.ultralytics.com/tasks/segment)、[语义分割](https://docs.ultralytics.com/tasks/semantic)、[分类](https://docs.ultralytics.com/tasks/classify)、[姿态估计](https://docs.ultralytics.com/tasks/pose)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb)。
 
 ## 🧪 测试流程
 
@@ -115,7 +115,7 @@ var body: some View {
 bash scripts/download-models.sh
 ```
 
-该脚本会将六个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export/) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
+该脚本会将六个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
 
 ### 测试覆盖范围
 
@@ -133,7 +133,7 @@ bash scripts/download-models.sh
 
 ## 💡 参与贡献
 
-我们非常欢迎你为开源项目贡献力量！你的支持将帮助我们持续推动[人工智能（AI）](https://www.ultralytics.com/glossary/artificial-intelligence-ai)的发展边界。欢迎查阅[贡献指南](https://docs.ultralytics.com/help/contributing/)，也可以通过我们的[问卷](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey)分享你的反馈。感谢所有贡献者的支持！🙏
+我们非常欢迎你为开源项目贡献力量！你的支持将帮助我们持续推动[人工智能（AI）](https://www.ultralytics.com/glossary/artificial-intelligence-ai)的发展边界。欢迎查阅[贡献指南](https://docs.ultralytics.com/help/contributing)，也可以通过我们的[问卷](https://www.ultralytics.com/survey?utm_source=github&utm_medium=social&utm_campaign=Survey)分享你的反馈。感谢所有贡献者的支持！🙏
 
 [![Ultralytics open-source contributors](https://raw.githubusercontent.com/ultralytics/assets/main/im/image-contributors.png)](https://github.com/ultralytics/ultralytics/graphs/contributors)
 

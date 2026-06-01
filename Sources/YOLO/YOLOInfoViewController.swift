@@ -72,7 +72,8 @@ final class YOLOInfoViewController: UIViewController {
     title = "About YOLO"
     view.backgroundColor = .systemBackground
     navigationItem.rightBarButtonItem = UIBarButtonItem(
-      systemItem: .done, primaryAction: UIAction { [weak self] _ in
+      systemItem: .done,
+      primaryAction: UIAction { [weak self] _ in
         self?.dismiss(animated: true)
       })
 
@@ -93,9 +94,12 @@ final class YOLOInfoViewController: UIViewController {
       scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 20),
-      stackView.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 20),
-      stackView.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -20),
+      stackView.topAnchor.constraint(
+        equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 20),
+      stackView.leadingAnchor.constraint(
+        equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 20),
+      stackView.trailingAnchor.constraint(
+        equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -20),
       stackView.bottomAnchor.constraint(
         equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -28),
     ])

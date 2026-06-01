@@ -57,9 +57,7 @@ final class YOLOInfoViewController: UIViewController {
     scrollView.alwaysBounceVertical = true
     scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-    let stackView = UIStackView()
-    stackView.axis = .vertical
-    stackView.spacing = 18
+    let stackView = stackView(spacing: 18)
     stackView.translatesAutoresizingMaskIntoConstraints = false
 
     view.addSubview(scrollView)
@@ -97,26 +95,18 @@ final class YOLOInfoViewController: UIViewController {
   }
 
   private func headerView() -> UIView {
-    let stackView = UIStackView()
-    stackView.axis = .vertical
+    let stackView = stackView(spacing: 8)
     stackView.alignment = .center
-    stackView.spacing = 8
 
     let iconView = UIImageView(image: UIImage(systemName: "camera.viewfinder"))
     iconView.tintColor = .systemBlue
     iconView.contentMode = .scaleAspectFit
     iconView.translatesAutoresizingMaskIntoConstraints = false
 
-    let titleLabel = UILabel()
-    titleLabel.text = "Ultralytics YOLO"
-    titleLabel.font = .preferredFont(forTextStyle: .title1)
-    titleLabel.adjustsFontForContentSizeCategory = true
+    let titleLabel = label("Ultralytics YOLO", style: .title1)
     titleLabel.textAlignment = .center
 
-    let subtitleLabel = UILabel()
-    subtitleLabel.text = "Real-time AI vision for iOS"
-    subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
-    subtitleLabel.adjustsFontForContentSizeCategory = true
+    let subtitleLabel = label("Real-time AI vision for iOS", style: .subheadline)
     subtitleLabel.textColor = .secondaryLabel
     subtitleLabel.textAlignment = .center
 
@@ -133,19 +123,9 @@ final class YOLOInfoViewController: UIViewController {
   }
 
   private func infoSection(title: String, body: String) -> UIView {
-    let stackView = UIStackView()
-    stackView.axis = .vertical
-    stackView.spacing = 6
-
-    let titleLabel = UILabel()
-    titleLabel.text = title
-    titleLabel.font = .preferredFont(forTextStyle: .headline)
-    titleLabel.adjustsFontForContentSizeCategory = true
-
-    let bodyLabel = UILabel()
-    bodyLabel.text = body
-    bodyLabel.font = .preferredFont(forTextStyle: .body)
-    bodyLabel.adjustsFontForContentSizeCategory = true
+    let stackView = stackView(spacing: 6)
+    let titleLabel = label(title, style: .headline)
+    let bodyLabel = label(body, style: .body)
     bodyLabel.textColor = .secondaryLabel
     bodyLabel.numberOfLines = 0
 
@@ -155,14 +135,9 @@ final class YOLOInfoViewController: UIViewController {
   }
 
   private func resourcesSection() -> UIView {
-    let stackView = UIStackView()
-    stackView.axis = .vertical
-    stackView.spacing = 10
+    let stackView = stackView(spacing: 10)
 
-    let titleLabel = UILabel()
-    titleLabel.text = "Continue Learning"
-    titleLabel.font = .preferredFont(forTextStyle: .headline)
-    titleLabel.adjustsFontForContentSizeCategory = true
+    let titleLabel = label("Continue Learning", style: .headline)
     stackView.addArrangedSubview(titleLabel)
 
     for resource in resources {
@@ -186,22 +161,14 @@ final class YOLOInfoViewController: UIViewController {
     iconView.contentMode = .scaleAspectFit
     iconView.translatesAutoresizingMaskIntoConstraints = false
 
-    let titleLabel = UILabel()
-    titleLabel.text = resource.title
-    titleLabel.font = .preferredFont(forTextStyle: .headline)
-    titleLabel.adjustsFontForContentSizeCategory = true
+    let titleLabel = label(resource.title, style: .headline)
     titleLabel.textColor = .systemBlue
 
-    let subtitleLabel = UILabel()
-    subtitleLabel.text = resource.subtitle
-    subtitleLabel.font = .preferredFont(forTextStyle: .footnote)
-    subtitleLabel.adjustsFontForContentSizeCategory = true
+    let subtitleLabel = label(resource.subtitle, style: .footnote)
     subtitleLabel.textColor = .secondaryLabel
     subtitleLabel.numberOfLines = 0
 
-    let textStackView = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
-    textStackView.axis = .vertical
-    textStackView.spacing = 2
+    let textStackView = stackView([titleLabel, subtitleLabel], spacing: 2)
 
     let externalLinkView = UIImageView(image: UIImage(systemName: "arrow.up.forward"))
     externalLinkView.tintColor = .tertiaryLabel
@@ -227,6 +194,21 @@ final class YOLOInfoViewController: UIViewController {
     ])
 
     return button
+  }
+
+  private func label(_ text: String, style: UIFont.TextStyle) -> UILabel {
+    let label = UILabel()
+    label.text = text
+    label.font = .preferredFont(forTextStyle: style)
+    label.adjustsFontForContentSizeCategory = true
+    return label
+  }
+
+  private func stackView(_ views: [UIView] = [], spacing: CGFloat) -> UIStackView {
+    let stackView = UIStackView(arrangedSubviews: views)
+    stackView.axis = .vertical
+    stackView.spacing = spacing
+    return stackView
   }
 
   private func open(_ url: URL) {

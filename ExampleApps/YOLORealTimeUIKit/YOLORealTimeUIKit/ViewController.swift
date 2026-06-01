@@ -2,7 +2,7 @@
 
 //  This file is part of the Example Apps of Ultralytics YOLO Package, providing a UIKit example for real-time object
 //  detection.
-//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://www.ultralytics.com/license
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The ViewController shows how to run real-time object detection with YOLO models in UIKit. It provides a camera

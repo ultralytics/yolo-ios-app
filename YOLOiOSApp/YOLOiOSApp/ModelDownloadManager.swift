@@ -1,7 +1,7 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 //  This file is part of the Ultralytics YOLO app and manages the machine learning model lifecycle.
-//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://www.ultralytics.com/license
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  ModelCacheManager and ModelDownloadManager together handle the YOLO model lifecycle: downloading from remote URLs,

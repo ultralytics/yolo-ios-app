@@ -104,8 +104,10 @@ class ModelDownloadManager: NSObject {
   private override init() {}
 
   private func completeTask(_ task: URLSessionDownloadTask, model: MLModel?, key: String) {
-    downloadCompletionHandlers[task]?(model, key)
+    let completion = downloadCompletionHandlers[task]
     downloadCompletionHandlers.removeValue(forKey: task)
+    downloadTasks.removeValue(forKey: task)
+    completion?(model, key)
   }
 
   func startDownload(
@@ -116,6 +118,15 @@ class ModelDownloadManager: NSObject {
     downloadTasks[downloadTask] = (url: destinationURL, key: key)
     downloadCompletionHandlers[downloadTask] = completion
     downloadTask.resume()
+  }
+
+  func cancelDownload(key: String) {
+    let tasks = downloadTasks.filter { $0.value.key == key }.map(\.key)
+    tasks.forEach {
+      $0.cancel()
+      downloadTasks.removeValue(forKey: $0)
+      downloadCompletionHandlers.removeValue(forKey: $0)
+    }
   }
 }
 
@@ -134,7 +145,6 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         try FileManager.default.removeItem(at: zipURL)
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
-      downloadTasks.removeValue(forKey: downloadTask)
 
       // Extract to a per-key temp directory to avoid collisions between concurrent downloads.
       let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
@@ -187,6 +197,16 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     }
   }
 
+  func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    guard let error = error,
+      let downloadTask = task as? URLSessionDownloadTask,
+      let key = downloadTasks[downloadTask]?.key
+    else { return }
+
+    print("Download failed: \(error)")
+    completeTask(downloadTask, model: nil, key: key)
+  }
+
   private func loadModel(from url: URL, key: String, completion: @escaping (MLModel?) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
@@ -208,6 +228,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
     totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
   ) {
+    guard downloadTasks[downloadTask] != nil else { return }
     guard totalBytesExpectedToWrite > 0 else { return }
     let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
     DispatchQueue.main.async { self.progressHandler?(progress) }

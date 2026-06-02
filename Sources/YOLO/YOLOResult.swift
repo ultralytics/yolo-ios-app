@@ -52,6 +52,9 @@ public struct YOLOResult: @unchecked Sendable {
   /// Optional frames per second rate for real-time processing.
   public var fps: Double?
 
+  /// Optional copy of the original input image when capture is enabled by the caller.
+  public var originalImage: UIImage? = nil
+
   /// Array of class label names used by the model.
   public var names: [String]
 
@@ -118,6 +121,18 @@ public struct Probs: @unchecked Sendable {
 
   /// The top 5 class labels by confidence score.
   public var top5: [String]
+
+  /// Compatibility alias used by Flutter-facing integrations.
+  public var top1Label: String {
+    get { top1 }
+    set { top1 = newValue }
+  }
+
+  /// Compatibility alias used by Flutter-facing integrations.
+  public var top5Labels: [String] {
+    get { top5 }
+    set { top5 = newValue }
+  }
 
   /// The confidence score (0.0 to 1.0) for the top prediction.
   public var top1Conf: Float
@@ -266,6 +281,23 @@ extension OBB {
       let rx = cosA * pt.x - sinA * pt.y
       let ry = sinA * pt.x + cosA * pt.y
       return CGPoint(x: rx + cxPx, y: ry + cyPx)
+    }
+  }
+
+  /// Converts the OBB to normalized corner points while rotating in pixel space for non-square images.
+  ///
+  /// This overload is kept for compatibility with the Flutter fork. Use `toPolygon(imageSize:)` when pixel-space
+  /// points are needed for drawing.
+  public func toPolygon(in imageSize: CGSize) -> Polygon {
+    guard imageSize.width > 0, imageSize.height > 0 else { return toPolygon() }
+    return OBB(
+      cx: cx * Float(imageSize.width),
+      cy: cy * Float(imageSize.height),
+      w: w * Float(imageSize.width),
+      h: h * Float(imageSize.height),
+      angle: angle
+    ).toPolygon().map { point in
+      CGPoint(x: point.x / imageSize.width, y: point.y / imageSize.height)
     }
   }
 

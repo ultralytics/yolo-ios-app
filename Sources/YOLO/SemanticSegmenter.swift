@@ -20,9 +20,10 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   override func processObservations(for request: VNRequest, _ error: Error?) {
     let semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
     self.updateTime()
-    let result = YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask, speed: self.t2,
       fps: 1 / self.t4, names: labels)
+    result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
 
@@ -43,6 +44,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     result.annotatedImage = drawYOLOSemanticSegmentation(
       ciImage: image, semanticMask: semanticMask?.maskImage)
     result.speed = finishTiming(notify: false)
+    if capturesOriginalImage {
+      result.originalImage = UIImage(ciImage: image)
+    }
     return result
   }
 

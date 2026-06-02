@@ -34,8 +34,9 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   override func processObservations(for request: VNRequest, _ error: Error?) {
     let boxes = decodeBoxes(from: request)
     self.updateTime()
-    let result = YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
+    result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
 
@@ -58,9 +59,10 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
 
         // The labels array is a list of VNClassificationObservation objects, with the highest scoring class first in
         // the list.
-        let label = prediction.labels[0].identifier
-        let index = self.labels.firstIndex(of: label) ?? 0
-        let confidence = prediction.labels[0].confidence
+        let observationLabel = prediction.labels.first?.identifier ?? ""
+        let index = self.labels.firstIndex(of: observationLabel) ?? 0
+        let label = observationLabel.isEmpty ? labelName(for: index) : observationLabel
+        let confidence = prediction.labels.first?.confidence ?? 0
         boxes.append(
           Box(index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox))
       }
@@ -95,6 +97,9 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     let annotatedImage = drawYOLODetections(on: image, result: result)
     result.speed = finishTiming(notify: false)
     result.annotatedImage = annotatedImage
+    if capturesOriginalImage {
+      result.originalImage = UIImage(ciImage: image)
+    }
 
     return result
   }
@@ -158,7 +163,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       let imageRect = inputRect(
         fromModelRect: CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1))
       let normalizedBox = normalizedRect(fromInputRect: imageRect)
-      let label = classIndex < labels.count ? labels[classIndex] : "\(classIndex)"
+      let label = labelName(for: classIndex)
 
       boxes.append(
         Box(index: classIndex, cls: label, conf: conf, xywh: imageRect, xywhn: normalizedBox))
@@ -223,7 +228,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       let imageRect = inputRect(fromModelRect: rect)
       let normalizedBox = normalizedRect(fromInputRect: imageRect)
       let classIndex = candidateClasses[i]
-      let label = classIndex < labels.count ? labels[classIndex] : "\(classIndex)"
+      let label = labelName(for: classIndex)
       boxes.append(
         Box(
           index: classIndex, cls: label, conf: candidateScores[i], xywh: imageRect,

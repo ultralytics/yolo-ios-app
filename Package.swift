@@ -7,7 +7,7 @@ import PackageDescription
 let package = Package(
   name: "YOLO",
   platforms: [
-    .iOS(.v16)
+    .iOS(.v13)
   ],
   products: [
     // Products define the executables and libraries a package produces, making them visible to other packages.

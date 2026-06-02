@@ -25,6 +25,8 @@ public final class YOLO: @unchecked Sendable {
   private var pendingNumItems: Int?
   private var pendingConfidence: Double?
   private var pendingIou: Double?
+  private var useGpu: Bool = true
+  private var defaultReturnAnnotatedImage = true
 
   /// Whether the model has finished loading and is ready to run inference.
   ///
@@ -35,14 +37,26 @@ public final class YOLO: @unchecked Sendable {
   }
 
   /// Initializes YOLO from a remote model URL, downloading and caching it as needed.
-  public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
+  public init(
+    url: URL,
+    task: YOLOTask,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
+    returnAnnotatedImage: Bool = true,
+    completion: @escaping (Result<YOLO, Error>) -> Void
+  ) {
+    self.useGpu = useGpu
+    self.pendingNumItems = numItemsThreshold
+    self.defaultReturnAnnotatedImage = returnAnnotatedImage
     modelDownloader = YOLOModelDownloader()
     modelDownloader?.download(from: url, task: task) { [weak self] result in
       guard let self = self else { return }
       self.modelDownloader = nil
       switch result {
       case .success(let modelPath):
-        self.loadModel(from: modelPath, task: task, completion: completion)
+        self.loadModel(
+          from: modelPath, task: task, useGpu: useGpu, numItemsThreshold: numItemsThreshold,
+          completion: completion)
       case .failure(let error):
         completion(.failure(error))
       }
@@ -50,20 +64,36 @@ public final class YOLO: @unchecked Sendable {
   }
 
   public init(
-    _ modelPathOrName: String, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)? = nil
+    _ modelPathOrName: String,
+    task: YOLOTask,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
+    returnAnnotatedImage: Bool = true,
+    completion: ((Result<YOLO, Error>) -> Void)? = nil
   ) {
+    self.useGpu = useGpu
+    self.pendingNumItems = numItemsThreshold
+    self.defaultReturnAnnotatedImage = returnAnnotatedImage
     guard let modelURL = ModelPathResolver.resolve(modelPathOrName) else {
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
-    loadModel(from: modelURL, task: task, completion: completion)
+    loadModel(
+      from: modelURL, task: task, useGpu: useGpu, numItemsThreshold: numItemsThreshold,
+      completion: completion)
   }
 
   /// Creates the task-specific predictor for the given model URL and applies any pending thresholds.
   private func loadModel(
-    from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
+    from modelURL: URL,
+    task: YOLOTask,
+    useGpu: Bool,
+    numItemsThreshold: Int,
+    completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    BasePredictor.create(for: task, modelURL: modelURL) { [weak self] result in
+    BasePredictor.create(
+      for: task, modelURL: modelURL, useGpu: useGpu, numItemsThreshold: numItemsThreshold
+    ) { [weak self] result in
       guard let self = self else { return }
       switch result {
       case .success(let predictor):
@@ -137,41 +167,50 @@ public final class YOLO: @unchecked Sendable {
   }
 
   /// Runs inference against the loaded predictor, or returns an empty result if no model is loaded.
-  private func run(_ ciImage: CIImage) -> YOLOResult {
-    predictor?.predictOnImage(image: ciImage) ?? .empty
+  private func run(_ ciImage: CIImage, returnAnnotatedImage: Bool? = nil) -> YOLOResult {
+    var result = predictor?.predictOnImage(image: ciImage) ?? .empty
+    if !(returnAnnotatedImage ?? defaultReturnAnnotatedImage) {
+      result.annotatedImage = nil
+    }
+    return result
   }
 
-  public func callAsFunction(_ uiImage: UIImage) -> YOLOResult {
+  public func callAsFunction(_ uiImage: UIImage, returnAnnotatedImage: Bool? = nil) -> YOLOResult {
     // CIImage(image:) drops UIImage.imageOrientation, so non-`.up` photos (e.g. portrait
     // shots with orientation = .right) would otherwise be inferred against raw, rotated
     // pixels. Build the CIImage from the backing CGImage and re-apply the orientation.
     if let cgImage = uiImage.cgImage {
       let orientation = CGImagePropertyOrientation(uiImage.imageOrientation)
-      return run(CIImage(cgImage: cgImage).oriented(orientation))
+      return run(CIImage(cgImage: cgImage).oriented(orientation), returnAnnotatedImage: returnAnnotatedImage)
     }
     let upright = uiImage.uprightForYOLO()
-    if let cgImage = upright.cgImage { return run(CIImage(cgImage: cgImage)) }
-    if let ciImage = upright.ciImage ?? CIImage(image: upright) { return run(ciImage) }
+    if let cgImage = upright.cgImage {
+      return run(CIImage(cgImage: cgImage), returnAnnotatedImage: returnAnnotatedImage)
+    }
+    if let ciImage = upright.ciImage ?? CIImage(image: upright) {
+      return run(ciImage, returnAnnotatedImage: returnAnnotatedImage)
+    }
     return .empty
   }
 
-  public func callAsFunction(_ ciImage: CIImage) -> YOLOResult {
-    return run(ciImage)
+  public func callAsFunction(_ ciImage: CIImage, returnAnnotatedImage: Bool? = nil) -> YOLOResult {
+    return run(ciImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 
-  public func callAsFunction(_ cgImage: CGImage) -> YOLOResult {
-    return run(CIImage(cgImage: cgImage))
+  public func callAsFunction(_ cgImage: CGImage, returnAnnotatedImage: Bool? = nil) -> YOLOResult {
+    return run(CIImage(cgImage: cgImage), returnAnnotatedImage: returnAnnotatedImage)
   }
 
   public func callAsFunction(
     _ resourceName: String,
-    withExtension ext: String? = nil
+    withExtension ext: String? = nil,
+    returnAnnotatedImage: Bool? = nil
   ) -> YOLOResult {
     guard let url = Bundle.main.url(forResource: resourceName, withExtension: ext),
       let data = try? Data(contentsOf: url),
       let uiImage = UIImage(data: data)
     else { return .empty }
-    return self(uiImage)
+    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 
   /// Runs inference on an image fetched from a remote URL.
@@ -185,32 +224,35 @@ public final class YOLO: @unchecked Sendable {
       "Blocking network I/O on the calling thread. Fetch the image yourself and call callAsFunction(_: UIImage) instead."
   )
   public func callAsFunction(
-    _ remoteURL: URL?
+    _ remoteURL: URL?,
+    returnAnnotatedImage: Bool? = nil
   ) -> YOLOResult {
     guard let remoteURL = remoteURL,
       let data = try? Data(contentsOf: remoteURL),
       let uiImage = UIImage(data: data)
     else { return .empty }
-    return self(uiImage)
+    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 
   public func callAsFunction(
-    _ localPath: String
+    _ localPath: String,
+    returnAnnotatedImage: Bool? = nil
   ) -> YOLOResult {
     let fileURL = URL(fileURLWithPath: localPath)
     guard let data = try? Data(contentsOf: fileURL),
       let uiImage = UIImage(data: data)
     else { return .empty }
-    return self(uiImage)
+    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 
   @MainActor @available(iOS 16.0, *)
   public func callAsFunction(
-    _ swiftUIImage: SwiftUI.Image
+    _ swiftUIImage: SwiftUI.Image,
+    returnAnnotatedImage: Bool? = nil
   ) -> YOLOResult {
     let renderer = ImageRenderer(content: swiftUIImage)
     guard let uiImage = renderer.uiImage else { return .empty }
-    return self(uiImage)
+    return self(uiImage, returnAnnotatedImage: returnAnnotatedImage)
   }
 }
 

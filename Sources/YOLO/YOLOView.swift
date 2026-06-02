@@ -998,7 +998,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let infoViewController = YOLOInfoViewController()
     let navigationController = UINavigationController(rootViewController: infoViewController)
     navigationController.modalPresentationStyle = .pageSheet
-    if let sheet = navigationController.sheetPresentationController {
+    if #available(iOS 15.0, *), let sheet = navigationController.sheetPresentationController {
       sheet.detents = [.medium(), .large()]
       sheet.prefersGrabberVisible = true
       sheet.prefersScrollingExpandsWhenScrolledToEdge = true

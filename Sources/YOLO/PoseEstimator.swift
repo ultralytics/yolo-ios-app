@@ -38,9 +38,10 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
       keypointsList.append(person.keypoints)
     }
     self.updateTime()
-    let result = YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
       annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
+    result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
 
@@ -76,13 +77,17 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         ciImage: image,
         keypointsList: keypointsForImage,
         confsList: confsList,
-        boundingBoxes: boxes
+        boundingBoxes: boxes,
+        originalImageSize: inputSize
       )
 
-      let result = YOLOResult(
+      var result = YOLOResult(
         orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
         keypointsList: keypointsList, annotatedImage: annotatedImage,
         speed: finishTiming(notify: false), names: labels)
+      if capturesOriginalImage {
+        result.originalImage = UIImage(ciImage: image)
+      }
       return result
     }
     return YOLOResult(
@@ -174,7 +179,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
       let imageSizeBox = inputRect(fromModelRect: box)
       let normalizedBox = normalizedRect(fromInputRect: imageSizeBox)
       let boxResult = Box(
-        index: 0, cls: "person", conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
+        index: 0, cls: labelName(for: 0), conf: score, xywh: imageSizeBox, xywhn: normalizedBox)
       let numKeypoints = boxFeatures.count / 3
 
       var xynArray = [(x: Float, y: Float)]()
@@ -241,7 +246,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         fromModelRect: CGRect(x: x1, y: y1, width: x2 - x1, height: y2 - y1))
       let normalizedBox = normalizedRect(fromInputRect: imageSizeBox)
       let boxResult = Box(
-        index: 0, cls: "person", conf: conf, xywh: imageSizeBox, xywhn: normalizedBox)
+        index: 0, cls: labelName(for: 0), conf: conf, xywh: imageSizeBox, xywhn: normalizedBox)
 
       // Extract keypoints
       var xynArray = [(x: Float, y: Float)]()

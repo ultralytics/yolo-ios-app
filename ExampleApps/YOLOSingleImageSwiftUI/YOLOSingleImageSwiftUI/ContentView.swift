@@ -13,7 +13,7 @@
 
 import PhotosUI
 import SwiftUI
-import YOLO
+import UltralyticsYOLO
 
 /// A SwiftUI view that demonstrates single-image object detection using the YOLO framework.
 struct ContentView: View {

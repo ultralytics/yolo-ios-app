@@ -12,7 +12,7 @@
 
 import PhotosUI
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 /// A view controller that demonstrates YOLO model inference on a single image using UIKit.
 ///

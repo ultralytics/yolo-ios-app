@@ -3,7 +3,7 @@
 import CoreML
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Tests for SemanticSegmenter logits post-processing (per-pixel class argmax).
 final class SemanticSegmenterTests: XCTestCase {

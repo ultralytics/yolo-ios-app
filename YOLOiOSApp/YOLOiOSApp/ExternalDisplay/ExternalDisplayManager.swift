@@ -2,7 +2,7 @@
 
 import CoreMedia
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 /// Coordinates the optional external display: scene activation, mode preference, and pub/sub of updates.
 class ExternalDisplayManager {

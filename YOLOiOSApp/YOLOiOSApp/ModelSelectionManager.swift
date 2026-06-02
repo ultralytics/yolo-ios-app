@@ -2,7 +2,7 @@
 
 import Foundation
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 struct ModelSelectionManager {
   enum ModelSize: String, CaseIterable {

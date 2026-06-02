@@ -11,7 +11,7 @@ import UIKit
 import Vision
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 @testable import YOLORealTimeUIKit
 
 /// Unit tests for the YOLO real-time UIKit example application.

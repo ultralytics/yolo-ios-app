@@ -6,7 +6,7 @@ import QuartzCore
 import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for Plot visualization functions
 class PlotTests: XCTestCase {

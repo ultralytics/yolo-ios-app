@@ -3,7 +3,7 @@
 import Foundation
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Verifies `MiniZip`, the dependency-free ZIP extractor used for unpacking downloaded model archives.
 ///

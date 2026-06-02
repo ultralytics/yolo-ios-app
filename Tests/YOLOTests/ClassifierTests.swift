@@ -3,7 +3,7 @@
 import CoreML
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Tests for Classifier softmax + top-5 selection.
 final class ClassifierTests: XCTestCase {

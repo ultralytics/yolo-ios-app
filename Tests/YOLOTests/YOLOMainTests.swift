@@ -5,7 +5,7 @@ import CoreImage
 import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for YOLO main class functionality
 class YOLOMainTests: XCTestCase {

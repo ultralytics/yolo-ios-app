@@ -4,7 +4,7 @@ import CoreImage
 import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 final class YOLOSSOTMergeTests: XCTestCase {
 

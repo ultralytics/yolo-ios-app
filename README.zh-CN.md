@@ -65,7 +65,7 @@
 
 这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。应用会将全部六个 nano 模型（每个任务一个：检测、分割、语义分割、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）——这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 Xcode 构建阶段从 GitHub 发布资源下载，**绝不会提交到代码库**（`*.mlpackage` 已被 gitignore 忽略），更大的尺寸（s/m/l/x）则在应用内按需下载。你也可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
 
-### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
+### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
 这是一个面向 iOS 和 iPadOS 的轻量级 [Swift](https://developer.apple.com/swift/) package，用于简化 YOLO26 等 YOLO 模型在应用中的集成与使用。借助 [SwiftUI](https://developer.apple.com/xcode/swiftui/)，你可以用极少的代码轻松集成 YOLO：
 
@@ -94,7 +94,7 @@ var body: some View {
 
 如果你已经准备好将 YOLO 集成到自己的项目中，可以继续查看 Swift Package 和示例应用。
 
-- [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)：将 YOLO 能力集成到你的 Swift 应用中。
+- [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)：将 YOLO 能力集成到你的 Swift 应用中。
 - [**示例应用**](https://github.com/ultralytics/yolo-ios-app/tree/main/ExampleApps)：查看基于 YOLO Swift Package 的实际实现示例。
 
 ## ✨ 核心亮点

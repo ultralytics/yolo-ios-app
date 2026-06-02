@@ -16,7 +16,7 @@ import AudioToolbox
 import CoreML
 import CoreMedia
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {

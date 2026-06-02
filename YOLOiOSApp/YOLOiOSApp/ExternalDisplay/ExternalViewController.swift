@@ -3,7 +3,7 @@
 import AVFoundation
 import CoreMedia
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 class ExternalViewController: UIViewController, YOLOViewDelegate {
 

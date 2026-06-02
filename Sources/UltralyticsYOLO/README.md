@@ -63,7 +63,7 @@ dependencies: [
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "YOLO", package: "yolo-ios-app") // Use the package name defined above
+        .product(name: "UltralyticsYOLO", package: "yolo-ios-app") // Use the package name defined above
     ]
 )
 ```
@@ -79,7 +79,7 @@ The YOLO Swift Package primarily provides two main components: the **`YOLO` clas
 Start by importing the package in your Swift files:
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 ```
 
 ### YOLO Class (Inference)
@@ -89,7 +89,7 @@ Use the `YOLO` class for performing inference on static images ([`UIImage`](http
 Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format. You can load an official model from a remote URL, point to your own local `.mlpackage` or `.mlmodelc`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 import UIKit
 
 // --- Initialization ---
@@ -149,7 +149,7 @@ The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) co
 #### SwiftUI Example
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 import SwiftUI
 
 struct CameraView: View {
@@ -189,7 +189,7 @@ struct CameraViewWithBundledModel: View {
 ```swift
 import AVFoundation
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 class CameraViewController: UIViewController {
     var yoloView: YOLOView?

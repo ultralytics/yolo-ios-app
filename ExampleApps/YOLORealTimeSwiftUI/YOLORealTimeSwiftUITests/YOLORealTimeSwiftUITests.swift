@@ -11,7 +11,7 @@ import Testing
 import Vision
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 @testable import YOLORealTimeSwiftUI
 
 /// Unit tests for the YOLO real-time SwiftUI example application.

@@ -11,7 +11,7 @@
 //  and model name. The view ignores safe areas to provide a full-screen camera experience.
 
 import SwiftUI
-import YOLO
+import UltralyticsYOLO
 
 /// A SwiftUI view that demonstrates real-time object detection using the YOLOCamera component.
 struct ContentView: View {

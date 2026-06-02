@@ -31,20 +31,25 @@ jobs:
           chmod +x scripts/download-models.sh && scripts/download-models.sh
 
       - name: Install dependencies
-        run: xcodebuild -resolvePackageDependencies
+        run: swift package resolve
 
       - name: Build and Test
         run: |
           IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
-          DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
-          DESTINATION=${DESTINATION:-name=iPhone 14}
+          if [ -z "$IOS_SIMULATOR" ]; then
+            IOS_DEVICE_TYPE=$(xcrun simctl list devicetypes | grep -E "iPhone" | tail -1 | sed -E 's/.*\(([^)]+)\).*/\1/')
+            IOS_RUNTIME=$(xcrun simctl list runtimes available | grep -E "iOS" | tail -1 | sed -E 's/.*\(([^)]+)\).*/\1/')
+            IOS_SIMULATOR=$(xcrun simctl create "CI iPhone" "$IOS_DEVICE_TYPE" "$IOS_RUNTIME")
+          fi
+          DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR,arch=arm64"
 
           xcodebuild \
             -scheme UltralyticsYOLO \
             -sdk iphonesimulator \
             -derivedDataPath Build/ \
-            -destination "platform=iOS Simulator,$DESTINATION" \
+            -destination "$DESTINATION" \
             -enableCodeCoverage YES \
+            IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             clean build test
 
       - name: Generate Code Coverage Report
@@ -91,24 +96,24 @@ jobs:
             if [ -s info.lcov ]; then
                 echo "Coverage report generated successfully: info.lcov"
             else
-                echo "WARNING: info.lcov was generated but is empty."
-                touch info.lcov # Ensure file exists for Codecov step
+                echo "ERROR: info.lcov was generated but is empty."
+                exit 1
             fi
           else
             echo "Could not generate coverage report - required binary or profdata file missing or invalid."
             echo "Binary Path: $BINARY_PATH"
             echo "Profdata Path: $PROFDATA_PATH"
-            touch info.lcov # Create empty info.lcov for Codecov
-            echo "Empty info.lcov created as a fallback."
+            exit 1
           fi
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v6
-        if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./info.lcov
           slug: ultralytics/yolo-ios-app
+          disable_search: true
+          plugins: noop
           fail_ci_if_error: false
           handle_no_reports_found: true
 
@@ -126,8 +131,12 @@ jobs:
       - name: Run Periphery
         run: |
           IOS_SIMULATOR=$(xcrun simctl list devices available | grep -E "iPhone.*" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
-          DESTINATION=${IOS_SIMULATOR:+id=$IOS_SIMULATOR}
-          DESTINATION=${DESTINATION:-name=iPhone 14}
+          if [ -z "$IOS_SIMULATOR" ]; then
+            IOS_DEVICE_TYPE=$(xcrun simctl list devicetypes | grep -E "iPhone" | tail -1 | sed -E 's/.*\(([^)]+)\).*/\1/')
+            IOS_RUNTIME=$(xcrun simctl list runtimes available | grep -E "iOS" | tail -1 | sed -E 's/.*\(([^)]+)\).*/\1/')
+            IOS_SIMULATOR=$(xcrun simctl create "CI iPhone" "$IOS_DEVICE_TYPE" "$IOS_RUNTIME")
+          fi
+          DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR,arch=arm64"
 
           periphery scan \
             --project YOLOiOSApp/YOLOiOSApp.xcodeproj \
@@ -138,4 +147,4 @@ jobs:
             --format github-actions \
             --strict \
             -- \
-            -destination "platform=iOS Simulator,$DESTINATION"
+            -destination "$DESTINATION"

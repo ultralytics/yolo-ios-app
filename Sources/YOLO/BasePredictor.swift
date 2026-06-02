@@ -372,12 +372,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The confidence threshold for filtering detection results (default: 0.25).
   ///
   /// Only detections with confidence scores above this threshold will be included in results.
-  var confidenceThreshold = 0.25
+  public internal(set) var confidenceThreshold = 0.25
 
   /// Sets the confidence threshold for filtering results.
   ///
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
-  func setConfidenceThreshold(confidence: Double) {
+  public func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
     let iou = requiresNMS ? iouThreshold : 1.0
     detector?.featureProvider = ThresholdProvider(
@@ -385,12 +385,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
-  var iouThreshold = 0.7
+  public internal(set) var iouThreshold = 0.7
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
-  func setIouThreshold(iou: Double) {
+  public func setIouThreshold(iou: Double) {
     iouThreshold = iou
     let effectiveIou = requiresNMS ? iouThreshold : 1.0
     detector?.featureProvider = ThresholdProvider(
@@ -398,12 +398,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The maximum number of detections to return in results (default: 30).
-  var numItemsThreshold = 30
+  public internal(set) var numItemsThreshold = 30
 
   /// Sets the maximum number of detection items to include in results.
   ///
   /// - Parameter numItems: The maximum number of items to include.
-  func setNumItemsThreshold(numItems: Int) {
+  public func setNumItemsThreshold(numItems: Int) {
     numItemsThreshold = numItems
   }
 

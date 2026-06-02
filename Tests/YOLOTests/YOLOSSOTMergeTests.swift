@@ -7,6 +7,22 @@ import XCTest
 @testable import UltralyticsYOLO
 
 final class YOLOSSOTMergeTests: XCTestCase {
+  private final class AsyncResultBox<T>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var result: Result<T, Error>?
+
+    func store(_ result: Result<T, Error>) {
+      lock.lock()
+      defer { lock.unlock() }
+      self.result = result
+    }
+
+    func load() -> Result<T, Error>? {
+      lock.lock()
+      defer { lock.unlock() }
+      return result
+    }
+  }
 
   private func modelURL(_ name: String) throws -> URL {
     let testsDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
@@ -23,7 +39,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
   ) throws -> BasePredictor {
     let expectation = XCTestExpectation(description: "Load \(name)")
     let url = try modelURL(name)
-    var loaded: Result<BasePredictor, Error>?
+    let loaded = AsyncResultBox<BasePredictor>()
 
     BasePredictor.create(
       for: task,
@@ -31,12 +47,12 @@ final class YOLOSSOTMergeTests: XCTestCase {
       useGpu: useGpu,
       numItemsThreshold: numItemsThreshold
     ) { result in
-      loaded = result
+      loaded.store(result)
       expectation.fulfill()
     }
 
     wait(for: [expectation], timeout: 30)
-    return try XCTUnwrap(loaded).get()
+    return try XCTUnwrap(loaded.load()).get()
   }
 
   private func testImage(width: CGFloat = 640, height: CGFloat = 640) -> CIImage {

@@ -40,7 +40,7 @@ jobs:
           DESTINATION=${DESTINATION:-name=iPhone 14}
 
           xcodebuild \
-            -scheme YOLO \
+            -scheme UltralyticsYOLO \
             -sdk iphonesimulator \
             -derivedDataPath Build/ \
             -destination "platform=iOS Simulator,$DESTINATION" \
@@ -134,7 +134,7 @@ jobs:
             --schemes YOLOiOSApp \
             --exclude-tests \
             --retain-public \
-            --report-include 'Sources/YOLO/**/*.swift' \
+            --report-include 'Sources/UltralyticsYOLO/**/*.swift' \
             --format github-actions \
             --strict \
             -- \

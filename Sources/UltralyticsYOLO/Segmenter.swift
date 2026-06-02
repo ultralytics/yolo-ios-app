@@ -31,6 +31,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let capturedModelInputSize = self.modelInputSize
     let capturedLabels = self.labels
     let capturedOriginalImage = self.currentOriginalImage
+    let capturedWantsInstanceMasks = self.capturesInstanceMasks
     let capturedMaskCropRect = inputMaskCropRect(
       maskWidth: capturedMasks.shape[3].intValue,
       maskHeight: capturedMasks.shape[2].intValue,
@@ -45,7 +46,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
           cropRect: capturedMaskCropRect,
-          returnIndividualMasks: false
+          returnIndividualMasks: capturedWantsInstanceMasks
         )
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }

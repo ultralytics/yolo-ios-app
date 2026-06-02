@@ -495,6 +495,7 @@ extension VideoCapture: ResultsListener, InferenceTimeListener {
 
   public func on(result: YOLOResult) {
     DispatchQueue.main.async { [weak self] in
+      defer { self?.predictor?.isUpdating = false }
       self?.delegate?.onPredict(result: result)
     }
   }

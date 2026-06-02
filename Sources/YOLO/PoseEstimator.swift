@@ -45,59 +45,47 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
-    let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       let emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       return emptyResult
     }
 
-    let imageWidth = image.extent.width
-    let imageHeight = image.extent.height
-    self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    self.t0 = CACurrentMediaTime()
+    let requestHandler = makeRequestHandler(for: image)
+    if perform(request, with: requestHandler, errorMessage: "Pose estimation failed"),
+      let results = request.results as? [VNCoreMLFeatureValueObservation],
+      let prediction = results.first?.featureValue.multiArrayValue
+    {
 
-    do {
-      try requestHandler.perform([request])
+      let preds = PostProcessPose(
+        prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
+        iouThreshold: Float(self.iouThreshold))
+      var keypointsList = [Keypoints]()
+      var boxes = [Box]()
+      var keypointsForImage = [[(x: Float, y: Float)]]()
+      var confsList: [[Float]] = []
 
-      if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-
-        if let prediction = results.first?.featureValue.multiArrayValue {
-
-          let preds = PostProcessPose(
-            prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
-            iouThreshold: Float(self.iouThreshold))
-          var keypointsList = [Keypoints]()
-          var boxes = [Box]()
-          var keypointsForImage = [[(x: Float, y: Float)]]()
-          var confsList: [[Float]] = []
-
-          let limitedPreds = preds.prefix(self.numItemsThreshold)
-          for person in limitedPreds {
-            boxes.append(person.box)
-            keypointsList.append(person.keypoints)
-            keypointsForImage.append(person.keypoints.xyn)
-            confsList.append(person.keypoints.conf)
-          }
-
-          let annotatedImage = drawYOLOPoseWithBoxes(
-            ciImage: image,
-            keypointsList: keypointsForImage,
-            confsList: confsList,
-            boundingBoxes: boxes
-          )
-
-          updateTime(notify: false)
-          let result = YOLOResult(
-            orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
-            keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t1,
-            names: labels)
-          return result
-        }
+      let limitedPreds = preds.prefix(self.numItemsThreshold)
+      for person in limitedPreds {
+        boxes.append(person.box)
+        keypointsList.append(person.keypoints)
+        keypointsForImage.append(person.keypoints.xyn)
+        confsList.append(person.keypoints.conf)
       }
-    } catch {
-      YOLOLog.error("Pose estimation failed: \(error)")
+
+      let annotatedImage = drawYOLOPoseWithBoxes(
+        ciImage: image,
+        keypointsList: keypointsForImage,
+        confsList: confsList,
+        boundingBoxes: boxes
+      )
+
+      let result = YOLOResult(
+        orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
+        keypointsList: keypointsList, annotatedImage: annotatedImage,
+        speed: finishTiming(notify: false), names: labels)
+      return result
     }
-    return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    return YOLOResult(orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)
   }
 
   func PostProcessPose(

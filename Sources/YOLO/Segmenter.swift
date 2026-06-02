@@ -61,48 +61,45 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
-    let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
 
-    self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
+    let requestHandler = makeRequestHandler(for: image)
     var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
-    self.t0 = CACurrentMediaTime()
 
-    do {
-      try requestHandler.perform([request])
-      guard let parsed = parseSegmentationRequest(request) else { return result }
-
-      let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
-      let boxes = buildBoxes(from: limitedObjects)
-
-      guard
-        let processed = generateCombinedMaskImage(
-          detectedObjects: limitedObjects, protos: parsed.masks,
-          inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
-          cropRect: inputMaskCropRect(
-            maskWidth: parsed.masks.shape[3].intValue,
-            maskHeight: parsed.masks.shape[2].intValue,
-            inputSize: inputSize,
-            modelInputSize: modelInputSize)
-        ) as? (CGImage?, [[[Float]]])
-      else {
-        return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
-      }
-
-      let annotatedImage = drawYOLOSegmentationWithBoxes(
-        ciImage: image, boxes: boxes, maskImage: processed.0)
-      updateTime(notify: false)
-      result = YOLOResult(
-        orig_shape: inputSize, boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: processed.0),
-        annotatedImage: annotatedImage,
-        speed: self.t1, names: labels)
-    } catch {
-      YOLOLog.error("Segmentation failed: \(error)")
+    guard perform(request, with: requestHandler, errorMessage: "Segmentation failed"),
+      let parsed = parseSegmentationRequest(request)
+    else {
+      result.speed = finishTiming(notify: false)
+      return result
     }
-    return result
+
+    let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
+    let boxes = buildBoxes(from: limitedObjects)
+
+    guard
+      let processed = generateCombinedMaskImage(
+        detectedObjects: limitedObjects, protos: parsed.masks,
+        inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
+        cropRect: inputMaskCropRect(
+          maskWidth: parsed.masks.shape[3].intValue,
+          maskHeight: parsed.masks.shape[2].intValue,
+          inputSize: inputSize,
+          modelInputSize: modelInputSize)
+      ) as? (CGImage?, [[[Float]]])
+    else {
+      return YOLOResult(
+        orig_shape: inputSize, boxes: boxes, speed: finishTiming(notify: false), names: labels)
+    }
+
+    let annotatedImage = drawYOLOSegmentationWithBoxes(
+      ciImage: image, boxes: boxes, maskImage: processed.0)
+    return YOLOResult(
+      orig_shape: inputSize, boxes: boxes,
+      masks: Masks(masks: processed.1, combinedMask: processed.0),
+      annotatedImage: annotatedImage,
+      speed: finishTiming(notify: false), names: labels)
   }
 
   /// Pulls the `(masks, detectedObjects)` tuple out of a completed Vision request. The shape-4 output is the

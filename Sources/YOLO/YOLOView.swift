@@ -57,8 +57,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func onPredict(result: YOLOResult) {
-    defer { self.videoCapture.predictor?.isUpdating = false }
-
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 

@@ -40,9 +40,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Whether the model requires NMS post-processing (false for YOLO26 nms-free models).
   public private(set) var requiresNMS: Bool = true
 
-  /// The current pixel buffer being processed (used for camera frame processing).
-  var currentBuffer: CVPixelBuffer?
-
   /// The current listener to receive prediction results.
   weak var currentOnResultsListener: ResultsListener?
 
@@ -237,36 +234,54 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
     onInferenceTime: InferenceTimeListener?
   ) {
-    if currentBuffer == nil, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
-      currentBuffer = pixelBuffer
-      inputSize = CGSize(
-        width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
-      currentOnResultsListener = onResultsListener
-      currentOnInferenceTimeListener = onInferenceTime
-
-      /// - Tag: MappingOrientation
-      // The frame is always oriented based on the camera sensor, so in most cases Vision needs to rotate it for the
-      // model to work as expected.
-      let imageOrientation: CGImagePropertyOrientation = .up
-
-      // Invoke a VNRequestHandler with that image
-      let handler = VNImageRequestHandler(
-        cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
-      t0 = CACurrentMediaTime()  // inference start
-      do {
-        if let request = visionRequest {
-          try handler.perform([request])
-          processObservations(for: request, nil)
-        } else {
-          isUpdating = false
-        }
-      } catch {
-        YOLOLog.error("Vision request failed: \(error)")
-        isUpdating = false
-      }
-
-      currentBuffer = nil
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+    currentOnResultsListener = onResultsListener
+    currentOnInferenceTimeListener = onInferenceTime
+    guard let request = visionRequest else {
+      isUpdating = false
+      return
     }
+    let handler = makeRequestHandler(for: pixelBuffer)
+    guard perform(request, with: handler, errorMessage: "Vision request failed") else {
+      isUpdating = false
+      return
+    }
+    processObservations(for: request, nil)
+  }
+
+  func makeRequestHandler(for image: CIImage) -> VNImageRequestHandler {
+    inputSize = image.extent.size
+    t0 = CACurrentMediaTime()
+    return VNImageRequestHandler(ciImage: image, options: [:])
+  }
+
+  func makeRequestHandler(for pixelBuffer: CVPixelBuffer) -> VNImageRequestHandler {
+    inputSize = CGSize(
+      width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
+    t0 = CACurrentMediaTime()
+    return VNImageRequestHandler(
+      cvPixelBuffer: pixelBuffer, orientation: cameraFrameOrientation, options: [:])
+  }
+
+  /// The camera output is already configured into the app's inference orientation.
+  var cameraFrameOrientation: CGImagePropertyOrientation { .up }
+
+  func perform(_ request: VNRequest, with handler: VNImageRequestHandler, errorMessage: String)
+    -> Bool
+  {
+    do {
+      try handler.perform([request])
+      return true
+    } catch {
+      YOLOLog.error("\(errorMessage): \(error)")
+      return false
+    }
+  }
+
+  @discardableResult
+  func finishTiming(notify: Bool = true) -> Double {
+    updateTime(notify: notify)
+    return self.t1
   }
 
   /// The confidence threshold for filtering detection results (default: 0.25).

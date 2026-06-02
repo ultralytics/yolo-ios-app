@@ -19,28 +19,29 @@ import Vision
 public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    if let results = request.results as? [VNCoreMLFeatureValueObservation] {
-
-      if let prediction = results.first?.featureValue.multiArrayValue {
-
-        let preds = PostProcessPose(
-          prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
-          iouThreshold: Float(self.iouThreshold))
-        var keypointsList = [Keypoints]()
-        var boxes = [Box]()
-
-        let limitedPreds = preds.prefix(self.numItemsThreshold)
-        for person in limitedPreds {
-          boxes.append(person.box)
-          keypointsList.append(person.keypoints)
-        }
-        self.updateTime()
-        let result = YOLOResult(
-          orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
-          annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
-        self.currentOnResultsListener?.on(result: result)
-      }
+    guard let results = request.results as? [VNCoreMLFeatureValueObservation],
+      let prediction = results.first?.featureValue.multiArrayValue
+    else {
+      self.isUpdating = false
+      return
     }
+
+    let preds = PostProcessPose(
+      prediction: prediction, confidenceThreshold: Float(self.confidenceThreshold),
+      iouThreshold: Float(self.iouThreshold))
+    var keypointsList = [Keypoints]()
+    var boxes = [Box]()
+
+    let limitedPreds = preds.prefix(self.numItemsThreshold)
+    for person in limitedPreds {
+      boxes.append(person.box)
+      keypointsList.append(person.keypoints)
+    }
+    self.updateTime()
+    let result = YOLOResult(
+      orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
+      annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
+    self.currentOnResultsListener?.on(result: result)
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
@@ -53,6 +54,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)
+    self.t0 = CACurrentMediaTime()
 
     do {
       try requestHandler.perform([request])
@@ -84,11 +86,11 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
             boundingBoxes: boxes
           )
 
-          updateTime()
+          updateTime(notify: false)
           let result = YOLOResult(
             orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
-            keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t2,
-            fps: 1 / self.t4, names: labels)
+            keypointsList: keypointsList, annotatedImage: annotatedImage, speed: self.t1,
+            names: labels)
           return result
         }
       }

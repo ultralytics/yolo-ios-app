@@ -33,8 +33,8 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     }
 
     self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
-    let start = Date()
     var semanticMask: SemanticMask?
+    self.t0 = CACurrentMediaTime()
 
     do {
       try requestHandler.perform([request])
@@ -45,9 +45,11 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
 
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask,
-      speed: Date().timeIntervalSince(start), names: labels)
+      speed: self.t1, names: labels)
     result.annotatedImage = drawYOLOSemanticSegmentation(
       ciImage: image, semanticMask: semanticMask?.maskImage)
+    updateTime(notify: false)
+    result.speed = self.t1
     return result
   }
 

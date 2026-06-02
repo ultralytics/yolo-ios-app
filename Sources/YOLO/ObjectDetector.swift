@@ -90,7 +90,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     let imageWidth = image.extent.width
     let imageHeight = image.extent.height
     self.inputSize = CGSize(width: imageWidth, height: imageHeight)
-    let start = Date()
+    self.t0 = CACurrentMediaTime()
 
     do {
       try requestHandler.perform([request])
@@ -98,10 +98,11 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     } catch {
       YOLOLog.error("Object detection failed: \(error)")
     }
-    let elapsed = Date().timeIntervalSince(start)
 
-    var result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: elapsed, names: labels)
+    var result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: self.t1, names: labels)
     let annotatedImage = drawYOLODetections(on: image, result: result)
+    updateTime(notify: false)
+    result.speed = self.t1
     result.annotatedImage = annotatedImage
 
     return result

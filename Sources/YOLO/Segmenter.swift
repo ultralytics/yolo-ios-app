@@ -26,14 +26,9 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
     let boxes = buildBoxes(from: limitedObjects)
 
-    // Update timing before capturing values to avoid one-frame lag.
-    self.updateTime()
-
     let capturedMasks = parsed.masks
     let capturedInputSize = self.inputSize
     let capturedModelInputSize = self.modelInputSize
-    let capturedT2 = self.t2
-    let capturedT4 = self.t4
     let capturedLabels = self.labels
     let capturedMaskCropRect = inputMaskCropRect(
       maskWidth: capturedMasks.shape[3].intValue,
@@ -48,17 +43,19 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           protos: capturedMasks,
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
-          cropRect: capturedMaskCropRect
-        ) as? (CGImage?, [[[Float]]])
+          cropRect: capturedMaskCropRect,
+          returnIndividualMasks: false
+        ) as? (CGImage?, [[[Float]]]?)
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
       }
+      self?.updateTime()
       let result = YOLOResult(
         orig_shape: capturedInputSize,
         boxes: boxes,
-        masks: Masks(masks: processed.1, combinedMask: processed.0),
-        speed: capturedT2, fps: 1 / capturedT4, names: capturedLabels)
+        masks: Masks(masks: processed.1 ?? [], combinedMask: processed.0),
+        speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels)
       self?.currentOnResultsListener?.on(result: result)
     }
   }
@@ -71,6 +68,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
     self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
     var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    self.t0 = CACurrentMediaTime()
 
     do {
       try requestHandler.perform([request])
@@ -93,13 +91,14 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         return YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
       }
 
-      updateTime()
+      let annotatedImage = drawYOLOSegmentationWithBoxes(
+        ciImage: image, boxes: boxes, maskImage: processed.0)
+      updateTime(notify: false)
       result = YOLOResult(
         orig_shape: inputSize, boxes: boxes,
         masks: Masks(masks: processed.1, combinedMask: processed.0),
-        annotatedImage: drawYOLOSegmentationWithBoxes(
-          ciImage: image, boxes: boxes, maskImage: processed.0),
-        speed: self.t2, fps: 1 / self.t4, names: labels)
+        annotatedImage: annotatedImage,
+        speed: self.t1, names: labels)
     } catch {
       YOLOLog.error("Segmentation failed: \(error)")
     }

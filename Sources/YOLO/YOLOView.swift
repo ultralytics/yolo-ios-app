@@ -57,6 +57,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func onPredict(result: YOLOResult) {
+    defer { self.videoCapture.predictor?.isUpdating = false }
+
     // Notify delegate of detection results
     delegate?.yoloView(self, didReceiveResult: result)
 
@@ -68,14 +70,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         ? result.masks?.combinedMask : result.semanticMask?.maskImage
       {
         guard let maskLayer = self.maskLayer else {
-          self.videoCapture.predictor?.isUpdating = false
           return
         }
         maskLayer.isHidden = false
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       }
-      self.videoCapture.predictor?.isUpdating = false
     } else if task == .classify {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)
     } else if task == .pose {

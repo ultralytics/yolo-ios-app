@@ -203,18 +203,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           iouThreshold: iou, confidenceThreshold: predictor.confidenceThreshold)
         predictor.detector = coreMLModel
         predictor.visionRequest = {
-          let request = VNCoreMLRequest(
-            model: coreMLModel,
-            completionHandler: {
-              [weak predictor] request, error in
-              guard let predictor = predictor else {
-                // The predictor was deallocated — do nothing
-                return
-              }
-              if isRealTime {
-                predictor.processObservations(for: request, error)
-              }
-            })
+          let request = VNCoreMLRequest(model: coreMLModel)
           request.imageCropAndScaleOption = predictor.imageCropAndScaleOption
           return request
         }()
@@ -267,11 +256,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       do {
         if let request = visionRequest {
           try handler.perform([request])
+          processObservations(for: request, nil)
+        } else {
+          isUpdating = false
         }
       } catch {
         YOLOLog.error("Vision request failed: \(error)")
+        isUpdating = false
       }
-      t1 = CACurrentMediaTime() - t0  // inference dt
 
       currentBuffer = nil
     }
@@ -476,14 +468,18 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   ///
   /// Call this once per processed frame after `t1` is set. Uses an EMA with `emaAlpha` weight on new samples and skips
   /// obvious outliers above `maxValidDt`.
-  func updateTime() {
+  func updateTime(notify: Bool = true) {
     let alpha = Self.emaAlpha
+    let now = CACurrentMediaTime()
+    self.t1 = now - self.t0
     if self.t1 < Self.maxValidDt {  // valid dt
       self.t2 = self.t1 * alpha + self.t2 * (1 - alpha)  // smoothed inference time
     }
-    self.t4 = (CACurrentMediaTime() - self.t3) * alpha + self.t4 * (1 - alpha)  // smoothed FPS dt
-    self.t3 = CACurrentMediaTime()
+    self.t4 = (now - self.t3) * alpha + self.t4 * (1 - alpha)  // smoothed FPS dt
+    self.t3 = now
 
-    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
+    if notify {
+      self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
+    }
   }
 }

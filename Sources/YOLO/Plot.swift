@@ -290,14 +290,16 @@ func generateCombinedMaskImage(
       ))
   }
 
-  for i in 0..<N {
-    let box = maskBoxes[i]
-    let startIdx = i * HW
-    for y in 0..<maskHeight {
-      let rowStart = startIdx + y * maskWidth
-      let insideY = y >= box.y1 && y < box.y2
-      for x in 0..<maskWidth where !insideY || x < box.x1 || x >= box.x2 {
-        combinedMask[rowStart + x] = 0
+  if returnIndividualMasks {
+    for i in 0..<N {
+      let box = maskBoxes[i]
+      let startIdx = i * HW
+      for y in 0..<maskHeight {
+        let rowStart = startIdx + y * maskWidth
+        let insideY = y >= box.y1 && y < box.y2
+        for x in 0..<maskWidth where !insideY || x < box.x1 || x >= box.x2 {
+          combinedMask[rowStart + x] = 0
+        }
       }
     }
   }

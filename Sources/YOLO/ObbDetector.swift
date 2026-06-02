@@ -19,7 +19,10 @@ import Vision
 public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    guard let prediction = firstFeatureArray(request) else { return }
+    guard let prediction = firstFeatureArray(request) else {
+      self.isUpdating = false
+      return
+    }
     let obbResults = buildResults(from: prediction)
     self.updateTime()
     self.currentOnResultsListener?.on(
@@ -34,6 +37,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
       return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
     self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
+    self.t0 = CACurrentMediaTime()
 
     do {
       try requestHandler.perform([request])
@@ -41,11 +45,12 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
         return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
       }
       let obbResults = buildResults(from: prediction)
-      updateTime()
+      let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
+      updateTime(notify: false)
       return YOLOResult(
         orig_shape: inputSize, boxes: [], obb: obbResults,
-        annotatedImage: drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults),
-        speed: self.t2, fps: 1 / self.t4, names: labels)
+        annotatedImage: annotatedImage,
+        speed: self.t1, names: labels)
     } catch {
       YOLOLog.error("OBB detection failed: \(error)")
     }

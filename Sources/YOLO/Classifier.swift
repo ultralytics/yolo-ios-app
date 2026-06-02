@@ -35,6 +35,7 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
 
     self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
+    self.t0 = CACurrentMediaTime()
     do {
       try requestHandler.perform([request])
       probs = extractProbs(from: request)
@@ -43,8 +44,10 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     }
 
     var result = YOLOResult(
-      orig_shape: inputSize, boxes: [], probs: probs, speed: t1, names: labels)
+      orig_shape: inputSize, boxes: [], probs: probs, speed: self.t1, names: labels)
     result.annotatedImage = drawYOLOClassifications(on: image, result: result)
+    updateTime(notify: false)
+    result.speed = self.t1
     return result
   }
 

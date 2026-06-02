@@ -41,6 +41,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.
   public var capturesOriginalImage = false
 
+  /// Whether realtime (camera) segmentation predictions should materialize per-instance masks
+  /// (`YOLOResult.masks.masks`) in addition to the combined display mask. Off by default to avoid the per-frame cost
+  /// when only the on-screen overlay is needed; consumers (e.g. the Flutter plugin) enable it when a live stream
+  /// explicitly requests individual masks.
+  public var capturesInstanceMasks = false
+
   /// The original camera image captured for the current prediction when `capturesOriginalImage` is enabled.
   var currentOriginalImage: UIImage?
 

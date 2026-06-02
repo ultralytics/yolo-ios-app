@@ -45,7 +45,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           inputHeight: capturedModelInputSize.height,
           cropRect: capturedMaskCropRect,
           returnIndividualMasks: false
-        ) as? (CGImage?, [[[Float]]]?)
+        )
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
         return
@@ -87,7 +87,8 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           maskHeight: parsed.masks.shape[2].intValue,
           inputSize: inputSize,
           modelInputSize: modelInputSize)
-      ) as? (CGImage?, [[[Float]]])
+      ),
+      let masks = processed.1
     else {
       return YOLOResult(
         orig_shape: inputSize, boxes: boxes, speed: finishTiming(notify: false), names: labels)
@@ -97,7 +98,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
       ciImage: image, boxes: boxes, maskImage: processed.0)
     return YOLOResult(
       orig_shape: inputSize, boxes: boxes,
-      masks: Masks(masks: processed.1, combinedMask: processed.0),
+      masks: Masks(masks: masks, combinedMask: processed.0),
       annotatedImage: annotatedImage,
       speed: finishTiming(notify: false), names: labels)
   }

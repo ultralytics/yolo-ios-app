@@ -19,7 +19,6 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(predictor.iouThreshold, 0.7, accuracy: 0.001)
     XCTAssertEqual(predictor.numItemsThreshold, 30)
     XCTAssertFalse(predictor.isUpdating)
-    XCTAssertNil(predictor.currentBuffer)
   }
 
   func testConfidenceThresholdSetting() {

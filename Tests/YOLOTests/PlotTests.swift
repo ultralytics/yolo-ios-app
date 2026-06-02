@@ -231,7 +231,7 @@ class PlotTests: XCTestCase {
       let result = generateCombinedMaskImage(
         detectedObjects: detected, protos: protos,
         inputWidth: W, inputHeight: H, threshold: 0.5,
-        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?),
+        cropRect: nil, returnIndividualMasks: true),
       let masks = result.1
     else {
       XCTFail("generateCombinedMaskImage returned nil or wrong type")
@@ -265,7 +265,7 @@ class PlotTests: XCTestCase {
       let result = generateCombinedMaskImage(
         detectedObjects: detected, protos: protos,
         inputWidth: W, inputHeight: H,
-        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?),
+        cropRect: nil, returnIndividualMasks: true),
       let masks = result.1
     else {
       XCTFail("generateCombinedMaskImage returned nil or wrong type")
@@ -288,7 +288,7 @@ class PlotTests: XCTestCase {
       generateCombinedMaskImage(
         detectedObjects: [], protos: protos,
         inputWidth: 4, inputHeight: 4, threshold: 0.5,
-        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?)
+        cropRect: nil, returnIndividualMasks: true)
     XCTAssertNotNil(result)
     XCTAssertNil(result?.0)
     XCTAssertEqual(result?.1?.count, 0)

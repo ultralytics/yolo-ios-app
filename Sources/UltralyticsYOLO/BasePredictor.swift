@@ -9,6 +9,7 @@
 //  Task-specific subclasses (detection, segmentation, semantic segmentation, classification, pose, OBB) override the
 //  prediction methods to handle their own output formats.
 
+import CoreImage
 import Foundation
 import UIKit
 import Vision
@@ -36,6 +37,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
+
+  /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.
+  public var capturesOriginalImage = false
+
+  /// The original camera image captured for the current prediction when `capturesOriginalImage` is enabled.
+  var currentOriginalImage: UIImage?
 
   /// Whether the model requires NMS post-processing (false for YOLO26 nms-free models).
   public private(set) var requiresNMS: Bool = true
@@ -86,30 +93,112 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     visionRequest = nil
   }
 
+  /// Returns a non-empty label for a class index, falling back to `"class <index>"` when metadata is missing/sparse.
+  public func labelName(for index: Int) -> String {
+    guard index >= 0, index < labels.count else { return "class \(index)" }
+    let label = labels[index].trimmingCharacters(in: .whitespacesAndNewlines)
+    return label.isEmpty ? "class \(index)" : label
+  }
+
+  /// Parses class labels from Core ML creator-defined metadata.
+  ///
+  /// Supports comma-separated `classes` metadata and dictionary/list-style `names` metadata. Sparse keyed `names`
+  /// preserve their numeric indexes by filling missing slots with empty strings so `labelName(for:)` can fall back
+  /// deterministically.
+  static func parseLabels(from userDefined: [String: String]) -> [String] {
+    if let labelsData = userDefined["classes"] {
+      return
+        labelsData
+        .components(separatedBy: ",")
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    if let labelsData = userDefined["names"] {
+      let cleanedInput =
+        labelsData
+        .replacingOccurrences(of: "{", with: "")
+        .replacingOccurrences(of: "}", with: "")
+        .replacingOccurrences(of: "[", with: "")
+        .replacingOccurrences(of: "]", with: "")
+
+      let parsedPairs = cleanedInput.components(separatedBy: ",").compactMap {
+        pair -> (Int?, String)? in
+        let components = pair.split(
+          separator: ":",
+          maxSplits: 1,
+          omittingEmptySubsequences: false)
+        if components.count >= 2 {
+          let keyText = String(components[0])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "\"", with: "")
+          let value = String(components[1])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "\"", with: "")
+          return (Int(keyText), value)
+        }
+
+        let value = String(pair)
+          .trimmingCharacters(in: .whitespacesAndNewlines)
+          .replacingOccurrences(of: "'", with: "")
+          .replacingOccurrences(of: "\"", with: "")
+        return value.isEmpty ? nil : (nil, value)
+      }
+
+      let keyedLabels = parsedPairs.compactMap { key, value -> (Int, String)? in
+        guard let key else { return nil }
+        return (key, value)
+      }
+      if !keyedLabels.isEmpty {
+        let maxKey = keyedLabels.map(\.0).max() ?? -1
+        var labels = Array(repeating: "", count: maxKey + 1)
+        for (key, value) in keyedLabels where key >= 0 {
+          labels[key] = value
+        }
+        return labels
+      }
+
+      return parsedPairs.map { $0.1 }
+    }
+
+    return []
+  }
+
   /// Dispatches `create` to the concrete predictor type for the given task, centralizing the task → predictor mapping.
   public static func create(
     for task: YOLOTask,
     modelURL: URL,
     isRealTime: Bool = false,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     switch task {
     case .classify:
-      Classifier.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+      Classifier.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .segment:
-      Segmenter.create(unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+      Segmenter.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .semantic:
       SemanticSegmenter.create(
-        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .pose:
       PoseEstimator.create(
-        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .obb:
       ObbDetector.create(
-        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .detect:
       ObjectDetector.create(
-        unwrappedModelURL: modelURL, isRealTime: isRealTime, completion: completion)
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     }
   }
 
@@ -125,10 +214,13 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     // Create an instance (synchronously, cheap)
     let predictor = Self.init()
+    predictor.numItemsThreshold = numItemsThreshold
 
     // Kick off the expensive loading on a background thread
     DispatchQueue.global(qos: .userInitiated).async {
@@ -137,11 +229,20 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-        // Pin inference to the Apple Neural Engine (plus CPU fallback), excluding the GPU. In a real-time camera app
-        // the GPU is busy compositing the preview and overlays; letting CoreML schedule conv/decode work on the GPU
-        // (.all) risks contention and frame-time jitter. .cpuAndNeuralEngine keeps the conv backbone on the Apple
-        // Neural Engine — the engine these models already prefer — and was verified on a physical iPhone.
-        config.computeUnits = .cpuAndNeuralEngine
+        // `useGpu` selects hardware-accelerated inference, NOT the GPU specifically. When true (default), Core ML runs on
+        // the Apple Neural Engine + CPU and the GPU is deliberately excluded: in a real-time camera app the GPU is busy
+        // compositing the preview/overlays, so scheduling conv/decode there (`.all`) risks contention and frame-time
+        // jitter. When false, inference is pinned to CPU only (most compatible; no ANE/GPU). This mirrors the Flutter
+        // plugin's public `useGpu` option, so the name is kept for cross-API consistency.
+        if useGpu {
+          if #available(iOS 16.0, *) {
+            config.computeUnits = .cpuAndNeuralEngine
+          } else {
+            config.computeUnits = .all
+          }
+        } else {
+          config.computeUnits = .cpuOnly
+        }
 
         let mlModel: MLModel
         if isCompiled {
@@ -151,43 +252,18 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           mlModel = try MLModel(contentsOf: compiledUrl, configuration: config)
         }
 
-        guard
-          let userDefined = mlModel.modelDescription
-            .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
-        else {
-          throw PredictorError.modelFileNotFound
-        }
+        let userDefined =
+          mlModel.modelDescription
+          .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
 
         // (2) Extract class labels
-        if let labelsData = userDefined["classes"] {
-          predictor.labels = labelsData.components(separatedBy: ",")
-        } else if let labelsData = userDefined["names"] {
-          // Parse JSON/dictionary-ish format
-          let cleanedInput =
-            labelsData
-            .replacingOccurrences(of: "{", with: "")
-            .replacingOccurrences(of: "}", with: "")
-            .replacingOccurrences(of: " ", with: "")
-          let keyValuePairs = cleanedInput.components(separatedBy: ",")
-          for pair in keyValuePairs {
-            let components = pair.components(separatedBy: ":")
-            if components.count >= 2 {
-              let extractedString = components[1].trimmingCharacters(in: .whitespaces)
-              let cleanedString = extractedString.replacingOccurrences(of: "'", with: "")
-              predictor.labels.append(cleanedString)
-            }
-          }
-        } else {
-          throw NSError(
-            domain: "BasePredictor", code: -1,
-            userInfo: [
-              NSLocalizedDescriptionKey: "Invalid metadata format"
-            ])
-        }
+        predictor.labels = userDefined.map(Self.parseLabels(from:)) ?? []
 
         // Detect NMS-free models (YOLO26 support)
-        if let nmsValue = userDefined["nms"] {
+        if let nmsValue = userDefined?["nms"] {
           predictor.requiresNMS = (nmsValue.lowercased() != "false")
+        } else if Self.hasNMSFreeDetectionOutput(in: mlModel) {
+          predictor.requiresNMS = false
         }
 
         // (3) Store model input size
@@ -237,6 +313,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
     currentOnResultsListener = onResultsListener
     currentOnInferenceTimeListener = onInferenceTime
+    currentOriginalImage = capturesOriginalImage ? makeUIImage(from: pixelBuffer) : nil
     guard let request = visionRequest else {
       isUpdating = false
       return
@@ -247,6 +324,16 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       return
     }
     processObservations(for: request, nil)
+  }
+
+  /// Shared rendering context. `CIContext` is expensive to build (it compiles Metal pipelines and allocates GPU
+  /// resources), so it must never be created per frame — original-image capture runs on every camera frame.
+  private static let ciContext = CIContext()
+
+  private func makeUIImage(from pixelBuffer: CVPixelBuffer) -> UIImage? {
+    let image = CIImage(cvPixelBuffer: pixelBuffer)
+    guard let cgImage = Self.ciContext.createCGImage(image, from: image.extent) else { return nil }
+    return UIImage(cgImage: cgImage)
   }
 
   func makeRequestHandler(for image: CIImage) -> VNImageRequestHandler {
@@ -287,12 +374,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The confidence threshold for filtering detection results (default: 0.25).
   ///
   /// Only detections with confidence scores above this threshold will be included in results.
-  var confidenceThreshold = 0.25
+  public internal(set) var confidenceThreshold = 0.25
 
   /// Sets the confidence threshold for filtering results.
   ///
   /// - Parameter confidence: The new confidence threshold value (0.0 to 1.0).
-  func setConfidenceThreshold(confidence: Double) {
+  public func setConfidenceThreshold(confidence: Double) {
     confidenceThreshold = confidence
     let iou = requiresNMS ? iouThreshold : 1.0
     detector?.featureProvider = ThresholdProvider(
@@ -300,12 +387,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
-  var iouThreshold = 0.7
+  public internal(set) var iouThreshold = 0.7
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///
   /// - Parameter iou: The new IoU threshold value (0.0 to 1.0).
-  func setIouThreshold(iou: Double) {
+  public func setIouThreshold(iou: Double) {
     iouThreshold = iou
     let effectiveIou = requiresNMS ? iouThreshold : 1.0
     detector?.featureProvider = ThresholdProvider(
@@ -313,12 +400,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// The maximum number of detections to return in results (default: 30).
-  var numItemsThreshold = 30
+  public internal(set) var numItemsThreshold = 30
 
   /// Sets the maximum number of detection items to include in results.
   ///
   /// - Parameter numItems: The maximum number of items to include.
-  func setNumItemsThreshold(numItems: Int) {
+  public func setNumItemsThreshold(numItems: Int) {
     numItemsThreshold = numItems
   }
 
@@ -370,6 +457,16 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
     YOLOLog.warning("Could not determine model input size")
     return (0, 0)
+  }
+
+  private static func hasNMSFreeDetectionOutput(in model: MLModel) -> Bool {
+    model.modelDescription.outputDescriptionsByName.values.contains { output in
+      guard let shape = output.multiArrayConstraint?.shape.map(\.intValue), shape.count == 3 else {
+        return false
+      }
+      // YOLO26 detect end2end exports use [1, max_det, 6] = xyxy, confidence, class id.
+      return shape[2] == 6 && shape[1] > 0 && shape[1] <= 1000
+    }
   }
 
   private func letterboxTransform(

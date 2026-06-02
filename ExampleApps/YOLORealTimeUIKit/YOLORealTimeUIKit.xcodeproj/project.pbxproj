@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		731432B22D361B6500919FF7 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432B12D361B6500919FF7 /* YOLO */; };
-		731432DD2D361C0F00919FF7 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432DC2D361C0F00919FF7 /* YOLO */; };
-		73A42F392D361CEC00330ED6 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73A42F382D361CEC00330ED6 /* YOLO */; };
+		731432B22D361B6500919FF7 /* UltralyticsYOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432B12D361B6500919FF7 /* UltralyticsYOLO */; };
+		731432DD2D361C0F00919FF7 /* UltralyticsYOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432DC2D361C0F00919FF7 /* UltralyticsYOLO */; };
+		73A42F392D361CEC00330ED6 /* UltralyticsYOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 73A42F382D361CEC00330ED6 /* UltralyticsYOLO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,9 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				731432B22D361B6500919FF7 /* YOLO in Frameworks */,
-				73A42F392D361CEC00330ED6 /* YOLO in Frameworks */,
-				731432DD2D361C0F00919FF7 /* YOLO in Frameworks */,
+				731432B22D361B6500919FF7 /* UltralyticsYOLO in Frameworks */,
+				73A42F392D361CEC00330ED6 /* UltralyticsYOLO in Frameworks */,
+				731432DD2D361C0F00919FF7 /* UltralyticsYOLO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,9 +134,9 @@
 			);
 			name = YOLORealTimeUIKit;
 			packageProductDependencies = (
-				731432B12D361B6500919FF7 /* YOLO */,
-				731432DC2D361C0F00919FF7 /* YOLO */,
-				73A42F382D361CEC00330ED6 /* YOLO */,
+				731432B12D361B6500919FF7 /* UltralyticsYOLO */,
+				731432DC2D361C0F00919FF7 /* UltralyticsYOLO */,
+				73A42F382D361CEC00330ED6 /* UltralyticsYOLO */,
 			);
 			productName = YOLORealTimeUIKit;
 			productReference = 73B0323E2D2E5CCE0003DB69 /* YOLORealTimeUIKit.app */;
@@ -597,17 +597,17 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		731432B12D361B6500919FF7 /* YOLO */ = {
+		731432B12D361B6500919FF7 /* UltralyticsYOLO */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = YOLO;
+			productName = UltralyticsYOLO;
 		};
-		731432DC2D361C0F00919FF7 /* YOLO */ = {
+		731432DC2D361C0F00919FF7 /* UltralyticsYOLO */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = YOLO;
+			productName = UltralyticsYOLO;
 		};
-		73A42F382D361CEC00330ED6 /* YOLO */ = {
+		73A42F382D361CEC00330ED6 /* UltralyticsYOLO */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = YOLO;
+			productName = UltralyticsYOLO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

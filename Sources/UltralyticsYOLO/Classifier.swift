@@ -21,9 +21,10 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
   override func processObservations(for request: VNRequest, _ error: Error?) {
     let probs = extractProbs(from: request)
     self.updateTime()
-    let result = YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)
+    result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
 
@@ -42,6 +43,9 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
       orig_shape: inputSize, boxes: [], probs: probs, speed: 0, names: labels)
     result.annotatedImage = drawYOLOClassifications(on: image, result: result)
     result.speed = finishTiming(notify: false)
+    if capturesOriginalImage {
+      result.originalImage = UIImage(ciImage: image)
+    }
     return result
   }
 
@@ -111,8 +115,8 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     }
     var topLabels = [String]()
     var topConfs = [Float]()
-    for j in 0..<k where topIdx[j] >= 0 && topIdx[j] < labels.count {
-      topLabels.append(labels[topIdx[j]])
+    for j in 0..<k where topIdx[j] >= 0 {
+      topLabels.append(labelName(for: topIdx[j]))
       topConfs.append(topVal[j])
     }
     return Probs(

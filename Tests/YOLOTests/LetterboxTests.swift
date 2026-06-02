@@ -3,7 +3,7 @@
 import CoreGraphics
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Verifies the model-input letterbox is robust across camera aspect ratios (16:9 and 4:3, portrait and landscape).
 ///

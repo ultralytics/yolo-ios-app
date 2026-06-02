@@ -10,7 +10,7 @@
 //  the YOLO model, set up a camera preview, and display detection results in real-time with bounding boxes and labels.
 
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 /// A view controller that demonstrates real-time object detection, segmentation, or other YOLO tasks using the UIKit
 /// framework.

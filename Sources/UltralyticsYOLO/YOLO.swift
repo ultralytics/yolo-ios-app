@@ -25,6 +25,7 @@ public final class YOLO: @unchecked Sendable {
   private var pendingNumItems: Int?
   private var pendingConfidence: Double?
   private var pendingIou: Double?
+  private var useGpu: Bool = true
 
   /// Whether the model has finished loading and is ready to run inference.
   ///
@@ -35,14 +36,24 @@ public final class YOLO: @unchecked Sendable {
   }
 
   /// Initializes YOLO from a remote model URL, downloading and caching it as needed.
-  public init(url: URL, task: YOLOTask, completion: @escaping (Result<YOLO, Error>) -> Void) {
+  public init(
+    url: URL,
+    task: YOLOTask,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
+    completion: @escaping (Result<YOLO, Error>) -> Void
+  ) {
+    self.useGpu = useGpu
+    self.pendingNumItems = numItemsThreshold
     modelDownloader = YOLOModelDownloader()
     modelDownloader?.download(from: url, task: task) { [weak self] result in
       guard let self = self else { return }
       self.modelDownloader = nil
       switch result {
       case .success(let modelPath):
-        self.loadModel(from: modelPath, task: task, completion: completion)
+        self.loadModel(
+          from: modelPath, task: task, useGpu: useGpu, numItemsThreshold: numItemsThreshold,
+          completion: completion)
       case .failure(let error):
         completion(.failure(error))
       }
@@ -50,20 +61,34 @@ public final class YOLO: @unchecked Sendable {
   }
 
   public init(
-    _ modelPathOrName: String, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)? = nil
+    _ modelPathOrName: String,
+    task: YOLOTask,
+    useGpu: Bool = true,
+    numItemsThreshold: Int = 30,
+    completion: ((Result<YOLO, Error>) -> Void)? = nil
   ) {
+    self.useGpu = useGpu
+    self.pendingNumItems = numItemsThreshold
     guard let modelURL = ModelPathResolver.resolve(modelPathOrName) else {
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
-    loadModel(from: modelURL, task: task, completion: completion)
+    loadModel(
+      from: modelURL, task: task, useGpu: useGpu, numItemsThreshold: numItemsThreshold,
+      completion: completion)
   }
 
   /// Creates the task-specific predictor for the given model URL and applies any pending thresholds.
   private func loadModel(
-    from modelURL: URL, task: YOLOTask, completion: ((Result<YOLO, Error>) -> Void)?
+    from modelURL: URL,
+    task: YOLOTask,
+    useGpu: Bool,
+    numItemsThreshold: Int,
+    completion: ((Result<YOLO, Error>) -> Void)?
   ) {
-    BasePredictor.create(for: task, modelURL: modelURL) { [weak self] result in
+    BasePredictor.create(
+      for: task, modelURL: modelURL, useGpu: useGpu, numItemsThreshold: numItemsThreshold
+    ) { [weak self] result in
       guard let self = self else { return }
       switch result {
       case .success(let predictor):
@@ -150,8 +175,12 @@ public final class YOLO: @unchecked Sendable {
       return run(CIImage(cgImage: cgImage).oriented(orientation))
     }
     let upright = uiImage.uprightForYOLO()
-    if let cgImage = upright.cgImage { return run(CIImage(cgImage: cgImage)) }
-    if let ciImage = upright.ciImage ?? CIImage(image: upright) { return run(ciImage) }
+    if let cgImage = upright.cgImage {
+      return run(CIImage(cgImage: cgImage))
+    }
+    if let ciImage = upright.ciImage ?? CIImage(image: upright) {
+      return run(ciImage)
+    }
     return .empty
   }
 

@@ -11,7 +11,7 @@ import SwiftUI
 import Testing
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 @testable import YOLOSingleImageSwiftUI
 
 /// Unit tests for the YOLO single image SwiftUI example application.

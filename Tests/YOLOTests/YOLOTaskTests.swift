@@ -2,7 +2,7 @@
 
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for YOLOTask enum
 class YOLOTaskTests: XCTestCase {

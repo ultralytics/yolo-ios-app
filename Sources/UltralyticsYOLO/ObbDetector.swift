@@ -25,10 +25,11 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     }
     let obbResults = buildResults(from: prediction)
     self.updateTime()
-    self.currentOnResultsListener?.on(
-      result: YOLOResult(
-        orig_shape: inputSize, boxes: [], obb: obbResults,
-        speed: self.t2, fps: 1 / self.t4, names: labels))
+    var result = YOLOResult(
+      orig_shape: inputSize, boxes: [], obb: obbResults,
+      speed: self.t2, fps: 1 / self.t4, names: labels)
+    result.originalImage = currentOriginalImage
+    self.currentOnResultsListener?.on(result: result)
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
@@ -45,10 +46,14 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     }
     let obbResults = buildResults(from: prediction)
     let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
-    return YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: [], obb: obbResults,
       annotatedImage: annotatedImage,
       speed: finishTiming(notify: false), names: labels)
+    if capturesOriginalImage {
+      result.originalImage = UIImage(ciImage: image)
+    }
+    return result
   }
 
   private func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
@@ -60,11 +65,10 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
       feature: prediction,
       confidenceThreshold: Float(self.confidenceThreshold),
       iouThreshold: Float(self.iouThreshold))
-    return nmsResults.prefix(self.numItemsThreshold).compactMap { result in
-      guard result.cls < labels.count else { return nil }
+    return nmsResults.prefix(self.numItemsThreshold).map { result in
       return OBBResult(
         box: inputOBB(fromModelOBB: result.box), confidence: result.score,
-        cls: labels[result.cls], index: result.cls)
+        cls: labelName(for: result.cls), index: result.cls)
     }
   }
 

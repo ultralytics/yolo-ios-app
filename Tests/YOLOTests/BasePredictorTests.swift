@@ -4,7 +4,7 @@ import CoreML
 import Vision
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for BasePredictor functionality
 class BasePredictorTests: XCTestCase {

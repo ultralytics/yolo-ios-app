@@ -3,7 +3,7 @@
 import CoreML
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for ThresholdProvider
 class ThresholdProviderTests: XCTestCase {

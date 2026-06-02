@@ -12,7 +12,7 @@
 ///
 /// Each case maps to a different predictor implementation and output shape. Pick the case that matches the model
 /// you are loading.
-public enum YOLOTask {
+public enum YOLOTask: Equatable {
   /// Object detection: rectangular bounding boxes with class labels and confidence scores.
   case detect
 
@@ -30,4 +30,34 @@ public enum YOLOTask {
 
   /// Image classification: top-k class predictions for the full image, with no localization.
   case classify
+
+  /// Parses task names from user/platform strings, defaulting to `.detect` for unknown values.
+  ///
+  /// Accepts the canonical case names plus common bridge/model aliases such as `"detection"`, `"segmentation"`,
+  /// `"classification"`, and `"oriented-bounding-box"`.
+  public static func fromString(_ value: String) -> YOLOTask {
+    let normalized =
+      value
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+      .replacingOccurrences(of: "_", with: "-")
+      .replacingOccurrences(of: " ", with: "-")
+
+    switch normalized {
+    case "segment", "seg", "segmentation", "instance-segment", "instance-segmentation":
+      return .segment
+    case "semantic", "semantic-segment", "semantic-segmentation":
+      return .semantic
+    case "classify", "classification", "class", "cls":
+      return .classify
+    case "pose", "pose-estimation", "keypoint", "keypoints":
+      return .pose
+    case "obb", "oriented-bounding-box", "oriented-box", "rotated-box":
+      return .obb
+    case "detect", "detection", "object-detection":
+      return .detect
+    default:
+      return .detect
+    }
+  }
 }

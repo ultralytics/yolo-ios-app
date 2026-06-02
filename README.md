@@ -66,7 +66,7 @@ This repository provides a comprehensive solution for running YOLO models on App
 
 The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all six official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
-### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO)
+### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
 A lightweight [Swift](https://developer.apple.com/swift/) package designed for iOS and iPadOS. It simplifies the integration and usage of YOLO-based models like YOLO26 within your own applications. Integrate YOLO models effortlessly with minimal code using [SwiftUI](https://developer.apple.com/xcode/swiftui/):
 
@@ -153,8 +153,22 @@ New to YOLO on mobile or want to quickly test your custom model? Start with the 
 
 Ready to integrate YOLO into your own project? Explore the Swift Package and example applications.
 
-- [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/YOLO): Integrate YOLO capabilities into your Swift app.
+- [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO): Integrate YOLO capabilities into your Swift app.
 - [**Example Apps**](https://github.com/ultralytics/yolo-ios-app/tree/main/ExampleApps): See practical implementations using the YOLO Swift Package.
+
+Add the `UltralyticsYOLO` package to your app with Swift Package Manager:
+
+```swift
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.0")
+```
+
+Or with CocoaPods:
+
+```ruby
+pod 'UltralyticsYOLO', '~> 8.9'
+```
+
+Then `import UltralyticsYOLO` and use the `YOLO` class — see the [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO) for full usage. The same `UltralyticsYOLO` package powers both this native iOS app and the [Ultralytics YOLO Flutter plugin](https://github.com/ultralytics/yolo-flutter-app), keeping one source of truth across platforms.
 
 ## ✨ Key Highlights
 

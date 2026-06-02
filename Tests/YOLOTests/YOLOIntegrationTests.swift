@@ -2,7 +2,7 @@
 
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Integration tests combining multiple components
 class YOLOIntegrationTests: XCTestCase {

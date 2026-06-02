@@ -5,25 +5,25 @@
 import PackageDescription
 
 let package = Package(
-  name: "YOLO",
+  name: "UltralyticsYOLO",
   platforms: [
-    .iOS(.v16)
+    .iOS(.v13)
   ],
   products: [
     // Products define the executables and libraries a package produces, making them visible to other packages.
     .library(
-      name: "YOLO",
-      targets: ["YOLO"])
+      name: "UltralyticsYOLO",
+      targets: ["UltralyticsYOLO"])
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
     .target(
-      name: "YOLO",
+      name: "UltralyticsYOLO",
       exclude: ["README.md"]),
     .testTarget(
       name: "YOLOTests",
-      dependencies: ["YOLO"],
+      dependencies: ["UltralyticsYOLO"],
       exclude: ["README.md"],
       resources: [
         .copy("Resources/yolo26n.mlpackage"),

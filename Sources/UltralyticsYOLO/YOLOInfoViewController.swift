@@ -8,6 +8,10 @@ import SafariServices
 import UIKit
 
 final class YOLOInfoViewController: UIViewController {
+  private final class ResourceLinkButton: UIButton {
+    var url: URL?
+  }
+
   private struct Resource {
     let title: String
     let subtitle: String
@@ -47,11 +51,16 @@ final class YOLOInfoViewController: UIViewController {
 
     title = "About YOLO"
     view.backgroundColor = .systemBackground
-    navigationItem.rightBarButtonItem = UIBarButtonItem(
-      systemItem: .done,
-      primaryAction: UIAction { [weak self] _ in
-        self?.dismiss(animated: true)
-      })
+    if #available(iOS 14.0, *) {
+      navigationItem.rightBarButtonItem = UIBarButtonItem(
+        systemItem: .done,
+        primaryAction: UIAction { [weak self] _ in
+          self?.dismiss(animated: true)
+        })
+    } else {
+      navigationItem.rightBarButtonItem = UIBarButtonItem(
+        barButtonSystemItem: .done, target: self, action: #selector(doneTapped))
+    }
 
     let scrollView = UIScrollView()
     scrollView.alwaysBounceVertical = true
@@ -148,10 +157,17 @@ final class YOLOInfoViewController: UIViewController {
   }
 
   private func resourceButton(for resource: Resource) -> UIButton {
-    let action = UIAction { [weak self] _ in
-      self?.open(resource.url)
+    let button = ResourceLinkButton(type: .system)
+    button.url = resource.url
+    if #available(iOS 14.0, *) {
+      button.addAction(
+        UIAction { [weak self] _ in
+          self?.open(resource.url)
+        },
+        for: .touchUpInside)
+    } else {
+      button.addTarget(self, action: #selector(resourceTapped(_:)), for: .touchUpInside)
     }
-    let button = UIButton(type: .system, primaryAction: action)
     button.backgroundColor = .secondarySystemGroupedBackground
     button.layer.cornerRadius = 8
     button.accessibilityHint = "Opens \(resource.title)"
@@ -194,6 +210,15 @@ final class YOLOInfoViewController: UIViewController {
     ])
 
     return button
+  }
+
+  @objc private func doneTapped() {
+    dismiss(animated: true)
+  }
+
+  @objc private func resourceTapped(_ sender: UIButton) {
+    guard let url = (sender as? ResourceLinkButton)?.url else { return }
+    open(url)
   }
 
   private func label(_ text: String, style: UIFont.TextStyle) -> UILabel {

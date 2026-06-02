@@ -4,7 +4,7 @@ import CoreGraphics
 import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 
 /// Minimal tests for YOLOResult data structures
 class YOLOResultTests: XCTestCase {

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		731432DA2D361BC300919FF7 /* YOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432D92D361BC300919FF7 /* YOLO */; };
+		731432DA2D361BC300919FF7 /* UltralyticsYOLO in Frameworks */ = {isa = PBXBuildFile; productRef = 731432D92D361BC300919FF7 /* UltralyticsYOLO */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,7 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				731432DA2D361BC300919FF7 /* YOLO in Frameworks */,
+				731432DA2D361BC300919FF7 /* UltralyticsYOLO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,7 +117,7 @@
 			);
 			name = YOLOSingleImageSwiftUI;
 			packageProductDependencies = (
-				731432D92D361BC300919FF7 /* YOLO */,
+				731432D92D361BC300919FF7 /* UltralyticsYOLO */,
 			);
 			productName = YOLOSingleImageSwiftUI;
 			productReference = 73B032B52D2E5F1F0003DB69 /* YOLOSingleImageSwiftUI.app */;
@@ -578,9 +578,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		731432D92D361BC300919FF7 /* YOLO */ = {
+		731432D92D361BC300919FF7 /* UltralyticsYOLO */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = YOLO;
+			productName = UltralyticsYOLO;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

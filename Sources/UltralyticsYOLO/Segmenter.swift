@@ -30,6 +30,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let capturedInputSize = self.inputSize
     let capturedModelInputSize = self.modelInputSize
     let capturedLabels = self.labels
+    let capturedOriginalImage = self.currentOriginalImage
     let capturedMaskCropRect = inputMaskCropRect(
       maskWidth: capturedMasks.shape[3].intValue,
       maskHeight: capturedMasks.shape[2].intValue,
@@ -51,11 +52,12 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         return
       }
       self?.updateTime()
-      let result = YOLOResult(
+      var result = YOLOResult(
         orig_shape: capturedInputSize,
         boxes: boxes,
         masks: Masks(masks: processed.1 ?? [], combinedMask: processed.0),
         speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels)
+      result.originalImage = capturedOriginalImage
       self?.currentOnResultsListener?.on(result: result)
     }
   }
@@ -66,13 +68,13 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     }
 
     let requestHandler = makeRequestHandler(for: image)
-    var result = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    var emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
 
     guard perform(request, with: requestHandler, errorMessage: "Segmentation failed"),
       let parsed = parseSegmentationRequest(request)
     else {
-      result.speed = finishTiming(notify: false)
-      return result
+      emptyResult.speed = finishTiming(notify: false)
+      return emptyResult
     }
 
     let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
@@ -96,11 +98,15 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
     let annotatedImage = drawYOLOSegmentationWithBoxes(
       ciImage: image, boxes: boxes, maskImage: processed.0)
-    return YOLOResult(
+    var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes,
       masks: Masks(masks: masks, combinedMask: processed.0),
       annotatedImage: annotatedImage,
       speed: finishTiming(notify: false), names: labels)
+    if capturesOriginalImage {
+      result.originalImage = UIImage(ciImage: image)
+    }
+    return result
   }
 
   /// Pulls the `(masks, detectedObjects)` tuple out of a completed Vision request. The shape-4 output is the
@@ -130,12 +136,11 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     var boxes: [Box] = []
     boxes.reserveCapacity(objects.count)
     for (box, classIndex, confidence, _) in objects {
-      guard classIndex < labels.count else { continue }
       let xywh = inputRect(fromModelRect: box)
       let rect = normalizedRect(fromInputRect: xywh)
       boxes.append(
         Box(
-          index: classIndex, cls: labels[classIndex], conf: confidence,
+          index: classIndex, cls: labelName(for: classIndex), conf: confidence,
           xywh: xywh, xywhn: rect))
     }
     return boxes

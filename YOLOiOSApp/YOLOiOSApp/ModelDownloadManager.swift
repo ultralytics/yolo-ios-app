@@ -11,7 +11,7 @@
 
 import CoreML
 import Foundation
-import YOLO
+import UltralyticsYOLO
 
 /// URL of the app's Documents directory; used for storing compiled models and download archives.
 private let documentsDirectory = FileManager.default.urls(

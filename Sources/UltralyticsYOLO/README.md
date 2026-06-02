@@ -49,26 +49,36 @@ https://github.com/ultralytics/yolo-ios-app.git
 
 Select the repository when it appears, then choose the `main` branch or the latest version tag.
 
-In the "Choose Package Products for yolo-ios-app" dialog, add the `YOLO` product to your app target and click **Add Package**.
+In the "Choose Package Products for yolo-ios-app" dialog, add the `UltralyticsYOLO` product to your app target and click **Add Package**.
 
 Alternatively, declare the dependency in your own `Package.swift`:
 
 ```swift
 // In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", branch: "main") // Or specify a version tag
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.0")
 ]
 
 // In your target's dependencies
 .target(
     name: "YourTarget",
     dependencies: [
-        .product(name: "YOLO", package: "yolo-ios-app") // Use the package name defined above
+        .product(name: "UltralyticsYOLO", package: "yolo-ios-app") // Use the package name defined above
     ]
 )
 ```
 
-Once added, the YOLO Swift Package will be automatically integrated into your project.
+Once added, the package is integrated automatically.
+
+### CocoaPods
+
+`UltralyticsYOLO` is also published to [CocoaPods](https://cocoapods.org/) trunk. Add it to your `Podfile`:
+
+```ruby
+pod 'UltralyticsYOLO', '~> 8.9'
+```
+
+Then run `pod install`.
 
 ## 💡 Usage
 
@@ -79,7 +89,7 @@ The YOLO Swift Package primarily provides two main components: the **`YOLO` clas
 Start by importing the package in your Swift files:
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 ```
 
 ### YOLO Class (Inference)
@@ -89,7 +99,7 @@ Use the `YOLO` class for performing inference on static images ([`UIImage`](http
 Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format. You can load an official model from a remote URL, point to your own local `.mlpackage` or `.mlmodelc`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 import UIKit
 
 // --- Initialization ---
@@ -149,7 +159,7 @@ The package provides convenient SwiftUI (`YOLOCamera`) and UIKit (`YOLOView`) co
 #### SwiftUI Example
 
 ```swift
-import YOLO
+import UltralyticsYOLO
 import SwiftUI
 
 struct CameraView: View {
@@ -189,7 +199,7 @@ struct CameraViewWithBundledModel: View {
 ```swift
 import AVFoundation
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 class CameraViewController: UIViewController {
     var yoloView: YOLOView?

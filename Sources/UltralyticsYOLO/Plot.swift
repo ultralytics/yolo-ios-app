@@ -458,6 +458,7 @@ func drawKeypoints(
   boundingBoxes: [Box],
   on layer: CALayer,
   imageViewSize: CGSize,
+  originalImageSize: CGSize? = nil,
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true
 ) {
@@ -624,7 +625,8 @@ public func drawYOLOPoseWithBoxes(
   confsList: [[Float]],
   boundingBoxes: [Box],
   confThreshold: Float = 0.25,
-  drawSkeleton: Bool = true
+  drawSkeleton: Bool = true,
+  originalImageSize: CGSize? = nil
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     for box in boundingBoxes {
@@ -638,6 +640,7 @@ public func drawYOLOPoseWithBoxes(
       boundingBoxes: boundingBoxes,
       on: poseLayer,
       imageViewSize: size,
+      originalImageSize: originalImageSize ?? size,
       confThreshold: confThreshold,
       drawSkeleton: drawSkeleton)
     poseLayer.render(in: ctx)

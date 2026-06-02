@@ -11,7 +11,7 @@ import Testing
 import UIKit
 import XCTest
 
-@testable import YOLO
+@testable import UltralyticsYOLO
 @testable import YOLOSingleImageUIKit
 
 /// Unit tests for the YOLO single image UIKit example application.

@@ -11,7 +11,7 @@
 // - Stop the iPhone camera while the external display is active
 
 import UIKit
-import YOLO
+import UltralyticsYOLO
 
 // MARK: - External Display Support
 extension ViewController {

@@ -85,7 +85,8 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         speed: finishTiming(notify: false), names: labels)
       return result
     }
-    return YOLOResult(orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)
+    return YOLOResult(
+      orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)
   }
 
   func PostProcessPose(

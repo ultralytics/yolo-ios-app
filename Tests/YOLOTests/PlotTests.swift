@@ -249,6 +249,38 @@ class PlotTests: XCTestCase {
     }
   }
 
+  func testGenerateCombinedMaskImageCropsPerInstanceMasksToDetectionBox() {
+    let C = 1
+    let H = 4
+    let W = 4
+    let protos = try! MLMultiArray(shape: [1, C, H, W] as [NSNumber], dataType: .float32)
+    let pPtr = protos.dataPointer.assumingMemoryBound(to: Float.self)
+    for i in 0..<(H * W) { pPtr[i] = 1 }
+
+    let detected: [(CGRect, Int, Float, [Float])] = [
+      (CGRect(x: 1, y: 1, width: 2, height: 2), 0, 0.9, [1])
+    ]
+
+    guard
+      let result = generateCombinedMaskImage(
+        detectedObjects: detected, protos: protos,
+        inputWidth: W, inputHeight: H,
+        cropRect: nil, returnIndividualMasks: true) as? (CGImage?, [[[Float]]]?),
+      let masks = result.1
+    else {
+      XCTFail("generateCombinedMaskImage returned nil or wrong type")
+      return
+    }
+
+    XCTAssertEqual(masks.count, 1)
+    for y in 0..<H {
+      for x in 0..<W {
+        let expected: Float = (1..<3).contains(x) && (1..<3).contains(y) ? 1 : 0
+        XCTAssertEqual(masks[0][y][x], expected, accuracy: 1e-4)
+      }
+    }
+  }
+
   func testGenerateCombinedMaskImageEmptyDetectionsReturnsGracefully() {
     // Zero detections must not crash on the unsafe-buffer paths; it returns no image and empty masks.
     let protos = try! MLMultiArray(shape: [1, 2, 4, 4] as [NSNumber], dataType: .float32)

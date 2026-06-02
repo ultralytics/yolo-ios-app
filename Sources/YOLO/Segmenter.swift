@@ -48,7 +48,6 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           protos: capturedMasks,
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
-          threshold: 0.5,
           cropRect: capturedMaskCropRect
         ) as? (CGImage?, [[[Float]]])
       else {
@@ -84,7 +83,6 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         let processed = generateCombinedMaskImage(
           detectedObjects: limitedObjects, protos: parsed.masks,
           inputWidth: self.modelInputSize.width, inputHeight: self.modelInputSize.height,
-          threshold: 0.5,
           cropRect: inputMaskCropRect(
             maskWidth: parsed.masks.shape[3].intValue,
             maskHeight: parsed.masks.shape[2].intValue,

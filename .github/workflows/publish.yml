@@ -111,6 +111,27 @@ jobs:
           ultralytics-actions-summarize-release
           uv cache prune --ci
 
+  pod:
+    needs: [check, release]
+    if: needs.check.outputs.new_version == 'true' && (github.event_name == 'push' || inputs.release == true)
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_branch || 'main' }}
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+      # Publishes the UltralyticsYOLO pod from the v{MARKETING_VERSION} tag created by the release job above, so the
+      # Flutter plugin's CocoaPods consumers resolve it from trunk. Requires the COCOAPODS_TRUNK_TOKEN repo secret.
+      - name: Push UltralyticsYOLO to CocoaPods trunk
+        env:
+          COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+        run: pod trunk push UltralyticsYOLO.podspec --allow-warnings
+
   testflight:
     needs: check
     if: github.event_name == 'push' || inputs.testflight == true

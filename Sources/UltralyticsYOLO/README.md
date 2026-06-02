@@ -49,14 +49,14 @@ https://github.com/ultralytics/yolo-ios-app.git
 
 Select the repository when it appears, then choose the `main` branch or the latest version tag.
 
-In the "Choose Package Products for yolo-ios-app" dialog, add the `YOLO` product to your app target and click **Add Package**.
+In the "Choose Package Products for yolo-ios-app" dialog, add the `UltralyticsYOLO` product to your app target and click **Add Package**.
 
 Alternatively, declare the dependency in your own `Package.swift`:
 
 ```swift
 // In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", branch: "main") // Or specify a version tag
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.0")
 ]
 
 // In your target's dependencies
@@ -68,7 +68,17 @@ dependencies: [
 )
 ```
 
-Once added, the YOLO Swift Package will be automatically integrated into your project.
+Once added, the package is integrated automatically.
+
+### CocoaPods
+
+`UltralyticsYOLO` is also published to [CocoaPods](https://cocoapods.org/) trunk. Add it to your `Podfile`:
+
+```ruby
+pod 'UltralyticsYOLO', '~> 8.9'
+```
+
+Then run `pod install`.
 
 ## 💡 Usage
 

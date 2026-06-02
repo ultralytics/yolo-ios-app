@@ -110,6 +110,7 @@ jobs:
           files: ./info.lcov
           slug: ultralytics/yolo-ios-app
           fail_ci_if_error: false
+          handle_no_reports_found: true
 
   periphery:
     runs-on: macos-26

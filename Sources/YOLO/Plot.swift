@@ -196,7 +196,7 @@ func generateCombinedMaskImage(
   protos: MLMultiArray,  // shape: [1, C, H, W]
   inputWidth: Int,
   inputHeight: Int,
-  threshold: Float = 0.5,
+  threshold: Float = 0.0,
   cropRect: CGRect? = nil,
   returnIndividualMasks: Bool = true
 ) -> (CGImage?, [[[Float]]]?)? {
@@ -272,21 +272,45 @@ func generateCombinedMaskImage(
   let outputHeight = Int(outputRect.height)
   guard outputWidth > 0, outputHeight > 0 else { return nil }
 
+  // Match Ultralytics process_mask(): crop each mask to its detection box before thresholding
+  // or returning per-instance data.
+  var maskBoxes: [(x1: Int, y1: Int, x2: Int, y2: Int)] = []
+  maskBoxes.reserveCapacity(N)
+  for (box, _, _, _) in detectedObjects {
+    let x1 = Int((Float(box.minX) * scaleX).rounded())
+    let y1 = Int((Float(box.minY) * scaleY).rounded())
+    let x2 = Int((Float(box.maxX) * scaleX).rounded())
+    let y2 = Int((Float(box.maxY) * scaleY).rounded())
+    maskBoxes.append(
+      (
+        x1: max(0, min(x1, maskWidth)),
+        y1: max(0, min(y1, maskHeight)),
+        x2: max(0, min(x2, maskWidth)),
+        y2: max(0, min(y2, maskHeight))
+      ))
+  }
+
+  if returnIndividualMasks {
+    for i in 0..<N {
+      let box = maskBoxes[i]
+      let startIdx = i * HW
+      for y in 0..<maskHeight {
+        let rowStart = startIdx + y * maskWidth
+        let insideY = y >= box.y1 && y < box.y2
+        for x in 0..<maskWidth where !insideY || x < box.x1 || x >= box.x2 {
+          combinedMask[rowStart + x] = 0
+        }
+      }
+    }
+  }
+
   // 8) Per-instance probability maps are built later (section 10) with bulk row copies.
   var probabilityMasks: [[[Float]]]? = nil
 
   // 9) Compose according to sort order
-  for (originalIndex, box, classID, _) in sortedObjects {
-    // Convert boundingBox to mask coordinate system
-    let minX = Int(Float(box.minX) * scaleX)
-    let minY = Int(Float(box.minY) * scaleY)
-    let maxX = Int(Float(box.maxX) * scaleX)
-    let maxY = Int(Float(box.maxY) * scaleY)
-
-    let boxX1 = max(0, min(minX, maskWidth - 1))
-    let boxX2 = max(0, min(maxX, maskWidth - 1))
-    let boxY1 = max(0, min(minY, maskHeight - 1))
-    let boxY2 = max(0, min(maxY, maskHeight - 1))
+  for (originalIndex, _, classID, _) in sortedObjects {
+    let maskBox = maskBoxes[originalIndex]
+    guard maskBox.x1 < maskBox.x2, maskBox.y1 < maskBox.y2 else { continue }
 
     let startIdx = originalIndex * HW
 
@@ -300,8 +324,8 @@ func generateCombinedMaskImage(
     let b = UInt8(color.blue)
 
     // Pixel loop: box range only
-    for y in boxY1...boxY2 {
-      for x in boxX1...boxX2 {
+    for y in maskBox.y1..<maskBox.y2 {
+      for x in maskBox.x1..<maskBox.x2 {
         let px = y * maskWidth + x
         let maskVal = combinedMask[startIdx + px]
         if maskVal > threshold {

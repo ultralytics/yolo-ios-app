@@ -19,7 +19,10 @@ import Vision
 public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
-    guard let prediction = firstFeatureArray(request) else { return }
+    guard let prediction = firstFeatureArray(request) else {
+      self.isUpdating = false
+      return
+    }
     let obbResults = buildResults(from: prediction)
     self.updateTime()
     self.currentOnResultsListener?.on(
@@ -29,27 +32,23 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
   }
 
   public override func predictOnImage(image: CIImage) -> YOLOResult {
-    let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
     guard let request = visionRequest else {
       return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
     }
-    self.inputSize = CGSize(width: image.extent.width, height: image.extent.height)
+    let requestHandler = makeRequestHandler(for: image)
 
-    do {
-      try requestHandler.perform([request])
-      guard let prediction = firstFeatureArray(request) else {
-        return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
-      }
-      let obbResults = buildResults(from: prediction)
-      updateTime()
+    guard perform(request, with: requestHandler, errorMessage: "OBB detection failed"),
+      let prediction = firstFeatureArray(request)
+    else {
       return YOLOResult(
-        orig_shape: inputSize, boxes: [], obb: obbResults,
-        annotatedImage: drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults),
-        speed: self.t2, fps: 1 / self.t4, names: labels)
-    } catch {
-      YOLOLog.error("OBB detection failed: \(error)")
+        orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)
     }
-    return YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
+    let obbResults = buildResults(from: prediction)
+    let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
+    return YOLOResult(
+      orig_shape: inputSize, boxes: [], obb: obbResults,
+      annotatedImage: annotatedImage,
+      speed: finishTiming(notify: false), names: labels)
   }
 
   private func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {

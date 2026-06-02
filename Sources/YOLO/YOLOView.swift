@@ -68,14 +68,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         ? result.masks?.combinedMask : result.semanticMask?.maskImage
       {
         guard let maskLayer = self.maskLayer else {
-          self.videoCapture.predictor?.isUpdating = false
           return
         }
         maskLayer.isHidden = false
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       }
-      self.videoCapture.predictor?.isUpdating = false
     } else if task == .classify {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)
     } else if task == .pose {

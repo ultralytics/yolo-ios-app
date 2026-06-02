@@ -396,9 +396,11 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
   private func predictOnFrame(sampleBuffer: CMSampleBuffer) {
     guard let predictor = predictor, currentBuffer == nil,
+      !predictor.isUpdating,
       let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
     else { return }
     currentBuffer = pixelBuffer
+    self.predictor?.isUpdating = true
     if !frameSizeCaptured {
       let w = CGFloat(CVPixelBufferGetWidth(pixelBuffer))
       let h = CGFloat(CVPixelBufferGetHeight(pixelBuffer))
@@ -493,6 +495,7 @@ extension VideoCapture: ResultsListener, InferenceTimeListener {
 
   public func on(result: YOLOResult) {
     DispatchQueue.main.async { [weak self] in
+      defer { self?.predictor?.isUpdating = false }
       self?.delegate?.onPredict(result: result)
     }
   }

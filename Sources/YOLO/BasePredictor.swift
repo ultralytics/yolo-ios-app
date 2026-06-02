@@ -107,13 +107,15 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// deterministically.
   static func parseLabels(from userDefined: [String: String]) -> [String] {
     if let labelsData = userDefined["classes"] {
-      return labelsData
+      return
+        labelsData
         .components(separatedBy: ",")
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 
     if let labelsData = userDefined["names"] {
-      let cleanedInput = labelsData
+      let cleanedInput =
+        labelsData
         .replacingOccurrences(of: "{", with: "")
         .replacingOccurrences(of: "}", with: "")
         .replacingOccurrences(of: "[", with: "")
@@ -248,7 +250,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           mlModel = try MLModel(contentsOf: compiledUrl, configuration: config)
         }
 
-        let userDefined = mlModel.modelDescription
+        let userDefined =
+          mlModel.modelDescription
           .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
 
         // (2) Extract class labels

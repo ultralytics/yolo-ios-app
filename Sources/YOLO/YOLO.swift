@@ -181,7 +181,8 @@ public final class YOLO: @unchecked Sendable {
     // pixels. Build the CIImage from the backing CGImage and re-apply the orientation.
     if let cgImage = uiImage.cgImage {
       let orientation = CGImagePropertyOrientation(uiImage.imageOrientation)
-      return run(CIImage(cgImage: cgImage).oriented(orientation), returnAnnotatedImage: returnAnnotatedImage)
+      return run(
+        CIImage(cgImage: cgImage).oriented(orientation), returnAnnotatedImage: returnAnnotatedImage)
     }
     let upright = uiImage.uprightForYOLO()
     if let cgImage = upright.cgImage {

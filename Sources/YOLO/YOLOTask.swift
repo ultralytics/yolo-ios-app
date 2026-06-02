@@ -36,7 +36,8 @@ public enum YOLOTask: Equatable {
   /// Accepts the canonical case names plus common bridge/model aliases such as `"detection"`, `"segmentation"`,
   /// `"classification"`, and `"oriented-bounding-box"`.
   public static func fromString(_ value: String) -> YOLOTask {
-    let normalized = value
+    let normalized =
+      value
       .trimmingCharacters(in: .whitespacesAndNewlines)
       .lowercased()
       .replacingOccurrences(of: "_", with: "-")

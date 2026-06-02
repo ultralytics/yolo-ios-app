@@ -112,7 +112,8 @@ final class YOLOSSOTMergeTests: XCTestCase {
     XCTAssertEqual(probs.top1, "cat")
     XCTAssertEqual(probs.top5, ["cat", "dog"])
 
-    var result = YOLOResult(orig_shape: CGSize(width: 10, height: 20), boxes: [], speed: 0, names: [])
+    var result = YOLOResult(
+      orig_shape: CGSize(width: 10, height: 20), boxes: [], speed: 0, names: [])
     result.originalImage = UIImage()
     XCTAssertNotNil(result.originalImage)
   }

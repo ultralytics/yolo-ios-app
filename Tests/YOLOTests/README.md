@@ -91,7 +91,7 @@ If you do not use `scripts/download-models.sh`, move or copy the manually acquir
 Tests/YOLOTests/Resources/
 ```
 
-Ensure the filenames match exactly those listed in step 2.
+Ensure the filenames match exactly those listed in step 3.
 
 ## ▶️ Running the Tests
 
@@ -111,7 +111,7 @@ From the repository root, run:
 
 ```bash
 xcodebuild \
-  -scheme YOLO \
+  -scheme UltralyticsYOLO \
   -sdk iphonesimulator \
   -destination "platform=iOS Simulator,name=iPhone 16" \
   clean build test
@@ -134,7 +134,7 @@ If you receive an error message indicating that a model file could not be found:
 If tests fail or you encounter other problems:
 
 1.  **Xcode Version:** Ensure your installed Xcode version supports Swift 5.10 and an iOS 16 simulator runtime.
-2.  **iOS Target:** The package requires [iOS](https://www.apple.com/os/ios/) 16.0 or later. Make sure your testing environment (simulator or device) meets this requirement.
+2.  **iOS Target:** The package's minimum deployment target is [iOS](https://www.apple.com/os/ios/) 13.0, and CI validates the test suite on an iOS 16 simulator (`IPHONEOS_DEPLOYMENT_TARGET=16.0`). Make sure your testing environment (simulator or device) runs iOS 16.0 or later for parity with CI.
 3.  **Framework Availability:** Confirm that the [Core ML](https://developer.apple.com/documentation/coreml) and [Vision frameworks](https://developer.apple.com/documentation/vision) are available and correctly linked in your build settings.
 4.  **Consult Logs:** Examine the detailed test logs in Xcode or the terminal output for specific error messages that can help pinpoint the issue.
 5.  **Check Ultralytics Docs:** Refer to the [Ultralytics documentation](https://docs.ultralytics.com/) or the [FAQ section](https://docs.ultralytics.com/help/FAQ) for potential solutions and common issues. You might also find relevant discussions on the [Ultralytics Community Forums](https://community.ultralytics.com/).

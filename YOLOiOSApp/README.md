@@ -10,7 +10,7 @@
 The Ultralytics YOLO iOS App makes it easy to experience the power of [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) object detection models directly on your Apple device. Explore real-time detection capabilities with various models, bringing state-of-the-art [computer vision](https://www.ultralytics.com/glossary/computer-vision-cv) to your fingertips.
 
 > [!NOTE]
-> **Zero third-party dependencies.** Both the app and the `YOLO` Swift package are built entirely on Apple's first-party frameworks — there are no external Swift packages to resolve, vet, or license. Even on-device extraction of downloaded model archives uses a small, self-contained ZIP extractor, so a fresh checkout builds with nothing to fetch.
+> **Zero third-party dependencies.** Both the app and the `UltralyticsYOLO` Swift package are built entirely on Apple's first-party frameworks — there are no external Swift packages to resolve, vet, or license. Even on-device extraction of downloaded model archives uses a small, self-contained ZIP extractor, so a fresh checkout builds with nothing to fetch.
 
 <div align="center">
   <br>
@@ -68,7 +68,7 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Bundled and Optional YOLO26 Models:**
-    The app ships with all six nano models (one per task: detect, segment, semantic, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](RemoteModels.swift).
+    The app ships with all six nano models (one per task: detect, segment, semantic, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift).
 
     You can also prepare local model files for development or tests:
 
@@ -129,7 +129,7 @@ The YOLO iOS App includes a suite of unit and integration tests to ensure functi
 
 The test suite is designed to run with or without the actual Core ML model files:
 
-- **Without Models:** Set `SKIP_MODEL_TESTS = true` in the test target's build settings (under `Build Settings` > `User-Defined`). This allows running tests that don't require model inference, such as UI tests or utility function tests.
+- **Without Models:** Set `SKIP_MODEL_TESTS = true` in the example apps' test sources (the flag is a `static let` constant in each example test class; the package tests in `Tests/YOLOTests` always exercise the bundled models). This allows running tests that don't require model inference, such as UI tests or utility function tests.
 - **With Models:** Set `SKIP_MODEL_TESTS = false` and run `bash scripts/download-models.sh` from the repository root, or build the main app target so the **Download YOLO Models** build phase prepares the app models. This enables the full test suite, including tests that perform actual model inference.
 
 ### Required Models for Full Testing
@@ -143,16 +143,16 @@ To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include th
 - **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `Models/Pose`)
 - **OBB Detection:** `yolo26n-obb.mlpackage` (place in `Models/OBB`)
 
-You can export these models using the Python script provided in the [Installation section](#add-yolo26-models) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
+You can export these models using the Python script provided in the [Installation section](#installation) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
 
 ### Running Tests in Xcode
 
-1.  Open the `YOLOiOSApp.xcodeproj` project in Xcode.
+1.  Open the repository root `Package.swift` in Xcode (the `YOLOTests` suite belongs to the `UltralyticsYOLO` Swift package; `YOLOiOSApp.xcodeproj` itself contains no test target).
 2.  Navigate to the Test Navigator tab (represented by a diamond icon) in the left sidebar.
 3.  Select the tests you wish to run (e.g., the entire `YOLOTests` suite or individual test functions).
 4.  Click the Run button (play icon) next to your selection to execute the tests on a connected device or simulator.
 
-Review the test files located within the `YOLOTests` directory for specific implementation details and test coverage.
+Review the test files located within the `Tests/YOLOTests` directory at the repository root for specific implementation details and test coverage.
 
 ## 💡 Contribute
 

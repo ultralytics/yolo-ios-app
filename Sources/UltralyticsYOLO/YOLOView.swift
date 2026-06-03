@@ -52,7 +52,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public weak var delegate: YOLOViewDelegate?
 
   public func onInferenceTime(speed: Double, fps: Double) {
-    self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // t2 seconds to ms
+    self.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, speed)  // speed arrives already in ms
     self.delegate?.yoloView(self, didUpdatePerformance: fps, inferenceTime: speed)
   }
 

@@ -34,14 +34,14 @@ model.export(format="coreml", nms=False)
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The model file (`yolo26n.mlpackage`) **must** be added to the **main application target** (`YOLO-RealTime-UIKit`) within your [Xcode project](https://developer.apple.com/xcode/), not just the test target. This ensures the model is correctly bundled and accessible by the main application.
+**IMPORTANT**: The model file (`yolo26n.mlpackage`) **must** be added to the **main application target** (`YOLORealTimeUIKit`) within your [Xcode project](https://developer.apple.com/xcode/), not just the test target. This ensures the model is correctly bundled and accessible by the main application.
 
 Follow these steps to add the model file correctly:
 
 1.  Drag and drop `yolo26n.mlpackage` into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    - Ensure the checkbox for the **"YOLO-RealTime-UIKit" target** (the main app target) is **checked**.
-    - Optionally, check the "YOLO-RealTime-UIKitTests" target, but remember the main target is crucial for the tests to access the model.
+    - Ensure the checkbox for the **"YOLORealTimeUIKit" target** (the main app target) is **checked**.
+    - Optionally, check the "YOLORealTimeUIKitTests" target, but remember the main target is crucial for the tests to access the model.
     - Select the "Create folder references" option (indicated by a blue folder icon). This helps maintain a clean project organization.
 3.  Click "Finish" to complete the process.
 

@@ -584,7 +584,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Updates the smoothed inference time and FPS, then notifies the timing listener.
   ///
-  /// Call this once per processed frame after `t1` is set. Uses an EMA with `emaAlpha` weight on new samples and skips
+  /// Call this once per processed frame after `t0` is set. Uses an EMA with `emaAlpha` weight on new samples and skips
   /// obvious outliers above `maxValidDt`.
   func updateTime(notify: Bool = true) {
     let alpha = Self.emaAlpha

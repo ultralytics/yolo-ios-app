@@ -30,7 +30,7 @@ public protocol InferenceTimeListener: AnyObject {
   /// Called when inference timing information is available.
   ///
   /// - Parameters:
-  ///   - inferenceTime: The time in seconds taken to perform the model inference.
+  ///   - inferenceTime: The time in milliseconds taken to perform the model inference.
   ///   - fpsRate: The calculated frames per second rate based on recent inference times.
   func on(inferenceTime: Double, fpsRate: Double)
 }

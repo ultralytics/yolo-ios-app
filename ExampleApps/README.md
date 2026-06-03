@@ -64,7 +64,7 @@ Follow these steps to get the examples up and running:
       ):
           """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
           for model_type in model_types:
-              imgsz = [224, 224] if "cls" in model_type else [640, 384]  # default input image sizes
+              imgsz = [224, 224] if "cls" in model_type else [1024, 1024] if "obb" in model_type else [640, 640]  # official input image sizes
               nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
               for size in model_sizes:
                   model_name = f"yolo26{size}{model_type}"
@@ -90,13 +90,13 @@ Follow these steps to get the examples up and running:
 
 ## ✅ Testing
 
-Each example app includes [unit tests](https://en.wikipedia.org/wiki/Unit_testing) to verify its core functionality. These tests are located within the corresponding `Tests` directory (e.g., `YOLO-Single-Image-SwiftUITests`).
+Each example app includes [unit tests](https://en.wikipedia.org/wiki/Unit_testing) to verify its core functionality. These tests are located within each example's test directory (e.g., `YOLOSingleImageSwiftUITests`).
 
 ### Running Tests
 
 1.  Open the desired example project in Xcode.
 2.  Select the Test navigator (diamond icon).
-3.  Choose the test target (e.g., `YOLO-Single-Image-SwiftUITests`).
+3.  Choose the test target (e.g., `YOLOSingleImageSwiftUITests`).
 4.  Run tests using `Cmd+U` or by clicking the play button next to the test target or individual tests.
 
 ### Test Configuration
@@ -107,7 +107,7 @@ Each example app includes [unit tests](https://en.wikipedia.org/wiki/Unit_testin
   2.  Set `SKIP_MODEL_TESTS = false` within the relevant test file(s).
   3.  Run the tests again.
 
-Please consult the `README.md` file inside each example's `Tests` directory for detailed instructions on required models, obtaining/exporting them, and the specific functionalities covered by the tests.
+Please consult the `README.md` file inside each example's test directory for detailed instructions on required models, obtaining/exporting them, and the specific functionalities covered by the tests.
 
 ## 🤝 Contributing
 

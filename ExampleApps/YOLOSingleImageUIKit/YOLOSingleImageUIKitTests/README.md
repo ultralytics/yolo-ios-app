@@ -34,14 +34,14 @@ model.export(format="coreml")
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The Core ML model file (`.mlpackage`) must be added to the **main application target** (named `YOLO-Single-Image-UIKit`), not just the test target.
+**IMPORTANT**: The Core ML model file (`.mlpackage`) must be added to the **main application target** (named `YOLOSingleImageUIKit`), not just the test target.
 
 Follow these steps carefully:
 
 1.  Drag and drop the generated `yolo26n.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    - Ensure the checkbox next to the **`YOLO-Single-Image-UIKit`** target is checked. This is crucial.
-    - You may optionally check the `YOLO-Single-Image-UIKitTests` target as well, but including it only in the test target is insufficient.
+    - Ensure the checkbox next to the **`YOLOSingleImageUIKit`** target is checked. This is crucial.
+    - You may optionally check the `YOLOSingleImageUIKitTests` target as well, but including it only in the test target is insufficient.
     - Select the "Create folder references" option (indicated by a blue folder icon) for better project organization.
 3.  Click "Finish".
 
@@ -72,7 +72,7 @@ The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent chec
 To run the full test suite, including tests that perform actual model inference:
 
 1.  **Add Models**: Ensure you have obtained and added the required `yolo26n.mlpackage` file to the **main application target** as described in the "Adding Model Files to the Project" section.
-2.  **Modify Flag**: Open the relevant test file (e.g., `YOLO_Single_Image_UIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
+2.  **Modify Flag**: Open the relevant test file (e.g., `YOLOSingleImageUIKitTests.swift`) and change the flag `SKIP_MODEL_TESTS` to `false`.
 3.  **Run Tests**: Execute the tests again through [Xcode](https://developer.apple.com/xcode/) (Product > Test or Command+U).
 
 This comprehensive approach ensures that both the fundamental application structure and the critical model integration points are thoroughly tested, while still offering a lightweight option for basic checks and CI environments. For more information on deploying models, check out our guide on [model deployment options](https://docs.ultralytics.com/guides/model-deployment-options) and explore platforms like [Ultralytics Platform](https://platform.ultralytics.com).

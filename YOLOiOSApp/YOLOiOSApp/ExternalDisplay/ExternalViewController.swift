@@ -292,7 +292,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
     }
 
-    // Format for display (e.g. "yolo26n-seg" -> "YOLO26n Seg").
+    // Format for display (e.g. "yolo26n-seg" -> "YOLO26n-seg").
     labelName.text = processString(nameWithoutExtension)
   }
 

@@ -35,14 +35,14 @@ For more details on exporting models, refer to the [Ultralytics Export documenta
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The `.mlpackage` model file must be added to the **main application target** (`YOLO-Single-Image-SwiftUI`) in [Xcode](https://developer.apple.com/xcode/), not just the test target. The testing framework relies on accessing the model through the main application bundle (`Bundle.main`).
+**IMPORTANT**: The `.mlpackage` model file must be added to the **main application target** (`YOLOSingleImageSwiftUI`) in [Xcode](https://developer.apple.com/xcode/), not just the test target. The testing framework relies on accessing the model through the main application bundle (`Bundle.main`).
 
 Follow these steps to add the model file correctly using Xcode:
 
 1.  Drag and drop the `yolo26n-seg.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    - Ensure the checkbox for the **`YOLO-Single-Image-SwiftUI`** target (the main app) is selected.
-    - You may optionally select the `YOLO-Single-Image-SwiftUITests` target, but the main target is essential.
+    - Ensure the checkbox for the **`YOLOSingleImageSwiftUI`** target (the main app) is selected.
+    - You may optionally select the `YOLOSingleImageSwiftUITests` target, but the main target is essential.
     - Select the "Create folder references" option (this usually shows a blue folder icon).
 3.  Click "Finish".
 
@@ -68,7 +68,7 @@ The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent chec
 To run the complete test suite, including tests that perform actual model inference:
 
 1.  Ensure you have added the required `yolo26n-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files" section.
-2.  Locate the `SKIP_MODEL_TESTS` flag within the test source file (e.g., `YOLO_Single_Image_SwiftUITests.swift`) and set it to `false`.
+2.  Locate the `SKIP_MODEL_TESTS` flag within the test source file (e.g., `YOLOSingleImageSwiftUITests.swift`) and set it to `false`.
 3.  Run the tests again using Xcode's Test navigator (Cmd+U).
 
 This comprehensive approach ensures that tests can validate both the fundamental application structure and the critical model integration and inference pathways, while still offering flexibility for environments without the large model files.

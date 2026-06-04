@@ -80,7 +80,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     let shape = feature.shape.map { $0.intValue }
     guard shape.count == 3 else { return [] }
 
-    // YOLO26 end2end OBB: [1, max_det, 7] where 7 = x1,y1,x2,y2,conf,class_id,angle
+    // YOLO26 end2end OBB: [1, max_det, 7] where 7 = cx,cy,w,h,conf,class_id,angle (center xywh, NOT xyxy)
     // Traditional OBB: [1, 4+nc+1, num_anchors] where shape[2] > shape[1]
     if shape[2] < shape[1] {
       return postProcessEnd2EndOBB(

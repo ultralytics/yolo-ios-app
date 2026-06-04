@@ -23,7 +23,7 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 - ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
 - ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
-- ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching functionality.
+- ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching via the `YOLO` class.
 - ✅ **Zero Dependencies**: Pure Swift built only on Apple's first-party frameworks (Foundation, Core ML, Vision, Compression) — **no third-party packages** to vet, license, or keep up to date. Even ZIP extraction for downloaded models is handled by a small, self-contained extractor, so the package installs instantly via [Swift Package Manager](https://www.swift.org/package-manager/) with nothing to resolve.
 
 **Compatibility note:** `YOLOTask.semantic` is a public enum case added for semantic segmentation. Apps with exhaustive `switch` statements over `YOLOTask` should add this case or include a `default`.
@@ -32,10 +32,10 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 
 | Platform | Minimum Version | Notes                      |
 | -------- | --------------- | -------------------------- |
-| iOS      | 16.0+           | Suitable for iPhone / iPad |
+| iOS      | 13.0+           | Suitable for iPhone / iPad |
 
 - **Swift 5.10+**: Required for modern language features.
-- **Xcode 15.3+**: Required to build against the iOS 16 SDK and use the modern [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) APIs. Download from the [Apple Developer site](https://developer.apple.com/xcode/). Xcode 17 is recommended on recent macOS versions.
+- **Xcode 15.3+**: Required for Swift 5.10 (the package's `swift-tools-version`) and the modern [Swift Concurrency](https://developer.apple.com/documentation/swift/concurrency) APIs. Download from the [Apple Developer site](https://developer.apple.com/xcode/). Xcode 17 is recommended on recent macOS versions.
 
 ## 🚀 Installation
 
@@ -163,14 +163,12 @@ import UltralyticsYOLO
 import SwiftUI
 
 struct CameraView: View {
-    private static let modelURL = URL(
-        string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip"
-    )!
-
     var body: some View {
-        // Real-time inference using an official downloadable model.
+        // Real-time inference using a model bundled in the app (e.g. yolo26n-seg.mlpackage
+        // added to the app target). To use an official hosted asset, download and unzip it
+        // first (e.g. with `YOLOModelDownloader`) and pass its local path or file URL.
         YOLOCamera(
-            url: Self.modelURL,
+            modelPathOrName: "yolo26n-seg",
             task: .segment,
             cameraPosition: .back
         ) { result in
@@ -181,7 +179,7 @@ struct CameraView: View {
     }
 }
 
-// Alternative: use your own model already included in the app bundle.
+// Alternative: use your own custom model already included in the app bundle.
 struct CameraViewWithBundledModel: View {
     var body: some View {
         YOLOCamera(
@@ -258,9 +256,9 @@ Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>.tflite`
+- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
-The package can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
+The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
 The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `int8`, `nms`, `end2end`, calibration, postprocessing, and release hosting.
 

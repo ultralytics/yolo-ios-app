@@ -31,14 +31,14 @@ model.export(format="coreml")  # Creates yolo26n-obb.mlpackage
 
 ### Adding Model Files to the Project
 
-**IMPORTANT**: The `.mlpackage` file must be added to the **main application target** (`YOLO-RealTime-SwiftUI`), not just the test target. The testing framework loads models from the main application's bundle (`Bundle.main`).
+**IMPORTANT**: The `.mlpackage` file must be added to the **main application target** (`YOLORealTimeSwiftUI`), not just the test target. The testing framework loads models from the main application's bundle (`Bundle.main`).
 
 Follow these steps to add the model file correctly within Xcode:
 
 1.  Drag and drop the `yolo26n-obb.mlpackage` file into your Xcode project navigator.
 2.  In the "Choose options for adding these files" dialog:
-    - Ensure the **"YOLO-RealTime-SwiftUI"** target checkbox is **checked**.
-    - Optionally, check the "YOLO-RealTime-SwiftUITests" target, but the main target is essential.
+    - Ensure the **"YOLORealTimeSwiftUI"** target checkbox is **checked**.
+    - Optionally, check the "YOLORealTimeSwiftUITests" target, but the main target is essential.
     - Select the **"Create folder references"** option (indicated by a blue folder icon). This helps maintain the project structure.
     - Ensure **"Copy items if needed"** is checked.
 3.  Click "Finish".
@@ -67,7 +67,7 @@ By default, the `SKIP_MODEL_TESTS` flag in the test file is set to `true`. This 
 To run the full test suite, including tests that perform inference:
 
 1.  Ensure you have obtained `yolo26n-obb.mlpackage` and added it to the **main application target** as described above.
-2.  Open the relevant test file (e.g., `YOLO_RealTime_SwiftUITests.swift`).
+2.  Open the relevant test file (e.g., `YOLORealTimeSwiftUITests.swift`).
 3.  Change the flag `SKIP_MODEL_TESTS` to `false`.
 4.  Run the tests using Xcode (Product > Test or `Cmd+U`).
 

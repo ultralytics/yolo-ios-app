@@ -42,7 +42,7 @@
 
 - 原生 iOS 性能 - 通过 Swift 与 Core ML 获得最高速度
 - 针对 Apple Silicon 优化 - 充分利用 Neural Engine 与 GPU
-- 实时推理 - 在最新款 iPhone 上可达 60+ FPS
+- 实时推理 - 在最新款 iPhone 上达到相机帧率（约 30 FPS）的性能
 - 低延迟 - 无框架额外开销，直接访问硬件能力
 - iOS 优先设计 - 原生 UI/UX，遵循 Apple 设计规范
 - Core ML 集成 - 使用 Apple 官方优化的机器学习框架

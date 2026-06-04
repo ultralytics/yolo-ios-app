@@ -56,8 +56,8 @@ public enum MiniZip {
   private static let localFileHeaderSignature: UInt32 = 0x0403_4b50
   private static let zip64SizeSentinel: UInt32 = 0xFFFF_FFFF
 
-  // A single raw-DEFLATE stream cannot expand by more than ~1032:1; entries claiming more than this for
-  // their compressed size are rejected as decompression bombs before any allocation.
+  // A single raw-DEFLATE stream cannot expand by more than ~1032:1; entries whose claimed uncompressed
+  // size exceeds this multiple of their compressed size are rejected as decompression bombs before any allocation.
   private static let maxDeflateExpansionRatio = 1032
 
   /// Extracts every entry of the ZIP at `archiveURL` into `destinationURL`.

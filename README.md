@@ -42,7 +42,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 
 - Native iOS Performance — Maximum speed with Swift & Core ML
 - Optimized for Apple Silicon — Leverages the Neural Engine & GPU
-- Real-time Inference — 60+ FPS on recent iPhones
+- Real-time Inference — Camera-rate (~30 FPS) performance on recent iPhones
 - Low Latency — Direct hardware access without framework overhead
 - iOS-First Design — Native UI/UX following Apple guidelines
 - Core ML Integration — Apple's optimized ML framework
@@ -76,10 +76,10 @@ let result = model(uiImage)
 ```
 
 ```swift
-// Use the built-in camera view for real-time inference
+// Use the built-in camera view for real-time inference with a model bundled in your app
 var body: some View {
     YOLOCamera(
-        url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n-seg.mlpackage.zip")!,
+        modelPathOrName: "yolo26n-seg",
         task: .segment,
         cameraPosition: .back
     )
@@ -101,7 +101,7 @@ The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segme
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>.tflite`
+- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the TFLite column summarizes the Flutter repo's Android export script and release assets.
 
@@ -114,7 +114,7 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 | `imgsz`        | `224` cls; `1024` OBB; `640` others | `224` cls; `640` others          |
 | `nms`          | `False`                             | `False`                          |
 | `end2end`      | `True`                              | `False`                          |
-| Calibration    | exporter default                    | `data=coco128.yaml`              |
+| Calibration    | exporter default                    | `TASK2CALIBRATIONDATA` per task  |
 | Postprocessing | Swift/Core ML                       | Android native                   |
 
 Core ML assets use `nms=False` and `end2end=True`: `nms=False` suppresses the Core ML NMS pipeline, and `end2end=True` supplies the YOLO26 decoded output contract consumed by the Swift decoders. The TFLite export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
@@ -143,7 +143,7 @@ The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example
 
 ### Android TFLite Counterparts
 
-The Android assets used by the Flutter package are maintained in the Flutter repo, not this iOS repo. Their canonical export script is `scripts/export-tflite-models.py` in `ultralytics/yolo-flutter-app`; it exports the matching YOLO26 task/size matrix as int8 `.tflite` assets calibrated with `data=coco128.yaml` and uploads them to `yolo-flutter-app` `v0.3.5`.
+The Android assets used by the Flutter package are maintained in the Flutter repo, not this iOS repo. Their canonical export script is `scripts/export-tflite-models.py` in `ultralytics/yolo-flutter-app`; it exports the matching YOLO26 task/size matrix as int8 `.tflite` assets calibrated with the per-task `ultralytics.cfg.TASK2CALIBRATIONDATA` defaults and uploads them to `yolo-flutter-app` `v0.3.5`.
 
 ## 🛠️ Quickstart Guide
 

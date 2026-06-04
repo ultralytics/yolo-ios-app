@@ -19,7 +19,7 @@ public final class YOLOModelCache {
   /// Root cache directory for compiled models.
   let cacheDirectory: URL
 
-  /// Lock that serializes file-system access from concurrent callers.
+  /// Lock that serializes cache-path lookups (`getCachedModelPath`) from concurrent callers.
   private let lock = NSLock()
 
   /// Errors that can be reported by cache operations.

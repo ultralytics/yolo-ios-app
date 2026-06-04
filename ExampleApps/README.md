@@ -71,7 +71,7 @@ Follow these steps to get the examples up and running:
               for size in model_sizes:
                   model_name = f"yolo26{size}{model_type}"
                   model = YOLO(f"{model_name}.pt")
-                  model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms)
+                  model.export(format="coreml", int8=True, imgsz=imgsz, nms=nms, end2end=True)
                   zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 

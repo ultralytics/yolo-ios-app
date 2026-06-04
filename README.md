@@ -42,7 +42,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 
 - Native iOS Performance — Maximum speed with Swift & Core ML
 - Optimized for Apple Silicon — Leverages the Neural Engine & GPU
-- Real-time Inference — 60+ FPS on recent iPhones
+- Real-time Inference — Camera-rate (~30 FPS) performance on recent iPhones
 - Low Latency — Direct hardware access without framework overhead
 - iOS-First Design — Native UI/UX following Apple guidelines
 - Core ML Integration — Apple's optimized ML framework

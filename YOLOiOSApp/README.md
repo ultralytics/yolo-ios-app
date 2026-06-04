@@ -70,7 +70,7 @@ Ensure you have the following before you begin:
 3.  **Bundled and Optional YOLO26 Models:**
     The app ships with all six nano models (one per task: detect, segment, semantic, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift).
 
-    You can also prepare local model files for development or tests:
+    From the repository root, you can also prepare local model files for development or tests:
 
     ```bash
     uv venv --python 3.13 .venv

@@ -71,7 +71,7 @@ def export_and_zip_yolo_models(
         for size in model_sizes:
             model_name = f"yolo26{size}{model_type}"
             model = YOLO(f"{model_name}.pt")
-            model.export(format="coreml", int8=True, imgsz=[imgsz, imgsz], nms=nms)
+            model.export(format="coreml", int8=True, imgsz=[imgsz, imgsz], nms=nms, end2end=True)
             zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 
@@ -100,7 +100,7 @@ With the model files correctly placed, run the test suite with [Xcode](https://d
 ### Using Xcode
 
 1.  Open the `Package.swift` file located in the root directory of the [yolo-ios-app repository](https://github.com/ultralytics/yolo-ios-app) using Xcode.
-2.  Wait for Xcode to resolve package dependencies.
+2.  Wait for Xcode to load the Swift package.
 3.  Select **Product** > **Test** from the menu bar, or use the shortcut **⌘U**.
 
 Xcode will build the package and execute all the tests defined in the `YOLOTests` target.

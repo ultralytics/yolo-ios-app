@@ -135,6 +135,20 @@ class YOLOMainTests: XCTestCase {
     XCTAssertNotEqual(cache.cacheKey(for: sourceURL, task: .detect), cache.cacheKey(for: sourceURL))
   }
 
+  func testLoggerEvaluatesMessages() {
+    var emitted = 0
+    func message(_ text: String) -> String {
+      emitted += 1
+      return text
+    }
+
+    YOLOLog.info(message("info"))
+    YOLOLog.warning(message("warning"))
+    YOLOLog.error(message("error"))
+
+    XCTAssertEqual(emitted, 3)
+  }
+
 }
 
 private func makeTestImage(size: CGSize, color: UIColor) -> UIImage {

@@ -111,7 +111,8 @@ jobs:
           awk '
             /^SF:/ {
               file = $0
-              skip = file ~ /Sources\/UltralyticsYOLO\/(BoundingBoxView|VideoCapture|YOLOCamera|YOLOInfoViewController|YOLOModelDownloader|YOLOView)\.swift$/
+              skip = file ~ /Build\/Build\/Intermediates\.noindex\// ||
+                file ~ /Sources\/UltralyticsYOLO\/(BoundingBoxView|VideoCapture|YOLOCamera|YOLOInfoViewController|YOLOModelDownloader|YOLOView)\.swift$/
             }
             !skip { print }
             /^end_of_record/ { skip = 0 }

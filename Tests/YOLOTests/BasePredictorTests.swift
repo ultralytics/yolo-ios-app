@@ -482,6 +482,7 @@ private func makeArray(
 ) throws -> MLMultiArray {
   let array = try MLMultiArray(shape: shape.map(NSNumber.init(value:)), dataType: .float32)
   let pointer = array.dataPointer.assumingMemoryBound(to: Float.self)
+  pointer.initialize(repeating: 0, count: array.count)
   let strides = array.strides.map { $0.intValue }
 
   writeValues { indices, value in

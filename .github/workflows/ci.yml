@@ -106,6 +106,18 @@ jobs:
             exit 1
           fi
 
+      - name: Filter Coverage Report
+        run: |
+          awk '
+            /^SF:/ {
+              file = $0
+              skip = file ~ /Sources\/UltralyticsYOLO\/(BoundingBoxView|VideoCapture|YOLOCamera|YOLOInfoViewController|YOLOModelDownloader|YOLOView)\.swift$/
+            }
+            !skip { print }
+            /^end_of_record/ { skip = 0 }
+          ' info.lcov > info.filtered.lcov
+          mv info.filtered.lcov info.lcov
+
       - name: Upload to Codecov
         uses: codecov/codecov-action@v6
         with:

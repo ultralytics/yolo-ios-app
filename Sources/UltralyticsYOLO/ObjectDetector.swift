@@ -110,7 +110,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///
   /// - Parameter prediction: The raw MLMultiArray output from the model.
   /// - Returns: An array of detected boxes.
-  private func processRawResults(_ prediction: MLMultiArray) -> [Box] {
+  func processRawResults(_ prediction: MLMultiArray) -> [Box] {
     let shape = prediction.shape.map { $0.intValue }
     let strides = prediction.strides.map { $0.intValue }
     let pointer = prediction.dataPointer.assumingMemoryBound(to: Float.self)

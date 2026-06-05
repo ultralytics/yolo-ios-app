@@ -11,7 +11,6 @@ import XCTest
 class YOLOMainTests: XCTestCase {
 
   func testYOLOInitializationWithInvalidPath() {
-    // Test YOLO initialization with invalid model path calls completion with error
     let expectation = XCTestExpectation(description: "Invalid model path")
 
     let _ = YOLO("invalid_model_path", task: .detect) { result in
@@ -33,38 +32,54 @@ class YOLOMainTests: XCTestCase {
   }
 
   func testYOLOCallAsFunctionWithUIImage() {
-    // Test YOLO callable interface with UIImage would require actual model loading
-    // Skip this test as it requires complex setup
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    let yolo = YOLO("invalid_model_path", task: .detect)
+    let predictor = MockPredictor()
+    yolo.predictor = predictor
+
+    let image = makeTestImage(size: CGSize(width: 12, height: 8), color: .red)
+
+    let result = yolo(image)
+
+    XCTAssertEqual(result.orig_shape, CGSize(width: 12, height: 8))
+    XCTAssertEqual(predictor.callCount, 1)
   }
 
-  func testYOLOCallAsFunctionWithCIImage() {
-    // Test YOLO callable interface with CIImage would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+  func testYOLOCallAsFunctionRoutesCIAndCGImages() {
+    let yolo = YOLO("invalid_model_path", task: .detect)
+    let predictor = MockPredictor()
+    yolo.predictor = predictor
+
+    let ciImage = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 20, height: 10))
+    XCTAssertEqual(yolo(ciImage).orig_shape, CGSize(width: 20, height: 10))
+
+    let cgImage = makeTestImage(size: CGSize(width: 7, height: 5), color: .green).cgImage!
+    XCTAssertEqual(yolo(cgImage).orig_shape, CGSize(width: 7, height: 5))
+    XCTAssertEqual(predictor.callCount, 2)
   }
 
-  func testYOLOCallAsFunctionWithCGImage() {
-    // Test YOLO callable interface with CGImage would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+  func testYOLOCallAsFunctionHandlesMissingImageSources() {
+    let yolo = YOLO("invalid_model_path", task: .detect)
+
+    XCTAssertEqual(yolo("missing-resource", withExtension: "png").orig_shape, .zero)
+    XCTAssertEqual(yolo("/tmp/definitely-missing-yolo-image.png").orig_shape, .zero)
   }
 
-  func testYOLOCallAsFunctionWithResourceName() {
-    // Test YOLO callable interface with resource name would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
-  }
+  func testYOLOCallAsFunctionLoadsLocalImagePath() throws {
+    let yolo = YOLO("invalid_model_path", task: .detect)
+    let predictor = MockPredictor()
+    yolo.predictor = predictor
 
-  func testYOLOCallAsFunctionWithRemoteURL() {
-    // Test YOLO callable interface with remote URL would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
-  }
+    let image = makeTestImage(size: CGSize(width: 11, height: 9), color: .white)
+    let imagePath = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString)
+      .appendingPathExtension("png")
+    try image.pngData()?.write(to: imagePath)
+    defer { try? FileManager.default.removeItem(at: imagePath) }
 
-  func testYOLOCallAsFunctionWithLocalPath() {
-    // Test YOLO callable interface with local path would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+    XCTAssertEqual(yolo(imagePath.path).orig_shape, CGSize(width: 11, height: 9))
   }
 
   func testYOLOAllTaskTypes() {
-    // Test YOLO initialization for all task types with invalid paths
     let tasks: [YOLOTask] = [.detect, .segment, .semantic, .classify, .pose, .obb]
 
     for task in tasks {
@@ -84,11 +99,51 @@ class YOLOMainTests: XCTestCase {
     }
   }
 
-  func testYOLOWithReturnAnnotatedImageFlag() {
-    // Test YOLO callable interface with returnAnnotatedImage flag would require actual model loading
-    XCTAssertTrue(true, "YOLO call interface test skipped - requires model loading")
+  func testYOLOThresholdsValidateAndApplyToLoadedPredictor() {
+    let yolo = YOLO("invalid_model_path", task: .detect)
+    let predictor = BasePredictor()
+    yolo.predictor = predictor
+
+    yolo.setThresholds(numItems: 3, confidence: 0.4, iou: 0.6)
+
+    XCTAssertEqual(yolo.getNumItemsThreshold(), 3)
+    XCTAssertEqual(yolo.getConfidenceThreshold() ?? -1, 0.4, accuracy: 0.001)
+    XCTAssertEqual(yolo.getIouThreshold() ?? -1, 0.6, accuracy: 0.001)
+    XCTAssertTrue(validateUnitRange(0, name: "threshold"))
+    XCTAssertTrue(validateUnitRange(1, name: "threshold"))
+    XCTAssertFalse(validateUnitRange(-0.1, name: "threshold"))
+    XCTAssertFalse(validateUnitRange(1.1, name: "threshold"))
   }
 
+  func testModelCacheValidatesPackageManifestsAndSizesEntries() throws {
+    let cache = YOLOModelCache.shared
+    let sourceURL = URL(string: "https://example.com/\(UUID().uuidString).zip")!
+    let key = cache.cacheKey(for: sourceURL, task: .detect)
+    let packageURL = cache.cacheDirectory.appendingPathComponent(key).appendingPathExtension(
+      "mlpackage")
+    defer { try? FileManager.default.removeItem(at: packageURL) }
+
+    try FileManager.default.createDirectory(at: packageURL, withIntermediateDirectories: true)
+    XCTAssertNil(cache.getCachedModelPath(url: sourceURL, task: .detect))
+
+    try Data("{}".utf8).write(to: packageURL.appendingPathComponent("Manifest.json"))
+    try Data(repeating: 1, count: 16).write(to: packageURL.appendingPathComponent("weights.bin"))
+
+    XCTAssertEqual(cache.getCachedModelPath(url: sourceURL, task: .detect), packageURL)
+    XCTAssertTrue(try cache.listCachedModels().contains(key))
+    XCTAssertGreaterThanOrEqual(try cache.getCacheSize(), 18)
+    XCTAssertNotEqual(cache.cacheKey(for: sourceURL, task: .detect), cache.cacheKey(for: sourceURL))
+  }
+
+}
+
+private func makeTestImage(size: CGSize, color: UIColor) -> UIImage {
+  let format = UIGraphicsImageRendererFormat()
+  format.scale = 1
+  return UIGraphicsImageRenderer(size: size, format: format).image { context in
+    color.setFill()
+    context.fill(CGRect(origin: .zero, size: size))
+  }
 }
 
 // MARK: - Mock Classes for Testing
@@ -96,6 +151,7 @@ class YOLOMainTests: XCTestCase {
 class MockPredictor: Predictor, @unchecked Sendable {
   var labels: [String] = []
   var isUpdating: Bool = false
+  var callCount = 0
 
   func predict(
     sampleBuffer: CMSampleBuffer, onResultsListener: ResultsListener?,
@@ -105,7 +161,8 @@ class MockPredictor: Predictor, @unchecked Sendable {
   }
 
   func predictOnImage(image: CIImage) -> YOLOResult {
-    return YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
+    callCount += 1
+    return YOLOResult(orig_shape: image.extent.size, boxes: [], speed: 0, names: labels)
   }
 }
 

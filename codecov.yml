@@ -1,0 +1,7 @@
+ignore:
+  - "Sources/UltralyticsYOLO/BoundingBoxView.swift"
+  - "Sources/UltralyticsYOLO/VideoCapture.swift"
+  - "Sources/UltralyticsYOLO/YOLOCamera.swift"
+  - "Sources/UltralyticsYOLO/YOLOInfoViewController.swift"
+  - "Sources/UltralyticsYOLO/YOLOModelDownloader.swift"
+  - "Sources/UltralyticsYOLO/YOLOView.swift"

@@ -94,6 +94,9 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     let pointer = feature.dataPointer.bindMemory(
       to: Float.self,
       capacity: feature.count)
+    let strides = feature.strides.map { $0.intValue }
+    let channelStride = strides[1]
+    let anchorStride = strides[2]
     let inputW = Float(modelInputSize.width)
     let inputH = Float(modelInputSize.height)
 
@@ -123,16 +126,17 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
     // 1) Parallel-extract predictions
     DispatchQueue.concurrentPerform(iterations: numAnchors) { i in
-      let cx = pointerWrapper.pointer[i] / inputW
-      let cy = pointerWrapper.pointer[numAnchors + i] / inputH
-      let w = pointerWrapper.pointer[2 * numAnchors + i] / inputW
-      let h = pointerWrapper.pointer[3 * numAnchors + i] / inputH
+      let anchorOffset = i * anchorStride
+      let cx = pointerWrapper.pointer[anchorOffset] / inputW
+      let cy = pointerWrapper.pointer[channelStride + anchorOffset] / inputH
+      let w = pointerWrapper.pointer[2 * channelStride + anchorOffset] / inputW
+      let h = pointerWrapper.pointer[3 * channelStride + anchorOffset] / inputH
 
       // Find best class & score
       var bestScore: Float = 0
       var bestClass: Int = 0
       for c in 0..<numClasses {
-        let sc = pointerWrapper.pointer[(4 + c) * numAnchors + i]
+        let sc = pointerWrapper.pointer[(4 + c) * channelStride + anchorOffset]
         if sc > bestScore {
           bestScore = sc
           bestClass = c
@@ -140,7 +144,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
       }
 
       // Angle is the last channel
-      let angleIndex = (4 + numClasses) * numAnchors + i
+      let angleIndex = (4 + numClasses) * channelStride + anchorOffset
       let angle = pointerWrapper.pointer[angleIndex]
 
       // Threshold

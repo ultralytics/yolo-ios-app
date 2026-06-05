@@ -293,6 +293,203 @@ class BasePredictorTests: XCTestCase {
 
     XCTAssertEqual(mask?.classMap, [1, 0, 1, 0])
   }
+
+  func testObjectDetectorDecodesTraditionalTensorWithClassAwareNMS() throws {
+    let detector = ObjectDetector()
+    detector.labels = ["person", "car"]
+    detector.modelInputSize = (width: 100, height: 100)
+    detector.inputSize = CGSize(width: 100, height: 100)
+
+    let prediction = try makeArray(shape: [1, 6, 8]) { write in
+      write([0, 0, 0], 50)
+      write([0, 1, 0], 50)
+      write([0, 2, 0], 20)
+      write([0, 3, 0], 20)
+      write([0, 4, 0], 0.9)
+
+      write([0, 0, 1], 52)
+      write([0, 1, 1], 50)
+      write([0, 2, 1], 20)
+      write([0, 3, 1], 20)
+      write([0, 4, 1], 0.8)
+
+      write([0, 0, 2], 80)
+      write([0, 1, 2], 80)
+      write([0, 2, 2], 10)
+      write([0, 3, 2], 10)
+      write([0, 5, 2], 0.7)
+    }
+
+    let boxes = detector.processRawResults(prediction)
+
+    XCTAssertEqual(boxes.count, 2)
+    XCTAssertEqual(boxes.map(\.cls), ["person", "car"])
+    XCTAssertEqual(boxes[0].xywh, CGRect(x: 40, y: 40, width: 20, height: 20))
+    XCTAssertEqual(boxes[1].xywh, CGRect(x: 75, y: 75, width: 10, height: 10))
+  }
+
+  func testObjectDetectorDecodesEndToEndTensorAndAppliesLimit() throws {
+    let detector = ObjectDetector()
+    detector.labels = ["person", "car"]
+    detector.modelInputSize = (width: 100, height: 100)
+    detector.inputSize = CGSize(width: 100, height: 100)
+    detector.setNumItemsThreshold(numItems: 1)
+
+    let prediction = try makeArray(shape: [1, 8, 6]) { write in
+      write([0, 0, 0], 10)
+      write([0, 0, 1], 20)
+      write([0, 0, 2], 40)
+      write([0, 0, 3], 60)
+      write([0, 0, 4], 0.7)
+      write([0, 0, 5], 1)
+
+      write([0, 1, 0], 50)
+      write([0, 1, 1], 50)
+      write([0, 1, 2], 70)
+      write([0, 1, 3], 70)
+      write([0, 1, 4], 0.6)
+      write([0, 1, 5], 0)
+    }
+
+    let boxes = detector.processRawResults(prediction)
+
+    XCTAssertEqual(boxes.count, 1)
+    let box = try XCTUnwrap(boxes.first)
+    XCTAssertEqual(box.cls, "car")
+    XCTAssertEqual(box.xywh, CGRect(x: 10, y: 20, width: 30, height: 40))
+    XCTAssertEqual(box.xywhn, CGRect(x: 0.1, y: 0.2, width: 0.3, height: 0.4))
+  }
+
+  func testSegmenterDecodesTraditionalAndEndToEndTensors() throws {
+    let segmenter = Segmenter()
+
+    let traditional = try makeArray(shape: [1, 38, 40]) { write in
+      write([0, 0, 0], 20)
+      write([0, 1, 0], 20)
+      write([0, 2, 0], 10)
+      write([0, 3, 0], 10)
+      write([0, 4, 0], 0.9)
+      write([0, 6, 0], 0.1)
+
+      write([0, 0, 1], 21)
+      write([0, 1, 1], 20)
+      write([0, 2, 1], 10)
+      write([0, 3, 1], 10)
+      write([0, 4, 1], 0.8)
+
+      write([0, 0, 2], 80)
+      write([0, 1, 2], 80)
+      write([0, 2, 2], 8)
+      write([0, 3, 2], 8)
+      write([0, 5, 2], 0.7)
+      for i in 0..<32 { write([0, 6 + i, 2], Float(i)) }
+    }
+
+    let traditionalResults = segmenter.postProcessSegment(
+      feature: traditional, confidenceThreshold: 0.25, iouThreshold: 0.5)
+
+    XCTAssertEqual(traditionalResults.count, 2)
+    let classZero = try XCTUnwrap(traditionalResults.first { $0.1 == 0 })
+    XCTAssertEqual(classZero.2, 0.9, accuracy: 0.001)
+    let classOne = try XCTUnwrap(traditionalResults.first { $0.1 == 1 })
+    XCTAssertEqual(classOne.3[31], 31)
+
+    let endToEnd = try makeArray(shape: [1, 40, 38]) { write in
+      write([0, 0, 0], 1)
+      write([0, 0, 1], 2)
+      write([0, 0, 2], 5)
+      write([0, 0, 3], 8)
+      write([0, 0, 4], 0.8)
+      write([0, 0, 5], 3)
+      write([0, 0, 6], 0.25)
+    }
+
+    let endToEndResults = segmenter.postProcessSegment(
+      feature: endToEnd, confidenceThreshold: 0.25, iouThreshold: 0.5)
+
+    XCTAssertEqual(endToEndResults.count, 1)
+    let endToEndResult = try XCTUnwrap(endToEndResults.first)
+    XCTAssertEqual(endToEndResult.0, CGRect(x: 1, y: 2, width: 4, height: 6))
+    XCTAssertEqual(endToEndResult.1, 3)
+    XCTAssertEqual(endToEndResult.3[0], 0.25, accuracy: 0.001)
+  }
+
+  func testPoseEstimatorDecodesTraditionalTensor() throws {
+    let pose = PoseEstimator()
+    pose.labels = ["person"]
+    pose.modelInputSize = (width: 100, height: 100)
+    pose.inputSize = CGSize(width: 100, height: 100)
+
+    let prediction = try makeArray(shape: [1, 56, 80]) { write in
+      write([0, 0, 0], 50)
+      write([0, 1, 0], 50)
+      write([0, 2, 0], 20)
+      write([0, 3, 0], 10)
+      write([0, 4, 0], 0.9)
+      for keypoint in 0..<17 {
+        let base = 5 + keypoint * 3
+        write([0, base, 0], Float(10 + keypoint))
+        write([0, base + 1, 0], Float(20 + keypoint))
+        write([0, base + 2, 0], 0.8)
+      }
+    }
+
+    let results = pose.PostProcessPose(
+      prediction: prediction, confidenceThreshold: 0.25, iouThreshold: 0.5)
+
+    XCTAssertEqual(results.count, 1)
+    let result = try XCTUnwrap(results.first)
+    XCTAssertEqual(result.box.xywh, CGRect(x: 40, y: 45, width: 20, height: 10))
+    XCTAssertEqual(result.keypoints.xy.count, 17)
+    XCTAssertEqual(result.keypoints.xyn[16].x, 0.26, accuracy: 0.001)
+    XCTAssertEqual(result.keypoints.conf[16], 0.8, accuracy: 0.001)
+  }
+
+  func testObbDetectorDecodesTraditionalTensorAndRunsRotatedNMS() throws {
+    let detector = ObbDetector()
+    detector.modelInputSize = (width: 100, height: 100)
+
+    let prediction = try makeArray(shape: [1, 7, 40]) { write in
+      write([0, 0, 0], 50)
+      write([0, 1, 0], 50)
+      write([0, 2, 0], 20)
+      write([0, 3, 0], 10)
+      write([0, 4, 0], 0.9)
+      write([0, 6, 0], 0.2)
+
+      write([0, 0, 1], 51)
+      write([0, 1, 1], 50)
+      write([0, 2, 1], 20)
+      write([0, 3, 1], 10)
+      write([0, 4, 1], 0.8)
+      write([0, 6, 1], 0.2)
+    }
+
+    let results = detector.postProcessOBB(
+      feature: prediction, confidenceThreshold: 0.25, iouThreshold: 0.3)
+
+    XCTAssertEqual(results.count, 1)
+    let result = try XCTUnwrap(results.first)
+    XCTAssertEqual(result.box.cx, 0.5, accuracy: 0.001)
+    XCTAssertEqual(result.box.w, 0.2, accuracy: 0.001)
+    XCTAssertEqual(result.score, 0.9, accuracy: 0.001)
+  }
+}
+
+private func makeArray(
+  shape: [Int],
+  writeValues: (_ write: (_ indices: [Int], _ value: Float) -> Void) -> Void
+) throws -> MLMultiArray {
+  let array = try MLMultiArray(shape: shape.map(NSNumber.init(value:)), dataType: .float32)
+  let pointer = array.dataPointer.assumingMemoryBound(to: Float.self)
+  let strides = array.strides.map { $0.intValue }
+
+  writeValues { indices, value in
+    let offset = zip(indices, strides).reduce(0) { $0 + $1.0 * $1.1 }
+    pointer[offset] = value
+  }
+
+  return array
 }
 
 // MARK: - Mock Classes

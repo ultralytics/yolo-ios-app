@@ -1,0 +1,7 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+- "Sources/UltralyticsYOLO/VideoCapture.swift"
+- "Sources/UltralyticsYOLO/YOLOCamera.swift"
+- "Sources/UltralyticsYOLO/YOLOInfoViewController.swift"
+- "Sources/UltralyticsYOLO/YOLOModelDownloader.swift"
+- "Sources/UltralyticsYOLO/YOLOView.swift"

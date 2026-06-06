@@ -1246,8 +1246,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func updateLensControlVisibility() {
     lensControl.isHidden = switchCameraButton.isHidden || lensDevices.isEmpty
     lensCaptionLabel.isHidden = lensControl.isHidden
-    torchButton.isHidden = lensControl.isHidden
-    torchCaptionLabel.isHidden = lensControl.isHidden || !isTorchOn
+    // Hide the torch chip when the active device has no torch (e.g. front camera) — a visible chip
+    // that can't do anything reads as broken.
+    torchButton.isHidden = lensControl.isHidden || videoCapture.captureDevice?.hasTorch != true
+    torchCaptionLabel.isHidden = torchButton.isHidden || !isTorchOn
   }
 
   private func lensTitle(for device: AVCaptureDevice) -> String {

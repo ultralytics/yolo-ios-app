@@ -62,11 +62,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func onPredict(result: YOLOResult) {
-    // Notify delegate of detection results
+    // Notify consumers of detection results regardless of overlay visibility.
     delegate?.yoloView(self, didReceiveResult: result)
+    onDetection?(result)
+
+    // Consumers drawing their own overlays disable the built-in rendering below via `showOverlays`;
+    // its `didSet` already cleared anything previously drawn, so just skip.
+    guard showOverlays else { return }
 
     task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
-    onDetection?(result)
 
     if task == .segment || task == .semantic {
       if let maskImage = task == .segment
@@ -100,6 +104,16 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public var onDetection: ((YOLOResult) -> Void)?
+
+  /// Controls whether the built-in prediction overlays (boxes, masks, pose, classification) are drawn.
+  /// When `false`, inference and the result callbacks (`delegate`, `onDetection`) keep firing, but nothing is
+  /// rendered — letting consumers draw fully custom overlays. Defaults to `true`.
+  public var showOverlays: Bool = true {
+    didSet {
+      if !showOverlays { clearPredictionOverlays() }
+    }
+  }
+
   private var videoCapture: VideoCapture
   private var busy = false
   var task = YOLOTask.detect
@@ -504,6 +518,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         layer.removeFromSuperlayer()
       }
     }
+  }
+
+  /// Hides and clears all built-in prediction overlays (boxes, classification, mask, pose).
+  private func clearPredictionOverlays() {
+    boundingBoxViews.forEach { $0.hide() }
+    removeClassificationLayers()
+    maskLayer?.isHidden = true
+    maskLayer?.contents = nil
+    removeAllSubLayers(parentLayer: poseLayer)
   }
 
   func overlayYOLOClassificationsCALayer(on view: UIView, result: YOLOResult) {

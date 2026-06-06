@@ -46,6 +46,7 @@
 - 低延迟 - 无框架额外开销，直接访问硬件能力
 - iOS 优先设计 - 原生 UI/UX，遵循 Apple 设计规范
 - Core ML 集成 - 使用 Apple 官方优化的机器学习框架
+- 同时支持 YOLO26（无 NMS）与 YOLO11 模型
 - 零依赖 - 纯 Swift，仅依赖 Apple 官方框架；无任何第三方 package
 
 | 功能                  | iOS | 详细说明                     |
@@ -63,7 +64,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。应用会将全部六个 nano 模型（每个任务一个：检测、分割、语义分割、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）——这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 Xcode 构建阶段从 GitHub 发布资源下载，**绝不会提交到代码库**（`*.mlpackage` 已被 gitignore 忽略），更大的尺寸（s/m/l/x）则在应用内按需下载。你也可以通过简单拖放，将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型导入应用中快速测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。发布的应用打包了全部六个官方 nano Core ML 模型，更大的变体可按需下载；你也可以将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型添加到应用工程中进行测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -75,20 +76,78 @@ let result = model(uiImage)
 ```
 
 ```swift
-// 使用内置相机视图进行实时推理
+// 使用内置相机视图，对应用内打包的模型进行实时推理
 var body: some View {
     YOLOCamera(
-        modelPathOrName: "yolo26n-seg", // 指定模型名称或路径
-        task: .segment,                // 定义任务（detect、segment、semantic、classify、pose、obb）
-        cameraPosition: .back          // 选择摄像头（后置或前置）
+        modelPathOrName: "yolo26n-seg",
+        task: .segment,
+        cameraPosition: .back
     )
     .ignoresSafeArea()
 }
 ```
 
+## 📦 官方模型资源
+
+官方模型以 GitHub 发布（release）资源的形式提供，而不是提交到仓库中的大文件。主 iOS 应用会在构建时下载六个 nano Core ML 资源并打包进应用；更大的应用模型、Swift package 的 `YOLO(url:)` 加载方式以及 Flutter package 资源会在首次使用时下载官方模型并缓存到本地。
+
+主应用 YOLOiOSApp 会将**全部六个 nano 模型**（每个任务一个：检测、分割、语义分割、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）。这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 **Download YOLO Models** Xcode 构建阶段从 GitHub 发布资源下载——`.mlpackage` 文件**绝不会提交到仓库**（`*.mlpackage` 已被 gitignore 忽略）。该步骤是幂等的，在 GitHub Actions CI 上会被跳过，CI 会在单独的步骤中运行同一脚本。
+
+| 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
+| ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| TFLite int8 `.tflite`         | Android 上的 Flutter                            | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+
+URL 模式：
+
+- Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
+- TFLite：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+
+iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；TFLite 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
+
+| 属性      | Core ML                            | TFLite                           |
+| --------- | ---------------------------------- | -------------------------------- |
+| 模型 ID   | `yolo26{n,s,m,l,x}`                | `yolo26{n,s,m,l,x}`              |
+| 任务      | detect、seg、sem、cls、pose、obb   | detect、seg、sem、cls、pose、obb |
+| 格式      | `.mlpackage.zip`                   | `.tflite`                        |
+| `int8`    | `True`                             | `True`                           |
+| `imgsz`   | 分类 `224`；OBB `1024`；其余 `640` | 分类 `224`；其余 `640`           |
+| `nms`     | `False`                            | `False`                          |
+| `end2end` | `True`                             | `False`                          |
+| 校准      | 导出器默认值                       | 按任务的 `TASK2CALIBRATIONDATA`  |
+| 后处理    | Swift/Core ML                      | Android 原生                     |
+
+Core ML 资源使用 `nms=False` 和 `end2end=True` 导出：`nms=False` 会去掉 Core ML NMS 流水线，`end2end=True` 则提供由 Swift 解码器消费的 YOLO26 解码输出契约。TFLite 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
+
+### Core ML 发布工作流
+
+权威导出脚本是 [`scripts/export-models.py`](scripts/export-models.py)。它定义了任务/尺寸矩阵、导出图像尺寸、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+
+```bash
+uv venv --python 3.13 .venv
+uv pip install -e "../ultralytics[export]"
+uv run python scripts/export-models.py
+```
+
+常用变体：
+
+```bash
+# 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
+uv run python scripts/export-models.py --sizes n --copy-to-app
+
+# 导出全部官方 Core ML 资源并上传到规范发布版本。
+uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+```
+
+该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。在本 SDK 中 YOLO26 是无 NMS 的，因此官方 Core ML 资源使用 `nms=False` 和 `end2end=True` 导出；Swift 侧后处理负责处理端到端的检测、分割、姿态和 OBB 输出（分类和语义分割输出无需 NMS 解码）。
+
+### Android TFLite 对应资源
+
+Flutter package 使用的 Android 资源在 Flutter 仓库中维护，而不在本 iOS 仓库中。其规范导出脚本是 `ultralytics/yolo-flutter-app` 仓库中的 `scripts/export-tflite-models.py`；它将匹配的 YOLO26 任务/尺寸矩阵导出为 int8 `.tflite` 资源，使用按任务的 `ultralytics.cfg.TASK2CALIBRATIONDATA` 默认值进行校准，并上传到 `yolo-flutter-app` `v0.3.5`。
+
 ## 🛠️ 快速开始
 
-如果你刚接触移动端 YOLO，或想快速测试自己的模型，建议先从主应用 YOLOiOSApp 开始。
+如果你刚接触移动端 YOLO，或想快速测试自己的模型，建议先从主应用 YOLOiOSApp 开始。六个 nano 任务模型会在构建时打包进应用，因此应用安装后即可离线运行；更大的模型尺寸可按需下载。
 
 - [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)：在 iOS 上体验 YOLO 推理的最简单方式。
 
@@ -97,9 +156,23 @@ var body: some View {
 - [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)：将 YOLO 能力集成到你的 Swift 应用中。
 - [**示例应用**](https://github.com/ultralytics/yolo-ios-app/tree/main/ExampleApps)：查看基于 YOLO Swift Package 的实际实现示例。
 
+使用 Swift Package Manager 将 `UltralyticsYOLO` package 添加到你的应用：
+
+```swift
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.0")
+```
+
+或使用 CocoaPods：
+
+```ruby
+pod 'UltralyticsYOLO', '~> 8.9'
+```
+
+然后 `import UltralyticsYOLO` 并使用 `YOLO` 类——完整用法请参阅 [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)。同一个 `UltralyticsYOLO` package 同时驱动本原生 iOS 应用和 [Ultralytics YOLO Flutter 插件](https://github.com/ultralytics/yolo-flutter-app)，在多个平台间保持单一事实来源。
+
 ## ✨ 核心亮点
 
-- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。
+- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。有关设备端性能分析以及相机/Core ML 配置的依据，请参阅 [docs/performance.md](docs/performance.md)。
 - **Apple 移动平台支持**：Swift Package 面向 iOS 和 iPadOS，并提供原生 Core ML 集成。
 - **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect)、[实例分割](https://docs.ultralytics.com/tasks/segment)、[语义分割](https://docs.ultralytics.com/tasks/semantic)、[分类](https://docs.ultralytics.com/tasks/classify)、[姿态估计](https://docs.ultralytics.com/tasks/pose)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb)。
 

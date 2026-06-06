@@ -307,7 +307,7 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YOLORealTimeUIKit/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera for real-time YOLO object detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -337,7 +337,7 @@
 				DEVELOPMENT_TEAM = 3MR4P6CL3X;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = YOLORealTimeUIKit/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera for real-time YOLO object detection.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

@@ -89,7 +89,7 @@ var body: some View {
 
 ## 📦 Official Model Assets
 
-Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the six nano Core ML assets at build time and bundles them into the app; larger app models, Swift package examples, and Flutter package assets download official models on first use and cache them locally.
+Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the six nano Core ML assets at build time and bundles them into the app; larger app models, the Swift package's `YOLO(url:)` loading, and Flutter package assets download official models on first use and cache them locally.
 
 The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segment, semantic, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
 
@@ -139,7 +139,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False` and `end2end=True`; Swift-side postprocessing handles detect, segment, pose, and OBB outputs.
+The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False` and `end2end=True`; Swift-side postprocessing handles the end2end detect, segment, pose, and OBB outputs (classify and semantic outputs need no NMS decode).
 
 ### Android TFLite Counterparts
 

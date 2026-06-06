@@ -17,8 +17,9 @@ import UIKit
 /// Holds bounding boxes, instance and semantic masks, classification probabilities, keypoints, oriented bounding
 /// boxes, an annotated preview image, and timing metrics.
 ///
-/// - Note: Not every field is populated for every task — detection populates `boxes`, segmentation also populates
-///   `masks`, classification populates `probs`, pose populates `keypointsList`, and OBB populates `obb`.
+/// - Note: Not every field is populated for every task — detection populates `boxes`, instance segmentation also
+///   populates `masks`, semantic segmentation populates `semanticMask`, classification populates `probs`, pose
+///   populates `keypointsList`, and OBB populates `obb`.
 /// - Important: Marked `@unchecked Sendable` so results can cross actor boundaries; fields are written once during
 ///   construction and treated as read-only thereafter.
 public struct YOLOResult: @unchecked Sendable {

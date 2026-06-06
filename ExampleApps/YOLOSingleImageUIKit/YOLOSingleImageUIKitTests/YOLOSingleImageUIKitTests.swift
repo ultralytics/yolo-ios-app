@@ -58,7 +58,7 @@ struct YOLOSingleImageUIKitTests {
     // Check if the function returns a valid image
     #expect(correctedImageDown != nil, "Corrected image should not be nil")
 
-    // Create image with orientation = .left (3)
+    // Create image with orientation = .left (2)
     let imageLeft = UIImage(cgImage: originalImage.cgImage!, scale: 1.0, orientation: .left)
     let correctedImageLeft = viewController.getCorrectOrientationUIImage(uiImage: imageLeft)
 

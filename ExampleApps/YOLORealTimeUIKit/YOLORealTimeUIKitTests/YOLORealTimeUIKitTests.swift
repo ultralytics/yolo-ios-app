@@ -139,29 +139,6 @@ struct YOLORealTimeUIKitTests {
     }
   }
 
-  /// Documentation test for model error handling limitations
-  @Test func testModelErrorHandlingDocumentation() async throws {
-    // Note: We cannot directly test invalid model paths because YOLOView calls fatalError
-    // when a model is not found (in Sources/YOLO/YOLOView.swift:193)
-
-    // Document this design limitation for future improvement
-    let improvement = """
-      YOLOView should be refactored to handle missing models gracefully by:
-      1. Using completion handlers with Result type instead of fatalError
-      2. Using Swift's throwing mechanisms
-      3. Using optional values or fallbacks
-
-      Current implementation in YOLOView.swift line 193 uses:
-      guard let unwrappedModelURL = modelURL else {
-        let error = PredictorError.modelFileNotFound
-        fatalError(error.localizedDescription)
-      }
-      """
-
-    // This is just a documentation test
-    #expect(true, "This test documents a design limitation")
-  }
-
   /// Tests the basic button functionality of play/pause controls.
   /// - Note: This test can only be run when a valid model is available.
   @Test func testPlayPauseButtonsFunctionality() async throws {

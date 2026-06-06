@@ -294,7 +294,7 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(mask?.classMap, [1, 0, 1, 0])
   }
 
-  func testObjectDetectorDecodesTraditionalTensorWithClassAwareNMS() throws {
+  func testObjectDetectorDecodesTraditionalTensorWithNMS() throws {
     let detector = ObjectDetector()
     detector.labels = ["person", "car"]
     detector.modelInputSize = (width: 100, height: 100)

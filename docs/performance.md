@@ -45,7 +45,7 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 | `.vga640x480`               | 480×640         | Vision     | 13.3 ms     | 24     |
 | `.vga640x480`               | 480×640         | manual     | 8.3 ms      | 25     |
 
-**Shipped: `.hd1280x720`** — halves frame time vs `.photo` and doubles sustained FPS while keeping a crisp 16:9 preview. `.vga640x480` (4:3, same FOV as `.photo`) lands on 640 with pad-only/no-downscale, the cheapest preprocess. The preset is guarded by `canSetSessionPreset` with a `[requested, .high, .photo]` fallback so startup never regresses on a camera that can't honor it.
+**Shipped: `.hd1280x720`** — cuts pipeline frame time vs `.photo` (15.9 → 13.3 ms) and doubles sustained FPS while keeping a crisp 16:9 preview. `.vga640x480` (4:3, same FOV as `.photo`) lands on 640 with pad-only/no-downscale, the cheapest preprocess. The preset is guarded by `canSetSessionPreset` with a `[requested, .high, .photo]` fallback so startup never regresses on a camera that can't honor it.
 
 ## Experiment: preprocessing — Vision vs. manual vImage
 

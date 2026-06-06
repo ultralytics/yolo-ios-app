@@ -42,6 +42,11 @@ public protocol YOLOViewDelegate: AnyObject {
   func yoloView(_: YOLOView, didReceiveResult result: YOLOResult)
 }
 
+extension YOLOViewDelegate {
+  /// Default no-op so conformers only implement the callbacks they need.
+  public func yoloView(_: YOLOView, didReceiveResult: YOLOResult) {}
+}
+
 private let defaultMaxDetectionItems = 100
 
 /// A UIView that runs real-time YOLO inference and renders detection, segmentation, pose, or OBB overlays.

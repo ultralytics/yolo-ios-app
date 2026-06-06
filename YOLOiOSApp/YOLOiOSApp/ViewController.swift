@@ -698,15 +698,6 @@ extension ViewController {
     }
   }
 
-  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-    DispatchQueue.main.async {
-      ExternalDisplayManager.shared.shareResults(result)
-      NotificationCenter.default.post(
-        name: .yoloResultsAvailable,
-        object: nil,
-        userInfo: ["result": result]
-      )
-    }
-  }
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {}
 
 }

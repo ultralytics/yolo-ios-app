@@ -68,7 +68,7 @@ The test file currently sets `SKIP_MODEL_TESTS = false`, so model-dependent chec
 To run the complete test suite, including tests that perform actual model inference:
 
 1.  Ensure you have added the required `yolo26n-seg.mlpackage` file to the **main application target** as described in the "Adding Model Files" section.
-2.  Locate the `SKIP_MODEL_TESTS` flag within the test source file (e.g., `YOLOSingleImageSwiftUITests.swift`) and set it to `false`.
+2.  Locate the `SKIP_MODEL_TESTS` flag within the test source file (e.g., `YOLOSingleImageSwiftUITests.swift`) and ensure it is `false` (the default).
 3.  Run the tests again using Xcode's Test navigator (Cmd+U).
 
 This comprehensive approach ensures that tests can validate both the fundamental application structure and the critical model integration and inference pathways, while still offering flexibility for environments without the large model files.

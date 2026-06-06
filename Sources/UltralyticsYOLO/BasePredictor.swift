@@ -235,11 +235,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
-        // `useGpu` selects hardware-accelerated inference, NOT the GPU specifically. When true (default), Core ML runs on
-        // the Apple Neural Engine + CPU and the GPU is deliberately excluded: in a real-time camera app the GPU is busy
-        // compositing the preview/overlays, so scheduling conv/decode there (`.all`) risks contention and frame-time
-        // jitter. When false, inference is pinned to CPU only (most compatible; no ANE/GPU). This mirrors the Flutter
-        // plugin's public `useGpu` option, so the name is kept for cross-API consistency.
+        // `useGpu` selects hardware-accelerated inference, NOT the GPU specifically. When true (default), Core ML runs
+        // on the Apple Neural Engine + CPU on iOS 16+ and the GPU is deliberately excluded: in a real-time camera app
+        // the GPU is busy compositing the preview/overlays, so scheduling conv/decode there (`.all`) risks contention
+        // and frame-time jitter. On iOS 13-15, which lack `.cpuAndNeuralEngine`, it falls back to `.all`. When false,
+        // inference is pinned to CPU only (most compatible; no ANE/GPU). This mirrors the Flutter plugin's public
+        // `useGpu` option, so the name is kept for cross-API consistency.
         if useGpu {
           if #available(iOS 16.0, *) {
             config.computeUnits = .cpuAndNeuralEngine

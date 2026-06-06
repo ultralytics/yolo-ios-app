@@ -216,7 +216,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func reorderDetectionModels(_ fileNames: [String]) -> [String] {
-    let order: [Character: Int] = ["n": 0, "m": 1, "s": 2, "l": 3, "x": 4]
+    let order: [Character: Int] = ["n": 0, "s": 1, "m": 2, "l": 3, "x": 4]
     let (official, custom) = fileNames.reduce(into: ([String](), [String]())) { result, name in
       let base = (name as NSString).deletingPathExtension.lowercased()
       base.hasPrefix("yolo") && order[base.last ?? "z"] != nil

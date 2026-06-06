@@ -702,7 +702,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     torchButton.isHidden = true
     torchButton.backgroundColor = UIColor.black.withAlphaComponent(0.38)
-    torchButton.layer.cornerRadius = 8
+    // Capsule, matching the lens pill next to it (UISegmentedControl renders as a capsule).
+    torchButton.layer.cornerRadius = 17
     torchButton.addTarget(self, action: #selector(torchTapped), for: .touchUpInside)
     self.addSubview(torchButton)
 
@@ -1047,10 +1048,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   /// Syncs the torch chip and its "Torch on" note to the given state — bolt glyph in yellow when on, slashed bolt
-  /// in white when off, matching the Flutter showcase torch chip.
+  /// in white when off, matching the Flutter showcase torch chip. SF Symbols point size is a font size, not an
+  /// icon-box size: the bolt at 13pt renders 13x17, matching Flutter's 17pt icon box (17pt would render 17x22).
   private func setTorchUI(on: Bool) {
     isTorchOn = on
-    let config = UIImage.SymbolConfiguration(pointSize: 17, weight: .regular, scale: .default)
+    let config = UIImage.SymbolConfiguration(pointSize: 13, weight: .regular, scale: .default)
     torchButton.setImage(
       UIImage(systemName: on ? "bolt.fill" : "bolt.slash.fill", withConfiguration: config),
       for: .normal)

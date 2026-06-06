@@ -89,7 +89,7 @@ var body: some View {
 
 ## 📦 官方模型资源
 
-官方模型以 GitHub 发布（release）资源的形式提供，而不是提交到仓库中的大文件。主 iOS 应用会在构建时下载六个 nano Core ML 资源并打包进应用；更大的应用模型、Swift package 示例以及 Flutter package 资源会在首次使用时下载官方模型并缓存到本地。
+官方模型以 GitHub 发布（release）资源的形式提供，而不是提交到仓库中的大文件。主 iOS 应用会在构建时下载六个 nano Core ML 资源并打包进应用；更大的应用模型、Swift package 的 `YOLO(url:)` 加载方式以及 Flutter package 资源会在首次使用时下载官方模型并缓存到本地。
 
 主应用 YOLOiOSApp 会将**全部六个 nano 模型**（每个任务一个：检测、分割、语义分割、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）。这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 **Download YOLO Models** Xcode 构建阶段从 GitHub 发布资源下载——`.mlpackage` 文件**绝不会提交到仓库**（`*.mlpackage` 已被 gitignore 忽略）。该步骤是幂等的，在 GitHub Actions CI 上会被跳过，CI 会在单独的步骤中运行同一脚本。
 

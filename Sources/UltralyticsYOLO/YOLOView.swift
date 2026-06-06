@@ -1047,9 +1047,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     setTorchMode(!isTorchOn)
   }
 
-  /// Syncs the torch chip and its "Torch on" note to the given state — bolt glyph in yellow when on, slashed bolt
-  /// in white when off, matching the Flutter showcase torch chip. SF Symbols point size is a font size, not an
-  /// icon-box size: the bolt at 13pt renders 13x17, matching Flutter's 17pt icon box (17pt would render 17x22).
+  /// Syncs the torch chip and its "Torch on" note to the given state, matching the Flutter showcase torch chip.
+  /// 13pt is the SF Symbols font size whose rendered bolt matches Flutter's 17pt icon box.
   private func setTorchUI(on: Bool) {
     isTorchOn = on
     let config = UIImage.SymbolConfiguration(pointSize: 13, weight: .regular, scale: .default)

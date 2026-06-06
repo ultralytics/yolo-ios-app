@@ -139,6 +139,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   let selection = UISelectionFeedbackGenerator()
   private let lensControl = UISegmentedControl()
   private let lensCaptionLabel = UILabel()
+  private let torchButton = UIButton()
+  private let torchCaptionLabel = UILabel()
+  private var isTorchOn = false
   private var cameraTransitionView: UIView?
   private var lensDevices = [AVCaptureDevice]()
   private var selectedLensDeviceID: String?
@@ -292,6 +295,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   public func stop() {
+    // Stopping the capture session turns the hardware torch off; keep the chip truthful.
+    setTorchUI(on: false)
     videoCapture.stop()
   }
 
@@ -694,6 +699,24 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     lensCaptionLabel.textColor = UIColor.white.withAlphaComponent(0.78)
     lensCaptionLabel.font = UIFont.systemFont(ofSize: 11, weight: .medium)
     self.addSubview(lensCaptionLabel)
+
+    torchButton.isHidden = true
+    torchButton.backgroundColor = UIColor.black.withAlphaComponent(0.38)
+    // Capsule, matching the lens pill next to it (UISegmentedControl renders as a capsule).
+    torchButton.layer.cornerRadius = 17
+    torchButton.addTarget(self, action: #selector(torchTapped), for: .touchUpInside)
+    self.addSubview(torchButton)
+
+    torchCaptionLabel.isHidden = true
+    torchCaptionLabel.text = "Torch on"
+    torchCaptionLabel.textColor = .systemYellow
+    torchCaptionLabel.font = UIFont.systemFont(ofSize: 11, weight: .semibold)
+    // Shrink rather than truncate when the clamped frame is a few points short (375pt-wide triple-lens phones),
+    // mirroring the Flutter row's scale-down behavior.
+    torchCaptionLabel.adjustsFontSizeToFitWidth = true
+    torchCaptionLabel.minimumScaleFactor = 0.7
+    self.addSubview(torchCaptionLabel)
+    setTorchUI(on: false)
   }
 
   public override func layoutSubviews() {
@@ -863,6 +886,21 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       width: controlWidth,
       height: controlHeight
     )
+    // Torch chip sits directly right of the centered lens pill, with its "Torch on" note beside it —
+    // mirrors the Flutter showcase layout (`yolo-flutter-app/lib/widgets/lens_picker.dart`).
+    torchButton.frame = CGRect(
+      x: lensControl.frame.maxX + 6,
+      y: lensControl.frame.minY,
+      width: 41,
+      height: controlHeight
+    )
+    let captionX = torchButton.frame.maxX + 6
+    torchCaptionLabel.frame = CGRect(
+      x: captionX,
+      y: lensControl.frame.minY,
+      width: min(60, max(0, width - captionX)),
+      height: controlHeight
+    )
     lensCaptionLabel.frame = CGRect(
       x: 20,
       y: lensControl.frame.minY - captionHeight - 4,
@@ -977,6 +1015,51 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  /// Turns the torch on/off and returns the actual resulting state (`false` when the active device has no torch or
+  /// configuration fails), keeping the torch chip in sync with the hardware.
+  @discardableResult
+  public func setTorchMode(_ enabled: Bool) -> Bool {
+    var on = false
+    defer { setTorchUI(on: on) }
+    guard let device = videoCapture.captureDevice, device.hasTorch else { return false }
+
+    do {
+      try device.lockForConfiguration()
+      defer {
+        device.unlockForConfiguration()
+      }
+
+      if enabled {
+        try device.setTorchModeOn(level: AVCaptureDevice.maxAvailableTorchLevel)
+      } else {
+        device.torchMode = .off
+      }
+      on = device.torchMode == .on
+      return on
+    } catch {
+      YOLOLog.error("Torch configuration failed: \(error.localizedDescription)")
+      return false
+    }
+  }
+
+  @objc private func torchTapped() {
+    selection.selectionChanged()
+    setTorchMode(!isTorchOn)
+  }
+
+  /// Syncs the torch chip and its "Torch on" note to the given state, matching the Flutter showcase torch chip.
+  /// 13pt is the SF Symbols font size whose rendered bolt matches Flutter's 17pt icon box.
+  private func setTorchUI(on: Bool) {
+    isTorchOn = on
+    let config = UIImage.SymbolConfiguration(pointSize: 13, weight: .regular, scale: .default)
+    torchButton.setImage(
+      UIImage(systemName: on ? "bolt.fill" : "bolt.slash.fill", withConfiguration: config),
+      for: .normal)
+    torchButton.tintColor = on ? .systemYellow : .white
+    torchButton.accessibilityLabel = on ? "Turn torch off" : "Turn torch on"
+    torchCaptionLabel.isHidden = torchButton.isHidden || !on
+  }
+
   @objc func playTapped() {
     selection.selectionChanged()
     pausedShareImage = nil
@@ -989,6 +1072,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     selection.selectionChanged()
     playButton.isEnabled = true
     pauseButton.isEnabled = false
+    // Stopping the capture session turns the hardware torch off; keep the chip truthful.
+    setTorchUI(on: false)
     videoCapture.captureNextFrame { [weak self] image in
       self?.pausedShareImage = image
       self?.videoCapture.stop()
@@ -1076,6 +1161,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         ?? min(max(activeDevice.videoZoomFactor, self.minimumZoom), self.maximumZoom)
       self.lastZoomFactor = rawZoomFactor
       self.labelZoom.text = self.zoomLabelText(rawZoomFactor: rawZoomFactor, device: activeDevice)
+      // Switching the camera input drops the torch (the new device may not have one); sync the chip
+      // with the actual hardware state so it never reads stale.
+      self.setTorchUI(on: activeDevice.torchMode == .on)
       self.updateLensControl()
     }
   }
@@ -1157,6 +1245,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private func updateLensControlVisibility() {
     lensControl.isHidden = switchCameraButton.isHidden || lensDevices.isEmpty
     lensCaptionLabel.isHidden = lensControl.isHidden
+    // Hide the torch chip when the active device has no torch (e.g. front camera) — a visible chip
+    // that can't do anything reads as broken.
+    torchButton.isHidden = lensControl.isHidden || videoCapture.captureDevice?.hasTorch != true
+    torchCaptionLabel.isHidden = torchButton.isHidden || !isTorchOn
   }
 
   private func lensTitle(for device: AVCaptureDevice) -> String {

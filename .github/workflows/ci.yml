@@ -137,9 +137,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install Periphery
-        run: |
-          brew tap peripheryapp/periphery
-          brew install periphery
+        run: brew install periphery
 
       - name: Run Periphery
         run: |

@@ -1,0 +1,10 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+    patch:
+      default:
+        target: auto

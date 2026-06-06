@@ -1,6 +1,5 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-import CoreMedia
 import UIKit
 import UltralyticsYOLO
 
@@ -48,15 +47,6 @@ class ExternalDisplayManager {
         UIApplication.shared.activateSceneSession(for: request, errorHandler: nil)
       }
     }
-  }
-
-  /// Broadcasts a YOLO inference result so the external display can render it.
-  func shareResults(_ results: YOLOResult) {
-    NotificationCenter.default.post(
-      name: .yoloResultsAvailable,
-      object: nil,
-      userInfo: ["results": results]
-    )
   }
 
   /// Notifies the external display that the selected task or model has changed.

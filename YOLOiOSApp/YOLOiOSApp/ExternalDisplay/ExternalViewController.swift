@@ -354,7 +354,4 @@ extension ExternalViewController {
     }
   }
 
-  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
-  }
-
 }

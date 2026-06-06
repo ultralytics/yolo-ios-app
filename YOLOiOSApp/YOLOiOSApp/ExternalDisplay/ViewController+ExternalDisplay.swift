@@ -75,6 +75,8 @@ extension ViewController {
           self.yoloView.shareButton,
           self.yoloView.infoButton,
         ].forEach { $0.isHidden = true }
+        // Lens and torch controls derive their visibility from switchCameraButton during layout.
+        self.yoloView.setNeedsLayout()
         self.modelSegmentedControl.setNeedsLayout()
         self.modelSegmentedControl.layoutIfNeeded()
       }

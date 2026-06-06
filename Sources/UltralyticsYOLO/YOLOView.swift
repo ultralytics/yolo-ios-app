@@ -66,11 +66,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     delegate?.yoloView(self, didReceiveResult: result)
     onDetection?(result)
 
-    // Consumers drawing their own overlays disable the built-in rendering below via `showOverlays`.
-    guard showOverlays else {
-      clearPredictionOverlays()
-      return
-    }
+    // Consumers drawing their own overlays disable the built-in rendering below via `showOverlays`;
+    // its `didSet` already cleared anything previously drawn, so just skip.
+    guard showOverlays else { return }
 
     task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
 

@@ -39,9 +39,23 @@ process_model() {
     # Remove existing model directory if present
     rm -rf "$model_path"
 
-    # Download the model
+    # Download the model: -f fails on HTTP errors, --retry covers transient network/server failures,
+    # and unzip -t catches truncated or corrupt archives before extraction
     echo "Downloading $model_name..."
-    curl -L "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar
+    local attempt
+    for attempt in 1 2 3; do
+      if curl -fL --retry 3 --connect-timeout 15 "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar \
+        && unzip -tqq "$zip_path" > /dev/null; then
+        break
+      fi
+      rm -f "$zip_path"
+      if [[ $attempt -eq 3 ]]; then
+        echo "❌ Failed to download a valid $model_name archive after 3 attempts"
+        exit 1
+      fi
+      echo "⚠️ $model_name download failed or archive invalid (attempt $attempt), retrying..."
+      sleep 5
+    done
 
     # Extract to temp directory to handle nested structure
     local tmp_dir="$OUTPUT_DIR/_tmp_extract_$$"
@@ -65,8 +79,13 @@ process_model() {
     # Clean up
     rm -rf "$tmp_dir" "$zip_path"
 
-    # Quick verification
-    [ -f "$model_path/Manifest.json" ] && echo "✅ Model $model_name ready" || echo "⚠️ Model $model_name may be incomplete"
+    # Verify extraction; remove the bad directory so a re-run re-downloads instead of skipping it
+    if [[ ! -f "$model_path/Manifest.json" ]]; then
+      rm -rf "$model_path"
+      echo "❌ Model $model_name is incomplete (missing Manifest.json)"
+      exit 1
+    fi
+    echo "✅ Model $model_name ready"
   fi
 
   # Copy to app model directory if not present

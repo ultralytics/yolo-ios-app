@@ -14,12 +14,14 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   test:
     runs-on: macos-26
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v6
 

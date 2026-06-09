@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   test:
@@ -122,13 +123,12 @@ jobs:
       - name: Upload to Codecov
         uses: codecov/codecov-action@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./info.lcov
           slug: ultralytics/yolo-ios-app
+          use_oidc: true
           disable_search: true
           plugins: noop
-          fail_ci_if_error: false
-          handle_no_reports_found: true
+          fail_ci_if_error: true
 
   periphery:
     runs-on: macos-26

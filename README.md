@@ -6,7 +6,7 @@
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![CI](https://github.com/ultralytics/yolo-ios-app/actions/workflows/ci.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/ultralytics/yolo-ios-app/branch/main/graph/badge.svg)](https://codecov.io/gh/ultralytics/yolo-ios-app)
+[![codecov](https://codecov.io/github/ultralytics/yolo-ios-app/branch/main/graph/badge.svg)](https://app.codecov.io/github/ultralytics/yolo-ios-app)
 
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)

@@ -34,6 +34,12 @@ so preprocess is reported as 0 and its cost is included in inference.
   measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`).
   <br>Reproduce with the Flutter plugin's harness:
   `flutter test integration_test/qnn_benchmark_test.dart -d <iphone> --dart-define=RUN_BENCH=true`
+- **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
+  `predictOnImage` on a thermally rested device, with no live capture pipeline competing for the ANE. Sustained
+  real-time camera operation measures **~16 ms/frame** for YOLO26n detect on this same device — see
+  [⏱️ What the App's "Inference Time" Actually Measures](#%EF%B8%8F-what-the-apps-inference-time-actually-measures)
+  for the steady-state pipeline breakdown (full-sensor letterboxing dominates, and in-app inference settles at ~7 ms
+  vs ~1.8 ms isolated).
 - The matching Snapdragon CPU/GPU/NPU table lives in the
   [Flutter plugin performance guide](https://github.com/ultralytics/yolo-flutter-app/blob/main/doc/performance.md).
 

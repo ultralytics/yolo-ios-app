@@ -19,6 +19,7 @@ import Vision
 public final class Segmenter: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
+    markInferenceEnd()
     guard let parsed = parseSegmentationRequest(request) else {
       self.isUpdating = false
       return
@@ -58,6 +59,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         boxes: boxes,
         masks: Masks(masks: processed.1 ?? [], combinedMask: processed.0),
         speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels)
+      self?.applyTimingBreakdown(&result)
       result.originalImage = capturedOriginalImage
       self?.currentOnResultsListener?.on(result: result)
     }
@@ -77,6 +79,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
       emptyResult.speed = finishTiming(notify: false)
       return emptyResult
     }
+    markInferenceEnd()
 
     let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
     let boxes = buildBoxes(from: limitedObjects)
@@ -97,13 +100,15 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         orig_shape: inputSize, boxes: boxes, speed: finishTiming(notify: false), names: labels)
     }
 
+    let speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
     let annotatedImage = drawYOLOSegmentationWithBoxes(
       ciImage: image, boxes: boxes, maskImage: processed.0)
     var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes,
       masks: Masks(masks: masks, combinedMask: processed.0),
       annotatedImage: annotatedImage,
-      speed: finishTiming(notify: false), names: labels)
+      speed: speed, names: labels)
+    applyTimingBreakdown(&result)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)
     }

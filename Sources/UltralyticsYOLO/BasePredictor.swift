@@ -70,6 +70,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Duration of a single inference operation.
   var t1 = 0.0  // inference dt
+  var tInferEnd = 0.0  // timestamp when the Vision request returned (postprocessing starts)
 
   /// Smoothed inference duration (averaged over recent operations).
   var t2 = 0.0  // inference dt smoothed
@@ -376,6 +377,26 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   func finishTiming(notify: Bool = true) -> Double {
     updateTime(notify: notify)
     return self.t1
+  }
+
+  /// Marks the end of inference (start of postprocessing). Call immediately when the Vision request completes.
+  func markInferenceEnd() {
+    tInferEnd = CACurrentMediaTime()
+  }
+
+  /// Per-stage timing in milliseconds: (pre, inference, post). On iOS Vision fuses input scaling into the
+  /// request, so `pre` is folded into `inference` and reported as zero. Call after `finishTiming`/`updateTime`.
+  func timingBreakdownMs() -> (pre: Double, inference: Double, post: Double) {
+    guard tInferEnd > t0 else { return (0, t1 * 1000, 0) }
+    return (0, (tInferEnd - t0) * 1000, (t3 - tInferEnd) * 1000)
+  }
+
+  /// Applies the current timing breakdown to a result.
+  func applyTimingBreakdown(_ result: inout YOLOResult) {
+    let timing = timingBreakdownMs()
+    result.preMs = timing.pre
+    result.inferenceMs = timing.inference
+    result.postMs = timing.post
   }
 
   /// The confidence threshold for filtering detection results (default: 0.25).

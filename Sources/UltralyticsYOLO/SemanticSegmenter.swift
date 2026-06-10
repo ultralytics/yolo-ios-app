@@ -18,11 +18,13 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   private var colorCache: (classCount: Int, colors: [(red: UInt8, green: UInt8, blue: UInt8)])?
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
+    markInferenceEnd()
     let semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask, speed: self.t2,
       fps: 1 / self.t4, names: labels)
+    applyTimingBreakdown(&result)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
@@ -35,15 +37,17 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     var semanticMask: SemanticMask?
     let requestHandler = makeRequestHandler(for: image)
     if perform(request, with: requestHandler, errorMessage: "Semantic segmentation failed") {
+      markInferenceEnd()
       semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
     }
 
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask,
       speed: 0, names: labels)
+    result.speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
+    applyTimingBreakdown(&result)
     result.annotatedImage = drawYOLOSemanticSegmentation(
       ciImage: image, semanticMask: semanticMask?.maskImage)
-    result.speed = finishTiming(notify: false)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)
     }

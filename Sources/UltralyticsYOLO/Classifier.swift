@@ -19,11 +19,13 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
   override var imageCropAndScaleOption: VNImageCropAndScaleOption { .centerCrop }
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
+    markInferenceEnd()
     let probs = extractProbs(from: request)
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: self.t2, fps: 1 / self.t4,
       names: labels)
+    applyTimingBreakdown(&result)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
@@ -36,13 +38,15 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     var probs = Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
     let requestHandler = makeRequestHandler(for: image)
     if perform(request, with: requestHandler, errorMessage: "Classifier inference failed") {
+      markInferenceEnd()
       probs = extractProbs(from: request)
     }
 
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], probs: probs, speed: 0, names: labels)
+    result.speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
+    applyTimingBreakdown(&result)
     result.annotatedImage = drawYOLOClassifications(on: image, result: result)
-    result.speed = finishTiming(notify: false)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)
     }

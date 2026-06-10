@@ -32,10 +32,12 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   ///   - request: The completed Vision request containing object detection results.
   ///   - error: Any error that occurred during the Vision request.
   override func processObservations(for request: VNRequest, _ error: Error?) {
+    markInferenceEnd()
     let boxes = decodeBoxes(from: request)
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
+    applyTimingBreakdown(&result)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
@@ -90,12 +92,14 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
 
     let requestHandler = makeRequestHandler(for: image)
     if perform(request, with: requestHandler, errorMessage: "Object detection failed") {
+      markInferenceEnd()
       boxes = decodeBoxes(from: request)
     }
 
     var result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
+    result.speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
+    applyTimingBreakdown(&result)
     let annotatedImage = drawYOLODetections(on: image, result: result)
-    result.speed = finishTiming(notify: false)
     result.annotatedImage = annotatedImage
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)

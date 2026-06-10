@@ -156,6 +156,19 @@ On A19, frame time is dominated by model inference (~7 ms, thermally bound under
 
 ## 🔓 Open Levers (Untested / Not Shipped)
 
+- **In-graph ArgMax for semantic models.** The Android/QNN integration moved semantic argmax into the exported
+  graph (uint8 class-map output, Qualcomm's own segmentation recipe) and went from erratic 123-1065 ms to a stable
+  ~50 ms on the NPU (ultralytics/ultralytics#24790). The Core ML semantic export still emits float logits that
+  `postProcessSemantic` argmax-decodes on the CPU (~7 ms of the semantic frame); an in-graph
+  `argmax(1).byte()` in the Core ML export should cut that decode and shrink the output tensor ~classCount-fold.
+  Needs `SemanticSegmenter` to accept a `[1, H, W]` integer class map alongside logits.
+- **Cross-platform decode parity (context, not a lever).** The Flutter Android predictors previously spent
+  ~12 ms/frame on detect decode (tensor reshape copies + JNI marshalling); rewriting them to direct flat reads —
+  the approach this SDK has always used via raw pointers (~0.18 ms) — took Android detect from 23.3 to 13.1 ms
+  end-to-end. Validation that the raw-pointer decode pattern here is the right baseline and should be preserved in
+  any future refactor.
+
+
 - **Lower model input resolution** — re-export at `imgsz=480` (0.56× the pixels of 640) to cut the ~7 ms model time; the largest remaining lever.
 - **Manual vImage preprocessing** — ~5 ms/frame win; needs BGRA color-order validation and per-task (OBB/pose/seg) decode support before shipping.
 - **Higher camera frame rate** — raise `activeVideoMinFrameDuration` toward 60 fps where the format and lighting allow, now that inference has headroom.

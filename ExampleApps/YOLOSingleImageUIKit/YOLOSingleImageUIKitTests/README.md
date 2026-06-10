@@ -27,9 +27,9 @@ from ultralytics import YOLO
 # Load the YOLO26 detection model
 model = YOLO("yolo26n.pt")
 
-# Export the model to Core ML format
-# This will create the yolo26n.mlpackage file
-model.export(format="coreml")
+# Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
+# This will create the yolo26n.mlpackage file.
+model.export(format="coreml", nms=False, end2end=True)
 ```
 
 ### Adding Model Files to the Project
@@ -47,7 +47,7 @@ Follow these steps carefully:
 
 Consider placing the model file within a "Models" group in your Xcode project for clarity.
 
-![Adding model to target](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
+For current Xcode guidance on adding files to a project, see Apple's [Managing files and folders in your Xcode project](https://developer.apple.com/documentation/xcode/managing-files-and-folders-in-your-xcode-project).
 
 The reason the model must be part of the main application target is that the YOLO framework code within the app loads the model from the main application [bundle](https://developer.apple.com/documentation/foundation/bundle) (`Bundle.main`). Tests run within the context of the app, thus requiring the model to be accessible via this main bundle.
 

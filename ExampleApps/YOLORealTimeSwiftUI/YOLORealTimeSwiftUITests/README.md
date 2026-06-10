@@ -25,8 +25,8 @@ from ultralytics import YOLO
 # Load a pretrained OBB model (e.g., yolo26n-obb.pt)
 model = YOLO("yolo26n-obb.pt")
 
-# Export the model to Core ML format
-model.export(format="coreml")  # Creates yolo26n-obb.mlpackage
+# Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
+model.export(format="coreml", nms=False, end2end=True, imgsz=1024)  # Creates yolo26n-obb.mlpackage
 ```
 
 ### Adding Model Files to the Project
@@ -45,7 +45,7 @@ Follow these steps to add the model file correctly within Xcode:
 
 For better organization, consider placing the model file within a "Models" group in your project structure.
 
-![Adding model to target](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
+For current Xcode guidance on adding files to a project, see Apple's [Managing files and folders in your Xcode project](https://developer.apple.com/documentation/xcode/managing-files-and-folders-in-your-xcode-project).
 
 The application framework specifically looks for models within the main application [bundle](https://developer.apple.com/documentation/foundation/bundle), hence the requirement to include them in the main target for tests to access them correctly.
 

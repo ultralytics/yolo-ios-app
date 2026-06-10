@@ -30,6 +30,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var modelSegmentedControl: UISegmentedControl!
   @IBOutlet weak var labelName: UILabel!
   @IBOutlet weak var labelFPS: UILabel!
+  /// Smaller line under `labelFPS` showing the pre/inference/post breakdown in ms (parity with the Flutter app HUD).
+  let labelBreakdown = UILabel()
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var logoImage: UIImageView!
@@ -131,7 +133,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     yoloView.delegate = self
-    [yoloView.labelName, yoloView.labelFPS].forEach { $0?.isHidden = true }
+    [yoloView.labelName, yoloView.labelFPS, yoloView.labelBreakdown].forEach { $0?.isHidden = true }
 
     // Observe slider changes to forward thresholds to an external display.
     yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
@@ -142,6 +144,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
       $0?.textColor = .white
       $0?.overrideUserInterfaceStyle = .dark
     }
+    labelBreakdown.textAlignment = .center
+    labelBreakdown.textColor = UIColor.white.withAlphaComponent(0.7)
+    labelBreakdown.font = UIFont.preferredFont(forTextStyle: .caption1)
+    labelBreakdown.overrideUserInterfaceStyle = .dark
+    labelBreakdown.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(labelBreakdown)
+    NSLayoutConstraint.activate([
+      labelBreakdown.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 2),
+      labelBreakdown.centerXAnchor.constraint(equalTo: labelFPS.centerXAnchor),
+    ])
     activityIndicator.style = .large
     activityIndicator.color = .white
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -695,6 +707,19 @@ extension ViewController {
     DispatchQueue.main.async { [weak self] in
       self?.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
       self?.labelFPS.textColor = .white
+    }
+  }
+
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
+    let breakdownTotal = result.preMs + result.inferenceMs + result.postMs
+    let text =
+      breakdownTotal > 0
+      ? String(
+        format: "%.1f pre · %.1f inference · %.1f post", result.preMs, result.inferenceMs,
+        result.postMs)
+      : ""
+    DispatchQueue.main.async { [weak self] in
+      self?.labelBreakdown.text = text
     }
   }
 

@@ -147,7 +147,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 Add the `UltralyticsYOLO` package to your app with Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.0")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.4")
 ```
 
 Or with CocoaPods:
@@ -202,7 +202,7 @@ We warmly welcome contributions to our open-source projects! Your support helps 
 
 Ultralytics provides two licensing options to accommodate diverse use cases:
 
-- **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/license/agpl-3.0) open-source license ideal for academic research, personal projects, and experimentation. It promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file and the full [AGPL-3.0 license text](https://www.gnu.org/licenses/agpl-3.0.en.html) for details.
+- **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/license/agpl-3.0) open-source license ideal for academic research, personal projects, and experimentation. It promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for the full license text.
 - **Enterprise License**: Tailored for commercial applications, this license allows the integration of Ultralytics software and AI models into commercial products and services without the open-source requirements of AGPL-3.0. If your scenario involves commercial use, please contact us via [Ultralytics Licensing](https://www.ultralytics.com/license).
 
 ## 🤝 Contact

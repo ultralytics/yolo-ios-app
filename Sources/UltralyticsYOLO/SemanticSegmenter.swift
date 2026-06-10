@@ -61,17 +61,19 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   func postProcessSemantic(_ logits: MLMultiArray) -> SemanticMask? {
     let shape = logits.shape.map { $0.intValue }
     let strides = logits.strides.map { $0.intValue }
-    guard shape.count == 4, shape[0] == 1 else {
+    // In-graph-ArgMax exports emit a [1, H, W] class map directly; legacy exports emit 4D float logits
+    let isClassMap = shape.count == 3 && shape[0] == 1
+    guard isClassMap || (shape.count == 4 && shape[0] == 1) else {
       YOLOLog.error(
-        "Invalid semantic output shape: expected logits [1, C, H, W] or [1, H, W, C], got \(logits.shape)"
+        "Invalid semantic output shape: expected class map [1, H, W] or logits [1, C, H, W] / [1, H, W, C], got \(logits.shape)"
       )
       return nil
     }
 
-    let isNCHW = shape[1] <= shape[3] || shape[1] == labels.count
-    let classCount = isNCHW ? shape[1] : shape[3]
-    let maskHeight = isNCHW ? shape[2] : shape[1]
-    let maskWidth = isNCHW ? shape[3] : shape[2]
+    let isNCHW = isClassMap || shape[1] <= shape[3] || shape[1] == labels.count
+    let classCount = isClassMap ? max(labels.count, 2) : (isNCHW ? shape[1] : shape[3])
+    let maskHeight = isClassMap ? shape[1] : (isNCHW ? shape[2] : shape[1])
+    let maskWidth = isClassMap ? shape[2] : (isNCHW ? shape[3] : shape[2])
     guard classCount > 0, maskWidth > 0, maskHeight > 0 else { return nil }
     if labels.isEmpty {
       YOLOLog.warning("Semantic output axis inferred without labels from shape: \(logits.shape)")
@@ -88,15 +90,39 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let outputHeight = Int(outputRect.height)
     guard outputWidth > 0, outputHeight > 0 else { return nil }
 
-    let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
     let outCount = outputWidth * outputHeight
     var classMap = [Int](repeating: 0, count: outCount)
     var pixels = Data(count: outCount * 4)
     let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
+    let classStride = isClassMap ? 0 : (isNCHW ? strides[1] : strides[3])
+    let rowStride = isClassMap ? strides[1] : (isNCHW ? strides[2] : strides[1])
+    let colStride = isClassMap ? strides[2] : (isNCHW ? strides[3] : strides[2])
+
+    if isClassMap {
+      // The NPU already did the argmax - just read the per-pixel class indices (dtype depends on the runtime)
+      let readIndex: (Int) -> Int
+      switch logits.dataType {
+      case .int32:
+        let p = logits.dataPointer.assumingMemoryBound(to: Int32.self)
+        readIndex = { Int(p[$0]) }
+      default:
+        let p = logits.dataPointer.assumingMemoryBound(to: Float.self)
+        readIndex = { Int(p[$0]) }
+      }
+      for y in 0..<outputHeight {
+        let srcRow = (y + outputY) * rowStride + outputX * colStride
+        let outRow = y * outputWidth
+        for x in 0..<outputWidth {
+          classMap[outRow + x] = min(max(readIndex(srcRow + x * colStride), 0), classCount - 1)
+        }
+      }
+      return finishSemanticMask(
+        classMap: classMap, pixels: &pixels, colors: colors,
+        outputWidth: outputWidth, outputHeight: outputHeight)
+    }
+
+    let pointer = logits.dataPointer.assumingMemoryBound(to: Float.self)
     let binaryThreshold = classCount == 1 ? singleChannelThreshold(pointer, count: logits.count) : 0
-    let classStride = isNCHW ? strides[1] : strides[3]
-    let rowStride = isNCHW ? strides[2] : strides[1]
-    let colStride = isNCHW ? strides[3] : strides[2]
 
     // Phase 1 — argmax over classes into `classMap`, iterating class-major: for each class plane sweep the output
     // pixels, keeping a running best score/index. For NCHW (the YOLO export layout) each plane is contiguous, so
@@ -133,10 +159,19 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       }
     }
 
-    // Phase 2 — paint the RGBA buffer from the resolved class map in one sequential sweep.
+    return finishSemanticMask(
+      classMap: classMap, pixels: &pixels, colors: colors,
+      outputWidth: outputWidth, outputHeight: outputHeight)
+  }
+
+  /// Paints the RGBA buffer from a resolved class map in one sequential sweep and packages the result.
+  private func finishSemanticMask(
+    classMap: [Int], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
+    outputWidth: Int, outputHeight: Int
+  ) -> SemanticMask {
     pixels.withUnsafeMutableBytes { rawBuffer in
       let pixelBuffer = rawBuffer.bindMemory(to: UInt8.self)
-      for i in 0..<outCount {
+      for i in 0..<(outputWidth * outputHeight) {
         writeColor(colors[classMap[i]], into: pixelBuffer, at: i * 4)
       }
     }

@@ -14,6 +14,29 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 - **Model:** `yolo26n` per task, 640×640 input (1024 for OBB, 224 for classify), int8 Core ML.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
 
+## Standardized backend benchmark
+
+End-to-end `predictOnImage` speeds for the official YOLO26n INT8 Core ML models on the test device
+(iPhone 17 Pro, A19, iOS 26.5), as **total time** with the preprocess / inference / postprocess split beneath
+each value. Annotation drawing is excluded. On iOS, Vision performs input scaling inside the inference request,
+so preprocess is reported as 0 and its cost is included in inference.
+
+| Model        | Task     | size<br><sup>(pixels)</sup> | CPU<br><sup>`.cpuOnly`<br>(ms)</sup>  | Neural Engine<br><sup>`.cpuAndNeuralEngine`<br>(ms)</sup> |
+| ------------ | -------- | --------------------------- | ------------------------------------- | ---------------------------------------------------------- |
+| YOLO26n      | Detect   | 640                         | 9.2<br><sup>0.0 / 9.1 / 0.0</sup>     | **3.8**<br><sup>0.0 / 3.7 / 0.0</sup>                       |
+| YOLO26n-seg  | Segment  | 640                         | 21.7<br><sup>0.0 / 12.0 / 9.8</sup>   | **14.1**<br><sup>0.0 / 4.5 / 9.6</sup>                      |
+| YOLO26n-sem  | Semantic | 1024                        | 14.6<br><sup>0.0 / 7.4 / 7.3</sup>    | **10.3**<br><sup>0.0 / 3.3 / 7.0</sup>                      |
+| YOLO26n-cls  | Classify | 224                         | 2.4<br><sup>0.0 / 2.4 / 0.0</sup>     | **2.0**<br><sup>0.0 / 1.9 / 0.0</sup>                       |
+| YOLO26n-pose | Pose     | 640                         | 12.1<br><sup>0.0 / 12.0 / 0.1</sup>   | **3.9**<br><sup>0.0 / 3.9 / 0.1</sup>                       |
+| YOLO26n-obb  | OBB      | 1024                        | 22.3<br><sup>0.0 / 22.3 / 0.0</sup>   | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                       |
+
+- **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
+  measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`).
+  <br>Reproduce with the Flutter plugin's harness:
+  `flutter test integration_test/qnn_benchmark_test.dart -d <iphone> --dart-define=RUN_BENCH=true`
+- The matching Snapdragon CPU/GPU/NPU table lives in the
+  [Flutter plugin performance guide](https://github.com/ultralytics/yolo-flutter-app/blob/main/doc/performance.md).
+
 ## Methodology (how to reproduce)
 
 | Tool                                                                                              | What it measures                                                         | Notes                                                                                                                                                                                                                                                            |

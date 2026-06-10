@@ -7,14 +7,14 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 > [!IMPORTANT]
 > **Host benchmarks predict the wrong winner — always confirm on device.** Mac `coremltools` `predict` deltas are useful for quick relative screening, but two separate findings below (end2end head, compute units) **flipped or vanished** when measured on an actual iPhone. Treat host numbers as hypotheses; treat the Xcode Core ML Performance Report and an instrumented on-device build as ground truth.
 
-## Test setup
+## 📱 Test Setup
 
 - **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5).
 - **Host (relative screening only):** Apple M4 Pro, `coremltools`.
 - **Model:** `yolo26n` per task, 640×640 input (1024 for OBB, 224 for classify), int8 Core ML.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
 
-## Standardized backend benchmark
+## 📊 Standardized Backend Benchmark
 
 End-to-end `predictOnImage` speeds for the official YOLO26n INT8 Core ML models on the test device
 (iPhone 17 Pro, A19, iOS 26.5), as **total time** with the preprocess / inference / postprocess split beneath
@@ -37,7 +37,7 @@ so preprocess is reported as 0 and its cost is included in inference.
 - The matching Snapdragon CPU/GPU/NPU table lives in the
   [Flutter plugin performance guide](https://github.com/ultralytics/yolo-flutter-app/blob/main/doc/performance.md).
 
-## Methodology (how to reproduce)
+## 🔬 Methodology (How to Reproduce)
 
 | Tool                                                                                              | What it measures                                                         | Notes                                                                                                                                                                                                                                                            |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -46,7 +46,7 @@ so preprocess is reported as 0 and its cost is included in inference.
 | Xcode **Core ML Performance Report** (`.mlpackage` → Performance → device → All)                  | per-layer on-device compute-unit placement + prediction latency          | Gold standard for absolute device numbers; exports `*.mlperf/report.json`.                                                                                                                                                                                       |
 | Instrumented app build (experiment branch; these hooks are not in the shipped SDK)                | per-frame `preprocess / inference / postprocess` split, EMA + raw jitter | Tap the FPS label to A/B Vision↔manual; env `YOLO_PREPROCESS`, `YOLO_COMPUTE_UNITS`, `YOLO_CAMERA_PRESET`; `[perf]` to stdout (capture via `xcrun devicectl device process launch --console`) and `os_log` (`subsystem com.ultralytics.yolo`, category `YOLO`). |
 
-## What the app's "inference time" actually measures
+## ⏱️ What the App's "Inference Time" Actually Measures
 
 The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame — preprocess + model predict + Swift postprocess — not just the model. The decode runs synchronously inside `perform` (the `VNCoreMLRequest` completion handler). On A19, `yolo26n` detect at `.photo` capture:
 
@@ -57,7 +57,7 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 | Postprocess (Swift decode)                 | ≈0.18 ms   | Raw-pointer reads; negligible.                                                              |
 | **Total**                                  | **≈16 ms** | The "16 ms" is the pipeline, not the model head.                                            |
 
-## Experiment: camera capture resolution
+## 📷 Experiment: Camera Capture Resolution
 
 **Q:** How much of the frame is preprocessing, and does capture resolution drive it? **A:** `.photo` delivers full-sensor ~2 MP frames that are downscaled to 640 every frame — the dominant cost. Lowering the preset has **no accuracy impact** (the model always sees a 640 input).
 
@@ -70,7 +70,7 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 **Shipped: `.hd1280x720`** — cuts pipeline frame time vs `.photo` (15.9 → 13.3 ms) and doubles sustained FPS while keeping a crisp 16:9 preview. `.vga640x480` (4:3, same FOV as `.photo`) lands on 640 with pad-only/no-downscale, the cheapest preprocess. The preset is guarded by `canSetSessionPreset` with a `[requested, .high, .photo]` fallback so startup never regresses on a camera that can't honor it.
 
-## Experiment: preprocessing — Vision vs. manual vImage
+## 🖼️ Experiment: Preprocessing — Vision vs. Manual vImage
 
 **Q:** How much of the frame is Vision framework overhead vs. the model? **A:** Bypassing Vision with a manual `vImage` letterbox into a reused buffer fed directly to `MLModel.prediction` removes ~5 ms/frame of Vision overhead. (Device, `yolo26n` detect.)
 
@@ -82,7 +82,7 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 Manual preprocessing is ~10–15% faster on its own, and stacks with a small capture preset (VGA collapses the letterbox to 0.48 ms → ~8 ms total). It is **not shipped**: it is currently detect-only and its BGRA→model color order needs visual validation. Preserved as an experiment (`git stash`).
 
-## Experiment: Core ML compute units (CPU / GPU / ANE)
+## 🧠 Experiment: Core ML Compute Units (CPU / GPU / ANE)
 
 **Q:** Should inference use `.cpuAndNeuralEngine` or `.all` (adds GPU)? **A:** `.all` is no faster and slightly jitterier in a live camera app, where the GPU is busy compositing the preview/overlays. The model is ~7 ms in-app under **both**.
 
@@ -99,7 +99,7 @@ Host (`coremltools`, `yolo26n`): `CPU_AND_NE` **2.6 ms** vs `CPU_ONLY` **8.6 ms*
 
 **Shipped: `.cpuAndNeuralEngine`** — keeps the conv backbone on the ANE and avoids GPU contention. Do not switch to `.all`.
 
-## Experiment: YOLO26 end2end head vs. legacy head + NMS
+## 🎯 Experiment: YOLO26 End2end Head vs. Legacy Head + NMS
 
 **Q:** The YOLO26 in-graph end2end decode (top-k/gather, no NMS) puts some ops on the CPU — is it slower than a legacy head + Core ML/Vision NMS? **A:** On host it looks slower; **on device it is as fast or faster.** Keep end2end.
 
@@ -122,11 +122,11 @@ Device (Xcode Performance Report, A19, `yolo26n`):
 
 **On device the sign flips: end2end is faster** — the A19 ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting `end2end=False` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The end2end export stays the default.
 
-## Experiment: YOLO26 vs. YOLO11 backbone
+## 🆚 Experiment: YOLO26 vs. YOLO11 Backbone
 
 **Q:** Is the YOLO26 backbone slower than YOLO11 on Core ML? **A:** No — they're equal. Host (`coremltools` NE, raw heads): `yolo26n` 2.26 ms ≈ `yolo11n` 2.25 ms (and `yolo26n` is smaller, 2.71 vs 2.89 MB). Any "YOLO26 is slower" impression was the end2end head, not the backbone.
 
-## Experiment: quantization & deployment target
+## ⚖️ Experiment: Quantization & Deployment Target
 
 | Setting                               | Effect                                                                                               |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -134,21 +134,21 @@ Device (Xcode Performance Report, A19, `yolo26n`):
 | int8 activation quantization          | No benefit (the ANE is fp16-native).                                                                 |
 | `minimum_deployment_target` iOS17/18+ | **Regresses** detect latency (adds casts / CPU ops). Leave unset; let `coremltools` choose.          |
 
-## Frame rate is camera-bound, not inference-bound
+## 🎞️ Frame Rate Is Camera-Bound, Not Inference-Bound
 
 `FPS` is the rate the camera delivers and the pipeline processes frames — **not** `1000 / inference_ms`. At ≤13 ms/frame the pipeline finishes well inside the camera's frame interval and idles until the next frame. Proof: manual+VGA (8.3 ms) ran at a _lower_ FPS than Vision+720p (13.3 ms). The cap is set by the camera format (~30 fps default), reduced in dim light (auto-exposure lengthens frame duration) and under thermal load — and the SDK does not raise `activeVideoMinFrameDuration`. Faster inference therefore buys latency and power/thermal headroom, not FPS, unless the camera frame-rate cap is raised.
 
-## Aspect-ratio robustness (16:9 ↔ 4:3)
+## 📐 Aspect-Ratio Robustness (16:9 ↔ 4:3)
 
 Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` is 16:9), so letterbox bars fall on different axes. The pipeline is aspect-agnostic: `letterboxTransform` derives `gain = min(640/W, 640/H)` with independent centered `padX`/`padY` from the **live** frame size; `inputRect` inverts it; and on-screen overlays use aspect-**fill** mapping consistent with the preview's `.resizeAspectFill` gravity. Verified by `Tests/YOLOTests/LetterboxTests.swift` (round-trips both aspects in both orientations).
 
-## Shipped configuration
+## ✅ Shipped Configuration
 
 `.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · default `minimum_deployment_target`.
 
 On A19, frame time is dominated by model inference (~7 ms, thermally bound under sustained live use) plus preprocessing. The isolated Performance Report's ~1.8 ms model time is not achievable inside a live camera pipeline.
 
-## Open levers (untested / not shipped)
+## 🔓 Open Levers (Untested / Not Shipped)
 
 - **Lower model input resolution** — re-export at `imgsz=480` (0.56× the pixels of 640) to cut the ~7 ms model time; the largest remaining lever.
 - **Manual vImage preprocessing** — ~5 ms/frame win; needs BGRA color-order validation and per-task (OBB/pose/seg) decode support before shipping.

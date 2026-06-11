@@ -265,15 +265,28 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  /// Capture session preset for the camera feed (default `.hd1280x720`).
+  ///
+  /// The default captures at 720p rather than `.photo`: full-sensor frames must be downscaled to the model input
+  /// every frame — the dominant preprocessing cost — and 720p roughly doubles sustained throughput with no accuracy
+  /// change for standard 640px models. Models with larger inputs picking out small objects can request a higher
+  /// preset (e.g. `.hd1920x1080`); unsupported presets fall back to `.high` then `.photo`. Changing this while the
+  /// camera is running restarts the session with the new preset.
+  public var captureSessionPreset: AVCaptureSession.Preset = .hd1280x720 {
+    didSet {
+      guard oldValue != captureSessionPreset, videoCapture.previewLayer != nil else { return }
+      let position = videoCapture.captureDevice?.position ?? .back
+      videoCapture.stop()
+      start(position: position)
+    }
+  }
+
   private func start(position: AVCaptureDevice.Position) {
     guard !busy else { return }
     busy = true
-    // Capture at 720p rather than `.photo`. `.photo` delivers full-sensor (~2 MP) frames that must be downscaled to
-    // the model's 640 input every frame — the dominant preprocessing cost. 720p roughly halves per-frame work and
-    // doubles sustained throughput on-device with no change to detection accuracy (the model always sees a 640 input).
-    // The letterbox pipeline is aspect-agnostic, so this 16:9 stream is handled the same as the previous 4:3 `.photo`.
     videoCapture.setUp(
-      sessionPreset: .hd1280x720, position: position, videoOrientation: currentVideoOrientation()
+      sessionPreset: captureSessionPreset, position: position,
+      videoOrientation: currentVideoOrientation()
     ) {
       [weak self] success in
       Task { @MainActor in

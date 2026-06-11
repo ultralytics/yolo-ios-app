@@ -732,7 +732,9 @@ extension ViewController {
   private func renderPerformanceLabel() {
     let rendered = NSMutableAttributedString(
       string: fpsText,
-      attributes: [.font: UIFont.preferredFont(forTextStyle: .body), .foregroundColor: UIColor.white])
+      attributes: [
+        .font: UIFont.preferredFont(forTextStyle: .body), .foregroundColor: UIColor.white,
+      ])
     if !breakdownText.isEmpty {
       rendered.append(
         NSAttributedString(

@@ -1207,7 +1207,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     transitionView.addSubview(blurView)
 
-    insertSubview(transitionView, belowSubview: labelName)
+    addSubview(transitionView)  // top of the hierarchy: cover the whole HUD (labels, sliders, toolbar) uniformly
     cameraTransitionView = transitionView
   }
 

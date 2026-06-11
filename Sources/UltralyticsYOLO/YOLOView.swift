@@ -285,7 +285,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     guard !busy else { return }
     busy = true
     videoCapture.setUp(
-      sessionPreset: captureSessionPreset, position: position, videoOrientation: currentVideoOrientation()
+      sessionPreset: captureSessionPreset, position: position,
+      videoOrientation: currentVideoOrientation()
     ) {
       [weak self] success in
       Task { @MainActor in

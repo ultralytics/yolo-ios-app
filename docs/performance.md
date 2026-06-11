@@ -37,7 +37,7 @@ so preprocess is reported as 0 and its cost is included in inference.
   measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`) in profile-mode
   builds (optimized native code).
   <br>Reproduce with the Flutter plugin's harness:
-  `flutter test integration_test/qnn_benchmark_test.dart -d <iphone> --dart-define=RUN_BENCH=true`
+  `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --profile -d <iphone> --dart-define=RUN_BENCH=true`
 - **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
   `predictOnImage` on a thermally rested device, with no live capture pipeline competing for the ANE. Sustained
   real-time camera operation measures **~16 ms/frame** for YOLO26n detect on this same device — see

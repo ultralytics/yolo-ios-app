@@ -177,7 +177,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     outputWidth: Int, outputHeight: Int
   ) -> SemanticMask {
     // One packed RGBA word per class, written through a UInt32 view (arm64 is little-endian: R | G<<8 | B<<16)
-    let lut = colors.map { UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000 }
+    let lut = colors.map {
+      UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000
+    }
     pixels.withUnsafeMutableBytes { rawBuffer in
       let pixelBuffer = rawBuffer.bindMemory(to: UInt32.self)
       classMap.withUnsafeBufferPointer { cm in

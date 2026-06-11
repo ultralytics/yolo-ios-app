@@ -36,4 +36,38 @@ final class SemanticSegmenterTests: XCTestCase {
     XCTAssertEqual(mask.height, 2)
     XCTAssertEqual(mask.classMap, [1, 0, 2, 0])
   }
+
+  func testClassMapMaskImagePixelColors() {
+    // In-graph-ArgMax export shape [1, H, W]: the vImage paint path must write RGBA byte order with
+    // each pixel taking its class's palette color and full alpha.
+    let segmenter = SemanticSegmenter()
+    segmenter.labels = ["a", "b", "c"]
+
+    let classMap = try! MLMultiArray(shape: [1, 2, 2] as [NSNumber], dataType: .int32)
+    let ids: [Int32] = [1, 0, 2, 0]
+    let p = classMap.dataPointer.assumingMemoryBound(to: Int32.self)
+    for i in 0..<ids.count { p[i] = ids[i] }
+
+    guard let mask = segmenter.postProcessSemantic(classMap), let image = mask.maskImage,
+      let data = image.dataProvider?.data as Data?
+    else {
+      XCTFail("postProcessSemantic returned no mask image")
+      return
+    }
+    XCTAssertEqual(mask.classMap, ids)
+
+    let colors = (0..<3).map { ultralyticsColors[$0 % ultralyticsColors.count] }
+    for (pixel, id) in ids.enumerated() {
+      let expected = UIColor(cgColor: colors[Int(id)].cgColor)
+      var r: CGFloat = 0
+      var g: CGFloat = 0
+      var b: CGFloat = 0
+      expected.getRed(&r, green: &g, blue: &b, alpha: nil)
+      let o = pixel * 4
+      XCTAssertEqual(data[o], UInt8(r * 255), "red, pixel \(pixel)")
+      XCTAssertEqual(data[o + 1], UInt8(g * 255), "green, pixel \(pixel)")
+      XCTAssertEqual(data[o + 2], UInt8(b * 255), "blue, pixel \(pixel)")
+      XCTAssertEqual(data[o + 3], 255, "alpha, pixel \(pixel)")
+    }
+  }
 }

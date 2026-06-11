@@ -19,6 +19,7 @@ import Vision
 public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
+    markInferenceEnd()
     guard let prediction = firstFeatureArray(request) else {
       self.isUpdating = false
       return
@@ -28,6 +29,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], obb: obbResults,
       speed: self.t2, fps: 1 / self.t4, names: labels)
+    applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }
@@ -44,12 +46,15 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
       return YOLOResult(
         orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)
     }
+    markInferenceEnd()
     let obbResults = buildResults(from: prediction)
+    let speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
     let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], obb: obbResults,
       annotatedImage: annotatedImage,
-      speed: finishTiming(notify: false), names: labels)
+      speed: speed, names: labels)
+    applyTimingBreakdown(&result)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)
     }

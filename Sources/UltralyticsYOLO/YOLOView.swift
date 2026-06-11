@@ -66,6 +66,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     delegate?.yoloView(self, didReceiveResult: result)
     onDetection?(result)
 
+    let breakdownTotal = result.preMs + result.inferenceMs + result.postMs
+    labelBreakdown.text =
+      breakdownTotal > 0
+      ? String(
+        format: "%.1f pre · %.1f inference · %.1f post", result.preMs, result.inferenceMs,
+        result.postMs)
+      : ""
+
     // Consumers drawing their own overlays disable the built-in rendering below via `showOverlays`;
     // its `didSet` already cleared anything previously drawn, so just skip.
     guard showOverlays else { return }
@@ -128,6 +136,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public var labelSliderIoU = UILabel()
   public var labelName = UILabel()
   public var labelFPS = UILabel()
+  /// Smaller secondary line under `labelFPS` showing the pre/inference/post breakdown in ms.
+  public var labelBreakdown = UILabel()
   public var labelZoom = UILabel()
   public var activityIndicator = UIActivityIndicatorView()
   public var playButton = UIButton()
@@ -602,6 +612,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     labelFPS.font = UIFont.preferredFont(forTextStyle: .body)
     self.addSubview(labelFPS)
 
+    labelBreakdown.text = ""
+    labelBreakdown.textAlignment = .center
+    labelBreakdown.textColor = UIColor.white.withAlphaComponent(0.7)
+    labelBreakdown.font = UIFont.preferredFont(forTextStyle: .caption1)
+    self.addSubview(labelBreakdown)
+
     labelSliderNumItems.isHidden = true
     configureSlider(sliderNumItems, min: 1, max: 100, value: Float(defaultMaxDetectionItems))
     sliderNumItems.isHidden = true
@@ -758,6 +774,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: 0, y: center.y - height * 0.24 - subLabelHeight,
       width: width, height: subLabelHeight
     )
+    labelBreakdown.frame = CGRect(
+      x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
+    )
 
     let sliderWidth: CGFloat = width * 0.2
     let sliderHeight: CGFloat = height * 0.06
@@ -811,6 +830,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     labelFPS.frame = CGRect(
       x: 0, y: labelName.frame.maxY + 15,
       width: width, height: subLabelHeight
+    )
+    labelBreakdown.frame = CGRect(
+      x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
     )
 
     let sliderWidth: CGFloat = width * 0.46
@@ -1185,7 +1207,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     transitionView.addSubview(blurView)
 
-    insertSubview(transitionView, belowSubview: labelName)
+    addSubview(transitionView)  // top of the hierarchy: cover the whole HUD (labels, sliders, toolbar) uniformly
     cameraTransitionView = transitionView
   }
 

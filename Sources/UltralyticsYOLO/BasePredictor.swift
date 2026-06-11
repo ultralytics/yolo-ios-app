@@ -70,9 +70,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Duration of a single inference operation.
   var t1 = 0.0  // inference dt
+  var tInferEnd = 0.0  // timestamp when the Vision request returned (postprocessing starts)
 
   /// Smoothed inference duration (averaged over recent operations).
   var t2 = 0.0  // inference dt smoothed
+  var t2Infer = 0.0  // inference-stage dt smoothed (camera path)
+  var t2Post = 0.0  // postprocess-stage dt smoothed (camera path)
 
   /// Timestamp for FPS calculation start (used for performance measurement).
   var t3 = CACurrentMediaTime()  // FPS start
@@ -378,6 +381,33 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     return self.t1
   }
 
+  /// Marks the end of inference (start of postprocessing). Call immediately when the Vision request completes.
+  func markInferenceEnd() {
+    tInferEnd = CACurrentMediaTime()
+  }
+
+  /// Per-stage timing in milliseconds: (pre, inference, post). On iOS Vision fuses input scaling into the
+  /// request, so `pre` is folded into `inference` and reported as zero. Call after `finishTiming`/`updateTime`.
+  func timingBreakdownMs() -> (pre: Double, inference: Double, post: Double) {
+    guard tInferEnd > t0 else { return (0, t1 * 1000, 0) }
+    return (0, (tInferEnd - t0) * 1000, (t3 - tInferEnd) * 1000)
+  }
+
+  /// Applies the current timing breakdown to a result. Pass `smoothed: true` on the camera path so the
+  /// per-stage values use the same EMA as the result's `speed` (raw per-frame values for single-image predicts).
+  func applyTimingBreakdown(_ result: inout YOLOResult, smoothed: Bool = false) {
+    if smoothed, t2Infer > 0 {
+      result.preMs = 0
+      result.inferenceMs = t2Infer * 1000
+      result.postMs = t2Post * 1000
+      return
+    }
+    let timing = timingBreakdownMs()
+    result.preMs = timing.pre
+    result.inferenceMs = timing.inference
+    result.postMs = timing.post
+  }
+
   /// The confidence threshold for filtering detection results (default: 0.25).
   ///
   /// Only detections with confidence scores above this threshold will be included in results.
@@ -593,6 +623,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     self.t1 = now - self.t0
     if self.t1 < Self.maxValidDt {  // valid dt
       self.t2 = self.t1 * alpha + self.t2 * (1 - alpha)  // smoothed inference time
+      if self.tInferEnd > self.t0 {  // smoothed per-stage split, same EMA as t2
+        self.t2Infer = (self.tInferEnd - self.t0) * alpha + self.t2Infer * (1 - alpha)
+        self.t2Post = (now - self.tInferEnd) * alpha + self.t2Post * (1 - alpha)
+      }
     }
     self.t4 = (now - self.t3) * alpha + self.t4 * (1 - alpha)  // smoothed FPS dt
     self.t3 = now

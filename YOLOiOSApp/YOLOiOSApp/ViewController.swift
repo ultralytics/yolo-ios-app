@@ -30,6 +30,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
   @IBOutlet weak var modelSegmentedControl: UISegmentedControl!
   @IBOutlet weak var labelName: UILabel!
   @IBOutlet weak var labelFPS: UILabel!
+  /// Latest "x FPS - y ms" line and pre/inference/post breakdown, rendered together in `labelFPS`.
+  private var fpsText = ""
+  private var breakdownText = ""
   @IBOutlet weak var labelVersion: UILabel!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
   @IBOutlet weak var logoImage: UIImageView!
@@ -131,7 +134,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UITapGestureRecognizer(target: self, action: #selector(logoButton)))
     yoloView.shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     yoloView.delegate = self
-    [yoloView.labelName, yoloView.labelFPS].forEach { $0?.isHidden = true }
+    [yoloView.labelName, yoloView.labelFPS, yoloView.labelBreakdown].forEach { $0?.isHidden = true }
 
     // Observe slider changes to forward thresholds to an external display.
     yoloView.sliderConf.addTarget(self, action: #selector(sliderValueChanged), for: .valueChanged)
@@ -142,6 +145,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
       $0?.textColor = .white
       $0?.overrideUserInterfaceStyle = .dark
     }
+    labelFPS.numberOfLines = 2
+    // Clear the storyboard placeholder text and reserve the final two-line height immediately,
+    // so the first inference result doesn't shift the layout below.
+    labelName.text = ""
+    fpsText = " "
+    breakdownText = " "
+    renderPerformanceLabel()
     activityIndicator.style = .large
     activityIndicator.color = .white
     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -600,9 +610,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self, action: #selector(modelSizeChanged(_:)), for: .valueChanged)
 
     modelSegmentedControl.translatesAutoresizingMaskIntoConstraints = false
+    // Fill width up to a portrait-phone cap and stay centered (storyboard centerX), so landscape doesn't
+    // stretch the row edge to edge - same behavior as the Flutter app's model row.
+    let fillWidth = modelSegmentedControl.widthAnchor.constraint(equalToConstant: 430)
+    fillWidth.priority = .defaultHigh
     NSLayoutConstraint.activate([
-      modelSegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-      modelSegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+      fillWidth,
+      modelSegmentedControl.widthAnchor.constraint(
+        lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
     ])
   }
 
@@ -693,9 +708,43 @@ class ViewController: UIViewController, YOLOViewDelegate {
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
     DispatchQueue.main.async { [weak self] in
-      self?.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-      self?.labelFPS.textColor = .white
+      self?.fpsText = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
+      self?.renderPerformanceLabel()
     }
+  }
+
+  func yoloView(_ view: YOLOView, didReceiveResult result: YOLOResult) {
+    let breakdownTotal = result.preMs + result.inferenceMs + result.postMs
+    let text =
+      breakdownTotal > 0
+      ? String(
+        format: "%.1f pre · %.1f inference · %.1f post", result.preMs, result.inferenceMs,
+        result.postMs)
+      : ""
+    DispatchQueue.main.async { [weak self] in
+      self?.breakdownText = text
+      self?.renderPerformanceLabel()
+    }
+  }
+
+  /// Renders the FPS line with the smaller stage-breakdown line beneath it in the single `labelFPS`,
+  /// so the breakdown inherits the label's exact layout and show/hide behavior (e.g. camera switching).
+  private func renderPerformanceLabel() {
+    let rendered = NSMutableAttributedString(
+      string: fpsText,
+      attributes: [
+        .font: UIFont.preferredFont(forTextStyle: .body), .foregroundColor: UIColor.white,
+      ])
+    if !breakdownText.isEmpty {
+      rendered.append(
+        NSAttributedString(
+          string: "\n" + breakdownText,
+          attributes: [
+            .font: UIFont.preferredFont(forTextStyle: .caption1),
+            .foregroundColor: UIColor.white.withAlphaComponent(0.7),
+          ]))
+    }
+    labelFPS.attributedText = rendered
   }
 
 }

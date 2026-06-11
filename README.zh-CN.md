@@ -12,7 +12,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-欢迎来到 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App 的 GitHub 仓库！📖 这个项目可将你的 iOS 设备变成强大的[实时推理](https://www.ultralytics.com/glossary/real-time-inference)工具，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持传统的 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和最新的 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以直接从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，也可以参考本指南，将 YOLO 能力集成到你自己的 Swift 应用中。
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。
 
 <div align="center">
   <br>
@@ -26,16 +26,13 @@
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/google-play.svg" width="15%" alt="Get it on Google Play"></a>
 </div>
 
-## ✨ 为什么选择原生 YOLO iOS？
+## ✨ 功能特性
 
-- 原生 iOS 性能 - 通过 Swift 与 Core ML 获得最高速度
-- 针对 Apple Silicon 优化 - 充分利用 Neural Engine 与 GPU
-- 实时推理 - 在最新款 iPhone 上达到相机帧率（约 30 FPS）的性能
-- 低延迟 - 无框架额外开销，直接访问硬件能力
-- iOS 优先设计 - 原生 UI/UX，遵循 Apple 设计规范
-- Core ML 集成 - 使用 Apple 官方优化的机器学习框架
+- 全程使用 Swift 与 Core ML，运行在 Apple Neural Engine 和 GPU 上
+- 在最新款 iPhone 上达到相机帧率（约 30 FPS）的实时推理——设备端性能分析见 [docs/performance.md](docs/performance.md)
+- 遵循 Apple 界面规范的原生 UI
 - 同时支持 YOLO26（无 NMS）与 YOLO11 模型
-- 零依赖 - 纯 Swift，仅依赖 Apple 官方框架；无任何第三方 package
+- 无第三方依赖——纯 Swift，仅依赖 Apple 官方框架
 
 | 功能                  | iOS | 详细说明                     |
 | --------------------- | --- | ---------------------------- |
@@ -48,7 +45,7 @@
 
 ## 📂 仓库内容
 
-此仓库为在 Apple 平台上运行 YOLO 模型提供了完整方案，帮助你构建强大的[边缘 AI](https://www.ultralytics.com/glossary/edge-ai)能力：
+此仓库包含两个用于在 Apple 平台上运行 YOLO 模型（[边缘 AI](https://www.ultralytics.com/glossary/edge-ai)）的组件：
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
@@ -56,7 +53,7 @@
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
-这是一个面向 iOS 和 iPadOS 的轻量级 [Swift](https://developer.apple.com/swift/) package，用于简化 YOLO26 等 YOLO 模型在应用中的集成与使用。借助 [SwiftUI](https://developer.apple.com/xcode/swiftui/)，你可以用极少的代码轻松集成 YOLO：
+这是一个面向 iOS 和 iPadOS 的轻量级 [Swift](https://developer.apple.com/swift/) package，负责 YOLO26 等 YOLO 模型在应用中的加载、推理与后处理，只需几行 [SwiftUI](https://developer.apple.com/xcode/swiftui/) 代码：
 
 ```swift
 // 对 UIImage 执行推理
@@ -157,12 +154,6 @@ pod 'UltralyticsYOLO', '~> 8.9'
 ```
 
 然后 `import UltralyticsYOLO` 并使用 `YOLO` 类——完整用法请参阅 [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)。同一个 `UltralyticsYOLO` package 同时驱动本原生 iOS 应用和 [Ultralytics YOLO Flutter 插件](https://github.com/ultralytics/yolo-flutter-app)，在多个平台间保持单一事实来源。
-
-## ✨ 核心亮点
-
-- **实时推理**：使用优化后的 [Core ML 模型](https://docs.ultralytics.com/integrations/coreml)，在 iPhone 和 iPad 上实现高速、高精度的目标检测，并可结合[模型量化](https://www.ultralytics.com/glossary/model-quantization)等技术进一步提升性能。有关设备端性能分析以及相机/Core ML 配置的依据，请参阅 [docs/performance.md](docs/performance.md)。
-- **Apple 移动平台支持**：Swift Package 面向 iOS 和 iPadOS，并提供原生 Core ML 集成。
-- **灵活任务支持**：支持[目标检测](https://docs.ultralytics.com/tasks/detect)、[实例分割](https://docs.ultralytics.com/tasks/segment)、[语义分割](https://docs.ultralytics.com/tasks/semantic)、[分类](https://docs.ultralytics.com/tasks/classify)、[姿态估计](https://docs.ultralytics.com/tasks/pose)以及[旋转框（OBB）检测](https://docs.ultralytics.com/tasks/obb)。
 
 ## 🧪 测试流程
 

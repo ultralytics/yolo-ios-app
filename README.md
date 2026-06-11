@@ -12,7 +12,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iOS App GitHub repository! 📖 This project transforms your iOS device into a powerful [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) tool for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both legacy [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and state-of-the-art [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app directly from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527) or explore our guide to integrate YOLO capabilities into your own Swift applications.
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
 
 <div align="center">
   <br>
@@ -26,16 +26,13 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
     <img src="https://raw.githubusercontent.com/ultralytics/assets/main/app/google-play.svg" width="15%" alt="Get it on Google Play"></a>
 </div>
 
-## ✨ Why Choose YOLO iOS Native?
+## ✨ Features
 
-- Native iOS Performance — Maximum speed with Swift & Core ML
-- Optimized for Apple Silicon — Leverages the Neural Engine & GPU
-- Real-time Inference — Camera-rate (~30 FPS) performance on recent iPhones
-- Low Latency — Direct hardware access without framework overhead
-- iOS-First Design — Native UI/UX following Apple guidelines
-- Core ML Integration — Apple's optimized ML framework
+- Swift and Core ML throughout, running on the Apple Neural Engine and GPU
+- Camera-rate (~30 FPS) real-time inference on recent iPhones — see [docs/performance.md](docs/performance.md) for on-device profiling
+- Native UI following Apple interface guidelines
 - YOLO26 (NMS-free) and YOLO11 models both supported
-- Zero Dependencies — Pure Swift on Apple's first-party frameworks only; no third-party packages
+- No third-party dependencies — pure Swift on Apple's first-party frameworks
 
 | Feature                               | iOS | Details                                       |
 | ------------------------------------- | --- | --------------------------------------------- |
@@ -48,7 +45,7 @@ Welcome to the [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) iO
 
 ## 📂 Repository Content
 
-This repository provides a comprehensive solution for running YOLO models on Apple platforms, enabling powerful [Edge AI](https://www.ultralytics.com/glossary/edge-ai) capabilities:
+This repository contains two components for running YOLO models on Apple platforms ([Edge AI](https://www.ultralytics.com/glossary/edge-ai)):
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
@@ -56,7 +53,7 @@ The primary iOS application allows easy real-time YOLO inference using your devi
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
-A lightweight [Swift](https://developer.apple.com/swift/) package designed for iOS and iPadOS. It simplifies the integration and usage of YOLO-based models like YOLO26 within your own applications. Integrate YOLO models effortlessly with minimal code using [SwiftUI](https://developer.apple.com/xcode/swiftui/):
+A lightweight [Swift](https://developer.apple.com/swift/) package designed for iOS and iPadOS. It handles model loading, inference, and postprocessing for YOLO models like YOLO26 in your own applications, with a few lines of [SwiftUI](https://developer.apple.com/xcode/swiftui/):
 
 ```swift
 // Perform inference on a UIImage
@@ -157,12 +154,6 @@ pod 'UltralyticsYOLO', '~> 8.9'
 ```
 
 Then `import UltralyticsYOLO` and use the `YOLO` class — see the [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO) for full usage. The same `UltralyticsYOLO` package powers both this native iOS app and the [Ultralytics YOLO Flutter plugin](https://github.com/ultralytics/yolo-flutter-app), keeping one source of truth across platforms.
-
-## ✨ Key Highlights
-
-- **Real-Time Inference**: Achieve high-speed, high-accuracy object detection on iPhones and iPads using optimized [Core ML models](https://docs.ultralytics.com/integrations/coreml), potentially enhanced through techniques like [model quantization](https://www.ultralytics.com/glossary/model-quantization). See [docs/performance.md](docs/performance.md) for on-device profiling and the camera/Core ML configuration rationale.
-- **Apple Mobile Support**: The Swift Package targets iOS and iPadOS with native Core ML integration.
-- **Flexible Tasks**: Supports [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), [classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), and [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb) detection.
 
 ## 🧪 Testing Procedures
 

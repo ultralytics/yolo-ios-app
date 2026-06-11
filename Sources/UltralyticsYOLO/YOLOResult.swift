@@ -53,6 +53,16 @@ public struct YOLOResult: @unchecked Sendable {
   /// Optional frames per second rate for real-time processing.
   public var fps: Double?
 
+  /// Preprocessing time in milliseconds. On iOS, Vision performs input scaling inside the inference
+  /// request, so this covers only work before the request is performed and is typically near zero.
+  public var preMs: Double = 0
+
+  /// Model inference time in milliseconds (Vision request execution, including its internal scaling).
+  public var inferenceMs: Double = 0
+
+  /// Postprocessing time in milliseconds (tensor decode, NMS, masks). Excludes annotation drawing.
+  public var postMs: Double = 0
+
   /// Optional copy of the original input image when capture is enabled by the caller.
   public var originalImage: UIImage? = nil
 

@@ -59,7 +59,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         boxes: boxes,
         masks: Masks(masks: processed.1 ?? [], combinedMask: processed.0),
         speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels)
-      self?.applyTimingBreakdown(&result)
+      self?.applyTimingBreakdown(&result, smoothed: true)
       result.originalImage = capturedOriginalImage
       self?.currentOnResultsListener?.on(result: result)
     }
@@ -73,13 +73,15 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let requestHandler = makeRequestHandler(for: image)
     var emptyResult = YOLOResult(orig_shape: inputSize, boxes: [], speed: 0, names: labels)
 
-    guard perform(request, with: requestHandler, errorMessage: "Segmentation failed"),
-      let parsed = parseSegmentationRequest(request)
-    else {
+    guard perform(request, with: requestHandler, errorMessage: "Segmentation failed") else {
       emptyResult.speed = finishTiming(notify: false)
       return emptyResult
     }
     markInferenceEnd()
+    guard let parsed = parseSegmentationRequest(request) else {
+      emptyResult.speed = finishTiming(notify: false)
+      return emptyResult
+    }
 
     let limitedObjects = Array(parsed.detectedObjects.prefix(self.numItemsThreshold))
     let boxes = buildBoxes(from: limitedObjects)

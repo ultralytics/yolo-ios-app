@@ -37,7 +37,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
-    applyTimingBreakdown(&result)
+    applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
   }

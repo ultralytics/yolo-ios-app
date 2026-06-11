@@ -27,8 +27,8 @@ from ultralytics import YOLO
 # Load the YOLO26 nano segmentation model
 model = YOLO("yolo26n-seg.pt")
 
-# Export the model to Core ML format
-model.export(format="coreml")  # Creates yolo26n-seg.mlpackage
+# Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
+model.export(format="coreml", nms=False, end2end=True)  # Creates yolo26n-seg.mlpackage
 ```
 
 For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export).
@@ -48,7 +48,7 @@ Follow these steps to add the model file correctly using Xcode:
 
 For better project organization, consider placing the model file within a "Models" group in your Xcode project structure.
 
-![Adding model to target in Xcode](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
+For current Xcode guidance on adding files to a project, see Apple's [Managing files and folders in your Xcode project](https://developer.apple.com/documentation/xcode/managing-files-and-folders-in-your-xcode-project).
 
 ### Testing Strategy
 

@@ -27,9 +27,9 @@ from ultralytics import YOLO
 # Load the YOLO26 nano detection model
 model = YOLO("yolo26n.pt")
 
-# Export the model to Core ML format (YOLO26 detect is NMS-free)
+# Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
 # See https://docs.ultralytics.com/integrations/coreml for more details
-model.export(format="coreml", nms=False)
+model.export(format="coreml", nms=False, end2end=True)
 ```
 
 ### Adding Model Files to the Project
@@ -47,7 +47,7 @@ Follow these steps to add the model file correctly:
 
 For optimal project structure, consider placing the model file within a dedicated "Models" group in your Xcode project navigator.
 
-![Adding model to target](https://docs-assets.developer.apple.com/published/abd9789384/ff4127a0-80a6-4716-b1cd-fc1facce5d8e.png)
+For current Xcode guidance on adding files to a project, see Apple's [Managing files and folders in your Xcode project](https://developer.apple.com/documentation/xcode/managing-files-and-folders-in-your-xcode-project).
 
 The testing framework relies on accessing models from the main application bundle ([`Bundle.main`](https://developer.apple.com/documentation/foundation/bundle)). Therefore, including the models in the main target is essential for the model-dependent tests to function correctly.
 

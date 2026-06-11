@@ -99,7 +99,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let rowStride = isClassMap ? strides[1] : (isNCHW ? strides[2] : strides[1])
     let colStride = isClassMap ? strides[2] : (isNCHW ? strides[3] : strides[2])
 
-    if isClassMap, colStride == 1 {
+    if isClassMap, colStride == 1, classCount <= 256 {
       // The NPU already did the argmax - gather, clamp, and paint the per-pixel class indices entirely through
       // vDSP/vImage. Full-resolution maps are ~1M pixels per frame, and Accelerate runs vectorized C, so this
       // stays fast even in -Onone debug builds where a scalar Swift sweep costs ~100 ms.
@@ -211,14 +211,31 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     classMap: [Int32], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
     outputWidth: Int, outputHeight: Int
   ) -> SemanticMask {
-    var staged = [Float](repeating: 0, count: classMap.count)
-    staged.withUnsafeMutableBufferPointer { dst in
-      classMap.withUnsafeBufferPointer { cm in
-        vDSP_vflt32(cm.baseAddress!, 1, dst.baseAddress!, 1, vDSP_Length(cm.count))
+    if colors.count <= 256 {
+      var staged = [Float](repeating: 0, count: classMap.count)
+      staged.withUnsafeMutableBufferPointer { dst in
+        classMap.withUnsafeBufferPointer { cm in
+          vDSP_vflt32(cm.baseAddress!, 1, dst.baseAddress!, 1, vDSP_Length(cm.count))
+        }
+        paintPixels(
+          fromClampedIndices: dst.baseAddress!, colors: colors,
+          outputWidth: outputWidth, outputHeight: outputHeight, pixels: &pixels)
       }
-      paintPixels(
-        fromClampedIndices: dst.baseAddress!, colors: colors,
-        outputWidth: outputWidth, outputHeight: outputHeight, pixels: &pixels)
+    } else {
+      // vImage lookup tables are 8-bit; beyond 256 classes paint scalar so class indices keep their own colors
+      let lut = colors.map {
+        UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000
+      }
+      pixels.withUnsafeMutableBytes { rawBuffer in
+        let pixelBuffer = rawBuffer.bindMemory(to: UInt32.self)
+        classMap.withUnsafeBufferPointer { cm in
+          lut.withUnsafeBufferPointer { colorWords in
+            for i in 0..<cm.count {
+              pixelBuffer[i] = colorWords[Int(cm[i])]
+            }
+          }
+        }
+      }
     }
 
     return SemanticMask(
@@ -300,6 +317,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     pixels.withUnsafeMutableBytes { rawBuffer in
       var rgba = vImage_Buffer(
         data: rawBuffer.baseAddress, height: height, width: width, rowBytes: outputWidth * 4)
+      // The four source planes land in bytes 0-3 in argument order (the A,R,G,B parameter names are nominal),
+      // so (red, green, blue, alpha) produces the RGBA byte order makeImage expects. Verified by
+      // testClassMapMaskImagePixelColors.
       vImageConvert_Planar8toARGB8888(
         &red, &green, &blue, &index8, &rgba, vImage_Flags(kvImageNoFlags))
     }

@@ -2,7 +2,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'UltralyticsYOLO'
-  s.version          = '8.9.7'
+  s.version          = '8.10.0'
   s.summary          = 'Ultralytics YOLO core inference for iOS (CoreML/Vision).'
   s.homepage         = 'https://github.com/ultralytics/yolo-ios-app'
   s.license          = { :type => 'AGPL-3.0', :file => 'LICENSE' }

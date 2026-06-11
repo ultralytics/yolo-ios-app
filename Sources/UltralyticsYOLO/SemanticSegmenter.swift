@@ -8,6 +8,7 @@
 //  individual object instances. It supports both [1, C, H, W] and [1, H, W, C] tensor layouts, removes letterbox
 //  padding via the input mask crop rect, and renders a color overlay for visualization.
 
+import Accelerate
 import CoreML
 import Foundation
 import UIKit
@@ -91,16 +92,50 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     guard outputWidth > 0, outputHeight > 0 else { return nil }
 
     let outCount = outputWidth * outputHeight
-    var classMap = [Int](repeating: 0, count: outCount)
+    var classMap = [Int32](repeating: 0, count: outCount)
     var pixels = Data(count: outCount * 4)
     let colors = semanticColors(classCount: classCount == 1 ? 2 : classCount)
     let classStride = isClassMap ? 0 : (isNCHW ? strides[1] : strides[3])
     let rowStride = isClassMap ? strides[1] : (isNCHW ? strides[2] : strides[1])
     let colStride = isClassMap ? strides[2] : (isNCHW ? strides[3] : strides[2])
 
+    if isClassMap, colStride == 1 {
+      // The NPU already did the argmax - gather, clamp, and paint the per-pixel class indices entirely through
+      // vDSP/vImage. Full-resolution maps are ~1M pixels per frame, and Accelerate runs vectorized C, so this
+      // stays fast even in -Onone debug builds where a scalar Swift sweep costs ~100 ms.
+      var staged = [Float](repeating: 0, count: outCount)
+      staged.withUnsafeMutableBufferPointer { dst in
+        switch logits.dataType {
+        case .int32:
+          let p = logits.dataPointer.assumingMemoryBound(to: Int32.self)
+          for y in 0..<outputHeight {
+            vDSP_vflt32(
+              p + (y + outputY) * rowStride + outputX, 1,
+              dst.baseAddress! + y * outputWidth, 1, vDSP_Length(outputWidth))
+          }
+        default:
+          let p = logits.dataPointer.assumingMemoryBound(to: Float.self)
+          for y in 0..<outputHeight {
+            (dst.baseAddress! + y * outputWidth)
+              .update(from: p + (y + outputY) * rowStride + outputX, count: outputWidth)
+          }
+        }
+        var low: Float = 0
+        var high = Float(classCount - 1)
+        vDSP_vclip(dst.baseAddress!, 1, &low, &high, dst.baseAddress!, 1, vDSP_Length(outCount))
+        classMap.withUnsafeMutableBufferPointer { cm in
+          vDSP_vfix32(dst.baseAddress!, 1, cm.baseAddress!, 1, vDSP_Length(outCount))
+        }
+        paintPixels(
+          fromClampedIndices: dst.baseAddress!, colors: colors,
+          outputWidth: outputWidth, outputHeight: outputHeight, pixels: &pixels)
+      }
+      return SemanticMask(
+        classMap: classMap, width: outputWidth, height: outputHeight,
+        maskImage: makeImage(fromRGBA: pixels, width: outputWidth, height: outputHeight))
+    }
     if isClassMap {
-      // The NPU already did the argmax - just read the per-pixel class indices (dtype depends on the runtime).
-      // Typed tight loops, not a per-pixel closure: full-resolution maps are ~1M pixels per frame.
+      // Non-contiguous class-map rows (not produced by Core ML in practice): scalar fallback
       classMap.withUnsafeMutableBufferPointer { cm in
         switch logits.dataType {
         case .int32:
@@ -109,7 +144,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
             let srcRow = (y + outputY) * rowStride + outputX * colStride
             let outRow = y * outputWidth
             for x in 0..<outputWidth {
-              cm[outRow + x] = min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1)
+              cm[outRow + x] = Int32(min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1))
             }
           }
         default:
@@ -118,7 +153,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
             let srcRow = (y + outputY) * rowStride + outputX * colStride
             let outRow = y * outputWidth
             for x in 0..<outputWidth {
-              cm[outRow + x] = min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1)
+              cm[outRow + x] = Int32(min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1))
             }
           }
         }
@@ -140,7 +175,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
         let srcRow = (y + outputY) * rowStride + outputX * colStride
         let outRow = y * outputWidth
         for x in 0..<outputWidth {
-          classMap[outRow + x] = pointer[srcRow + x * colStride] > binaryThreshold ? 1 : 0
+          classMap[outRow + x] = pointer[srcRow + x * colStride] > binaryThreshold ? 1 : 0 as Int32
         }
       }
     } else {
@@ -157,7 +192,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
                 let oi = outRow + x
                 if score > bb[oi] {
                   bb[oi] = score
-                  cm[oi] = c
+                  cm[oi] = Int32(c)
                 }
               }
             }
@@ -171,24 +206,19 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       outputWidth: outputWidth, outputHeight: outputHeight)
   }
 
-  /// Paints the RGBA buffer from a resolved class map in one sequential sweep and packages the result.
+  /// Paints the RGBA buffer from a resolved class map and packages the result.
   private func finishSemanticMask(
-    classMap: [Int], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
+    classMap: [Int32], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
     outputWidth: Int, outputHeight: Int
   ) -> SemanticMask {
-    // One packed RGBA word per class, written through a UInt32 view (arm64 is little-endian: R | G<<8 | B<<16)
-    let lut = colors.map {
-      UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000
-    }
-    pixels.withUnsafeMutableBytes { rawBuffer in
-      let pixelBuffer = rawBuffer.bindMemory(to: UInt32.self)
+    var staged = [Float](repeating: 0, count: classMap.count)
+    staged.withUnsafeMutableBufferPointer { dst in
       classMap.withUnsafeBufferPointer { cm in
-        lut.withUnsafeBufferPointer { colorWords in
-          for i in 0..<cm.count {
-            pixelBuffer[i] = colorWords[cm[i]]
-          }
-        }
+        vDSP_vflt32(cm.baseAddress!, 1, dst.baseAddress!, 1, vDSP_Length(cm.count))
       }
+      paintPixels(
+        fromClampedIndices: dst.baseAddress!, colors: colors,
+        outputWidth: outputWidth, outputHeight: outputHeight, pixels: &pixels)
     }
 
     return SemanticMask(
@@ -224,6 +254,50 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     }
     colorCache = (classCount, colors)
     return colors
+  }
+
+  /// Maps clamped float class indices to RGBA through vImage lookup tables - vectorized C, so debug builds
+  /// pay no Swift -Onone penalty on the ~1M-pixel sweep.
+  private func paintPixels(
+    fromClampedIndices indices: UnsafeMutablePointer<Float>,
+    colors: [(red: UInt8, green: UInt8, blue: UInt8)],
+    outputWidth: Int, outputHeight: Int, pixels: inout Data
+  ) {
+    var rTable = [UInt8](repeating: 0, count: 256)
+    var gTable = [UInt8](repeating: 0, count: 256)
+    var bTable = [UInt8](repeating: 0, count: 256)
+    for i in 0..<256 {
+      let color = colors[i % colors.count]
+      rTable[i] = color.red
+      gTable[i] = color.green
+      bTable[i] = color.blue
+    }
+
+    let count = outputWidth * outputHeight
+    let height = vImagePixelCount(outputHeight)
+    let width = vImagePixelCount(outputWidth)
+    let planes = UnsafeMutablePointer<UInt8>.allocate(capacity: count * 4)
+    defer { planes.deallocate() }
+
+    var srcF = vImage_Buffer(
+      data: indices, height: height, width: width, rowBytes: outputWidth * MemoryLayout<Float>.stride)
+    var index8 = vImage_Buffer(data: planes, height: height, width: width, rowBytes: outputWidth)
+    vImageConvert_PlanarFtoPlanar8(&srcF, &index8, 255, 0, vImage_Flags(kvImageNoFlags))
+
+    var red = vImage_Buffer(data: planes + count, height: height, width: width, rowBytes: outputWidth)
+    var green = vImage_Buffer(data: planes + count * 2, height: height, width: width, rowBytes: outputWidth)
+    var blue = vImage_Buffer(data: planes + count * 3, height: height, width: width, rowBytes: outputWidth)
+    vImageTableLookUp_Planar8(&index8, &red, &rTable, vImage_Flags(kvImageNoFlags))
+    vImageTableLookUp_Planar8(&index8, &green, &gTable, vImage_Flags(kvImageNoFlags))
+    vImageTableLookUp_Planar8(&index8, &blue, &bTable, vImage_Flags(kvImageNoFlags))
+    // Reuse the index plane as the alpha plane: every pixel fully opaque
+    memset(planes, 0xFF, count)
+
+    pixels.withUnsafeMutableBytes { rawBuffer in
+      var rgba = vImage_Buffer(
+        data: rawBuffer.baseAddress, height: height, width: width, rowBytes: outputWidth * 4)
+      vImageConvert_Planar8toARGB8888(&red, &green, &blue, &index8, &rgba, vImage_Flags(kvImageNoFlags))
+    }
   }
 
   private func makeImage(fromRGBA pixels: Data, width: Int, height: Int) -> CGImage? {

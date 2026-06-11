@@ -111,7 +111,7 @@ public struct Masks: @unchecked Sendable {
 /// pre-rendered color overlay for display.
 public struct SemanticMask: @unchecked Sendable {
   /// Dense class IDs in row-major order with `width * height` elements.
-  public let classMap: [Int]
+  public let classMap: [Int32]
 
   /// Width of the dense class map.
   public let width: Int

@@ -280,13 +280,17 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     defer { planes.deallocate() }
 
     var srcF = vImage_Buffer(
-      data: indices, height: height, width: width, rowBytes: outputWidth * MemoryLayout<Float>.stride)
+      data: indices, height: height, width: width,
+      rowBytes: outputWidth * MemoryLayout<Float>.stride)
     var index8 = vImage_Buffer(data: planes, height: height, width: width, rowBytes: outputWidth)
     vImageConvert_PlanarFtoPlanar8(&srcF, &index8, 255, 0, vImage_Flags(kvImageNoFlags))
 
-    var red = vImage_Buffer(data: planes + count, height: height, width: width, rowBytes: outputWidth)
-    var green = vImage_Buffer(data: planes + count * 2, height: height, width: width, rowBytes: outputWidth)
-    var blue = vImage_Buffer(data: planes + count * 3, height: height, width: width, rowBytes: outputWidth)
+    var red = vImage_Buffer(
+      data: planes + count, height: height, width: width, rowBytes: outputWidth)
+    var green = vImage_Buffer(
+      data: planes + count * 2, height: height, width: width, rowBytes: outputWidth)
+    var blue = vImage_Buffer(
+      data: planes + count * 3, height: height, width: width, rowBytes: outputWidth)
     vImageTableLookUp_Planar8(&index8, &red, &rTable, vImage_Flags(kvImageNoFlags))
     vImageTableLookUp_Planar8(&index8, &green, &gTable, vImage_Flags(kvImageNoFlags))
     vImageTableLookUp_Planar8(&index8, &blue, &bTable, vImage_Flags(kvImageNoFlags))
@@ -296,7 +300,8 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     pixels.withUnsafeMutableBytes { rawBuffer in
       var rgba = vImage_Buffer(
         data: rawBuffer.baseAddress, height: height, width: width, rowBytes: outputWidth * 4)
-      vImageConvert_Planar8toARGB8888(&red, &green, &blue, &index8, &rgba, vImage_Flags(kvImageNoFlags))
+      vImageConvert_Planar8toARGB8888(
+        &red, &green, &blue, &index8, &rgba, vImage_Flags(kvImageNoFlags))
     }
   }
 

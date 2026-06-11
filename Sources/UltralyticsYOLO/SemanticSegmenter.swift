@@ -99,21 +99,28 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let colStride = isClassMap ? strides[2] : (isNCHW ? strides[3] : strides[2])
 
     if isClassMap {
-      // The NPU already did the argmax - just read the per-pixel class indices (dtype depends on the runtime)
-      let readIndex: (Int) -> Int
-      switch logits.dataType {
-      case .int32:
-        let p = logits.dataPointer.assumingMemoryBound(to: Int32.self)
-        readIndex = { Int(p[$0]) }
-      default:
-        let p = logits.dataPointer.assumingMemoryBound(to: Float.self)
-        readIndex = { Int(p[$0]) }
-      }
-      for y in 0..<outputHeight {
-        let srcRow = (y + outputY) * rowStride + outputX * colStride
-        let outRow = y * outputWidth
-        for x in 0..<outputWidth {
-          classMap[outRow + x] = min(max(readIndex(srcRow + x * colStride), 0), classCount - 1)
+      // The NPU already did the argmax - just read the per-pixel class indices (dtype depends on the runtime).
+      // Typed tight loops, not a per-pixel closure: full-resolution maps are ~1M pixels per frame.
+      classMap.withUnsafeMutableBufferPointer { cm in
+        switch logits.dataType {
+        case .int32:
+          let p = logits.dataPointer.assumingMemoryBound(to: Int32.self)
+          for y in 0..<outputHeight {
+            let srcRow = (y + outputY) * rowStride + outputX * colStride
+            let outRow = y * outputWidth
+            for x in 0..<outputWidth {
+              cm[outRow + x] = min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1)
+            }
+          }
+        default:
+          let p = logits.dataPointer.assumingMemoryBound(to: Float.self)
+          for y in 0..<outputHeight {
+            let srcRow = (y + outputY) * rowStride + outputX * colStride
+            let outRow = y * outputWidth
+            for x in 0..<outputWidth {
+              cm[outRow + x] = min(max(Int(p[srcRow + x * colStride]), 0), classCount - 1)
+            }
+          }
         }
       }
       return finishSemanticMask(
@@ -169,10 +176,16 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     classMap: [Int], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
     outputWidth: Int, outputHeight: Int
   ) -> SemanticMask {
+    // One packed RGBA word per class, written through a UInt32 view (arm64 is little-endian: R | G<<8 | B<<16)
+    let lut = colors.map { UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000 }
     pixels.withUnsafeMutableBytes { rawBuffer in
-      let pixelBuffer = rawBuffer.bindMemory(to: UInt8.self)
-      for i in 0..<(outputWidth * outputHeight) {
-        writeColor(colors[classMap[i]], into: pixelBuffer, at: i * 4)
+      let pixelBuffer = rawBuffer.bindMemory(to: UInt32.self)
+      classMap.withUnsafeBufferPointer { cm in
+        lut.withUnsafeBufferPointer { colorWords in
+          for i in 0..<cm.count {
+            pixelBuffer[i] = colorWords[cm[i]]
+          }
+        }
       }
     }
 
@@ -209,17 +222,6 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     }
     colorCache = (classCount, colors)
     return colors
-  }
-
-  private func writeColor(
-    _ color: (red: UInt8, green: UInt8, blue: UInt8),
-    into pixels: UnsafeMutableBufferPointer<UInt8>,
-    at offset: Int
-  ) {
-    pixels[offset] = color.red
-    pixels[offset + 1] = color.green
-    pixels[offset + 2] = color.blue
-    pixels[offset + 3] = 255
   }
 
   private func makeImage(fromRGBA pixels: Data, width: Int, height: Int) -> CGImage? {

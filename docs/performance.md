@@ -23,18 +23,19 @@ so preprocess is reported as 0 and its cost is included in inference.
 
 | Model        | Task     | size<br><sup>(pixels)</sup> | CPU<br><sup>`.cpuOnly`<br>(ms)</sup> | Neural Engine<br><sup>`.cpuAndNeuralEngine`<br>(ms)</sup> |
 | ------------ | -------- | --------------------------- | ------------------------------------ | --------------------------------------------------------- |
-| YOLO26n      | Detect   | 640                         | 9.2<br><sup>0.0 / 9.1 / 0.0</sup>    | **3.8**<br><sup>0.0 / 3.7 / 0.0</sup>                     |
-| YOLO26n-seg  | Segment  | 640                         | 21.7<br><sup>0.0 / 12.0 / 9.8</sup>  | **14.1**<br><sup>0.0 / 4.5 / 9.6</sup>                    |
-| YOLO26n-sem  | Semantic | 1024<sup>1</sup>            | 17.2<br><sup>0.0 / 15.3 / 1.9</sup>  | **7.5**<br><sup>0.0 / 5.5 / 1.9</sup>                     |
-| YOLO26n-cls  | Classify | 224                         | 2.4<br><sup>0.0 / 2.4 / 0.0</sup>    | **2.0**<br><sup>0.0 / 1.9 / 0.0</sup>                     |
-| YOLO26n-pose | Pose     | 640                         | 12.1<br><sup>0.0 / 12.0 / 0.1</sup>  | **3.9**<br><sup>0.0 / 3.9 / 0.1</sup>                     |
-| YOLO26n-obb  | OBB      | 1024                        | 22.3<br><sup>0.0 / 22.3 / 0.0</sup>  | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                     |
+| YOLO26n      | Detect   | 640                         | 9.1<br><sup>0.0 / 9.1 / 0.0</sup>    | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
+| YOLO26n-seg  | Segment  | 640                         | 12.3<br><sup>0.0 / 12.1 / 0.2</sup>  | **4.8**<br><sup>0.0 / 4.5 / 0.3</sup>                     |
+| YOLO26n-sem  | Semantic | 1024<sup>1</sup>            | 21.8<br><sup>0.0 / 21.0 / 0.8</sup>  | **12.1**<br><sup>0.0 / 11.3 / 0.8</sup>                   |
+| YOLO26n-cls  | Classify | 224                         | 2.2<br><sup>0.0 / 2.2 / 0.0</sup>    | **2.0**<br><sup>0.0 / 2.0 / 0.0</sup>                     |
+| YOLO26n-pose | Pose     | 640                         | 12.0<br><sup>0.0 / 11.9 / 0.0</sup>  | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
+| YOLO26n-obb  | OBB      | 1024                        | 21.7<br><sup>0.0 / 21.7 / 0.0</sup>  | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                     |
 
-- <sup>1</sup> Semantic uses the in-graph ArgMax class-map Core ML export (ultralytics/ultralytics#24790):
-  the argmax leaves `postProcessSemantic` and runs in the graph, cutting Neural Engine end-to-end time from
-  10.3 ms (float logits) to 7.5 ms.
+- <sup>1</sup> Semantic uses the in-graph ArgMax class-map Core ML export at full resolution
+  (ultralytics/ultralytics#24790 + #24799): the argmax runs in the graph and emits a `[1, 1024, 1024]` class map,
+  so masks render pixel-sharp and `postProcessSemantic` is a sub-millisecond color sweep.
 - **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
-  measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`).
+  measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`) in profile-mode
+  builds (optimized native code).
   <br>Reproduce with the Flutter plugin's harness:
   `flutter test integration_test/qnn_benchmark_test.dart -d <iphone> --dart-define=RUN_BENCH=true`
 - **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
@@ -159,11 +160,11 @@ On A19, frame time is dominated by model inference (~7 ms, thermally bound under
 
 ## 🔓 Open Levers (Untested / Not Shipped)
 
-- ~~**In-graph ArgMax for semantic models.**~~ **Shipped** (ultralytics/ultralytics#24790 + this SDK's
-  `SemanticSegmenter` class-map support): semantic Core ML exports now embed the ArgMax and return a `[1, H, W]`
-  class map, replacing the ~7 ms CPU argmax decode — 10.3 → 7.5 ms end-to-end on the Neural Engine. The same
-  recipe is QNN/Core ML-only: the TFLite GPU delegate cannot compile `ARG_MAX` (whole-graph CPU fallback measured
-  3.6× slower than GPU logits), so Android TFLite keeps consumer-side argmax.
+- ~~**In-graph ArgMax for semantic models.**~~ **Shipped** (ultralytics/ultralytics#24790 + #24799 + this SDK's
+  `SemanticSegmenter` class-map support): semantic Core ML exports now embed the ArgMax and return a full-resolution
+  `[1, H, W]` class map, replacing the CPU argmax decode with a sub-millisecond color sweep and making masks
+  pixel-sharp. The same recipe is QNN/Core ML-only: the TFLite GPU delegate cannot compile `ARG_MAX` (whole-graph
+  CPU fallback measured 3.6× slower than GPU logits), so Android TFLite keeps consumer-side argmax.
 
 - **Cross-platform decode parity (context, not a lever).** The Flutter Android predictors previously spent
   ~12 ms/frame on detect decode (tensor reshape copies + JNI marshaling); rewriting them to direct flat reads —

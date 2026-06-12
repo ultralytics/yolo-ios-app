@@ -34,6 +34,8 @@ SIZES = ("n", "s", "m", "l", "x")
 
 @dataclass(frozen=True)
 class TaskSpec:
+    """Core ML export settings for one prediction task."""
+
     suffix: str
     model_dir: str
     imgsz: int
@@ -50,6 +52,7 @@ TASKS: dict[str, TaskSpec] = {
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for the export script."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--repo", default=DEFAULT_REPO)
@@ -70,6 +73,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def zip_mlpackage(package: Path) -> Path:
+    """Create a zip archive for a Core ML package directory."""
     zip_path = package.with_suffix(".mlpackage.zip")
     if zip_path.exists():
         zip_path.unlink()
@@ -80,6 +84,7 @@ def zip_mlpackage(package: Path) -> Path:
 
 
 def copy_to_app(package: Path, task: TaskSpec) -> None:
+    """Copy an exported Core ML package into the app model bundle."""
     destination = APP_MODELS_DIR / task.model_dir / package.name
     if destination.exists():
         shutil.rmtree(destination)
@@ -89,6 +94,7 @@ def copy_to_app(package: Path, task: TaskSpec) -> None:
 
 
 def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
+    """Upload exported Core ML assets to a GitHub release."""
     if not assets:
         return
     command = ["gh", "release", "upload", tag, "--repo", repo, "--clobber", *(str(path) for path in assets)]
@@ -96,6 +102,7 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
 
 
 def main() -> None:
+    """Export, package, and optionally upload Core ML assets."""
     args = parse_args()
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)

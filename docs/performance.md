@@ -107,6 +107,8 @@ Device, `yolo26n` detect, 4-cell matrix (raw = un-smoothed per-frame ms):
 
 Host (`coremltools`, `yolo26n`): `CPU_AND_NE` **2.6 ms** vs `CPU_ONLY` **8.6 ms** — the ANE is ~3× faster than CPU. (GPU-only is not measurable host-side; `ALL`/`CPU_AND_GPU` crash the Mac.)
 
+The same applies to the **Ultralytics Python package on a Mac**: its CoreML backend defaulted to `ComputeUnit.ALL`, so `YOLO("model.mlpackage").predict()` crashed on macOS hosts. Fixed in [ultralytics#24885](https://github.com/ultralytics/ultralytics/pull/24885) — it now loads `CPU_AND_NE` (ANE, ~3× faster; `CPU_ONLY` fallback on macOS <13), so host inference and `val()` run on the Neural Engine out of the box.
+
 **Shipped: `.cpuAndNeuralEngine`** — keeps the conv backbone on the ANE and avoids GPU contention. Do not switch to `.all`.
 
 ## 🎯 Experiment: YOLO26 End2end Head vs. Legacy Head + NMS

@@ -260,7 +260,7 @@ URL patterns:
 
 The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
-The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `int8`, `nms`, `end2end`, calibration, postprocessing, and release hosting.
+The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `quantize`, `nms`, `end2end`, calibration, postprocessing, and release hosting.
 
 ### Reproduce The Official Core ML Assets
 

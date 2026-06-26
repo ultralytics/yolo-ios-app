@@ -96,7 +96,7 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 | Model IDs      | `yolo26{n,s,m,l,x}`                 | `yolo26{n,s,m,l,x}`              |
 | Tasks          | detect, seg, sem, cls, pose, obb    | detect, seg, sem, cls, pose, obb |
 | Format         | `.mlpackage.zip`                    | `.tflite`                        |
-| `int8`         | `True`                              | `True`                           |
+| `quantize`     | `8`                                 | `8`                              |
 | `imgsz`        | `224` cls; `1024` OBB; `640` others | `224` cls; `640` others          |
 | `nms`          | `False`                             | `False`                          |
 | `end2end`      | `True`                              | `False`                          |

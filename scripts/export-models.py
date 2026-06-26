@@ -118,7 +118,7 @@ def main() -> None:
             exported = Path(
                 model.export(
                     format="coreml",
-                    int8=True,
+                    quantize=8,
                     nms=False,
                     end2end=True,
                     imgsz=task.imgsz,

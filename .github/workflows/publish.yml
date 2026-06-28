@@ -193,16 +193,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
-      - name: Extract PR Details
+      - name: Get release title
+        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.check.outputs.current_tag }}
         run: |
-          PR_JSON=$(gh pr list --search "${GITHUB_SHA}" --state merged --json number,title --jq '.[0]')
-          PR_NUMBER=$(echo "${PR_JSON}" | jq -r '.number')
-          PR_TITLE=$(echo "${PR_JSON}" | jq -r '.title' | sed 's/"/\\"/g')
-          echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_ENV}"
-          echo "PR_TITLE=${PR_TITLE}" >> "${GITHUB_ENV}"
+          TITLE=$(gh release view "$TAG" --json name -q .name 2>/dev/null | tr -d '\n\r"\\') || TITLE=""
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
       - name: Notify Success
         if: needs.release.result == 'success' && github.event_name == 'push'
         uses: slackapi/slack-github-action@v3.0.3
@@ -210,7 +209,7 @@ jobs:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
           payload: |
-            text: "<!channel> GitHub Actions success for ${{ github.workflow }} ✅\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* NEW `YOLO iOS ${{ needs.check.outputs.current_tag }}` release published 🎉\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n*Release Notes:* https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}\n"
+            text: "<!subteam^S07NKMNECKH> *${{ github.workflow }}* ✅ `${{ github.repository }}` ${{ steps.release.outputs.title || needs.check.outputs.current_tag }}  <https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}|*Release*>  ·  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|*Run*>"
       - name: Notify Failure
         if: needs.release.result != 'success'
         uses: slackapi/slack-github-action@v3.0.3
@@ -218,4 +217,4 @@ jobs:
           webhook-type: incoming-webhook
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_HUBWEB }}
           payload: |
-            text: "<!channel> GitHub Actions error for ${{ github.workflow }} ❌\n\n\n*Repository:* https://github.com/${{ github.repository }}\n*Action:* https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\n*Author:* ${{ github.actor }}\n*Event:* ${{ github.event_name }}\n*Job Status:* ${{ job.status }}\n*Pull Request:* <https://github.com/${{ github.repository }}/pull/${{ env.PR_NUMBER }}> ${{ env.PR_TITLE }}\n"
+            text: "<!subteam^S07NKMNECKH> *${{ github.workflow }}* ❌ `${{ github.repository }}` ${{ needs.check.outputs.current_tag }}  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|*Run*>"

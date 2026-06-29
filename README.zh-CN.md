@@ -82,16 +82,16 @@ var body: some View {
 | 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| TFLite int8 `.tflite`         | Android 上的 Flutter                            | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+| LiteRT int8 `.tflite`         | Android 上的 Flutter                            | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
 
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- TFLite：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+- LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
-iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；TFLite 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
+iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
-| 属性       | Core ML                            | TFLite                           |
+| 属性       | Core ML                            | LiteRT                           |
 | ---------- | ---------------------------------- | -------------------------------- |
 | 模型 ID    | `yolo26{n,s,m,l,x}`                | `yolo26{n,s,m,l,x}`              |
 | 任务       | detect、seg、sem、cls、pose、obb   | detect、seg、sem、cls、pose、obb |
@@ -103,7 +103,7 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | 校准       | 导出器默认值                       | 按任务的 `TASK2CALIBRATIONDATA`  |
 | 后处理     | Swift/Core ML                      | Android 原生                     |
 
-Core ML 资源使用 `nms=False` 和 `end2end=True` 导出：`nms=False` 会去掉 Core ML NMS 流水线，`end2end=True` 则提供由 Swift 解码器消费的 YOLO26 解码输出契约。TFLite 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
+Core ML 资源使用 `nms=False` 和 `end2end=True` 导出：`nms=False` 会去掉 Core ML NMS 流水线，`end2end=True` 则提供由 Swift 解码器消费的 YOLO26 解码输出契约。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
 
 ### Core ML 发布工作流
 
@@ -127,7 +127,7 @@ uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app 
 
 该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。在本 SDK 中 YOLO26 是无 NMS 的，因此官方 Core ML 资源使用 `nms=False` 和 `end2end=True` 导出；Swift 侧后处理负责处理端到端的检测、分割、姿态和 OBB 输出（分类和语义分割输出无需 NMS 解码）。
 
-### Android TFLite 对应资源
+### Android LiteRT 对应资源
 
 Flutter package 使用的 Android 资源在 Flutter 仓库中维护，而不在本 iOS 仓库中。其规范导出脚本是 `ultralytics/yolo-flutter-app` 仓库中的 `scripts/export-tflite-models.py`；它将匹配的 YOLO26 任务/尺寸矩阵导出为 int8 `.tflite` 资源，使用按任务的 `ultralytics.cfg.TASK2CALIBRATIONDATA` 默认值进行校准，并上传到 `yolo-flutter-app` `v0.3.5`。
 

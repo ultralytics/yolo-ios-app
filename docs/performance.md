@@ -165,8 +165,8 @@ On A19, frame time is dominated by model inference (~7 ms, thermally bound under
 - ~~**In-graph ArgMax for semantic models.**~~ **Shipped** (ultralytics/ultralytics#24790 + #24799 + this SDK's
   `SemanticSegmenter` class-map support): semantic Core ML exports now embed the ArgMax and return a full-resolution
   `[1, H, W]` class map, replacing the CPU argmax decode with a sub-millisecond color sweep and making masks
-  pixel-sharp. The same recipe is QNN/Core ML-only: the TFLite GPU delegate cannot compile `ARG_MAX` (whole-graph
-  CPU fallback measured 3.6× slower than GPU logits), so Android TFLite keeps consumer-side argmax.
+  pixel-sharp. The same recipe is QNN/Core ML-only: the LiteRT GPU delegate cannot compile `ARG_MAX` (whole-graph
+  CPU fallback measured 3.6× slower than GPU logits), so Android LiteRT keeps consumer-side argmax.
 
 - **Cross-platform decode parity (context, not a lever).** The Flutter Android predictors previously spent
   ~12 ms/frame on detect decode (tensor reshape copies + JNI marshaling); rewriting them to direct flat reads —

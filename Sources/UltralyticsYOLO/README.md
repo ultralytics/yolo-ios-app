@@ -251,12 +251,12 @@ Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| TFLite int8 `.tflite`         | Flutter on Android                           | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+| LiteRT int8 `.tflite`         | Flutter on Android                           | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
 The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 

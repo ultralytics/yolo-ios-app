@@ -82,16 +82,16 @@ The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segme
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| TFLite int8 `.tflite`         | Flutter on Android                           | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+| LiteRT int8 `.tflite`         | Flutter on Android                           | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- TFLite: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
-The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the TFLite column summarizes the Flutter repo's Android export script and release assets.
+The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
 
-| Property       | Core ML                             | TFLite                           |
+| Property       | Core ML                             | LiteRT                           |
 | -------------- | ----------------------------------- | -------------------------------- |
 | Model IDs      | `yolo26{n,s,m,l,x}`                 | `yolo26{n,s,m,l,x}`              |
 | Tasks          | detect, seg, sem, cls, pose, obb    | detect, seg, sem, cls, pose, obb |
@@ -103,7 +103,7 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 | Calibration    | exporter default                    | `TASK2CALIBRATIONDATA` per task  |
 | Postprocessing | Swift/Core ML                       | Android native                   |
 
-Core ML assets use `nms=False` and `end2end=True`: `nms=False` suppresses the Core ML NMS pipeline, and `end2end=True` supplies the YOLO26 decoded output contract consumed by the Swift decoders. The TFLite export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
+Core ML assets use `nms=False` and `end2end=True`: `nms=False` suppresses the Core ML NMS pipeline, and `end2end=True` supplies the YOLO26 decoded output contract consumed by the Swift decoders. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
 
 ### Core ML Release Workflow
 
@@ -127,7 +127,7 @@ uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app 
 
 The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False` and `end2end=True`; Swift-side postprocessing handles the end2end detect, segment, pose, and OBB outputs (classify and semantic outputs need no NMS decode).
 
-### Android TFLite Counterparts
+### Android LiteRT Counterparts
 
 The Android assets used by the Flutter package are maintained in the Flutter repo, not this iOS repo. Their canonical export script is `scripts/export-tflite-models.py` in `ultralytics/yolo-flutter-app`; it exports the matching YOLO26 task/size matrix as int8 `.tflite` assets calibrated with the per-task `ultralytics.cfg.TASK2CALIBRATIONDATA` defaults and uploads them to `yolo-flutter-app` `v0.3.5`.
 

@@ -18,9 +18,12 @@ import Foundation
 /// - Returns: Indices of the selected bounding boxes after suppression.
 public func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float) -> [Int] {
   let count = boxes.count
-  let sortedIndices = scores.enumerated().sorted { $0.element > $1.element }.map { $0.offset }
+  if count < 2 { return Array(0..<count) }
+
+  let sortedIndices = (0..<count).sorted { scores[$0] > scores[$1] }
   let areas = boxes.map { $0.area }
   var selectedIndices = [Int]()
+  selectedIndices.reserveCapacity(count)
   var activeIndices = [Bool](repeating: true, count: count)
   let iouThreshold = CGFloat(threshold)
 
@@ -33,7 +36,12 @@ public func nonMaxSuppression(boxes: [CGRect], scores: [Float], threshold: Float
     for j in (i + 1)..<sortedIndices.count {
       let otherIdx = sortedIndices[j]
       if !activeIndices[otherIdx] { continue }
-      let interArea = boxA.intersection(boxes[otherIdx]).area
+      let boxB = boxes[otherIdx]
+      let interWidth = min(boxA.maxX, boxB.maxX) - max(boxA.minX, boxB.minX)
+      guard interWidth > 0 else { continue }
+      let interHeight = min(boxA.maxY, boxB.maxY) - max(boxA.minY, boxB.minY)
+      guard interHeight > 0 else { continue }
+      let interArea = interWidth * interHeight
       let union = areaA + areas[otherIdx] - interArea
       if union > 0 && interArea / union > iouThreshold {
         activeIndices[otherIdx] = false

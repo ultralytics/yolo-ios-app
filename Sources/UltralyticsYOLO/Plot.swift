@@ -292,8 +292,10 @@ func generateCombinedMaskImage(
   let outputWidth = Int(outputRect.width)
   let outputHeight = Int(outputRect.height)
   guard outputWidth > 0, outputHeight > 0 else { return nil }
-  let targetWidth = max(1, Int((CGFloat(outputWidth) / CGFloat(maskWidth) * CGFloat(inputWidth)).rounded()))
-  let targetHeight = max(1, Int((CGFloat(outputHeight) / CGFloat(maskHeight) * CGFloat(inputHeight)).rounded()))
+  let targetWidth = max(
+    1, Int((CGFloat(outputWidth) / CGFloat(maskWidth) * CGFloat(inputWidth)).rounded()))
+  let targetHeight = max(
+    1, Int((CGFloat(outputHeight) / CGFloat(maskHeight) * CGFloat(inputHeight)).rounded()))
   let displayScaleX = CGFloat(targetWidth) / CGFloat(outputWidth)
   let displayScaleY = CGFloat(targetHeight) / CGFloat(outputHeight)
   var mergedPixels = [UInt32](repeating: 0, count: targetWidth * targetHeight)
@@ -353,8 +355,10 @@ func generateCombinedMaskImage(
 
     let targetX1 = max(0, Int(((visibleBox.minX - outputRect.minX) * displayScaleX).rounded(.down)))
     let targetY1 = max(0, Int(((visibleBox.minY - outputRect.minY) * displayScaleY).rounded(.down)))
-    let targetX2 = min(targetWidth, Int(((visibleBox.maxX - outputRect.minX) * displayScaleX).rounded(.up)))
-    let targetY2 = min(targetHeight, Int(((visibleBox.maxY - outputRect.minY) * displayScaleY).rounded(.up)))
+    let targetX2 = min(
+      targetWidth, Int(((visibleBox.maxX - outputRect.minX) * displayScaleX).rounded(.up)))
+    let targetY2 = min(
+      targetHeight, Int(((visibleBox.maxY - outputRect.minY) * displayScaleY).rounded(.up)))
     let targetBoxWidth = targetX2 - targetX1
     let targetBoxHeight = targetY2 - targetY1
     guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
@@ -424,7 +428,9 @@ func generateCombinedMaskImage(
   }
 
   let pixelData = mergedPixels.withUnsafeBufferPointer { Data(buffer: $0) }
-  return (makeRGBAImage(from: pixelData, width: targetWidth, height: targetHeight), probabilityMasks)
+  return (
+    makeRGBAImage(from: pixelData, width: targetWidth, height: targetHeight), probabilityMasks
+  )
 }
 
 public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {

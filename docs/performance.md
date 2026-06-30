@@ -99,10 +99,10 @@ Manual preprocessing is ~10–15% faster on its own, and stacks with a small cap
 
 Device (`YOLO26n-seg`, live camera, iPhone 17 Pro):
 
-| Segment mask paint path                            | Postprocess |
-| -------------------------------------------------- | ----------- |
-| Per-detection UIColor lookup + Swift array writes  | ≈10 ms      |
-| Precomputed color words + pointer ROI paint        | **≈3 ms**   |
+| Segment mask paint path                           | Postprocess |
+| ------------------------------------------------- | ----------- |
+| Per-detection UIColor lookup + Swift array writes | ≈10 ms      |
+| Precomputed color words + pointer ROI paint       | **≈3 ms**   |
 
 The shipped path still scales Float mask logits before thresholding, so mask edges remain high-resolution. The win comes
 from removing repeated UIColor component extraction and bounds-checked Swift array writes from the per-pixel ROI sweep.

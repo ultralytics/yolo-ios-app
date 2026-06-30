@@ -396,7 +396,9 @@ func generateCombinedMaskImage(
             height: vImagePixelCount(targetBoxHeight),
             width: vImagePixelCount(targetBoxWidth),
             rowBytes: targetBoxWidth * MemoryLayout<Float>.stride)
-          guard vImageScale_PlanarF(&source, &target, nil, vImage_Flags(kvImageNoFlags)) == kvImageNoError,
+          guard
+            vImageScale_PlanarF(&source, &target, nil, vImage_Flags(kvImageNoFlags))
+              == kvImageNoError,
             let maskBase = targetBuffer.baseAddress,
             let pixelBase = mergedPixels.baseAddress
           else { return false }

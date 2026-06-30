@@ -92,6 +92,21 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 Manual preprocessing is ~10–15% faster on its own, and stacks with a small capture preset (VGA collapses the letterbox to 0.48 ms → ~8 ms total). It is **not shipped**: it is currently detect-only and its BGRA→model color order needs visual validation. Preserved as an experiment (`git stash`).
 
+## 🎨 Experiment: Segment Mask Painting
+
+**Q:** Can high-resolution instance masks stay sharp without making segment postprocess dominate camera latency?
+**A:** Yes. Keep the high-resolution mask path, but make the final color paint pass pointer-based.
+
+Device (`YOLO26n-seg`, live camera, iPhone 17 Pro):
+
+| Segment mask paint path                            | Postprocess |
+| -------------------------------------------------- | ----------- |
+| Per-detection UIColor lookup + Swift array writes  | ≈10 ms      |
+| Precomputed color words + pointer ROI paint        | **≈3 ms**   |
+
+The shipped path still scales Float mask logits before thresholding, so mask edges remain high-resolution. The win comes
+from removing repeated UIColor component extraction and bounds-checked Swift array writes from the per-pixel ROI sweep.
+
 ## 🧠 Experiment: Core ML Compute Units (CPU / GPU / ANE)
 
 **Q:** Should inference use `.cpuAndNeuralEngine` or `.all` (adds GPU)? **A:** `.all` is no faster and slightly jitterier in a live camera app, where the GPU is busy compositing the preview/overlays. The model is ~7 ms in-app under **both**.
@@ -156,7 +171,7 @@ Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` 
 
 ## ✅ Shipped Configuration
 
-`.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · default `minimum_deployment_target`.
+`.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · optimized high-resolution segment mask painting · default `minimum_deployment_target`.
 
 On A19, frame time is dominated by model inference (~7 ms, thermally bound under sustained live use) plus preprocessing. The isolated Performance Report's ~1.8 ms model time is not achievable inside a live camera pipeline.
 

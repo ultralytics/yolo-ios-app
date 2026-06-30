@@ -38,6 +38,15 @@ let ultralyticsColors: [UIColor] = [
   UIColor(red: 162 / 255, green: 255 / 255, blue: 11 / 255, alpha: 0.6),
 ]
 
+private let ultralyticsColorWords: [UInt32] = ultralyticsColors.map { color in
+  var red: CGFloat = 0
+  var green: CGFloat = 0
+  var blue: CGFloat = 0
+  color.getRed(&red, green: &green, blue: &blue, alpha: nil)
+  return UInt32(UInt8(red * 255)) | UInt32(UInt8(green * 255)) << 8
+    | UInt32(UInt8(blue * 255)) << 16 | 0xFF00_0000
+}
+
 let posePalette: [[CGFloat]] = [
   [255, 128, 0],
   [255, 153, 51],
@@ -368,21 +377,13 @@ func generateCombinedMaskImage(
       let targetBoxHeight = targetY2 - targetY1
       guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
 
-      // Get class color
-      let _colorIndex = classID % ultralyticsColors.count
-      guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
-        continue
-      }
-      let r = UInt8(color.red)
-      let g = UInt8(color.green)
-      let b = UInt8(color.blue)
-      let colorWord = UInt32(r) | UInt32(g) << 8 | UInt32(b) << 16 | 0xFF00_0000
+      let colorWord = ultralyticsColorWords[classID % ultralyticsColorWords.count]
 
       let scaledCount = targetBoxWidth * targetBoxHeight
       if scaledMask.count < scaledCount {
         scaledMask = [Float](repeating: 0, count: scaledCount)
       }
-      let scaleError = combinedMask.withUnsafeBufferPointer { sourceBuffer in
+      let didScaleAndPaint = combinedMask.withUnsafeBufferPointer { sourceBuffer in
         scaledMask.withUnsafeMutableBufferPointer { targetBuffer in
           var source = vImage_Buffer(
             data: UnsafeMutableRawPointer(
@@ -395,18 +396,31 @@ func generateCombinedMaskImage(
             height: vImagePixelCount(targetBoxHeight),
             width: vImagePixelCount(targetBoxWidth),
             rowBytes: targetBoxWidth * MemoryLayout<Float>.stride)
-          return vImageScale_PlanarF(&source, &target, nil, vImage_Flags(kvImageNoFlags))
-        }
-      }
-      guard scaleError == kvImageNoError else { continue }
+          guard
+            vImageScale_PlanarF(&source, &target, nil, vImage_Flags(kvImageNoFlags))
+              == kvImageNoError,
+            let maskBase = targetBuffer.baseAddress,
+            let pixelBase = mergedPixels.baseAddress
+          else { return false }
 
-      for y in 0..<targetBoxHeight {
-        let sourceRow = y * targetBoxWidth
-        let targetRow = (targetY1 + y) * targetWidth + targetX1
-        for x in 0..<targetBoxWidth where scaledMask[sourceRow + x] > threshold {
-          mergedPixels[targetRow + x] = colorWord
+          var y = 0
+          while y < targetBoxHeight {
+            var maskIndex = y * targetBoxWidth
+            var pixelIndex = (targetY1 + y) * targetWidth + targetX1
+            let rowEnd = maskIndex + targetBoxWidth
+            while maskIndex < rowEnd {
+              if maskBase[maskIndex] > threshold {
+                pixelBase[pixelIndex] = colorWord
+              }
+              maskIndex += 1
+              pixelIndex += 1
+            }
+            y += 1
+          }
+          return true
         }
       }
+      guard didScaleAndPaint else { continue }
     }
   }
 

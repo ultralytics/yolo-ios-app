@@ -326,18 +326,6 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   }
 
   private func makeImage(fromRGBA pixels: Data, width: Int, height: Int) -> CGImage? {
-    guard let provider = CGDataProvider(data: pixels as CFData) else { return nil }
-    return CGImage(
-      width: width,
-      height: height,
-      bitsPerComponent: 8,
-      bitsPerPixel: 32,
-      bytesPerRow: width * 4,
-      space: CGColorSpaceCreateDeviceRGB(),
-      bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-      provider: provider,
-      decode: nil,
-      shouldInterpolate: true,
-      intent: .defaultIntent)
+    makeRGBAImage(from: pixels, width: width, height: height)
   }
 }

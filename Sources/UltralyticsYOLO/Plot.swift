@@ -86,6 +86,27 @@ let skeleton = [
   [5, 7],
 ]
 
+func makeRGBAImage(
+  from pixels: Data,
+  width: Int,
+  height: Int,
+  shouldInterpolate: Bool = true
+) -> CGImage? {
+  guard let provider = CGDataProvider(data: pixels as CFData) else { return nil }
+  return CGImage(
+    width: width,
+    height: height,
+    bitsPerComponent: 8,
+    bitsPerPixel: 32,
+    bytesPerRow: width * 4,
+    space: CGColorSpaceCreateDeviceRGB(),
+    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+    provider: provider,
+    decode: nil,
+    shouldInterpolate: shouldInterpolate,
+    intent: .defaultIntent)
+}
+
 /// Executes `body` inside a bitmap graphics context rendered at pixel scale.
 ///
 /// Flips the y-axis so drawing matches UIKit's top-left origin and draws the source image as the background, then
@@ -260,8 +281,8 @@ func generateCombinedMaskImage(
     detectedObjects.enumerated().map { (i, obj) in (i, obj.0, obj.1, obj.2) }
   let sortedObjects = indexedObjects.sorted { $0.3 < $1.3 }  // ascending by score
 
-  // 7) RGBA buffer (160x160)
-  var mergedPixels = [UInt8](repeating: 0, count: HW * 4)
+  // 7) Display geometry. Mask math stays at prototype resolution, but the visible composite is painted at
+  // model-input resolution so the app does not upscale a 160x160 image into blocky masks.
   let scaleX = Float(maskWidth) / Float(inputWidth)
   let scaleY = Float(maskHeight) / Float(inputHeight)
   let maskBounds = CGRect(x: 0, y: 0, width: maskWidth, height: maskHeight)
@@ -271,6 +292,13 @@ func generateCombinedMaskImage(
   let outputWidth = Int(outputRect.width)
   let outputHeight = Int(outputRect.height)
   guard outputWidth > 0, outputHeight > 0 else { return nil }
+  let targetWidth = max(
+    1, Int((CGFloat(outputWidth) / CGFloat(maskWidth) * CGFloat(inputWidth)).rounded()))
+  let targetHeight = max(
+    1, Int((CGFloat(outputHeight) / CGFloat(maskHeight) * CGFloat(inputHeight)).rounded()))
+  let displayScaleX = CGFloat(targetWidth) / CGFloat(outputWidth)
+  let displayScaleY = CGFloat(targetHeight) / CGFloat(outputHeight)
+  var pixelData = Data(count: targetWidth * targetHeight * MemoryLayout<UInt32>.stride)
 
   // Match Ultralytics process_mask(): crop each mask to its detection box before thresholding
   // or returning per-instance data.
@@ -306,34 +334,77 @@ func generateCombinedMaskImage(
 
   // 8) Per-instance probability maps are built later (section 10) with bulk row copies.
   var probabilityMasks: [[[Float]]]? = nil
+  var scaledMask = [Float]()
 
-  // 9) Compose according to sort order
-  for (originalIndex, _, classID, _) in sortedObjects {
-    let maskBox = maskBoxes[originalIndex]
-    guard maskBox.x1 < maskBox.x2, maskBox.y1 < maskBox.y2 else { continue }
+  pixelData.withUnsafeMutableBytes { rawPixels in
+    let mergedPixels = rawPixels.bindMemory(to: UInt32.self)
 
-    let startIdx = originalIndex * HW
+    // 9) Compose according to sort order. Scale each instance's Float logits before thresholding so edges are
+    // high-resolution binary masks, not blurred RGBA pixels.
+    for (originalIndex, _, classID, _) in sortedObjects {
+      let maskBox = maskBoxes[originalIndex]
+      guard maskBox.x1 < maskBox.x2, maskBox.y1 < maskBox.y2 else { continue }
 
-    // Get class color
-    let _colorIndex = classID % ultralyticsColors.count
-    guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
-      continue
-    }
-    let r = UInt8(color.red)
-    let g = UInt8(color.green)
-    let b = UInt8(color.blue)
+      let startIdx = originalIndex * HW
+      let visibleBox = CGRect(
+        x: maskBox.x1, y: maskBox.y1, width: maskBox.x2 - maskBox.x1,
+        height: maskBox.y2 - maskBox.y1
+      ).intersection(outputRect).integral
+      let sourceX = Int(visibleBox.minX)
+      let sourceY = Int(visibleBox.minY)
+      let sourceWidth = Int(visibleBox.width)
+      let sourceHeight = Int(visibleBox.height)
+      guard sourceWidth > 0, sourceHeight > 0 else { continue }
 
-    // Pixel loop: box range only
-    for y in maskBox.y1..<maskBox.y2 {
-      for x in maskBox.x1..<maskBox.x2 {
-        let px = y * maskWidth + x
-        let maskVal = combinedMask[startIdx + px]
-        if maskVal > threshold {
-          let pixIndex = px * 4
-          mergedPixels[pixIndex + 0] = r
-          mergedPixels[pixIndex + 1] = g
-          mergedPixels[pixIndex + 2] = b
-          mergedPixels[pixIndex + 3] = 255
+      let targetX1 = max(
+        0, Int(((visibleBox.minX - outputRect.minX) * displayScaleX).rounded(.down)))
+      let targetY1 = max(
+        0, Int(((visibleBox.minY - outputRect.minY) * displayScaleY).rounded(.down)))
+      let targetX2 = min(
+        targetWidth, Int(((visibleBox.maxX - outputRect.minX) * displayScaleX).rounded(.up)))
+      let targetY2 = min(
+        targetHeight, Int(((visibleBox.maxY - outputRect.minY) * displayScaleY).rounded(.up)))
+      let targetBoxWidth = targetX2 - targetX1
+      let targetBoxHeight = targetY2 - targetY1
+      guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
+
+      // Get class color
+      let _colorIndex = classID % ultralyticsColors.count
+      guard let color = ultralyticsColors[_colorIndex].toRGBComponents() else {
+        continue
+      }
+      let r = UInt8(color.red)
+      let g = UInt8(color.green)
+      let b = UInt8(color.blue)
+      let colorWord = UInt32(r) | UInt32(g) << 8 | UInt32(b) << 16 | 0xFF00_0000
+
+      let scaledCount = targetBoxWidth * targetBoxHeight
+      if scaledMask.count < scaledCount {
+        scaledMask = [Float](repeating: 0, count: scaledCount)
+      }
+      let scaleError = combinedMask.withUnsafeBufferPointer { sourceBuffer in
+        scaledMask.withUnsafeMutableBufferPointer { targetBuffer in
+          var source = vImage_Buffer(
+            data: UnsafeMutableRawPointer(
+              mutating: sourceBuffer.baseAddress! + startIdx + sourceY * maskWidth + sourceX),
+            height: vImagePixelCount(sourceHeight),
+            width: vImagePixelCount(sourceWidth),
+            rowBytes: maskWidth * MemoryLayout<Float>.stride)
+          var target = vImage_Buffer(
+            data: targetBuffer.baseAddress!,
+            height: vImagePixelCount(targetBoxHeight),
+            width: vImagePixelCount(targetBoxWidth),
+            rowBytes: targetBoxWidth * MemoryLayout<Float>.stride)
+          return vImageScale_PlanarF(&source, &target, nil, vImage_Flags(kvImageNoFlags))
+        }
+      }
+      guard scaleError == kvImageNoError else { continue }
+
+      for y in 0..<targetBoxHeight {
+        let sourceRow = y * targetBoxWidth
+        let targetRow = (targetY1 + y) * targetWidth + targetX1
+        for x in 0..<targetBoxWidth where scaledMask[sourceRow + x] > threshold {
+          mergedPixels[targetRow + x] = colorWord
         }
       }
     }
@@ -362,37 +433,9 @@ func generateCombinedMaskImage(
     }
   }
 
-  // 11) RGBA buffer -> CGImage
-  let colorSpace = CGColorSpaceCreateDeviceRGB()
-  let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
-  let totalBytes = mergedPixels.count
-
-  guard let providerRef = CGDataProvider(data: NSData(bytes: &mergedPixels, length: totalBytes))
-  else {
-    return nil
-  }
-  guard
-    let mergedCGImage = CGImage(
-      width: maskWidth,
-      height: maskHeight,
-      bitsPerComponent: 8,
-      bitsPerPixel: 32,
-      bytesPerRow: maskWidth * 4,
-      space: colorSpace,
-      bitmapInfo: bitmapInfo,
-      provider: providerRef,
-      decode: nil,
-      shouldInterpolate: false,
-      intent: .defaultIntent
-    )
-  else {
-    return nil
-  }
-
-  let outputImage =
-    outputRect == maskBounds
-    ? mergedCGImage : (mergedCGImage.cropping(to: outputRect) ?? mergedCGImage)
-  return (outputImage, probabilityMasks)
+  return (
+    makeRGBAImage(from: pixelData, width: targetWidth, height: targetHeight), probabilityMasks
+  )
 }
 
 public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {

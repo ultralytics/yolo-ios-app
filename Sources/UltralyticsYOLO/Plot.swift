@@ -356,10 +356,14 @@ func generateCombinedMaskImage(
       let sourceHeight = Int(visibleBox.height)
       guard sourceWidth > 0, sourceHeight > 0 else { continue }
 
-      let targetX1 = max(0, Int(((visibleBox.minX - outputRect.minX) * displayScaleX).rounded(.down)))
-      let targetY1 = max(0, Int(((visibleBox.minY - outputRect.minY) * displayScaleY).rounded(.down)))
-      let targetX2 = min(targetWidth, Int(((visibleBox.maxX - outputRect.minX) * displayScaleX).rounded(.up)))
-      let targetY2 = min(targetHeight, Int(((visibleBox.maxY - outputRect.minY) * displayScaleY).rounded(.up)))
+      let targetX1 = max(
+        0, Int(((visibleBox.minX - outputRect.minX) * displayScaleX).rounded(.down)))
+      let targetY1 = max(
+        0, Int(((visibleBox.minY - outputRect.minY) * displayScaleY).rounded(.down)))
+      let targetX2 = min(
+        targetWidth, Int(((visibleBox.maxX - outputRect.minX) * displayScaleX).rounded(.up)))
+      let targetY2 = min(
+        targetHeight, Int(((visibleBox.maxY - outputRect.minY) * displayScaleY).rounded(.up)))
       let targetBoxWidth = targetX2 - targetX1
       let targetBoxHeight = targetY2 - targetY1
       guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
@@ -429,7 +433,9 @@ func generateCombinedMaskImage(
     }
   }
 
-  return (makeRGBAImage(from: pixelData, width: targetWidth, height: targetHeight), probabilityMasks)
+  return (
+    makeRGBAImage(from: pixelData, width: targetWidth, height: targetHeight), probabilityMasks
+  )
 }
 
 public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> UIImage {

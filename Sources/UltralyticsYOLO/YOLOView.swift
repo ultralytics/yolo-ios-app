@@ -81,15 +81,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
 
     if task == .segment || task == .semantic {
+      guard let maskLayer = self.maskLayer else {
+        return
+      }
       if let maskImage = task == .segment
         ? result.masks?.combinedMask : result.semanticMask?.maskImage
       {
-        guard let maskLayer = self.maskLayer else {
-          return
-        }
         maskLayer.isHidden = false
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
+      } else {
+        maskLayer.contents = nil
+        maskLayer.isHidden = true
       }
     } else if task == .classify {
       self.overlayYOLOClassificationsCALayer(on: self, result: result)

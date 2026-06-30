@@ -238,6 +238,9 @@ class PlotTests: XCTestCase {
       return
     }
 
+    XCTAssertEqual(result.0?.width, W)
+    XCTAssertEqual(result.0?.height, H)
+    XCTAssertEqual(result.0?.shouldInterpolate, true)
     XCTAssertEqual(masks.count, 1)
     XCTAssertEqual(masks[0].count, H)
     XCTAssertEqual(masks[0][0].count, W)
@@ -279,6 +282,34 @@ class PlotTests: XCTestCase {
         XCTAssertEqual(masks[0][y][x], expected, accuracy: 1e-4)
       }
     }
+  }
+
+  func testGenerateCombinedMaskImageUpscalesCompositeToInputResolution() {
+    let C = 1
+    let H = 4
+    let W = 4
+    let protos = try! MLMultiArray(shape: [1, C, H, W] as [NSNumber], dataType: .float32)
+    let pPtr = protos.dataPointer.assumingMemoryBound(to: Float.self)
+    for i in 0..<(H * W) { pPtr[i] = 1 }
+
+    let detected: [(CGRect, Int, Float, [Float])] = [
+      (CGRect(x: 0, y: 0, width: 8, height: 8), 0, 0.9, [1])
+    ]
+
+    guard
+      let result = generateCombinedMaskImage(
+        detectedObjects: detected, protos: protos,
+        inputWidth: 8, inputHeight: 8,
+        cropRect: nil, returnIndividualMasks: true)
+    else {
+      XCTFail("generateCombinedMaskImage returned nil")
+      return
+    }
+
+    XCTAssertEqual(result.0?.width, 8)
+    XCTAssertEqual(result.0?.height, 8)
+    XCTAssertEqual(result.1?.first?.count, H)
+    XCTAssertEqual(result.1?.first?.first?.count, W)
   }
 
   func testGenerateCombinedMaskImageEmptyDetectionsReturnsGracefully() {

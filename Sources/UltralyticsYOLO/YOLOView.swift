@@ -1391,27 +1391,31 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   private func renderShareImage(_ image: UIImage) -> UIImage? {
+    guard let previewLayer = videoCapture.previewLayer else { return image }
+
     let imageView = UIImageView(image: image)
     imageView.contentMode = .scaleAspectFill
     imageView.frame = bounds
     let imageLayer = imageView.layer
-    layer.insertSublayer(imageLayer, above: videoCapture.previewLayer)
+    layer.insertSublayer(imageLayer, above: previewLayer)
 
-    var tempViews = [UIView]()
-    let boundingBoxInfos = makeBoundingBoxInfos(from: boundingBoxViews)
-    for info in boundingBoxInfos where !info.isHidden {
-      let boxView = createBoxView(from: info)
-      boxView.frame = info.rect
-      addSubview(boxView)
-      tempViews.append(boxView)
+    // The frozen frame now covers the preview layer and every overlay nested inside it (boxes, mask,
+    // pose). Lift those overlays just above the frozen frame — still below the view's controls, matching
+    // the live z-order — so `drawHierarchy` captures them, then restore them after the snapshot.
+    let overlays = previewLayer.sublayers ?? []
+    var aboveLayer: CALayer = imageLayer
+    for overlay in overlays {
+      layer.insertSublayer(overlay, above: aboveLayer)
+      aboveLayer = overlay
     }
 
     UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
     drawHierarchy(in: bounds, afterScreenUpdates: true)
     let snapshot = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
+
     imageLayer.removeFromSuperlayer()
-    tempViews.forEach { $0.removeFromSuperview() }
+    overlays.forEach { previewLayer.addSublayer($0) }
     return snapshot
   }
 

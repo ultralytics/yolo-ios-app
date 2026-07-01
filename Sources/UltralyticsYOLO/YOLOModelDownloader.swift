@@ -1,0 +1,313 @@
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+//  This file is part of the Ultralytics YOLO Package, providing model download functionality.
+//  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
+//  Access the source code: https://github.com/ultralytics/yolo-ios-app
+//
+//  YOLOModelDownloader downloads, extracts, and compiles YOLO models from remote URLs. It reports fractional
+//  progress, unpacks ZIP archives while skipping macOS metadata, and stores the compiled `.mlmodelc` in
+//  YOLOModelCache for offline reuse.
+
+import CoreML
+import Foundation
+
+/// Handles downloading and processing of YOLO models from remote URLs.
+public final class YOLOModelDownloader: NSObject {
+
+  public typealias ProgressHandler = (Double) -> Void
+  public typealias CompletionHandler = (Result<URL, Error>) -> Void
+
+  /// Errors that can be reported during a download.
+  public enum DownloadError: LocalizedError {
+    case invalidURL, invalidZipFile, modelNotFoundInArchive
+    case downloadFailed(Error)
+    case extractionFailed(Error)
+    case compilationFailed(Error)
+
+    public var errorDescription: String? {
+      switch self {
+      case .invalidURL: return "Invalid model URL"
+      case .downloadFailed(let error): return "Download failed: \(error.localizedDescription)"
+      case .invalidZipFile: return "Invalid or corrupted ZIP file"
+      case .modelNotFoundInArchive: return "No valid model file found in archive"
+      case .extractionFailed(let error):
+        return "Failed to extract archive: \(error.localizedDescription)"
+      case .compilationFailed(let error):
+        return "Failed to compile model: \(error.localizedDescription)"
+      }
+    }
+  }
+
+  private let lock = NSLock()
+  private var downloadTask: URLSessionDownloadTask?
+  private var progressHandler: ProgressHandler?
+  private var completionHandler: CompletionHandler?
+  private var currentTask: YOLOTask?
+  private var originalURL: URL?
+  private var isDownloading = false
+
+  private lazy var session: URLSession = {
+    URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+  }()
+
+  deinit {
+    session.invalidateAndCancel()
+  }
+
+  /// Downloads a YOLO model from a remote URL, with optional task tagging and progress reporting.
+  ///
+  /// - Parameters:
+  ///   - url: The remote URL to fetch the model archive from.
+  ///   - task: Optional task type (detect/segment/semantic/classify/pose/obb). Included in the cache key,
+  ///     so the same underlying URL can cache separate compiled models per task.
+  ///   - progress: Optional handler receiving fractional progress (0.0–1.0) on the main thread.
+  ///   - completion: Handler invoked once with the compiled `.mlmodelc` URL on success, or an error.
+  public func download(
+    from url: URL, task: YOLOTask? = nil, progress: ProgressHandler? = nil,
+    completion: @escaping CompletionHandler
+  ) {
+    // Check cache first (before acquiring lock)
+    if let cachedPath = YOLOModelCache.shared.getCachedModelPath(url: url, task: task) {
+      DispatchQueue.main.async {
+        completion(.success(cachedPath))
+      }
+      return
+    }
+
+    lock.lock()
+    guard !isDownloading else {
+      lock.unlock()
+      completion(
+        .failure(
+          DownloadError.downloadFailed(
+            NSError(
+              domain: "YOLOModelDownloader", code: -1,
+              userInfo: [NSLocalizedDescriptionKey: "A download is already in progress"]))))
+      return
+    }
+    isDownloading = true
+    self.progressHandler = progress
+    self.completionHandler = completion
+    self.currentTask = task
+    self.originalURL = url
+    lock.unlock()
+
+    // Start download
+    downloadTask = session.downloadTask(with: url)
+    downloadTask?.resume()
+  }
+
+  /// Cancels the in-flight download, if any.
+  public func cancelDownload() {
+    downloadTask?.cancel()
+  }
+
+  /// Finishes the active download exactly once and resets state before invoking the stored callback.
+  private func finish(_ result: Result<URL, Error>) {
+    lock.lock()
+    guard isDownloading else {
+      lock.unlock()
+      return
+    }
+    isDownloading = false
+    downloadTask = nil
+    let completionHandler = completionHandler
+    self.completionHandler = nil
+    progressHandler = nil
+    currentTask = nil
+    originalURL = nil
+    lock.unlock()
+
+    completionHandler?(result)
+  }
+
+  /// Extracts, locates, compiles, and caches the model from a freshly downloaded archive.
+  private func processDownloadedFile(at location: URL, originalURL: URL) {
+    // Use the stored originalURL if available (for task-aware downloads)
+    let url = self.originalURL ?? originalURL
+
+    do {
+      // Create temporary directory for extraction
+      let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+      try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+      // Cleanup temp directory
+      defer { try? FileManager.default.removeItem(at: tempDir) }
+
+      // Move downloaded file to temp location
+      let zipPath = tempDir.appendingPathComponent("model.zip")
+      try FileManager.default.moveItem(at: location, to: zipPath)
+
+      // Extract ZIP file
+      let extractedPath = tempDir.appendingPathComponent("extracted")
+      try unzipSkippingMacOSX(at: zipPath, to: extractedPath)
+
+      // Find model file
+      let modelPath = try findModelPath(in: extractedPath, for: url)
+
+      // Compile and cache model
+      let compiledPath = try compileModelIfNeeded(at: modelPath)
+      let cachedPath = try cacheModel(compiledPath, for: url)
+
+      finish(.success(cachedPath))
+
+    } catch {
+      finish(.failure(error))
+    }
+  }
+
+  /// Locates the model file (or mlpackage) inside the extracted archive.
+  private func findModelPath(in extractedPath: URL, for url: URL) throws -> URL {
+    let contents = try FileManager.default.contentsOfDirectory(
+      at: extractedPath, includingPropertiesForKeys: [.isDirectoryKey])
+
+    // Check if ZIP contains mlpackage contents directly
+    let hasManifest = contents.contains { $0.lastPathComponent == "Manifest.json" }
+    let hasDataFolder = contents.contains { $0.lastPathComponent == "Data" }
+
+    if hasManifest && hasDataFolder {
+      // Create proper .mlpackage directory
+      let key = YOLOModelCache.shared.cacheKey(for: url, task: currentTask)
+      let mlpackagePath = extractedPath.parent.appendingPathComponent("\(key).mlpackage")
+      try FileManager.default.moveItem(at: extractedPath, to: mlpackagePath)
+      return mlpackagePath
+    } else {
+      return try findModelFile(in: extractedPath)
+        ?? { throw DownloadError.modelNotFoundInArchive }()
+    }
+  }
+
+  /// Moves the compiled model into the shared cache and returns its final URL.
+  private func cacheModel(_ compiledPath: URL, for url: URL) throws -> URL {
+    let key = YOLOModelCache.shared.cacheKey(for: url, task: currentTask)
+    let cachedPath = YOLOModelCache.shared.cacheDirectory.appendingPathComponent(key)
+      .appendingPathExtension("mlmodelc")
+
+    if FileManager.default.fileExists(atPath: cachedPath.path) {
+      try FileManager.default.removeItem(at: cachedPath)
+    }
+
+    try FileManager.default.moveItem(at: compiledPath, to: cachedPath)
+    return cachedPath
+  }
+
+  /// Extracts a ZIP archive into `destinationURL`, skipping macOS resource-fork metadata.
+  private func unzipSkippingMacOSX(at sourceURL: URL, to destinationURL: URL) throws {
+    do {
+      try MiniZip.extract(at: sourceURL, to: destinationURL) { path in
+        // Skip macOS metadata files (resource forks and AppleDouble sidecars).
+        path.hasPrefix("__MACOSX") || path.contains("._")
+      }
+    } catch let error as MiniZip.MiniZipError {
+      switch error {
+      case .notAZipFile, .corruptArchive: throw DownloadError.invalidZipFile
+      default: throw DownloadError.extractionFailed(error)
+      }
+    }
+  }
+
+  /// Recursively searches `directory` for an `.mlpackage`, `.mlmodel`, or `.mlmodelc` and returns the first match.
+  private func findModelFile(in directory: URL) throws -> URL? {
+    let contents = try FileManager.default.contentsOfDirectory(
+      at: directory, includingPropertiesForKeys: [.isDirectoryKey])
+
+    // Look for model files in current directory
+    for url in contents {
+      if url.pathExtension == "mlpackage" {
+        let manifestPath = url.appendingPathComponent("Manifest.json")
+        if FileManager.default.fileExists(atPath: manifestPath.path) { return url }
+      }
+
+      if ["mlmodel", "mlmodelc"].contains(url.pathExtension) { return url }
+    }
+
+    // Search subdirectories recursively
+    for url in contents {
+      let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
+      if resourceValues.isDirectory == true && url.pathExtension != "mlpackage" {
+        if let found = try findModelFile(in: url) { return found }
+      }
+    }
+
+    return nil
+  }
+
+  /// Compiles `.mlmodel` / `.mlpackage` files via Core ML and returns the resulting `.mlmodelc` URL.
+  private func compileModelIfNeeded(at modelURL: URL) throws -> URL {
+    switch modelURL.pathExtension {
+    case "mlmodel", "mlpackage":
+      do {
+        let compiledURL = try MLModel.compileModel(at: modelURL)
+        _ = try MLModel(contentsOf: compiledURL)  // Verify compilation
+        return compiledURL
+      } catch {
+        throw DownloadError.compilationFailed(error)
+      }
+    case "mlmodelc":
+      return modelURL
+    default:
+      throw DownloadError.modelNotFoundInArchive
+    }
+  }
+}
+
+// MARK: - URLSessionDownloadDelegate
+extension YOLOModelDownloader: URLSessionDownloadDelegate {
+
+  public func urlSession(
+    _ session: URLSession, downloadTask: URLSessionDownloadTask,
+    didFinishDownloadingTo location: URL
+  ) {
+    guard let originalURL = downloadTask.originalRequest?.url else {
+      finish(.failure(DownloadError.invalidURL))
+      return
+    }
+
+    // Validate HTTP status code
+    if let httpResponse = downloadTask.response as? HTTPURLResponse,
+      !(200..<300).contains(httpResponse.statusCode)
+    {
+      finish(
+        .failure(
+          DownloadError.downloadFailed(
+            NSError(
+              domain: "YOLOModelDownloader", code: httpResponse.statusCode,
+              userInfo: [
+                NSLocalizedDescriptionKey:
+                  "Server returned HTTP \(httpResponse.statusCode)"
+              ]))))
+      return
+    }
+
+    processDownloadedFile(at: location, originalURL: originalURL)
+  }
+
+  public func urlSession(
+    _ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
+    totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64
+  ) {
+    let progress =
+      totalBytesExpectedToWrite > 0
+      ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) : 0.0
+    lock.lock()
+    let handler = progressHandler
+    lock.unlock()
+    guard let handler = handler else { return }
+    DispatchQueue.main.async {
+      handler(progress)
+    }
+  }
+
+  public func urlSession(
+    _ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?
+  ) {
+    if let error = error {
+      finish(.failure(DownloadError.downloadFailed(error)))
+    }
+  }
+}
+
+// MARK: - URL Extension
+extension URL {
+  fileprivate var parent: URL { deletingLastPathComponent() }
+}

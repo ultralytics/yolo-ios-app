@@ -1,6 +1,4 @@
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
-CLAUDE.md
-CLAUDE.md.backup
 trae_config.yaml
 trae_config.yml
 *.env
@@ -250,9 +248,6 @@ fabric.properties
 Tests/YOLOTests/Resources/*.mlpackage
 *.xcuserdatad/
 
-# Claude-related files
-CLAUDE.md
-CLAUDE.md.backup
 .build/
 
 Package.resolved

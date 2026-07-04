@@ -80,5 +80,5 @@ CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + Codecov with `
 - Formatting is enforced by `format.yml` pushing commits onto PRs (swift-format, Prettier, codespell, Ruff/docformatter for Python) — pull its commits instead of re-formatting locally.
 - Tests are XCTest in `Tests/YOLOTests`; model-backed tests load `.mlpackage` bundles from test resources (run the download script first) and none hit the live network.
 - Releases: bump `MARKETING_VERSION` (two build configurations in `project.pbxproj`) and `s.version` in `UltralyticsYOLO.podspec` together in the release PR; merging to `main` then auto-tags, releases, and publishes the pod.
-- Archive app builds auto-bump `CFBundleVersion` in `YOLOiOSApp/Info.plist` — never commit a stray build-number bump.
+- Archive app builds auto-bump `CFBundleVersion` in `YOLOiOSApp/YOLOiOSApp/Info.plist` — never commit a stray build-number bump.
 - `README.md` and `README.zh-CN.md` are translations of each other — apply any README change to both.

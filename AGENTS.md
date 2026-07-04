@@ -51,8 +51,8 @@ xcodebuild -scheme UltralyticsYOLO -sdk iphonesimulator -derivedDataPath Build/ 
 # ci.yml then exports lcov with llvm-cov and filters out camera/UI files before Codecov upload
 
 # Format (what format.yml auto-applies to PRs; no .swift-format config file = defaults)
-swift-format --in-place --recursive .        # brew install swift-format
-npx prettier --write "**/*.{md,yml,json}"    # YAML/JSON/Markdown
+swift-format --in-place --recursive .     # brew install swift-format
+npx prettier --write "**/*.{md,yml,json}" # YAML/JSON/Markdown
 
 # Dead-code check (CI `periphery` job, strict; brew install periphery)
 periphery scan --project YOLOiOSApp/YOLOiOSApp.xcodeproj --schemes YOLOiOSApp \

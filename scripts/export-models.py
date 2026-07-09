@@ -51,6 +51,8 @@ TASKS: dict[str, TaskSpec] = {
     "obb": TaskSpec("-obb", "OBB", 1024),
 }
 
+# TODO: Export all depth model sizes and upload them to release assets; only nano is currently bundled in the app.
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the export script."""

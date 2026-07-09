@@ -22,7 +22,7 @@ let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOT
   ("Detect", "Det", "Models/Detect", .detect),
   ("Segment", "Seg", "Models/Segment", .segment),
   ("Semantic", "Sem", "Models/Semantic", .semantic),
-  ("Depth", "Dep", "Models/Depth", .depth),
+  ("Depth", "Depth", "Models/Depth", .depth),
   ("Classify", "Cls", "Models/Classify", .classify),
   ("Pose", "Pose", "Models/Pose", .pose),
   ("OBB", "OBB", "Models/OBB", .obb),

@@ -123,6 +123,7 @@ jobs:
           mv info.filtered.lcov info.lcov
 
       - name: Upload to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v7
         with:
           files: ./info.lcov
@@ -130,7 +131,7 @@ jobs:
           use_oidc: true
           disable_search: true
           plugins: noop
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
   periphery:
     runs-on: macos-26

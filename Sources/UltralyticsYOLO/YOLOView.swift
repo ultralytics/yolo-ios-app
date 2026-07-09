@@ -90,6 +90,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         : task == .semantic ? result.semanticMask?.maskImage : result.depthMap?.image
       if let maskImage {
         maskLayer.isHidden = false
+        maskLayer.opacity = task == .depth ? 0.7 : 0.5
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       } else {
@@ -419,7 +420,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     if maskLayer == nil {
       let layer = CALayer()
       layer.frame = self.overlayLayer.bounds
-      layer.opacity = 0.5
       layer.name = "maskLayer"
       layer.magnificationFilter = .linear
       layer.minificationFilter = .linear

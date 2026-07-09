@@ -1,7 +1,4 @@
-import CoreML
-import XCTest
-
-@testable import UltralyticsYOLO
+// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
 final class DepthEstimatorTests: XCTestCase {
   func testPostProcessDepthCropsLetterboxPadding() throws {

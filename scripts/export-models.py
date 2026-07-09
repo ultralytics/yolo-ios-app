@@ -137,9 +137,7 @@ def main() -> None:
             package = exported.resolve()
             manifest = package / "Manifest.json"
             if not manifest.exists():
-                raise FileNotFoundError(
-                    f"Export did not create a valid mlpackage: {package}"
-                )
+                raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
             if args.copy_to_app:
                 copy_to_app(package, task)
             asset = zip_mlpackage(package)

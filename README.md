@@ -13,7 +13,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, depth estimation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
 
 <div align="center">
   <br>
@@ -40,6 +40,7 @@
 | Object Detection                      | ✅  | Bounding boxes, labels, and confidence scores |
 | Instance Segmentation                 | ✅  | Instance masks with boxes and classes         |
 | Semantic Segmentation                 | ✅  | Dense per-pixel class maps                    |
+| Depth Estimation                      | ✅  | Dense metric depth maps                       |
 | Image Classification                  | ✅  | Top class predictions and scores              |
 | Pose Estimation                       | ✅  | Keypoints with boxes and confidence scores    |
 | Oriented Bounding Box (OBB) Detection | ✅  | Rotated boxes and polygon corners             |

@@ -13,7 +13,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、深度估计、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。
 
 <div align="center">
   <br>
@@ -40,6 +40,7 @@
 | 目标检测              | ✅  | 边界框、类别标签和置信度分数 |
 | 实例分割              | ✅  | 实例掩膜、边界框和类别       |
 | 语义分割              | ✅  | 密集逐像素类别图             |
+| 深度估计              | ✅  | 密集公制深度图               |
 | 图像分类              | ✅  | 最高类别预测和分数           |
 | 姿态估计              | ✅  | 关键点、边界框和置信度分数   |
 | 定向边界框（OBB）检测 | ✅  | 旋转框和多边形角点           |

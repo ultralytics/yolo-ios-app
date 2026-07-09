@@ -49,7 +49,7 @@ extension YOLOViewDelegate {
 
 private let defaultMaxDetectionItems = 100
 
-/// A UIView that runs real-time YOLO inference and renders detection, segmentation, pose, or OBB overlays.
+/// A UIView that runs real-time YOLO inference and renders detection, segmentation, depth, pose, or OBB overlays.
 @MainActor
 public final class YOLOView: UIView, VideoCaptureDelegate {
 
@@ -80,13 +80,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
 
-    if task == .segment || task == .semantic {
+    if task == .segment || task == .semantic || task == .depth {
       guard let maskLayer = self.maskLayer else {
         return
       }
-      if let maskImage = task == .segment
-        ? result.masks?.combinedMask : result.semanticMask?.maskImage
-      {
+      let maskImage =
+        task == .segment
+        ? result.masks?.combinedMask
+        : task == .semantic ? result.semanticMask?.maskImage : result.depthMap?.image
+      if let maskImage {
         maskLayer.isHidden = false
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
@@ -449,7 +451,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     resetLayers()
 
     switch task {
-    case .segment, .semantic:
+    case .segment, .semantic, .depth:
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()

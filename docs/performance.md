@@ -107,6 +107,22 @@ Device (`YOLO26n-seg`, live camera, iPhone 17 Pro):
 The shipped path still scales Float mask logits before thresholding, so mask edges remain high-resolution. The win comes
 from removing repeated UIColor component extraction and bounds-checked Swift array writes from the per-pixel ROI sweep.
 
+## 🌡️ Experiment: Depth Map Painting
+
+**Q:** Can a full-resolution depth map be colorized every camera frame without dominating latency? **A:** Yes. Apply the
+same Accelerate pattern as semantic segmentation: bulk-copy contiguous tensor rows, use vDSP/vForce for min/max and
+log normalization, then paint through Planar8 lookup tables and `vImageConvert_Planar8toARGB8888`.
+
+Device (`YOLO26n-depth`, 640×640 int8 Core ML, live 720p camera, Debug build, 360×640 map after letterbox crop):
+
+| Depth color path                               | Postprocess |
+| ---------------------------------------------- | ----------- |
+| Per-pixel Swift log + color-stop interpolation | ≈70 ms      |
+| Accelerate/vImage vectorized paint             | **≈2.1 ms** |
+
+The vectorized path preserves the public metric-depth array and the same near-to-far color gradient; it only replaces
+the scalar rendering sweep.
+
 ## 🧠 Experiment: Core ML Compute Units (CPU / GPU / ANE)
 
 **Q:** Should inference use `.cpuAndNeuralEngine` or `.all` (adds GPU)? **A:** `.all` is no faster and slightly jitterier in a live camera app, where the GPU is busy compositing the preview/overlays. The model is ~7 ms in-app under **both**.
@@ -171,7 +187,8 @@ Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` 
 
 ## ✅ Shipped Configuration
 
-`.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · optimized high-resolution segment mask painting · default `minimum_deployment_target`.
+`.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · optimized
+high-resolution segment/depth painting · default `minimum_deployment_target`.
 
 On A19, frame time is dominated by model inference (~7 ms, thermally bound under sustained live use) plus preprocessing. The isolated Performance Report's ~1.8 ms model time is not achievable inside a live camera pipeline.
 

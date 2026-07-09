@@ -196,6 +196,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       SemanticSegmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
         numItemsThreshold: numItemsThreshold, completion: completion)
+    case .depth:
+      DepthEstimator.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
@@ -373,6 +377,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       YOLOLog.error("\(errorMessage): \(error)")
       return false
     }
+  }
+
+  func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
+    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
   }
 
   @discardableResult

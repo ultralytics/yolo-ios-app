@@ -79,9 +79,9 @@ Ensure you have the following before you begin:
 
 The Ultralytics YOLO iOS App offers an intuitive user experience:
 
-- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), [image classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb) depending on the selected task and model.
+- **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), depth estimation, [image classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Use the bundled YOLO26n ('nano') model for each supported task immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. You can also deploy and use custom models trained on your own data after exporting them to the Core ML format.
+- **Multiple AI Models:** Use the bundled YOLO26n ('nano') models for the six released tasks immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. Locally exported depth and custom Core ML models are supported too.
 
 ### 📺 External Display Support (Optional)
 
@@ -131,7 +131,17 @@ To execute the complete test suite (with `SKIP_MODEL_TESTS = false`), include th
 - **Pose Estimation:** `yolo26n-pose.mlpackage` (place in `Models/Pose`)
 - **OBB Detection:** `yolo26n-obb.mlpackage` (place in `Models/OBB`)
 
-You can export these models using the Python script provided in the [Installation section](#installation) or download them directly from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases).
+To export a depth model from the sibling Ultralytics checkout and add it to a local app build:
+
+This requires [Ultralytics PR 25065](https://github.com/ultralytics/ultralytics/pull/25065) or a later depth-capable
+Ultralytics revision.
+
+```bash
+uv pip install -e "../ultralytics[export]"
+uv run python scripts/export-models.py --tasks depth --sizes n --copy-to-app
+```
+
+The six test models above can also be downloaded from the [releases page](https://github.com/ultralytics/yolo-ios-app/releases); depth currently requires the local export command.
 
 ### Running Tests in Xcode
 

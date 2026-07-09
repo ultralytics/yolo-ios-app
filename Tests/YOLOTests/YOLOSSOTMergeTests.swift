@@ -106,6 +106,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     XCTAssertEqual(YOLOTask.fromString("seg"), .segment)
     XCTAssertEqual(YOLOTask.fromString("instance-segmentation"), .segment)
     XCTAssertEqual(YOLOTask.fromString("semantic_segmentation"), .semantic)
+    XCTAssertEqual(YOLOTask.fromString("depth_estimation"), .depth)
     XCTAssertEqual(YOLOTask.fromString("cls"), .classify)
     XCTAssertEqual(YOLOTask.fromString("classification"), .classify)
     XCTAssertEqual(YOLOTask.fromString("keypoints"), .pose)

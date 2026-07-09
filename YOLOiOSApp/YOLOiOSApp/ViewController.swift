@@ -6,8 +6,8 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  The ViewController is the primary interface for users to interact with YOLO models. Users can select different
-//  models and tasks (detection, segmentation, semantic segmentation, classification, pose, OBB) and visualize results
-//  in real-time. The controller manages loading of local and remote models, updates UI state during loading and
+//  models and tasks (detection, segmentation, semantic segmentation, depth, classification, pose, OBB) and visualize
+//  results in real-time. The controller manages loading of local and remote models, updates UI state during loading and
 //  inference, and handles capturing and sharing detection results. It also tracks model download progress and adapts
 //  the layout to different device orientations.
 
@@ -17,6 +17,16 @@ import CoreML
 import CoreMedia
 import UIKit
 import UltralyticsYOLO
+
+let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
+  ("Detect", "Det", "Models/Detect", .detect),
+  ("Segment", "Seg", "Models/Segment", .segment),
+  ("Semantic", "Sem", "Models/Semantic", .semantic),
+  ("Depth", "Depth", "Models/Depth", .depth),
+  ("Classify", "Cls", "Models/Classify", .classify),
+  ("Pose", "Pose", "Models/Pose", .pose),
+  ("OBB", "OBB", "Models/OBB", .obb),
+]
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
 class ViewController: UIViewController, YOLOViewDelegate {
@@ -81,15 +91,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  let tasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
-    ("Detect", "Det", "Models/Detect", .detect),
-    ("Segment", "Seg", "Models/Segment", .segment),
-    ("Semantic", "Sem", "Models/Semantic", .semantic),
-    ("Classify", "Cls", "Models/Classify", .classify),
-    ("Pose", "Pose", "Models/Pose", .pose),
-    ("OBB", "OBB", "Models/OBB", .obb),
-  ]
-
   private var modelsForTask: [String: [String]] = [:]
 
   var currentModels: [ModelEntry] = []
@@ -113,7 +114,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Populate the task segmented control and discover bundled models per task.
     segmentedControl.removeAllSegments()
-    tasks.enumerated().forEach { index, task in
+    appTasks.enumerated().forEach { index, task in
       segmentedControl.insertSegment(withTitle: task.shortName, at: index, animated: false)
       modelsForTask[task.name] = getModelFiles(in: task.folder)
     }
@@ -121,9 +122,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     setupModelSegmentedControl()
 
-    let defaultTaskIndex = tasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
+    let defaultTaskIndex = appTasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
     segmentedControl.selectedSegmentIndex = defaultTaskIndex
-    currentTask = tasks[defaultTaskIndex].name
+    currentTask = appTasks[defaultTaskIndex].name
 
     // Always load models initially; external display handling will stop the camera if needed.
     reloadModelEntriesAndLoadFirst(for: currentTask)
@@ -260,7 +261,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let modelTuples = currentModels.map { ($0.identifier, $0.remoteURL, $0.isLocalBundle) }
     standardModels = ModelSelectionManager.categorizeModels(from: modelTuples)
 
-    let yoloTask = tasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
+    let yoloTask = appTasks.first(where: { $0.name == taskName })?.yoloTask ?? .detect
     ModelSelectionManager.setupSegmentedControl(
       modelSegmentedControl, standardModels: standardModels, currentTask: yoloTask)
   }
@@ -268,7 +269,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func restoreCurrentModelSelection() {
     guard !currentTask.isEmpty else { return }
 
-    if let taskIndex = tasks.firstIndex(where: { $0.name == currentTask }) {
+    if let taskIndex = appTasks.firstIndex(where: { $0.name == currentTask }) {
       segmentedControl.selectedSegmentIndex = taskIndex
     }
 
@@ -281,7 +282,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       modelSegmentedControl.selectedSegmentIndex = modelIndex
     }
 
-    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
     ModelSelectionManager.updateSegmentAppearance(
       modelSegmentedControl,
       standardModels: standardModels,
@@ -342,13 +343,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
     currentLoadingEntry = entry
     currentLoadingTask = task
 
-    let yoloTask = tasks.first(where: { $0.name == task })?.yoloTask ?? .detect
+    let yoloTask = appTasks.first(where: { $0.name == task })?.yoloTask ?? .detect
 
     if entry.isLocalBundle {
       DispatchQueue.global().async { [weak self] in
         guard let self = self else { return }
 
-        guard let folderURL = self.tasks.first(where: { $0.name == task })?.folder,
+        guard let folderURL = appTasks.first(where: { $0.name == task })?.folder,
           let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
         else {
           DispatchQueue.main.async { [weak self] in
@@ -500,7 +501,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if success {
         let previousTask = self.currentTask
         self.currentTask = loadedTask
-        if let taskIndex = self.tasks.firstIndex(where: { $0.name == loadedTask }) {
+        if let taskIndex = appTasks.firstIndex(where: { $0.name == loadedTask }) {
           self.segmentedControl.selectedSegmentIndex = taskIndex
         }
         if previousTask != loadedTask {
@@ -510,7 +511,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
             userInfo: ["task": loadedTask]
           )
         }
-        let yoloTask = self.tasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
+        let yoloTask = appTasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
         self.currentModelName = processString(modelName)
 
         ModelSelectionManager.setupSegmentedControl(
@@ -530,12 +531,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
 
       if success && hasExternalDisplay {
-        let yoloTask = self.tasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
+        let yoloTask = appTasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
         var fullModelPath = ""
 
         if let entry = self.currentLoadingEntry {
           if entry.isLocalBundle {
-            if let folderURL = self.tasks.first(where: { $0.name == loadedTask })?.folder,
+            if let folderURL = appTasks.first(where: { $0.name == loadedTask })?.folder,
               let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
             {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
@@ -577,9 +578,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   @IBAction func indexChanged(_ sender: UISegmentedControl) {
     selection.selectionChanged()
-    guard tasks.indices.contains(sender.selectedSegmentIndex) else { return }
+    guard appTasks.indices.contains(sender.selectedSegmentIndex) else { return }
 
-    let newTask = tasks[sender.selectedSegmentIndex].name
+    let newTask = appTasks[sender.selectedSegmentIndex].name
 
     if (modelsForTask[newTask]?.isEmpty ?? true) && (remoteModelsInfo[newTask]?.isEmpty ?? true) {
       let alert = UIAlertController(
@@ -588,7 +589,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       alert.addAction(
         UIAlertAction(title: "OK", style: .cancel) { _ in alert.dismiss(animated: true) })
       present(alert, animated: true)
-      sender.selectedSegmentIndex = tasks.firstIndex { $0.name == currentTask } ?? 0
+      sender.selectedSegmentIndex = appTasks.firstIndex { $0.name == currentTask } ?? 0
       return
     }
 

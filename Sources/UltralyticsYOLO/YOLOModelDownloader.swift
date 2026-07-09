@@ -58,7 +58,7 @@ public final class YOLOModelDownloader: NSObject {
   ///
   /// - Parameters:
   ///   - url: The remote URL to fetch the model archive from.
-  ///   - task: Optional task type (detect/segment/semantic/classify/pose/obb). Included in the cache key,
+  ///   - task: Optional task type (detect/segment/semantic/depth/classify/pose/obb). Included in the cache key,
   ///     so the same underlying URL can cache separate compiled models per task.
   ///   - progress: Optional handler receiving fractional progress (0.0–1.0) on the main thread.
   ///   - completion: Handler invoked once with the compiled `.mlmodelc` URL on success, or an error.

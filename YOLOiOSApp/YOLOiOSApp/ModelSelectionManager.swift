@@ -5,6 +5,8 @@ import UIKit
 import UltralyticsYOLO
 
 struct ModelSelectionManager {
+  private static let taskSuffixes = ["-seg", "-sem", "-depth", "-cls", "-pose", "-obb"]
+
   enum ModelSize: String, CaseIterable {
     case n, s, m, l, x
 
@@ -55,8 +57,6 @@ struct ModelSelectionManager {
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {
-    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
-
     var nameWithoutSuffix = baseName
     for suffix in taskSuffixes {
       if baseName.hasSuffix(suffix) {
@@ -84,8 +84,6 @@ struct ModelSelectionManager {
   }
 
   private static func removeTaskSuffix(from name: String) -> String {
-    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
-
     var result = name
     for suffix in taskSuffixes {
       if name.hasSuffix(suffix) {

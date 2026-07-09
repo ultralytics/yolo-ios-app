@@ -9,9 +9,9 @@ class YOLOTaskTests: XCTestCase {
 
   func testAllTaskTypes() {
     // Test all YOLOTask enum cases exist and are distinct
-    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .classify, .pose, .obb]
+    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .depth, .classify, .pose, .obb]
 
-    XCTAssertEqual(tasks.count, 6)
+    XCTAssertEqual(tasks.count, 7)
 
     // Test each task type
     XCTAssertNotEqual(YOLOTask.detect, YOLOTask.segment)
@@ -30,6 +30,7 @@ class YOLOTaskTests: XCTestCase {
     XCTAssertEqual(YOLOTask.pose, YOLOTask.pose)
     XCTAssertEqual(YOLOTask.obb, YOLOTask.obb)
     XCTAssertEqual(YOLOTask.classify, YOLOTask.classify)
+    XCTAssertEqual(YOLOTask.depth, YOLOTask.depth)
   }
 
   func testTaskSwitchStatement() {
@@ -39,6 +40,7 @@ class YOLOTaskTests: XCTestCase {
       case .detect: return "detection"
       case .segment: return "segmentation"
       case .semantic: return "semantic"
+      case .depth: return "depth"
       case .pose: return "pose"
       case .obb: return "obb"
       case .classify: return "classification"
@@ -48,6 +50,7 @@ class YOLOTaskTests: XCTestCase {
     XCTAssertEqual(taskDescription(.detect), "detection")
     XCTAssertEqual(taskDescription(.segment), "segmentation")
     XCTAssertEqual(taskDescription(.semantic), "semantic")
+    XCTAssertEqual(taskDescription(.depth), "depth")
     XCTAssertEqual(taskDescription(.pose), "pose")
     XCTAssertEqual(taskDescription(.obb), "obb")
     XCTAssertEqual(taskDescription(.classify), "classification")

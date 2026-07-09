@@ -1,5 +1,10 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
+import CoreML
+import XCTest
+
+@testable import UltralyticsYOLO
+
 final class DepthEstimatorTests: XCTestCase {
   func testPostProcessDepthCropsLetterboxPadding() throws {
     let output = try MLMultiArray(shape: [1, 1, 4, 4], dataType: .float32)

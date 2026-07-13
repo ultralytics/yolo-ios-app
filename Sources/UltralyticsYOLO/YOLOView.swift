@@ -1108,7 +1108,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func pauseTapped() {
     selection.selectionChanged()
-    playButton.isEnabled = true
+    playButton.isEnabled = false
     pauseButton.isEnabled = false
     // Stopping the capture session turns the hardware torch off; keep the chip truthful.
     setTorchUI(on: false)
@@ -1117,6 +1117,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         self?.onPredict(result: result)
       }
       self?.pausedShareImage = image
+      self?.playButton.isEnabled = true
     }
   }
 

@@ -100,11 +100,11 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | `quantize` | `8`                                     | `8`                                     |
 | `imgsz`    | 分类 `224`；OBB `1024`；其余 `640`      | 分类 `224`；其余 `640`                  |
 | `nms`      | `False`                                 | `False`                                 |
-| `end2end`  | `True`                                  | `False`                                 |
+| `end2end`  | `True`；depth 为 `False`                 | `False`                                 |
 | 校准       | 导出器默认值                            | 按任务的 `TASK2CALIBRATIONDATA`         |
 | 后处理     | Swift/Core ML                           | Android 原生                            |
 
-Core ML 资源使用 `nms=False` 和 `end2end=True` 导出：`nms=False` 会去掉 Core ML NMS 流水线，`end2end=True` 则提供由 Swift 解码器消费的 YOLO26 解码输出契约。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
+Core ML 资源使用 `nms=False` 导出；检测类任务还使用 `end2end=True`，以提供由 Swift 解码器消费的解码输出契约，而深度任务通过 `end2end=False` 使用其直接密集输出。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
 
 ### Core ML 发布工作流
 

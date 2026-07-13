@@ -33,7 +33,7 @@ After opening a PR:
 ## Commands
 
 ```bash
-# One-time: download the six nano Core ML models (required by model-backed tests;
+# One-time: download the seven nano Core ML models (required by model-backed tests;
 # also copies them into YOLOiOSApp/Models/ for the app bundle)
 bash scripts/download-models.sh
 
@@ -69,7 +69,7 @@ CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + Codecov with `
 
 - Single SPM library target `UltralyticsYOLO` (`Sources/UltralyticsYOLO/`), also published as the `UltralyticsYOLO` CocoaPod; the `ultralytics/yolo-flutter-app` plugin depends on the pod (pinned `< 9.0`), so public API breaks there too. Package floor is iOS 13 (with `@available` fallbacks) while the main app `YOLOiOSApp/` targets iOS 16.
 - Zero third-party dependencies: ZIP extraction of downloaded models is the in-repo `MiniZip.swift` (Foundation + Compression only).
-- Inference flow: `YOLO.swift` facade (`callAsFunction` overloads for URL/String/UIImage/CIImage/CGImage) → `BasePredictor` subclasses (`ObjectDetector`, `Segmenter`, `SemanticSegmenter`, `Classifier`, `PoseEstimator`, `ObbDetector`) → Vision `VNCoreMLRequest`. `YOLOView` (UIKit, wraps `AVCaptureSession` + overlays) and `YOLOCamera` (SwiftUI) provide real-time camera UI.
+- Inference flow: `YOLO.swift` facade (`callAsFunction` overloads for URL/String/UIImage/CIImage/CGImage) → `BasePredictor` subclasses (`ObjectDetector`, `Segmenter`, `SemanticSegmenter`, `DepthEstimator`, `Classifier`, `PoseEstimator`, `ObbDetector`) → Vision `VNCoreMLRequest`. `YOLOView` (UIKit, wraps `AVCaptureSession` + overlays) and `YOLOCamera` (SwiftUI) provide real-time camera UI.
 - YOLO26 vs YOLO11: model metadata key `nms == "false"` marks NMS-free YOLO26 end2end models (detect output `[1, 300, 6]` xyxy pixel coords, decoded in Swift); default `requiresNMS = true` keeps the Core ML NMS path for YOLO11 (`[1, 4+nc, 8400]` xywh). Always index `MLMultiArray` via `strides`.
 - `.mlpackage` models are never committed (gitignored); tests and the app get them from the `v8.3.0` release assets via `scripts/download-models.sh` (an Xcode "Download YOLO Models" build phase runs it locally and is skipped on GitHub Actions, where CI runs the script as its own step).
 - Publishing (`publish.yml`, push to `main`, runs only when the pushing actor is `glenn-jocher`): a new `MARKETING_VERSION` in `YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj` triggers tag `v{version}` + GitHub release + `pod trunk push` + a squashed `testflight` branch force-pushed for Xcode Cloud; an unchanged version still ships a TestFlight build.

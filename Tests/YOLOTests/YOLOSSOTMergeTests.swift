@@ -196,5 +196,12 @@ final class YOLOSSOTMergeTests: XCTestCase {
       .predictOnImage(image: image)
     XCTAssertEqual(semantic.orig_shape, imageSize)
     XCTAssertNotNil(semantic.semanticMask)
+
+    let depth = try loadPredictor("yolo26n-depth", task: .depth, numItemsThreshold: 5)
+      .predictOnImage(image: image)
+    XCTAssertEqual(depth.orig_shape, imageSize)
+    let depthMap = try XCTUnwrap(depth.depthMap)
+    XCTAssertEqual(depthMap.values.count, depthMap.width * depthMap.height)
+    XCTAssertLessThan(depthMap.minDepth, depthMap.maxDepth)
   }
 }

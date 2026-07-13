@@ -2,7 +2,7 @@
 
 # YOLO Test Guide
 
-Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the [Ultralytics YOLO](https://docs.ultralytics.com/) framework integration within the iOS environment. To execute model-backed tests successfully, run the repository model downloader first; it fetches the same six nano Core ML assets that the main app bundles at build time.
+Welcome to the testing guide for the Ultralytics YOLO iOS application. This directory contains comprehensive tests designed to ensure the robustness and correctness of the [Ultralytics YOLO](https://docs.ultralytics.com/) framework integration within the iOS environment. To execute model-backed tests successfully, run the repository model downloader first; it fetches the same seven nano Core ML assets that the main app bundles at build time.
 
 ## 🧪 Preparation Before Testing
 
@@ -16,7 +16,7 @@ From the repository root, run:
 bash scripts/download-models.sh
 ```
 
-The script downloads the six nano `.mlpackage` files into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` so the main app bundle uses the same assets. The `.mlpackage` directories are intentionally gitignored and are not committed to the repository.
+The script downloads the seven nano `.mlpackage` files into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` so the main app bundle uses the same assets. The `.mlpackage` directories are intentionally gitignored and are not committed to the repository.
 
 ### 2. Check the Test Resource Directory
 
@@ -39,6 +39,7 @@ The tests require specific [Core ML](https://developer.apple.com/documentation/c
 - `yolo26n.mlpackage`: Standard [object detection](https://docs.ultralytics.com/tasks/detect) model.
 - `yolo26n-seg.mlpackage`: Model for [instance segmentation](https://docs.ultralytics.com/tasks/segment).
 - `yolo26n-sem.mlpackage`: Model for [semantic segmentation](https://docs.ultralytics.com/tasks/semantic).
+- `yolo26n-depth.mlpackage`: Model for monocular depth estimation.
 - `yolo26n-cls.mlpackage`: Model for [image classification](https://docs.ultralytics.com/tasks/classify).
 - `yolo26n-pose.mlpackage`: Model for [pose estimation](https://docs.ultralytics.com/tasks/pose).
 - `yolo26n-obb.mlpackage`: Model for [oriented bounding box (OBB)](https://docs.ultralytics.com/tasks/obb) detection.

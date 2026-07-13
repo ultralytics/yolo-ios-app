@@ -51,7 +51,7 @@ This repository contains two components for running YOLO models on Apple platfor
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all six official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -76,9 +76,9 @@ var body: some View {
 
 ## 📦 Official Model Assets
 
-Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the six nano Core ML assets at build time and bundles them into the app; larger app models, the Swift package's `YOLO(url:)` loading, and Flutter package assets download official models on first use and cache them locally.
+Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the seven nano Core ML assets at build time and bundles them into the app; larger app models, the Swift package's `YOLO(url:)` loading, and Flutter package assets download official models on first use and cache them locally.
 
-The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segment, semantic, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
+The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, segment, semantic, depth, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
 
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -90,12 +90,12 @@ URL patterns:
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
-The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
+The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, depth, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
 
 | Property       | Core ML                             | LiteRT                           |
 | -------------- | ----------------------------------- | -------------------------------- |
 | Model IDs      | `yolo26{n,s,m,l,x}`                 | `yolo26{n,s,m,l,x}`              |
-| Tasks          | detect, seg, sem, cls, pose, obb    | detect, seg, sem, cls, pose, obb |
+| Tasks          | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
 | Format         | `.mlpackage.zip`                    | `.tflite`                        |
 | `quantize`     | `8`                                 | `8`                              |
 | `imgsz`        | `224` cls; `1024` OBB; `640` others | `224` cls; `640` others          |
@@ -134,7 +134,7 @@ The Android assets used by the Flutter package are maintained in the Flutter rep
 
 ## 🛠️ Quickstart Guide
 
-New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. The six nano task models are bundled at build time, so the app can run offline after installation; larger model sizes download on demand.
+New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. The seven nano task models are bundled at build time, so the app can run offline after installation; larger model sizes download on demand.
 
 - [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp): The easiest way to experience YOLO inference on iOS.
 
@@ -169,7 +169,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the six nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

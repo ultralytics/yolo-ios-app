@@ -18,6 +18,7 @@ MODELS=(
   "yolo26n:Models/Detect"
   "yolo26n-seg:Models/Segment"
   "yolo26n-sem:Models/Semantic"
+  "yolo26n-depth:Models/Depth"
   "yolo26n-cls:Models/Classify"
   "yolo26n-pose:Models/Pose"
   "yolo26n-obb:Models/OBB"

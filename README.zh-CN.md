@@ -100,7 +100,7 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | `quantize` | `8`                                     | `8`                                     |
 | `imgsz`    | 分类 `224`；OBB `1024`；其余 `640`      | 分类 `224`；其余 `640`                  |
 | `nms`      | `False`                                 | `False`                                 |
-| `end2end`  | `True`；depth 为 `False`                 | `False`                                 |
+| `end2end`  | `True`；depth 为 `False`                | `False`                                 |
 | 校准       | 导出器默认值                            | 按任务的 `TASK2CALIBRATIONDATA`         |
 | 后处理     | Swift/Core ML                           | Android 原生                            |
 

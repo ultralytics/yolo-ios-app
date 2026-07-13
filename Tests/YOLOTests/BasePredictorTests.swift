@@ -21,6 +21,25 @@ class BasePredictorTests: XCTestCase {
     XCTAssertFalse(predictor.isUpdating)
   }
 
+  func testStaticTimingDoesNotChangeRealtimeAverages() {
+    let predictor = BasePredictor()
+    predictor.t2 = 0.1
+    predictor.t2Infer = 0.06
+    predictor.t2Post = 0.04
+    predictor.t3 = 10
+    predictor.t4 = 0.05
+    predictor.t0 = CACurrentMediaTime() - 0.01
+    predictor.tInferEnd = predictor.t0 + 0.006
+
+    XCTAssertGreaterThan(predictor.finishTiming(notify: false), 0)
+    XCTAssertEqual(predictor.t2, 0.1)
+    XCTAssertEqual(predictor.t2Infer, 0.06)
+    XCTAssertEqual(predictor.t2Post, 0.04)
+    XCTAssertEqual(predictor.t3, 10)
+    XCTAssertEqual(predictor.t4, 0.05)
+    XCTAssertGreaterThan(predictor.timingBreakdownMs().post, 0)
+  }
+
   func testConfidenceThresholdSetting() {
     // Test confidence threshold configuration
     let predictor = BasePredictor()

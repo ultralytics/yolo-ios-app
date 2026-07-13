@@ -187,7 +187,16 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
       vImageTableLookUp_Planar8(&indices, &red, &redTable, vImage_Flags(kvImageNoFlags))
       vImageTableLookUp_Planar8(&indices, &green, &greenTable, vImage_Flags(kvImageNoFlags))
       vImageTableLookUp_Planar8(&indices, &blue, &blueTable, vImage_Flags(kvImageNoFlags))
-      memset(planeData, 0xFF, values.count)
+      for index in values.indices {
+        if values[index] > 0 {
+          planeData[index] = 0xFF
+        } else {
+          planeData[index] = 0
+          planeData[index + values.count] = 0
+          planeData[index + values.count * 2] = 0
+          planeData[index + values.count * 3] = 0
+        }
+      }
 
       pixels.withUnsafeMutableBytes { rawBuffer in
         var rgba = vImage_Buffer(

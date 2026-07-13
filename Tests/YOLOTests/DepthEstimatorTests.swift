@@ -51,7 +51,9 @@ final class DepthEstimatorTests: XCTestCase {
     XCTAssertEqual(result.values, [0, 2, 5])
     XCTAssertEqual(result.minDepth, 2)
     XCTAssertEqual(result.maxDepth, 5)
-    XCTAssertNotNil(result.image)
+    let image = try XCTUnwrap(result.image)
+    let data = try XCTUnwrap(image.dataProvider?.data as Data?)
+    XCTAssertEqual(Array(data[0..<4]), [0, 0, 0, 0])
   }
 
   func testDepthImageColorsNearAndFarPixels() throws {

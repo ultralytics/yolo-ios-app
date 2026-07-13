@@ -92,17 +92,17 @@ URL 模式：
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
-| 属性       | Core ML                            | LiteRT                           |
-| ---------- | ---------------------------------- | -------------------------------- |
-| 模型 ID    | `yolo26{n,s,m,l,x}`                | `yolo26{n,s,m,l,x}`              |
+| 属性       | Core ML                                 | LiteRT                                  |
+| ---------- | --------------------------------------- | --------------------------------------- |
+| 模型 ID    | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
 | 任务       | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
-| 格式       | `.mlpackage.zip`                   | `.tflite`                        |
-| `quantize` | `8`                                | `8`                              |
-| `imgsz`    | 分类 `224`；OBB `1024`；其余 `640` | 分类 `224`；其余 `640`           |
-| `nms`      | `False`                            | `False`                          |
-| `end2end`  | `True`                             | `False`                          |
-| 校准       | 导出器默认值                       | 按任务的 `TASK2CALIBRATIONDATA`  |
-| 后处理     | Swift/Core ML                      | Android 原生                     |
+| 格式       | `.mlpackage.zip`                        | `.tflite`                               |
+| `quantize` | `8`                                     | `8`                                     |
+| `imgsz`    | 分类 `224`；OBB `1024`；其余 `640`      | 分类 `224`；其余 `640`                  |
+| `nms`      | `False`                                 | `False`                                 |
+| `end2end`  | `True`                                  | `False`                                 |
+| 校准       | 导出器默认值                            | 按任务的 `TASK2CALIBRATIONDATA`         |
+| 后处理     | Swift/Core ML                           | Android 原生                            |
 
 Core ML 资源使用 `nms=False` 和 `end2end=True` 导出：`nms=False` 会去掉 Core ML NMS 流水线，`end2end=True` 则提供由 Swift 解码器消费的 YOLO26 解码输出契约。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
 

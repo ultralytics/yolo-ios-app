@@ -51,6 +51,7 @@ TASKS: dict[str, TaskSpec] = {
     "obb": TaskSpec("-obb", "OBB", 1024),
 }
 
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the export script."""
     parser = argparse.ArgumentParser(description=__doc__)

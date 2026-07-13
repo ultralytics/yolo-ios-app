@@ -92,17 +92,17 @@ URL patterns:
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, depth, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
 
-| Property       | Core ML                             | LiteRT                           |
-| -------------- | ----------------------------------- | -------------------------------- |
-| Model IDs      | `yolo26{n,s,m,l,x}`                 | `yolo26{n,s,m,l,x}`              |
+| Property       | Core ML                                 | LiteRT                                  |
+| -------------- | --------------------------------------- | --------------------------------------- |
+| Model IDs      | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
 | Tasks          | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
-| Format         | `.mlpackage.zip`                    | `.tflite`                        |
-| `quantize`     | `8`                                 | `8`                              |
-| `imgsz`        | `224` cls; `1024` OBB; `640` others | `224` cls; `640` others          |
-| `nms`          | `False`                             | `False`                          |
-| `end2end`      | `True`                              | `False`                          |
-| Calibration    | exporter default                    | `TASK2CALIBRATIONDATA` per task  |
-| Postprocessing | Swift/Core ML                       | Android native                   |
+| Format         | `.mlpackage.zip`                        | `.tflite`                               |
+| `quantize`     | `8`                                     | `8`                                     |
+| `imgsz`        | `224` cls; `1024` OBB; `640` others     | `224` cls; `640` others                 |
+| `nms`          | `False`                                 | `False`                                 |
+| `end2end`      | `True`                                  | `False`                                 |
+| Calibration    | exporter default                        | `TASK2CALIBRATIONDATA` per task         |
+| Postprocessing | Swift/Core ML                           | Android native                          |
 
 Core ML assets use `nms=False` and `end2end=True`: `nms=False` suppresses the Core ML NMS pipeline, and `end2end=True` supplies the YOLO26 decoded output contract consumed by the Swift decoders. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
 

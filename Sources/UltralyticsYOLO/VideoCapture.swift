@@ -246,6 +246,10 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)
     ]
 
+    if #available(iOS 16.0, *) {
+      videoOutput.automaticallyConfiguresOutputBufferDimensions = false
+      videoOutput.deliversPreviewSizedOutputBuffers = false
+    }
     videoOutput.videoSettings = settings
     videoOutput.alwaysDiscardsLateVideoFrames = true
     videoOutput.setSampleBufferDelegate(self, queue: cameraQueue)
@@ -409,6 +413,12 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       else {
         DispatchQueue.main.async { completion(nil) }
         return
+      }
+      if let videoConnection = self.videoOutput.connection(with: .video),
+        let photoConnection = self.photoOutput.connection(with: .video)
+      {
+        photoConnection.videoOrientation = videoConnection.videoOrientation
+        self.configureVideoMirroring(photoConnection, isMirrored: videoConnection.isVideoMirrored)
       }
       let processor = PhotoCaptureProcessor { [weak self] image in
         self?.cameraQueue.async { self?.photoCaptureProcessor = nil }

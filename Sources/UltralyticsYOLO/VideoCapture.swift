@@ -614,7 +614,8 @@ private final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelega
   }
 
   func photoOutput(
-    _ output: AVCapturePhotoOutput, didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
+    _ output: AVCapturePhotoOutput,
+    didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
     error: Error?
   ) {
     completion(error == nil ? image : nil)

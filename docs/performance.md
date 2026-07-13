@@ -40,10 +40,10 @@ so preprocess is reported as 0 and its cost is included in inference.
   `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --profile -d <iphone> --dart-define=RUN_BENCH=true`
 - **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
   `predictOnImage` on a thermally rested device, with no live capture pipeline competing for the ANE. Sustained
-  real-time camera operation measures **~16 ms/frame** for YOLO26n detect on this same device — see
+  real-time camera operation measures **~11.3 ms/frame** for YOLO26n detect on this same device — see
   [⏱️ What the App's "Inference Time" Actually Measures](#%EF%B8%8F-what-the-apps-inference-time-actually-measures)
-  for the steady-state pipeline breakdown (full-sensor letterboxing dominates, and in-app inference settles at ~7 ms
-  vs ~1.8 ms isolated).
+  and [📐 High-Resolution Preview, Model-Sized Inference](#-experiment-high-resolution-preview-model-sized-inference)
+  for the steady-state pipeline breakdown.
 - The matching Snapdragon CPU/GPU/NPU table lives in the
   [Flutter plugin performance guide](https://github.com/ultralytics/yolo-flutter-app/blob/main/doc/performance.md).
 
@@ -104,9 +104,10 @@ Optimized Release build, sustained live camera, same scene and model assets:
 
 The output dimensions come from the loaded model and Vision crop mode, preserve the active camera format's aspect
 ratio, and never exceed the session's native buffer. iOS 13–15 keep the previous full-size output because those OS
-versions only accept the pixel-format key. A dedicated `AVCapturePhotoOutput` preserves high-resolution pause/share
-images; the device test produced a 1206×2622 composited share image while live inference continued on the smaller
-buffer.
+versions only accept the pixel-format key. A dedicated `AVCapturePhotoOutput` requests the active format's largest
+supported still image, runs inference on that exact photo so overlays remain aligned, and then creates the screen-sized
+share composite while live inference continues on the smaller buffer. The device test captured and inferred on the
+same 2376×4224 photo, then produced the expected 1206×2622-pixel composite.
 
 ## 🖼️ Experiment: Preprocessing — Vision vs. Manual vImage
 

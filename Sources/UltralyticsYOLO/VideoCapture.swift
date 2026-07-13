@@ -163,6 +163,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
 
   private var currentBuffer: CVPixelBuffer?
   private var photoCaptureProcessor: PhotoCaptureProcessor?
+  private var pendingPhotoCapture: (UIImage, (UIImage?, YOLOResult?) -> Void)?
   private var nativeBufferDimensions: (long: Int, short: Int)?
   private var modelInputSize: (width: Int, height: Int)?
   private var centerCropsModelInput = false
@@ -258,6 +259,9 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
     if captureSession.canAddOutput(photoOutput) {
       captureSession.addOutput(photoOutput)
+    }
+    if #available(iOS 16.0, *) {
+      configurePhotoDimensions(for: device)
     }
     // Keep preview and inference buffers in the current interface orientation.
     // AVCaptureVideoDataOutput physically rotates buffers for this connection.
@@ -359,6 +363,9 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     videoOutput.videoSettings = [
       kCVPixelBufferPixelFormatTypeKey as String: NSNumber(value: kCVPixelFormatType_32BGRA)
     ]
+    if #available(iOS 16.0, *) {
+      configurePhotoDimensions(for: device)
+    }
 
     let videoConnection = videoOutput.connection(with: .video)
     videoConnection?.videoOrientation = videoOrientation
@@ -403,17 +410,18 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
   }
 
-  func capturePhoto(completion: @escaping (UIImage?) -> Void) {
+  func capturePhoto(completion: @escaping (UIImage?, YOLOResult?) -> Void) {
     cameraQueue.async { [weak self] in
       guard let self, self.captureSession.isRunning else {
-        DispatchQueue.main.async { completion(nil) }
+        DispatchQueue.main.async { completion(nil, nil) }
         return
       }
       guard self.photoCaptureProcessor == nil, self.photoOutput.connection(with: .video) != nil
       else {
-        DispatchQueue.main.async { completion(nil) }
+        DispatchQueue.main.async { completion(nil, nil) }
         return
       }
+      self.inferenceOK = false
       if let videoConnection = self.videoOutput.connection(with: .video),
         let photoConnection = self.photoOutput.connection(with: .video)
       {
@@ -421,14 +429,49 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         self.configureVideoMirroring(photoConnection, isMirrored: videoConnection.isVideoMirrored)
       }
       let processor = PhotoCaptureProcessor { [weak self] image in
-        self?.cameraQueue.async { self?.photoCaptureProcessor = nil }
-        completion(image)
+        self?.cameraQueue.async {
+          guard let self else { return }
+          self.photoCaptureProcessor = nil
+          self.captureSession.stopRunning()
+          guard let image else {
+            self.inferenceOK = true
+            DispatchQueue.main.async { completion(nil, nil) }
+            return
+          }
+          self.pendingPhotoCapture = (image, completion)
+          self.processPendingPhoto()
+        }
       }
       self.photoCaptureProcessor = processor
       let settings = AVCapturePhotoSettings()
       settings.photoQualityPrioritization = .speed
+      if #available(iOS 16.0, *) {
+        settings.maxPhotoDimensions = self.photoOutput.maxPhotoDimensions
+      }
       self.photoOutput.capturePhoto(with: settings, delegate: processor)
     }
+  }
+
+  private func processPendingPhoto() {
+    guard let pendingPhotoCapture, predictor?.isUpdating != true else { return }
+    self.pendingPhotoCapture = nil
+    let image = pendingPhotoCapture.0
+    let ciImage = image.cgImage.map {
+      CIImage(cgImage: $0).oriented(CGImagePropertyOrientation(image.imageOrientation))
+    }
+    let result = ciImage.flatMap { predictor?.predictOnImage(image: $0) }
+    inferenceOK = true
+    DispatchQueue.main.async { pendingPhotoCapture.1(image, result) }
+  }
+
+  @available(iOS 16.0, *)
+  private func configurePhotoDimensions(for device: AVCaptureDevice) {
+    guard
+      let dimensions = device.activeFormat.supportedMaxPhotoDimensions.max(by: {
+        Int64($0.width) * Int64($0.height) < Int64($1.width) * Int64($1.height)
+      })
+    else { return }
+    photoOutput.maxPhotoDimensions = dimensions
   }
 
   private func configureInferenceBufferSize() {
@@ -557,6 +600,7 @@ private final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelega
   @unchecked Sendable
 {
   private let completion: @Sendable (UIImage?) -> Void
+  private var image: UIImage?
 
   init(completion: @escaping @Sendable (UIImage?) -> Void) {
     self.completion = completion
@@ -566,8 +610,14 @@ private final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelega
     _ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto,
     error: Error?
   ) {
-    let image = error == nil ? photo.fileDataRepresentation().flatMap(UIImage.init(data:)) : nil
-    DispatchQueue.main.async { self.completion(image) }
+    image = error == nil ? photo.fileDataRepresentation().flatMap(UIImage.init(data:)) : nil
+  }
+
+  func photoOutput(
+    _ output: AVCapturePhotoOutput, didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
+    error: Error?
+  ) {
+    completion(error == nil ? image : nil)
   }
 }
 
@@ -580,8 +630,10 @@ extension VideoCapture: ResultsListener, InferenceTimeListener {
 
   public func on(result: YOLOResult) {
     DispatchQueue.main.async { [weak self] in
-      defer { self?.predictor?.isUpdating = false }
-      self?.delegate?.onPredict(result: result)
+      guard let self else { return }
+      self.delegate?.onPredict(result: result)
+      self.predictor?.isUpdating = false
+      self.cameraQueue.async { self.processPendingPhoto() }
     }
   }
 }

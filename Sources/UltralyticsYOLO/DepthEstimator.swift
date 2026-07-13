@@ -110,11 +110,23 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
       }
     }
 
+    let positiveValues = vDSP.threshold(
+      values, to: .leastNonzeroMagnitude, with: .zeroFill)
+    var zero: Float = 0
+    var lowCount: vDSP_Length = 0
+    var highCount: vDSP_Length = 0
+    var scratch = [Float](repeating: 0, count: values.count)
+    vDSP_vclipc(
+      positiveValues, 1, &zero, &zero, &scratch, 1, vDSP_Length(values.count), &lowCount,
+      &highCount)
+    let validCount = Int(lowCount + highCount)
+    guard validCount > 0 else { return nil }
+    vDSP_vcmprs(values, 1, positiveValues, 1, &scratch, 1, vDSP_Length(values.count))
     var minDepth: Float = 0
     var maxDepth: Float = 0
-    vDSP_minv(values, 1, &minDepth, vDSP_Length(values.count))
-    vDSP_maxv(values, 1, &maxDepth, vDSP_Length(values.count))
-    guard minDepth > 0, maxDepth.isFinite else { return nil }
+    vDSP_minv(scratch, 1, &minDepth, vDSP_Length(validCount))
+    vDSP_maxv(scratch, 1, &maxDepth, vDSP_Length(validCount))
+    guard minDepth.isFinite, maxDepth.isFinite else { return nil }
     return DepthMap(
       values: values,
       width: outputWidth,
@@ -131,12 +143,10 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
   ) -> CGImage? {
     let low = log(Swift.max(minDepth, 1e-3))
     let range = Swift.max(log(maxDepth) - low, 1e-6)
-    var normalized = values
+    var normalized = vDSP.threshold(values, to: minDepth, with: .clampToThreshold)
     var count = Int32(values.count)
     normalized.withUnsafeMutableBufferPointer { destination in
-      values.withUnsafeBufferPointer { source in
-        vvlogf(destination.baseAddress!, source.baseAddress!, &count)
-      }
+      vvlogf(destination.baseAddress!, destination.baseAddress!, &count)
       var scale = -1 / range
       var offset = log(maxDepth) / range
       vDSP_vsmsa(

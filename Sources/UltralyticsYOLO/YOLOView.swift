@@ -1112,9 +1112,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     pauseButton.isEnabled = false
     // Stopping the capture session turns the hardware torch off; keep the chip truthful.
     setTorchUI(on: false)
-    videoCapture.capturePhoto { [weak self] image in
+    videoCapture.capturePhoto { [weak self] image, result in
+      if let result {
+        self?.onPredict(result: result)
+      }
       self?.pausedShareImage = image
-      self?.videoCapture.stop()
     }
   }
 
@@ -1381,12 +1383,15 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
 
-    videoCapture.capturePhoto { [weak self] image in
-      guard let self, let image else {
+    videoCapture.capturePhoto { [weak self] image, result in
+      guard let self, let image, let result else {
+        self?.videoCapture.start()
         completion(nil)
         return
       }
+      self.onPredict(result: result)
       completion(self.renderShareImage(image))
+      self.videoCapture.start()
     }
   }
 

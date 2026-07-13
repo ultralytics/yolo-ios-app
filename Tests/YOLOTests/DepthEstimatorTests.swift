@@ -40,6 +40,20 @@ final class DepthEstimatorTests: XCTestCase {
     XCTAssertEqual(result.values, [1.5, 2.5])
   }
 
+  func testPostProcessDepthIgnoresInvalidZeroForRange() throws {
+    let output = try MLMultiArray(shape: [1, 1, 1, 3], dataType: .float32)
+    let pointer = output.dataPointer.assumingMemoryBound(to: Float.self)
+    pointer[0] = 0
+    pointer[1] = 2
+    pointer[2] = 5
+
+    let result = try XCTUnwrap(DepthEstimator().postProcessDepth(output))
+    XCTAssertEqual(result.values, [0, 2, 5])
+    XCTAssertEqual(result.minDepth, 2)
+    XCTAssertEqual(result.maxDepth, 5)
+    XCTAssertNotNil(result.image)
+  }
+
   func testDepthImageColorsNearAndFarPixels() throws {
     let output = try MLMultiArray(shape: [1, 1, 1, 2], dataType: .float32)
     let pointer = output.dataPointer.assumingMemoryBound(to: Float.self)

@@ -775,7 +775,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     super.didMoveToWindow()
     guard window != nil else { return }
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
-    videoCapture.frameSizeCaptured = false
   }
 
   /// Lays out the controls and overlays for landscape orientation.
@@ -963,7 +962,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func orientationDidChange() {
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
-    videoCapture.frameSizeCaptured = false
   }
 
   private func currentVideoOrientation() -> AVCaptureVideoOrientation {
@@ -1114,7 +1112,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     pauseButton.isEnabled = false
     // Stopping the capture session turns the hardware torch off; keep the chip truthful.
     setTorchUI(on: false)
-    videoCapture.captureNextFrame { [weak self] image in
+    videoCapture.capturePhoto { [weak self] image in
       self?.pausedShareImage = image
       self?.videoCapture.stop()
     }
@@ -1383,7 +1381,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
 
-    videoCapture.captureNextFrame { [weak self] image in
+    videoCapture.capturePhoto { [weak self] image in
       guard let self, let image else {
         completion(nil)
         return

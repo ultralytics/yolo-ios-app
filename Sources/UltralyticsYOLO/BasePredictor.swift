@@ -480,24 +480,20 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter model: The Core ML model to analyze.
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
-    guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
-      YOLOLog.warning("Model has no input description")
-      return (0, 0)
+    let inputDescriptions = model.modelDescription.inputDescriptionsByName.values
+    if let imageConstraint = inputDescriptions.compactMap(\.imageConstraint).first {
+      let width = Int(imageConstraint.pixelsWide)
+      let height = Int(imageConstraint.pixelsHigh)
+      return (width: width, height: height)
     }
 
-    if let multiArrayConstraint = inputDescription.multiArrayConstraint {
+    for multiArrayConstraint in inputDescriptions.compactMap(\.multiArrayConstraint) {
       let shape = multiArrayConstraint.shape
       if shape.count >= 2 {
         let height = shape[shape.count - 2].intValue
         let width = shape[shape.count - 1].intValue
         return (width: width, height: height)
       }
-    }
-
-    if let imageConstraint = inputDescription.imageConstraint {
-      let width = Int(imageConstraint.pixelsWide)
-      let height = Int(imageConstraint.pixelsHigh)
-      return (width: width, height: height)
     }
 
     YOLOLog.warning("Could not determine model input size")

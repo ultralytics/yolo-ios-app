@@ -9,7 +9,7 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 ## 📱 Test Setup
 
-- **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5).
+- **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5.1).
 - **Host (relative screening only):** Apple M4 Pro, `coremltools`.
 - **Model:** `yolo26n` per task, 640×640 input (1024 for OBB, 224 for classify), int8 Core ML.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
@@ -74,11 +74,39 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 | Camera preset               | Delivered frame | Preprocess | Frame time  | FPS    |
 | --------------------------- | --------------- | ---------- | ----------- | ------ |
 | `.photo` (previous)         | 1206×1608       | Vision     | 15.9 ms     | 15     |
-| **`.hd1280x720` (current)** | 720×1280        | Vision     | **13.3 ms** | **30** |
+| `.hd1280x720`               | 720×1280        | Vision     | 13.3 ms     | 30     |
+| **720p preview + 640 output (current)** | 360×640 inference | Vision | **11.3 ms** | **30** |
 | `.vga640x480`               | 480×640         | Vision     | 13.3 ms     | 24     |
 | `.vga640x480`               | 480×640         | manual     | 8.3 ms      | 25     |
 
-**Shipped: `.hd1280x720`** — cuts pipeline frame time vs `.photo` (15.9 → 13.3 ms) and doubles sustained FPS while keeping a crisp 16:9 preview. `.vga640x480` (4:3, same FOV as `.photo`) lands on 640 with pad-only/no-downscale, the cheapest preprocess. The preset is guarded by `canSetSessionPreset` with a `[requested, .high, .photo]` fallback so startup never regresses on a camera that can't honor it.
+**Shipped: `.hd1280x720` preview with a model-sized data output.** The preview layer still receives the crisp 720p
+session, while `AVCaptureVideoDataOutput` asks AVFoundation for only the pixels Vision will consume. The preset is
+guarded by `canSetSessionPreset` with a `[requested, .high, .photo]` fallback so startup never regresses on a camera
+that can't honor it.
+
+## 📐 Experiment: High-Resolution Preview, Model-Sized Inference
+
+**Q:** Can the app display 720p while sending a smaller frame to Vision? **A:** Yes. On iOS 16+, uncompressed
+`AVCaptureVideoDataOutput.videoSettings` supports independent width and height. `AVCaptureVideoPreviewLayer` remains
+attached directly to the 720p session; only the inference output is resized.
+
+Optimized Release build, sustained live camera, same scene and model assets:
+
+| Task | Model input | Inference buffer | Before | After | Change |
+| ---- | ----------- | ---------------- | ------ | ----- | ------ |
+| Detect | 640 scale-fit | 360×640 | 13.3 ms | **11.3 ms** | **-15%** |
+| Segment | 640 scale-fit | 360×640 | 15.8 ms | **13.2 ms** | **-16%** |
+| Semantic | 1024 scale-fit | 576×1024 | 27.4 ms | **22.4 ms** | **-18%** |
+| Depth | 640 scale-fit | 360×640 | 18.3 ms | **16.5 ms** | **-10%** |
+| Classify | 224 center-crop | 224×398 | 8.1 ms | **7.8 ms** | **-4%** |
+| Pose | 640 scale-fit | 360×640 | 14.4 ms | **11.8 ms** | **-18%** |
+| OBB | 1024 scale-fit | 576×1024 | 26.8 ms | **24.1 ms** | **-10%** |
+
+The output dimensions come from the loaded model and Vision crop mode, preserve the active camera format's aspect
+ratio, and never exceed the session's native buffer. iOS 13–15 keep the previous full-size output because those OS
+versions only accept the pixel-format key. A dedicated `AVCapturePhotoOutput` preserves high-resolution pause/share
+images; the device test produced a 1206×2622 composited share image while live inference continued on the smaller
+buffer.
 
 ## 🖼️ Experiment: Preprocessing — Vision vs. Manual vImage
 
@@ -165,6 +193,23 @@ Device (Xcode Performance Report, A19, `yolo26n`):
 
 **On device the sign flips: end2end is faster** — the A19 ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting `end2end=False` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The end2end export stays the default.
 
+## 📦 Experiment: Core ML Export Variants
+
+Fresh `yolo26n` exports from the sibling Ultralytics checkout were installed into the optimized app and measured with
+the model-sized inference buffer. Reference-image results use `bus.jpg` at the existing 0.25 confidence threshold.
+
+| Export | Device total | Package | Reference result | Decision |
+| ------ | ------------ | ------- | ---------------- | -------- |
+| INT8 end2end, 640 (current) | 11.5–12.0 ms | 2.6 MB | 5 boxes; top confidence 0.925 | **Keep** |
+| FP16 end2end, 640 | 11.4–11.6 ms | 4.8 MB | 5 boxes; top confidence 0.922 | Within thermal/run noise; 2× size |
+| INT8 end2end, 480 | 9.9–10.3 ms | 2.6 MB | 6 boxes; top confidence 0.872 | Faster, but visibly weaker scores/extra detection |
+| INT8 legacy raw, 640 | 12.8–13.0 ms | 2.6 MB | 5 boxes | Rejected: Swift NMS adds ≈2.4 ms |
+| INT8 Core ML/Vision NMS, 640 | 11.2–11.7 ms | 2.6 MB | 5 boxes | No repeatable win over end2end |
+
+The 480 export is the only material inference-side speed lever, but it changes model quality and therefore is not a
+drop-in optimization. FP16 and Vision NMS do not justify replacing the current release assets. The existing INT8
+end2end export remains the best size/speed/quality default.
+
 ## 🆚 Experiment: YOLO26 vs. YOLO11 Backbone
 
 **Q:** Is the YOLO26 backbone slower than YOLO11 on Core ML? **A:** No — they're equal. Host (`coremltools` NE, raw heads): `yolo26n` 2.26 ms ≈ `yolo11n` 2.25 ms (and `yolo26n` is smaller, 2.71 vs 2.89 MB). Any "YOLO26 is slower" impression was the end2end head, not the backbone.
@@ -187,10 +232,12 @@ Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` 
 
 ## ✅ Shipped Configuration
 
-`.hd1280x720` capture · `.cpuAndNeuralEngine` · int8 end2end YOLO26 models · Vision preprocessing · optimized
-high-resolution segment/depth painting · default `minimum_deployment_target`.
+`.hd1280x720` preview · model-sized inference output · high-resolution photo capture · `.cpuAndNeuralEngine` · INT8
+end2end YOLO26 models · Vision preprocessing · optimized high-resolution segment/depth painting · default
+`minimum_deployment_target`.
 
-On A19, frame time is dominated by model inference (~7 ms, thermally bound under sustained live use) plus preprocessing. The isolated Performance Report's ~1.8 ms model time is not achievable inside a live camera pipeline.
+On A19, frame time is dominated by model inference plus Vision's fused scaling. The isolated Performance Report's
+~1.8 ms model time is not achievable inside a sustained live camera pipeline.
 
 ## 🔓 Open Levers (Untested / Not Shipped)
 
@@ -206,7 +253,10 @@ On A19, frame time is dominated by model inference (~7 ms, thermally bound under
   end-to-end. Validation that the raw-pointer decode pattern here is the right baseline and should be preserved in
   any future refactor.
 
-- **Lower model input resolution** — re-export at `imgsz=480` (0.56× the pixels of 640) to cut the ~7 ms model time; the largest remaining lever.
-- **Manual vImage preprocessing** — ~5 ms/frame win; needs BGRA color-order validation and per-task (OBB/pose/seg) decode support before shipping.
+- ~~**Lower model input resolution.**~~ Tested at `imgsz=480`: ≈2 ms faster, but lower reference confidences and an
+  extra detection. Not shipped because it is an accuracy/quality setting, not a free optimization.
+- **Manual vImage preprocessing** — the historical full-resolution experiment saved ~5 ms/frame, but the shipped
+  model-sized capture output now removes much of that resize work while retaining Vision. Any remaining benefit needs
+  a fresh all-task comparison plus BGRA color-order validation before replacing the current path.
 - **Higher camera frame rate** — raise `activeVideoMinFrameDuration` toward 60 fps where the format and lighting allow, now that inference has headroom.
 - **Frame skipping** — process every Nth frame to cut sustained power/thermal in always-on use.

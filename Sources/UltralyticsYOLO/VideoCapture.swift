@@ -405,7 +405,8 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         DispatchQueue.main.async { completion(nil) }
         return
       }
-      guard self.photoCaptureProcessor == nil, self.photoOutput.connection(with: .video) != nil else {
+      guard self.photoCaptureProcessor == nil, self.photoOutput.connection(with: .video) != nil
+      else {
         DispatchQueue.main.async { completion(nil) }
         return
       }

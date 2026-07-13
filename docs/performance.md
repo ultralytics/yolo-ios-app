@@ -71,13 +71,13 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 **Q:** How much of the frame is preprocessing, and does capture resolution drive it? **A:** `.photo` delivers full-sensor ~2 MP frames that are downscaled to 640 every frame — the dominant cost. Lowering the preset has **no accuracy impact** (the model always sees a 640 input).
 
-| Camera preset               | Delivered frame | Preprocess | Frame time  | FPS    |
-| --------------------------- | --------------- | ---------- | ----------- | ------ |
-| `.photo` (previous)         | 1206×1608       | Vision     | 15.9 ms     | 15     |
-| `.hd1280x720`               | 720×1280        | Vision     | 13.3 ms     | 30     |
-| **720p preview + 640 output (current)** | 360×640 inference | Vision | **11.3 ms** | **30** |
-| `.vga640x480`               | 480×640         | Vision     | 13.3 ms     | 24     |
-| `.vga640x480`               | 480×640         | manual     | 8.3 ms      | 25     |
+| Camera preset                           | Delivered frame   | Preprocess | Frame time  | FPS    |
+| --------------------------------------- | ----------------- | ---------- | ----------- | ------ |
+| `.photo` (previous)                     | 1206×1608         | Vision     | 15.9 ms     | 15     |
+| `.hd1280x720`                           | 720×1280          | Vision     | 13.3 ms     | 30     |
+| **720p preview + 640 output (current)** | 360×640 inference | Vision     | **11.3 ms** | **30** |
+| `.vga640x480`                           | 480×640           | Vision     | 13.3 ms     | 24     |
+| `.vga640x480`                           | 480×640           | manual     | 8.3 ms      | 25     |
 
 **Shipped: `.hd1280x720` preview with a model-sized data output.** The preview layer still receives the crisp 720p
 session, while `AVCaptureVideoDataOutput` asks AVFoundation for only the pixels Vision will consume. The preset is
@@ -92,15 +92,15 @@ attached directly to the 720p session; only the inference output is resized.
 
 Optimized Release build, sustained live camera, same scene and model assets:
 
-| Task | Model input | Inference buffer | Before | After | Change |
-| ---- | ----------- | ---------------- | ------ | ----- | ------ |
-| Detect | 640 scale-fit | 360×640 | 13.3 ms | **11.3 ms** | **-15%** |
-| Segment | 640 scale-fit | 360×640 | 15.8 ms | **13.2 ms** | **-16%** |
-| Semantic | 1024 scale-fit | 576×1024 | 27.4 ms | **22.4 ms** | **-18%** |
-| Depth | 640 scale-fit | 360×640 | 18.3 ms | **16.5 ms** | **-10%** |
-| Classify | 224 center-crop | 224×398 | 8.1 ms | **7.8 ms** | **-4%** |
-| Pose | 640 scale-fit | 360×640 | 14.4 ms | **11.8 ms** | **-18%** |
-| OBB | 1024 scale-fit | 576×1024 | 26.8 ms | **24.1 ms** | **-10%** |
+| Task     | Model input     | Inference buffer | Before  | After       | Change   |
+| -------- | --------------- | ---------------- | ------- | ----------- | -------- |
+| Detect   | 640 scale-fit   | 360×640          | 13.3 ms | **11.3 ms** | **-15%** |
+| Segment  | 640 scale-fit   | 360×640          | 15.8 ms | **13.2 ms** | **-16%** |
+| Semantic | 1024 scale-fit  | 576×1024         | 27.4 ms | **22.4 ms** | **-18%** |
+| Depth    | 640 scale-fit   | 360×640          | 18.3 ms | **16.5 ms** | **-10%** |
+| Classify | 224 center-crop | 224×398          | 8.1 ms  | **7.8 ms**  | **-4%**  |
+| Pose     | 640 scale-fit   | 360×640          | 14.4 ms | **11.8 ms** | **-18%** |
+| OBB      | 1024 scale-fit  | 576×1024         | 26.8 ms | **24.1 ms** | **-10%** |
 
 The output dimensions come from the loaded model and Vision crop mode, preserve the active camera format's aspect
 ratio, and never exceed the session's native buffer. iOS 13–15 keep the previous full-size output because those OS
@@ -198,13 +198,13 @@ Device (Xcode Performance Report, A19, `yolo26n`):
 Fresh `yolo26n` exports from the sibling Ultralytics checkout were installed into the optimized app and measured with
 the model-sized inference buffer. Reference-image results use `bus.jpg` at the existing 0.25 confidence threshold.
 
-| Export | Device total | Package | Reference result | Decision |
-| ------ | ------------ | ------- | ---------------- | -------- |
-| INT8 end2end, 640 (current) | 11.5–12.0 ms | 2.6 MB | 5 boxes; top confidence 0.925 | **Keep** |
-| FP16 end2end, 640 | 11.4–11.6 ms | 4.8 MB | 5 boxes; top confidence 0.922 | Within thermal/run noise; 2× size |
-| INT8 end2end, 480 | 9.9–10.3 ms | 2.6 MB | 6 boxes; top confidence 0.872 | Faster, but visibly weaker scores/extra detection |
-| INT8 legacy raw, 640 | 12.8–13.0 ms | 2.6 MB | 5 boxes | Rejected: Swift NMS adds ≈2.4 ms |
-| INT8 Core ML/Vision NMS, 640 | 11.2–11.7 ms | 2.6 MB | 5 boxes | No repeatable win over end2end |
+| Export                       | Device total | Package | Reference result              | Decision                                          |
+| ---------------------------- | ------------ | ------- | ----------------------------- | ------------------------------------------------- |
+| INT8 end2end, 640 (current)  | 11.5–12.0 ms | 2.6 MB  | 5 boxes; top confidence 0.925 | **Keep**                                          |
+| FP16 end2end, 640            | 11.4–11.6 ms | 4.8 MB  | 5 boxes; top confidence 0.922 | Within thermal/run noise; 2× size                 |
+| INT8 end2end, 480            | 9.9–10.3 ms  | 2.6 MB  | 6 boxes; top confidence 0.872 | Faster, but visibly weaker scores/extra detection |
+| INT8 legacy raw, 640         | 12.8–13.0 ms | 2.6 MB  | 5 boxes                       | Rejected: Swift NMS adds ≈2.4 ms                  |
+| INT8 Core ML/Vision NMS, 640 | 11.2–11.7 ms | 2.6 MB  | 5 boxes                       | No repeatable win over end2end                    |
 
 The 480 export is the only material inference-side speed lever, but it changes model quality and therefore is not a
 drop-in optimization. FP16 and Vision NMS do not justify replacing the current release assets. The existing INT8

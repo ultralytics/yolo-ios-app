@@ -17,7 +17,7 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 ## 📊 Standardized Backend Benchmark
 
 End-to-end `predictOnImage` speeds for the official YOLO26n INT8 Core ML models on the test device
-(iPhone 17 Pro, A19, iOS 26.5), as **total time** with the preprocess / inference / postprocess split beneath
+(iPhone 17 Pro, A19, iOS 26.5.2), as **total time** with the preprocess / inference / postprocess split beneath
 each value. Annotation drawing is excluded. On iOS, Vision performs input scaling inside the inference request,
 so preprocess is reported as 0 and its cost is included in inference.
 
@@ -37,8 +37,11 @@ so preprocess is reported as 0 and its cost is included in inference.
 - **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
   measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`) in profile-mode
   builds (optimized native code).
-  <br>Reproduce the six established task rows with the Flutter plugin's `qnn_benchmark_test.dart` harness and Depth with
-  `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/depth_benchmark_test.dart --dart-define=RUN_DEPTH_BENCH=true`. Add `--dart-define=USE_GPU=false` for `.cpuOnly`.
+  <br>Reproduce the six established task rows with
+  `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --dart-define=RUN_BENCH=true`.
+  Reproduce Depth with
+  `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/depth_benchmark_test.dart --dart-define=RUN_DEPTH_BENCH=true`.
+  Add `--dart-define=USE_GPU=false` to the Depth command for `.cpuOnly`.
 - **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
   `predictOnImage` on a thermally rested device, with no live capture pipeline competing for the ANE. Sustained
   real-time camera operation measures **~11.3 ms/frame** for YOLO26n detect on this same device — see

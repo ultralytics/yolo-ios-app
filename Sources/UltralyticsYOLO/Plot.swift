@@ -155,7 +155,12 @@ private func drawDetectionLabel(
   anchor: CGPoint,
   cornerRadius: CGFloat
 ) {
-  let labelRect = DetectionLabelStyle.frame(for: labelText, fontSize: fontSize, anchor: anchor)
+  let labelRect = DetectionLabelStyle.frame(
+    for: labelText,
+    fontSize: fontSize,
+    anchor: anchor,
+    within: ctx.boundingBoxOfClipPath
+  )
   ctx.setFillColor(color.withAlphaComponent(alpha).cgColor)
   let labelPath = UIBezierPath(
     roundedRect: labelRect,

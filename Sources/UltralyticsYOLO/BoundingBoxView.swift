@@ -58,13 +58,21 @@ enum DetectionLabelStyle {
     return CGSize(width: textRect.width + horizontalPadding, height: textRect.height)
   }
 
-  static func frame(for label: String, fontSize: CGFloat, anchor: CGPoint) -> CGRect {
-    let textSize = size(for: label, fontSize: fontSize)
-    let origin = CGPoint(
-      x: anchor.x - verticalOffset,
-      y: anchor.y - textSize.height - verticalOffset
+  static func frame(for label: String, fontSize: CGFloat, anchor: CGPoint, within bounds: CGRect)
+    -> CGRect
+  {
+    var textSize = size(for: label, fontSize: fontSize)
+    textSize.width = min(textSize.width, bounds.width)
+    textSize.height = min(textSize.height, bounds.height)
+    return CGRect(
+      x: min(max(anchor.x - verticalOffset, bounds.minX), bounds.maxX - textSize.width),
+      y: min(
+        max(anchor.y - textSize.height - verticalOffset, bounds.minY),
+        bounds.maxY - textSize.height
+      ),
+      width: textSize.width,
+      height: textSize.height
     )
-    return CGRect(origin: origin, size: textSize)
   }
 }
 
@@ -140,7 +148,8 @@ public final class BoundingBoxView {
     textLayer.frame = DetectionLabelStyle.frame(
       for: label,
       fontSize: textLayer.fontSize,
-      anchor: angle == nil ? frame.origin : path.bounds.origin
+      anchor: angle == nil ? frame.origin : path.bounds.origin,
+      within: textLayer.superlayer?.bounds ?? .zero
     )
     CATransaction.commit()
   }

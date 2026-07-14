@@ -9,7 +9,7 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 ## 📱 Test Setup
 
-- **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5.1).
+- **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5.2).
 - **Host (relative screening only):** Apple M4 Pro, `coremltools`.
 - **Model:** `yolo26n` per task, 640×640 input (1024 for OBB, 224 for classify), int8 Core ML.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
@@ -17,18 +17,19 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 ## 📊 Standardized Backend Benchmark
 
 End-to-end `predictOnImage` speeds for the official YOLO26n INT8 Core ML models on the test device
-(iPhone 17 Pro, A19, iOS 26.5), as **total time** with the preprocess / inference / postprocess split beneath
+(iPhone 17 Pro, A19, iOS 26.5.2), as **total time** with the preprocess / inference / postprocess split beneath
 each value. Annotation drawing is excluded. On iOS, Vision performs input scaling inside the inference request,
 so preprocess is reported as 0 and its cost is included in inference.
 
-| Model        | Task     | size<br><sup>(pixels)</sup> | CPU<br><sup>`.cpuOnly`<br>(ms)</sup> | Neural Engine<br><sup>`.cpuAndNeuralEngine`<br>(ms)</sup> |
-| ------------ | -------- | --------------------------- | ------------------------------------ | --------------------------------------------------------- |
-| YOLO26n      | Detect   | 640                         | 9.1<br><sup>0.0 / 9.1 / 0.0</sup>    | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
-| YOLO26n-seg  | Segment  | 640                         | 12.3<br><sup>0.0 / 12.1 / 0.2</sup>  | **4.8**<br><sup>0.0 / 4.5 / 0.3</sup>                     |
-| YOLO26n-sem  | Semantic | 1024<sup>1</sup>            | 21.8<br><sup>0.0 / 21.0 / 0.8</sup>  | **12.1**<br><sup>0.0 / 11.3 / 0.8</sup>                   |
-| YOLO26n-cls  | Classify | 224                         | 2.2<br><sup>0.0 / 2.2 / 0.0</sup>    | **2.0**<br><sup>0.0 / 2.0 / 0.0</sup>                     |
-| YOLO26n-pose | Pose     | 640                         | 12.0<br><sup>0.0 / 11.9 / 0.0</sup>  | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
-| YOLO26n-obb  | OBB      | 1024                        | 21.7<br><sup>0.0 / 21.7 / 0.0</sup>  | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                     |
+| Model         | Task     | size<br><sup>(pixels)</sup> | CPU<br><sup>`.cpuOnly`<br>(ms)</sup> | Neural Engine<br><sup>`.cpuAndNeuralEngine`<br>(ms)</sup> |
+| ------------- | -------- | --------------------------- | ------------------------------------ | --------------------------------------------------------- |
+| YOLO26n       | Detect   | 640                         | 9.1<br><sup>0.0 / 9.1 / 0.0</sup>    | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
+| YOLO26n-seg   | Segment  | 640                         | 12.3<br><sup>0.0 / 12.1 / 0.2</sup>  | **4.8**<br><sup>0.0 / 4.5 / 0.3</sup>                     |
+| YOLO26n-sem   | Semantic | 1024<sup>1</sup>            | 21.8<br><sup>0.0 / 21.0 / 0.8</sup>  | **12.1**<br><sup>0.0 / 11.3 / 0.8</sup>                   |
+| YOLO26n-depth | Depth    | 640                         | 24.8<br><sup>0.0 / 23.9 / 0.9</sup>  | **5.5**<br><sup>0.0 / 4.7 / 0.9</sup>                     |
+| YOLO26n-cls   | Classify | 224                         | 2.2<br><sup>0.0 / 2.2 / 0.0</sup>    | **2.0**<br><sup>0.0 / 2.0 / 0.0</sup>                     |
+| YOLO26n-pose  | Pose     | 640                         | 12.0<br><sup>0.0 / 11.9 / 0.0</sup>  | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
+| YOLO26n-obb   | OBB      | 1024                        | 21.7<br><sup>0.0 / 21.7 / 0.0</sup>  | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                     |
 
 - <sup>1</sup> Semantic uses the in-graph ArgMax class-map Core ML export at full resolution
   (ultralytics/ultralytics#24790 + #24799): the argmax runs in the graph and emits a `[1, 1024, 1024]` class map,
@@ -36,8 +37,11 @@ so preprocess is reported as 0 and its cost is included in inference.
 - **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
   measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`) in profile-mode
   builds (optimized native code).
-  <br>Reproduce with the Flutter plugin's harness:
-  `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --profile -d <iphone> --dart-define=RUN_BENCH=true`
+  <br>From the `example/` directory of the [Flutter plugin Depth PR](https://github.com/ultralytics/yolo-flutter-app/pull/562), reproduce the six established task rows with
+  `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --dart-define=RUN_BENCH=true`.
+  Reproduce Depth with
+  `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/depth_benchmark_test.dart --dart-define=RUN_DEPTH_BENCH=true`.
+  Add `--dart-define=USE_GPU=false` to the Depth command for `.cpuOnly`.
 - **These are single-image burst latencies**, not sustained camera frame times: one ~0.9 MP photo through
   `predictOnImage` on a thermally rested device, with no live capture pipeline competing for the ANE. Sustained
   real-time camera operation measures **~11.3 ms/frame** for YOLO26n detect on this same device — see
@@ -58,14 +62,14 @@ so preprocess is reported as 0 and its cost is included in inference.
 
 ## ⏱️ What the App's "Inference Time" Actually Measures
 
-The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame — preprocess + model predict + Swift postprocess — not just the model. The decode runs synchronously inside `perform` (the `VNCoreMLRequest` completion handler). On A19, `yolo26n` detect at `.photo` capture:
+The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame — preprocess + model predict + Swift postprocess — not just the model. The decode runs synchronously inside `perform` (the `VNCoreMLRequest` completion handler). On A19, the previous full-resolution `.photo` capture path measured:
 
-| Stage                                      | Time       | Notes                                                                                       |
-| ------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------- |
-| Preprocess (camera buffer → 640 letterbox) | dominant   | Cost scales with capture resolution — see below.                                            |
-| Model inference                            | ≈7 ms      | In-app; vs ≈1.8 ms in the isolated Performance Report (thermal + live-pipeline contention). |
-| Postprocess (Swift decode)                 | ≈0.18 ms   | Raw-pointer reads; negligible.                                                              |
-| **Total**                                  | **≈16 ms** | The "16 ms" is the pipeline, not the model head.                                            |
+| Stage                                      | Time        | Notes                                                                                       |
+| ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------- |
+| Preprocess (camera buffer → 640 letterbox) | dominant    | Cost scales with capture resolution — see below.                                            |
+| Model inference                            | ≈7 ms       | In-app; vs ≈1.8 ms in the isolated Performance Report (thermal + live-pipeline contention). |
+| Postprocess (Swift decode)                 | ≈0.18 ms    | Raw-pointer reads; negligible.                                                              |
+| **Total**                                  | **15.9 ms** | The frame time is the pipeline, not the model head.                                         |
 
 ## 📷 Experiment: Camera Capture Resolution
 
@@ -151,6 +155,20 @@ Device (`YOLO26n-depth`, 640×640 int8 Core ML, live 720p camera, Debug build, 3
 
 The vectorized path preserves the public metric-depth array and the same near-to-far color gradient; it only replaces
 the scalar rendering sweep.
+
+Single-image burst latency across every official Depth size on the same iPhone 17 Pro (15 runs after 3 warmups,
+`bus.jpg`, profile-mode Flutter harness, 480×640 typed metric map):
+
+| Depth model | CPU inference | CPU post | CPU total | Neural Engine inference | NE post | NE total     |
+| ----------- | ------------- | -------- | --------- | ----------------------- | ------- | ------------ |
+| YOLO26n     | 23.90 ms      | 0.85 ms  | 24.75 ms  | 4.67 ms                 | 0.87 ms | **5.54 ms**  |
+| YOLO26s     | 33.67 ms      | 0.90 ms  | 34.57 ms  | 6.15 ms                 | 0.85 ms | **7.01 ms**  |
+| YOLO26m     | 55.27 ms      | 0.93 ms  | 56.21 ms  | 9.64 ms                 | 0.89 ms | **10.54 ms** |
+| YOLO26l     | 67.32 ms      | 0.93 ms  | 68.25 ms  | 10.87 ms                | 0.94 ms | **11.80 ms** |
+| YOLO26x     | 116.77 ms     | 0.94 ms  | 117.71 ms | 19.38 ms                | 0.93 ms | **20.30 ms** |
+
+Vision performs scaling inside the request, so preprocessing is reported as 0 and included in inference. These burst
+numbers are distinct from the sustained 16.5 ms/frame YOLO26n Depth camera result above.
 
 ## 🧠 Experiment: Core ML Compute Units (CPU / GPU / ANE)
 

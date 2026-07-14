@@ -416,12 +416,12 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         DispatchQueue.main.async { completion(nil, nil) }
         return
       }
-      guard self.photoCaptureProcessor == nil, self.photoOutput.connection(with: .video) != nil
+      guard self.photoCaptureProcessor == nil, self.pendingPhotoCapture == nil,
+        self.photoOutput.connection(with: .video) != nil
       else {
         DispatchQueue.main.async { completion(nil, nil) }
         return
       }
-      self.inferenceOK = false
       if let videoConnection = self.videoOutput.connection(with: .video),
         let photoConnection = self.photoOutput.connection(with: .video)
       {
@@ -433,7 +433,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
           guard let self else { return }
           self.photoCaptureProcessor = nil
           guard let image else {
-            self.inferenceOK = true
             DispatchQueue.main.async { completion(nil, nil) }
             return
           }
@@ -459,7 +458,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
       CIImage(cgImage: $0).oriented(CGImagePropertyOrientation(image.imageOrientation))
     }
     let result = ciImage.flatMap { predictor?.predictOnImage(image: $0) }
-    inferenceOK = true
     DispatchQueue.main.async { pendingPhotoCapture.1(image, result) }
   }
 
@@ -590,7 +588,7 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
       nativeBufferDimensions = (max(width, height), min(width, height))
       configureInferenceBufferSize()
     }
-    guard inferenceOK else { return }
+    guard inferenceOK, photoCaptureProcessor == nil, pendingPhotoCapture == nil else { return }
     predictOnFrame(sampleBuffer: sampleBuffer)
   }
 }

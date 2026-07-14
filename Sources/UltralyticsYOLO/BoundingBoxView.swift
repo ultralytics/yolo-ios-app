@@ -58,6 +58,10 @@ enum DetectionLabelStyle {
     return CGSize(width: textRect.width + horizontalPadding, height: textRect.height)
   }
 
+  static func isVisible(_ geometry: CGRect, within bounds: CGRect) -> Bool {
+    geometry.intersects(bounds)
+  }
+
   static func frame(for label: String, fontSize: CGFloat, anchor: CGPoint, within bounds: CGRect)
     -> CGRect
   {
@@ -142,14 +146,19 @@ public final class BoundingBoxView {
 
     textLayer.string = label
     textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
-    textLayer.isHidden = false
     textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
 
+    let bounds = textLayer.superlayer?.bounds ?? .zero
+    textLayer.isHidden = !DetectionLabelStyle.isVisible(path.bounds, within: bounds)
+    guard !textLayer.isHidden else {
+      CATransaction.commit()
+      return
+    }
     textLayer.frame = DetectionLabelStyle.frame(
       for: label,
       fontSize: textLayer.fontSize,
       anchor: angle == nil ? frame.origin : path.bounds.origin,
-      within: textLayer.superlayer?.bounds ?? .zero
+      within: bounds
     )
     CATransaction.commit()
   }

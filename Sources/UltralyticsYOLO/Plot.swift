@@ -153,13 +153,16 @@ private func drawDetectionLabel(
   color: UIColor,
   alpha: CGFloat,
   anchor: CGPoint,
+  geometry: CGRect,
   cornerRadius: CGFloat
 ) {
+  let bounds = ctx.boundingBoxOfClipPath
+  guard DetectionLabelStyle.isVisible(geometry, within: bounds) else { return }
   let labelRect = DetectionLabelStyle.frame(
     for: labelText,
     fontSize: fontSize,
     anchor: anchor,
-    within: ctx.boundingBoxOfClipPath
+    within: bounds
   )
   ctx.setFillColor(color.withAlphaComponent(alpha).cgColor)
   let labelPath = UIBezierPath(
@@ -214,6 +217,7 @@ private func drawBoxLabel(
     color: color,
     alpha: 1,
     anchor: rect.origin,
+    geometry: rect,
     cornerRadius: max(min(rect.width, rect.height) * 0.05, 2.0)
   )
 }
@@ -673,6 +677,10 @@ func drawOBBsOnCIImage(
           color: color,
           alpha: 1,
           anchor: first,
+          geometry: corners.dropFirst().reduce(
+            CGRect(origin: first, size: .zero),
+            { $0.union(CGRect(origin: $1, size: .zero)) }
+          ),
           cornerRadius: DetectionLabelStyle.cornerRadius
         )
       }

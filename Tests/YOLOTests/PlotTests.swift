@@ -367,4 +367,15 @@ class PlotTests: XCTestCase {
     XCTAssertLessThanOrEqual(frame.width, bounds.width)
     XCTAssertEqual(frame.maxX, bounds.maxX)
   }
+
+  func testDetectionLabelVisibilityRequiresIntersectingGeometry() {
+    let bounds = CGRect(x: 0, y: 0, width: 100, height: 200)
+
+    XCTAssertTrue(
+      DetectionLabelStyle.isVisible(
+        CGRect(x: -10, y: 50, width: 20, height: 20), within: bounds))
+    XCTAssertFalse(
+      DetectionLabelStyle.isVisible(
+        CGRect(x: -30, y: 50, width: 20, height: 20), within: bounds))
+  }
 }

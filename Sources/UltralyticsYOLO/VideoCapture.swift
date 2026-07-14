@@ -432,7 +432,6 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
         self?.cameraQueue.async {
           guard let self else { return }
           self.photoCaptureProcessor = nil
-          self.captureSession.stopRunning()
           guard let image else {
             self.inferenceOK = true
             DispatchQueue.main.async { completion(nil, nil) }

@@ -13,7 +13,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, depth estimation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
 
 <div align="center">
   <br>
@@ -40,6 +40,7 @@
 | Object Detection                      | ✅  | Bounding boxes, labels, and confidence scores |
 | Instance Segmentation                 | ✅  | Instance masks with boxes and classes         |
 | Semantic Segmentation                 | ✅  | Dense per-pixel class maps                    |
+| Depth Estimation                      | ✅  | Dense metric depth maps                       |
 | Image Classification                  | ✅  | Top class predictions and scores              |
 | Pose Estimation                       | ✅  | Keypoints with boxes and confidence scores    |
 | Oriented Bounding Box (OBB) Detection | ✅  | Rotated boxes and polygon corners             |
@@ -50,7 +51,7 @@ This repository contains two components for running YOLO models on Apple platfor
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all six official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -75,9 +76,9 @@ var body: some View {
 
 ## 📦 Official Model Assets
 
-Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the six nano Core ML assets at build time and bundles them into the app; larger app models, the Swift package's `YOLO(url:)` loading, and Flutter package assets download official models on first use and cache them locally.
+Official models are GitHub release assets, not large files committed to the repositories. The main iOS app downloads the seven nano Core ML assets at build time and bundles them into the app; larger app models, the Swift package's `YOLO(url:)` loading, and Flutter package assets download official models on first use and cache them locally.
 
-The main YOLOiOSApp **bundles all six nano models** (one per task: detect, segment, semantic, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
+The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, segment, semantic, depth, classify, pose, OBB) into the shipped app, including App Store/archive builds. They are downloaded at build time from the GitHub release assets by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](scripts/download-models.sh) — the `.mlpackage` files are **never committed to the repo** (`*.mlpackage` is gitignored). The step is idempotent and is skipped on GitHub Actions CI, which runs the same script in its own step.
 
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -89,21 +90,21 @@ URL patterns:
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
 
-The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
+The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26 `n/s/m/l/x` assets for detect, segment, semantic, depth, classify, pose, and OBB and points each model ID at the `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the Flutter repo's Android export script and release assets.
 
-| Property       | Core ML                             | LiteRT                           |
-| -------------- | ----------------------------------- | -------------------------------- |
-| Model IDs      | `yolo26{n,s,m,l,x}`                 | `yolo26{n,s,m,l,x}`              |
-| Tasks          | detect, seg, sem, cls, pose, obb    | detect, seg, sem, cls, pose, obb |
-| Format         | `.mlpackage.zip`                    | `.tflite`                        |
-| `quantize`     | `8`                                 | `8`                              |
-| `imgsz`        | `224` cls; `1024` OBB; `640` others | `224` cls; `640` others          |
-| `nms`          | `False`                             | `False`                          |
-| `end2end`      | `True`                              | `False`                          |
-| Calibration    | exporter default                    | `TASK2CALIBRATIONDATA` per task  |
-| Postprocessing | Swift/Core ML                       | Android native                   |
+| Property       | Core ML                                 | LiteRT                                  |
+| -------------- | --------------------------------------- | --------------------------------------- |
+| Model IDs      | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
+| Tasks          | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
+| Format         | `.mlpackage.zip`                        | `.tflite`                               |
+| `quantize`     | `8`                                     | `8`                                     |
+| `imgsz`        | `224` cls; `1024` OBB; `640` others     | `224` cls; `640` others                 |
+| `nms`          | `False`                                 | `False`                                 |
+| `end2end`      | `True`; depth `False`                   | `False`                                 |
+| Calibration    | exporter default                        | `TASK2CALIBRATIONDATA` per task         |
+| Postprocessing | Swift/Core ML                           | Android native                          |
 
-Core ML assets use `nms=False` and `end2end=True`: `nms=False` suppresses the Core ML NMS pipeline, and `end2end=True` supplies the YOLO26 decoded output contract consumed by the Swift decoders. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
+Core ML assets use `nms=False`; detection-style tasks also use `end2end=True` for the decoded output contract consumed by the Swift decoders, while depth uses its direct dense output with `end2end=False`. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
 
 ### Core ML Release Workflow
 
@@ -125,7 +126,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False` and `end2end=True`; Swift-side postprocessing handles the end2end detect, segment, pose, and OBB outputs (classify and semantic outputs need no NMS decode).
+The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False`; detect, segment, pose, and OBB use `end2end=True`, while depth uses its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
 
 ### Android LiteRT Counterparts
 
@@ -133,7 +134,7 @@ The Android assets used by the Flutter package are maintained in the Flutter rep
 
 ## 🛠️ Quickstart Guide
 
-New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. The six nano task models are bundled at build time, so the app can run offline after installation; larger model sizes download on demand.
+New to YOLO on mobile or want to quickly test your custom model? Start with the main YOLOiOSApp. The seven nano task models are bundled at build time, so the app can run offline after installation; larger model sizes download on demand.
 
 - [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp): The easiest way to experience YOLO inference on iOS.
 
@@ -168,7 +169,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the six nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

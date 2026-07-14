@@ -18,16 +18,6 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   private var segmentedControl: UISegmentedControl!
   private var logoImageView: UIImageView!
 
-  // Task list shared with the iPhone controller for index lookup on task-change notifications.
-  private let tasks: [(name: String, value: YOLOTask)] = [
-    ("Detect", .detect),
-    ("Segment", .segment),
-    ("Semantic", .semantic),
-    ("Classify", .classify),
-    ("Pose", .pose),
-    ("OBB", .obb),
-  ]
-
   override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -90,7 +80,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 
   private func createSegmentedControl() -> UISegmentedControl {
     let control = UISegmentedControl()
-    for (index, taskInfo) in tasks.enumerated() {
+    for (index, taskInfo) in appTasks.enumerated() {
       control.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
     }
     control.selectedSegmentIndex = 0  // default to Detect
@@ -247,16 +237,12 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       let modelName = userInfo["modelName"] as? String
     else { return }
 
-    let taskMap: [String: YOLOTask] = [
-      "detect": .detect, "segment": .segment,
-      "semantic": .semantic, "classify": .classify, "pose": .pose, "obb": .obb,
-    ]
-    let task = taskMap[taskString] ?? .detect
+    let task = YOLOTask.fromString(taskString)
 
     currentTask = task
     currentModelName = modelName
 
-    if let taskIndex = tasks.firstIndex(where: { $0.value == task }) {
+    if let taskIndex = appTasks.firstIndex(where: { $0.yoloTask == task }) {
       DispatchQueue.main.async { [weak self] in
         self?.segmentedControl.selectedSegmentIndex = taskIndex
       }
@@ -317,7 +303,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       return
     }
 
-    if let taskIndex = tasks.firstIndex(where: { $0.name == taskName }) {
+    if let taskIndex = appTasks.firstIndex(where: { $0.name == taskName }) {
       DispatchQueue.main.async { [weak self] in
         self?.segmentedControl.selectedSegmentIndex = taskIndex
       }

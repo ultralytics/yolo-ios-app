@@ -6,7 +6,7 @@
 //
 //  Defines the Predictor protocol and listener interfaces shared by every YOLO model implementation. Predictors
 //  process static images and camera frames; listeners receive results and timing metrics. The protocol-based design
-//  keeps a consistent API across detection, segmentation, semantic segmentation, classification, pose, and OBB
+//  keeps a consistent API across detection, segmentation, semantic segmentation, depth, classification, pose, and OBB
 //  tasks. Error types for model loading and inference are also defined here.
 
 import CoreImage

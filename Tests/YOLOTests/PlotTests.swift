@@ -345,4 +345,37 @@ class PlotTests: XCTestCase {
     XCTAssertNotNil(outputImage)
     XCTAssertGreaterThan(outputImage?.size.width ?? 0, 0)
   }
+
+  func testDetectionLabelFrameStaysInsideTopLeft() {
+    let bounds = CGRect(x: 0, y: 0, width: 200, height: 400)
+    let frame = DetectionLabelStyle.frame(
+      for: "person 90.0", fontSize: 14, anchor: CGPoint(x: -20, y: -20), within: bounds)
+
+    XCTAssertEqual(frame.minX, bounds.minX)
+    XCTAssertEqual(frame.minY, bounds.minY)
+  }
+
+  func testDetectionLabelFrameStaysInsideRightEdge() {
+    let bounds = CGRect(x: 0, y: 0, width: 100, height: 200)
+    let frame = DetectionLabelStyle.frame(
+      for: String(repeating: "long label ", count: 20),
+      fontSize: 14,
+      anchor: CGPoint(x: 90, y: 100),
+      within: bounds
+    )
+
+    XCTAssertLessThanOrEqual(frame.width, bounds.width)
+    XCTAssertEqual(frame.maxX, bounds.maxX)
+  }
+
+  func testDetectionLabelVisibilityRequiresIntersectingGeometry() {
+    let bounds = CGRect(x: 0, y: 0, width: 100, height: 200)
+
+    XCTAssertTrue(
+      DetectionLabelStyle.isVisible(
+        CGRect(x: -10, y: 50, width: 20, height: 20), within: bounds))
+    XCTAssertFalse(
+      DetectionLabelStyle.isVisible(
+        CGRect(x: -30, y: 50, width: 20, height: 20), within: bounds))
+  }
 }

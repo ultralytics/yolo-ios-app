@@ -5,18 +5,10 @@ import UIKit
 import UltralyticsYOLO
 
 struct ModelSelectionManager {
+  private static let taskSuffixes = ["-seg", "-sem", "-depth", "-cls", "-pose", "-obb"]
+
   enum ModelSize: String, CaseIterable {
     case n, s, m, l, x
-
-    var displayName: String {
-      switch self {
-      case .n: return "nano"
-      case .s: return "small"
-      case .m: return "medium"
-      case .l: return "large"
-      case .x: return "xlarge"
-      }
-    }
   }
 
   struct ModelInfo {
@@ -55,8 +47,6 @@ struct ModelSelectionManager {
   }
 
   private static func extractSizeFromModelName(_ baseName: String) -> Character? {
-    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
-
     var nameWithoutSuffix = baseName
     for suffix in taskSuffixes {
       if baseName.hasSuffix(suffix) {
@@ -84,8 +74,6 @@ struct ModelSelectionManager {
   }
 
   private static func removeTaskSuffix(from name: String) -> String {
-    let taskSuffixes = ["-seg", "-sem", "-cls", "-pose", "-obb"]
-
     var result = name
     for suffix in taskSuffixes {
       if name.hasSuffix(suffix) {
@@ -130,7 +118,7 @@ struct ModelSelectionManager {
         control.insertSegment(withTitle: titleWithIcon, at: index, animated: false)
         control.setEnabled(true, forSegmentAt: index)
       } else {
-        control.insertSegment(withTitle: size.displayName, at: index, animated: false)
+        control.insertSegment(withTitle: "YOLO26\(size.rawValue)", at: index, animated: false)
         control.setEnabled(false, forSegmentAt: index)
       }
     }

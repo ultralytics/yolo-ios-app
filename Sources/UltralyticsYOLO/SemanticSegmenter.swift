@@ -55,10 +55,6 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     return result
   }
 
-  private func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
-    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
-  }
-
   func postProcessSemantic(_ logits: MLMultiArray) -> SemanticMask? {
     let shape = logits.shape.map { $0.intValue }
     let strides = logits.strides.map { $0.intValue }

@@ -45,6 +45,7 @@ TASKS: dict[str, TaskSpec] = {
     "detect": TaskSpec("", "Detect", 640),
     "segment": TaskSpec("-seg", "Segment", 640),
     "semantic": TaskSpec("-sem", "Semantic", 640),
+    "depth": TaskSpec("-depth", "Depth", 640),
     "classify": TaskSpec("-cls", "Classify", 224),
     "pose": TaskSpec("-pose", "Pose", 640),
     "obb": TaskSpec("-obb", "OBB", 1024),
@@ -97,7 +98,16 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
     """Upload exported Core ML assets to a GitHub release."""
     if not assets:
         return
-    command = ["gh", "release", "upload", tag, "--repo", repo, "--clobber", *(str(path) for path in assets)]
+    command = [
+        "gh",
+        "release",
+        "upload",
+        tag,
+        "--repo",
+        repo,
+        "--clobber",
+        *(str(path) for path in assets),
+    ]
     subprocess.run(command, check=True)
 
 
@@ -120,7 +130,7 @@ def main() -> None:
                     format="coreml",
                     quantize=8,
                     nms=False,
-                    end2end=True,
+                    end2end=task_name != "depth",
                     imgsz=task.imgsz,
                 )
             )

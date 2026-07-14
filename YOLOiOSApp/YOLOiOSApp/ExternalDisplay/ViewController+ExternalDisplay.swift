@@ -96,13 +96,13 @@ extension ViewController {
   }
 
   func notifyExternalDisplayOfCurrentModel() {
-    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     var fullModelPath = currentModelName
     if let entry = currentLoadingEntry
       ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
       entry.isLocalBundle,
-      let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
     {
       let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
@@ -141,7 +141,7 @@ extension ViewController {
     guard ExternalDisplayManager.isDedicatedModeEnabled else { return }
     guard !currentTask.isEmpty && !currentModels.isEmpty else { return }
 
-    let yoloTask = tasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
+    let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     let currentEntry =
       currentModels.first(where: { processString($0.displayName) == currentModelName })
@@ -150,7 +150,7 @@ extension ViewController {
 
     var fullModelPath = ""
     if entry.isLocalBundle,
-      let folderURL = tasks.first(where: { $0.name == currentTask })?.folder,
+      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
     {
       fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path

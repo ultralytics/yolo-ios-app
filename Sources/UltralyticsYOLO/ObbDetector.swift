@@ -61,10 +61,6 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     return result
   }
 
-  private func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
-    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
-  }
-
   private func buildResults(from prediction: MLMultiArray) -> [OBBResult] {
     let nmsResults = postProcessOBB(
       feature: prediction,

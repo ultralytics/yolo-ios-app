@@ -5,8 +5,8 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  YOLOResult and its supporting structs hold the output of a YOLO inference: bounding boxes for detection,
-//  instance and semantic masks for segmentation, top-k probabilities for classification, keypoints for pose, and
-//  oriented bounding boxes for OBB. The shared shape keeps result handling consistent across tasks.
+//  instance and semantic masks for segmentation, depth maps, top-k probabilities for classification, keypoints for
+//  pose, and oriented bounding boxes for OBB. The shared shape keeps result handling consistent across tasks.
 
 import CoreGraphics
 import Foundation
@@ -14,12 +14,12 @@ import UIKit
 
 /// The complete output of a single YOLO inference, with optional task-specific fields populated as needed.
 ///
-/// Holds bounding boxes, instance and semantic masks, classification probabilities, keypoints, oriented bounding
-/// boxes, an annotated preview image, and timing metrics.
+/// Holds bounding boxes, instance and semantic masks, depth maps, classification probabilities, keypoints, oriented
+/// bounding boxes, an annotated preview image, and timing metrics.
 ///
 /// - Note: Not every field is populated for every task — detection populates `boxes`, instance segmentation also
-///   populates `masks`, semantic segmentation populates `semanticMask`, classification populates `probs`, pose
-///   populates `keypointsList`, and OBB populates `obb`.
+///   populates `masks`, semantic segmentation populates `semanticMask`, depth estimation populates `depthMap`,
+///   classification populates `probs`, pose populates `keypointsList`, and OBB populates `obb`.
 /// - Important: Marked `@unchecked Sendable` so results can cross actor boundaries; fields are written once during
 ///   construction and treated as read-only thereafter.
 public struct YOLOResult: @unchecked Sendable {
@@ -34,6 +34,9 @@ public struct YOLOResult: @unchecked Sendable {
 
   /// Optional dense class map for semantic segmentation results.
   public var semanticMask: SemanticMask?
+
+  /// Optional dense metric depth map for depth estimation results.
+  public var depthMap: DepthMap?
 
   /// Optional probability distribution for classification results.
   public var probs: Probs?
@@ -121,6 +124,27 @@ public struct SemanticMask: @unchecked Sendable {
 
   /// Pre-rendered color overlay image for visualization.
   public let maskImage: CGImage?
+}
+
+/// Dense monocular depth output in meters.
+public struct DepthMap: @unchecked Sendable {
+  /// Depth values in row-major order.
+  public let values: [Float]
+
+  /// Width of the depth map.
+  public let width: Int
+
+  /// Height of the depth map.
+  public let height: Int
+
+  /// Nearest valid predicted distance in meters.
+  public let minDepth: Float
+
+  /// Farthest valid predicted distance in meters.
+  public let maxDepth: Float
+
+  /// Pre-rendered color visualization for display.
+  public let image: CGImage?
 }
 
 /// Classification probability results from a YOLO classification model.

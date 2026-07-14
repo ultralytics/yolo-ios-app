@@ -49,7 +49,7 @@ extension YOLOViewDelegate {
 
 private let defaultMaxDetectionItems = 100
 
-/// A UIView that runs real-time YOLO inference and renders detection, segmentation, pose, or OBB overlays.
+/// A UIView that runs real-time YOLO inference and renders detection, segmentation, depth, pose, or OBB overlays.
 @MainActor
 public final class YOLOView: UIView, VideoCaptureDelegate {
 
@@ -80,14 +80,17 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     task == .obb ? showOBBs(predictions: result) : showBoxes(predictions: result)
 
-    if task == .segment || task == .semantic {
+    if task == .segment || task == .semantic || task == .depth {
       guard let maskLayer = self.maskLayer else {
         return
       }
-      if let maskImage = task == .segment
-        ? result.masks?.combinedMask : result.semanticMask?.maskImage
-      {
+      let maskImage =
+        task == .segment
+        ? result.masks?.combinedMask
+        : task == .semantic ? result.semanticMask?.maskImage : result.depthMap?.image
+      if let maskImage {
         maskLayer.isHidden = false
+        maskLayer.opacity = task == .depth ? 0.7 : 0.5
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       } else {
@@ -167,6 +170,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   private let maximumZoom: CGFloat = 10.0
   private var lastZoomFactor: CGFloat = 1.0
   private var pausedShareImage: UIImage?
+  private var pausedImageView: UIImageView?
+  private var pausedOverlays = [CALayer]()
 
   /// Pending camera position to apply after async camera setup completes.
   public var pendingCameraPosition: AVCaptureDevice.Position?
@@ -328,6 +333,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   public func resume() {
     pausedShareImage = nil
+    removePausedImage()
     videoCapture.start()
   }
 
@@ -417,7 +423,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     if maskLayer == nil {
       let layer = CALayer()
       layer.frame = self.overlayLayer.bounds
-      layer.opacity = 0.5
       layer.name = "maskLayer"
       layer.magnificationFilter = .linear
       layer.minificationFilter = .linear
@@ -449,7 +454,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     resetLayers()
 
     switch task {
-    case .segment, .semantic:
+    case .segment, .semantic, .depth:
       setupMaskLayerIfNeeded()
     case .pose:
       setupPoseLayerIfNeeded()
@@ -766,6 +771,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     self.videoCapture.previewLayer?.frame = self.bounds
+    pausedImageView?.frame = bounds
     cameraTransitionView?.frame = self.bounds
   }
 
@@ -773,7 +779,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     super.didMoveToWindow()
     guard window != nil else { return }
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
-    videoCapture.frameSizeCaptured = false
   }
 
   /// Lays out the controls and overlays for landscape orientation.
@@ -961,7 +966,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func orientationDidChange() {
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
-    videoCapture.frameSizeCaptured = false
   }
 
   private func currentVideoOrientation() -> AVCaptureVideoOrientation {
@@ -1101,6 +1105,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   @objc func playTapped() {
     selection.selectionChanged()
     pausedShareImage = nil
+    removePausedImage()
     self.videoCapture.start()
     playButton.isEnabled = false
     pauseButton.isEnabled = true
@@ -1108,19 +1113,25 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func pauseTapped() {
     selection.selectionChanged()
-    playButton.isEnabled = true
+    playButton.isEnabled = false
     pauseButton.isEnabled = false
     // Stopping the capture session turns the hardware torch off; keep the chip truthful.
     setTorchUI(on: false)
-    videoCapture.captureNextFrame { [weak self] image in
-      self?.pausedShareImage = image
+    videoCapture.capturePhoto { [weak self] image, result in
       self?.videoCapture.stop()
+      if let result {
+        self?.onPredict(result: result)
+      }
+      self?.pausedShareImage = image
+      self?.showPausedImage(image)
+      self?.playButton.isEnabled = true
     }
   }
 
   @objc func switchCameraTapped() {
     selection.selectionChanged()
     pausedShareImage = nil
+    removePausedImage()
 
     let currentPosition = videoCapture.captureDevice?.position ?? .back
     let nextCameraPosition: AVCaptureDevice.Position = currentPosition == .back ? .front : .back
@@ -1381,16 +1392,26 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
 
-    videoCapture.captureNextFrame { [weak self] image in
+    videoCapture.capturePhoto { [weak self] image, result in
       guard let self, let image else {
         completion(nil)
         return
+      }
+      if let result {
+        self.onPredict(result: result)
       }
       completion(self.renderShareImage(image))
     }
   }
 
   private func renderShareImage(_ image: UIImage) -> UIImage? {
+    if pausedImageView != nil {
+      UIGraphicsBeginImageContextWithOptions(bounds.size, true, 0.0)
+      drawHierarchy(in: bounds, afterScreenUpdates: true)
+      let snapshot = UIGraphicsGetImageFromCurrentImageContext()
+      UIGraphicsEndImageContext()
+      return snapshot
+    }
     guard let previewLayer = videoCapture.previewLayer else { return image }
 
     let imageView = UIImageView(image: image)
@@ -1417,6 +1438,33 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     imageLayer.removeFromSuperlayer()
     overlays.forEach { previewLayer.addSublayer($0) }
     return snapshot
+  }
+
+  private func showPausedImage(_ image: UIImage?) {
+    removePausedImage()
+    guard let image, let previewLayer = videoCapture.previewLayer else { return }
+    let imageView = UIImageView(image: image)
+    imageView.contentMode = .scaleAspectFill
+    imageView.clipsToBounds = true
+    imageView.frame = bounds
+    layer.insertSublayer(imageView.layer, above: previewLayer)
+    pausedImageView = imageView
+
+    pausedOverlays = previewLayer.sublayers ?? []
+    var aboveLayer = imageView.layer
+    for overlay in pausedOverlays {
+      layer.insertSublayer(overlay, above: aboveLayer)
+      aboveLayer = overlay
+    }
+  }
+
+  private func removePausedImage() {
+    pausedImageView?.layer.removeFromSuperlayer()
+    if let previewLayer = videoCapture.previewLayer {
+      pausedOverlays.forEach { previewLayer.addSublayer($0) }
+    }
+    pausedImageView = nil
+    pausedOverlays.removeAll()
   }
 
   public func setInferenceFlag(ok: Bool) {

@@ -222,7 +222,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "# Auto-download the six nano YOLO26 models into Models/ so the app ships with them (see scripts/download-models.sh).\n# Skipped on GitHub Actions CI (which runs the same script in its own step); local and App Store/archive builds bundle the models.\nif [ \"$GITHUB_ACTIONS\" = \"true\" ]; then echo \"note: GitHub Actions CI detected, skipping YOLO model download\"; exit 0; fi\nbash \"${SRCROOT}/../scripts/download-models.sh\"\n";
+			shellScript = "# Auto-download the seven nano YOLO26 models into Models/ so the app ships with them (see scripts/download-models.sh).\n# Skipped on GitHub Actions CI (which runs the same script in its own step); local and App Store/archive builds bundle the models.\nif [ \"$GITHUB_ACTIONS\" = \"true\" ]; then echo \"note: GitHub Actions CI detected, skipping YOLO model download\"; exit 0; fi\nbash \"${SRCROOT}/../scripts/download-models.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

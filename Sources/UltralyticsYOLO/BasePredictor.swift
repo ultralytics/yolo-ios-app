@@ -196,6 +196,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       SemanticSegmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
         numItemsThreshold: numItemsThreshold, completion: completion)
+    case .depth:
+      DepthEstimator.create(
+        unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
+        numItemsThreshold: numItemsThreshold, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
@@ -375,6 +379,10 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     }
   }
 
+  func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
+    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
+  }
+
   @discardableResult
   func finishTiming(notify: Bool = true) -> Double {
     updateTime(notify: notify)
@@ -390,7 +398,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// request, so `pre` is folded into `inference` and reported as zero. Call after `finishTiming`/`updateTime`.
   func timingBreakdownMs() -> (pre: Double, inference: Double, post: Double) {
     guard tInferEnd > t0 else { return (0, t1 * 1000, 0) }
-    return (0, (tInferEnd - t0) * 1000, (t3 - tInferEnd) * 1000)
+    return (0, (tInferEnd - t0) * 1000, (t0 + t1 - tInferEnd) * 1000)
   }
 
   /// Applies the current timing breakdown to a result. Pass `smoothed: true` on the camera path so the
@@ -472,24 +480,20 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameter model: The Core ML model to analyze.
   /// - Returns: A tuple containing the width and height in pixels required by the model.
   func getModelInputSize(for model: MLModel) -> (width: Int, height: Int) {
-    guard let inputDescription = model.modelDescription.inputDescriptionsByName.first?.value else {
-      YOLOLog.warning("Model has no input description")
-      return (0, 0)
+    let inputDescriptions = model.modelDescription.inputDescriptionsByName.values
+    if let imageConstraint = inputDescriptions.compactMap(\.imageConstraint).first {
+      let width = Int(imageConstraint.pixelsWide)
+      let height = Int(imageConstraint.pixelsHigh)
+      return (width: width, height: height)
     }
 
-    if let multiArrayConstraint = inputDescription.multiArrayConstraint {
+    for multiArrayConstraint in inputDescriptions.compactMap(\.multiArrayConstraint) {
       let shape = multiArrayConstraint.shape
       if shape.count >= 2 {
         let height = shape[shape.count - 2].intValue
         let width = shape[shape.count - 1].intValue
         return (width: width, height: height)
       }
-    }
-
-    if let imageConstraint = inputDescription.imageConstraint {
-      let width = Int(imageConstraint.pixelsWide)
-      let height = Int(imageConstraint.pixelsHigh)
-      return (width: width, height: height)
     }
 
     YOLOLog.warning("Could not determine model input size")
@@ -621,6 +625,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     let alpha = Self.emaAlpha
     let now = CACurrentMediaTime()
     self.t1 = now - self.t0
+    guard notify else { return }
     if self.t1 < Self.maxValidDt {  // valid dt
       self.t2 = self.t1 * alpha + self.t2 * (1 - alpha)  // smoothed inference time
       if self.tInferEnd > self.t0 {  // smoothed per-stage split, same EMA as t2
@@ -631,8 +636,6 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     self.t4 = (now - self.t3) * alpha + self.t4 * (1 - alpha)  // smoothed FPS dt
     self.t3 = now
 
-    if notify {
-      self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
-    }
+    self.currentOnInferenceTimeListener?.on(inferenceTime: self.t2 * 1000, fpsRate: 1 / self.t4)
   }
 }

@@ -5,7 +5,7 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  YOLOTask enumerates the computer-vision tasks YOLO models can perform: object detection, instance segmentation,
-//  semantic segmentation, pose estimation, oriented bounding box detection, and image classification. The task
+//  semantic segmentation, depth estimation, pose estimation, oriented bounding box detection, and image classification. The task
 //  selects which predictor implementation the SDK instantiates for a given model.
 
 /// The computer-vision tasks supported by YOLO models.
@@ -31,6 +31,9 @@ public enum YOLOTask: Equatable {
   /// Image classification: top-k class predictions for the full image, with no localization.
   case classify
 
+  /// Monocular depth estimation: one metric depth value per image pixel.
+  case depth
+
   /// Parses task names from user/platform strings, defaulting to `.detect` for unknown values.
   ///
   /// Accepts the canonical case names plus common bridge/model aliases such as `"detection"`, `"segmentation"`,
@@ -50,6 +53,8 @@ public enum YOLOTask: Equatable {
       return .semantic
     case "classify", "classification", "class", "cls":
       return .classify
+    case "depth", "depth-estimation", "monocular-depth":
+      return .depth
     case "pose", "pose-estimation", "keypoint", "keypoints":
       return .pose
     case "obb", "oriented-bounding-box", "oriented-box", "rotated-box":

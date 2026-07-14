@@ -80,7 +80,7 @@ class YOLOMainTests: XCTestCase {
   }
 
   func testYOLOAllTaskTypes() {
-    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .classify, .pose, .obb]
+    let tasks: [YOLOTask] = [.detect, .segment, .semantic, .depth, .classify, .pose, .obb]
 
     for task in tasks {
       let expectation = XCTestExpectation(description: "Task \(task)")

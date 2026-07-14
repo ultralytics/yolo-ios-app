@@ -1392,12 +1392,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     videoCapture.capturePhoto { [weak self] image, result in
-      guard let self, let image, let result else {
+      guard let self, let image else {
         self?.videoCapture.start()
         completion(nil)
         return
       }
-      self.onPredict(result: result)
+      if let result {
+        self.onPredict(result: result)
+      }
       completion(self.renderShareImage(image))
       self.videoCapture.start()
     }

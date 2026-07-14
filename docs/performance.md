@@ -37,7 +37,7 @@ so preprocess is reported as 0 and its cost is included in inference.
 - **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
   measured through the SDK's per-stage timing (`YOLOResult.preMs`/`inferenceMs`/`postMs`) in profile-mode
   builds (optimized native code).
-  <br>Reproduce the six established task rows with
+  <br>From the `example/` directory of the [Flutter plugin Depth PR](https://github.com/ultralytics/yolo-flutter-app/pull/562), reproduce the six established task rows with
   `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/qnn_benchmark_test.dart --dart-define=RUN_BENCH=true`.
   Reproduce Depth with
   `flutter drive --profile -d <iphone> --driver=test_driver/integration_test.dart --target=integration_test/depth_benchmark_test.dart --dart-define=RUN_DEPTH_BENCH=true`.

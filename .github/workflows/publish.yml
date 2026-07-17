@@ -45,9 +45,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: false
+      - uses: ultralytics/actions/setup-uv@main
       - run: uv pip install --system --no-cache ultralytics-actions
       - id: check_version
         shell: python
@@ -94,9 +92,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: false
+      - uses: ultralytics/actions/setup-uv@main
       - run: uv pip install --system --no-cache ultralytics-actions
       - name: Create tag and release
         env:

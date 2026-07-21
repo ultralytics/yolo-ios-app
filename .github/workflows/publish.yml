@@ -25,6 +25,10 @@ on:
         type: boolean
         default: true
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   check:
     if: github.repository == 'ultralytics/yolo-ios-app' && github.actor == 'glenn-jocher'

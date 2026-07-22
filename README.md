@@ -98,7 +98,7 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 | Tasks          | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
 | Format         | `.mlpackage.zip`                        | `.tflite`                               |
 | `quantize`     | `8`                                     | `8`                                     |
-| `imgsz`        | `224` cls; `1024` OBB; `640` others     | `224` cls; `640` others                 |
+| `imgsz`        | `224` cls; `1024` sem/OBB; `640` others | `224` cls; `640` others                 |
 | `nms`          | `False`                                 | `False`                                 |
 | `end2end`      | `True`; depth `False`                   | `False`                                 |
 | Calibration    | exporter default                        | `TASK2CALIBRATIONDATA` per task         |
@@ -108,7 +108,11 @@ Core ML assets use `nms=False`; detection-style tasks also use `end2end=True` fo
 
 ### Core ML Release Workflow
 
-The authoritative export script is [`scripts/export-models.py`](scripts/export-models.py). It defines the task/size matrix, export image sizes, int8 Core ML settings, `.mlpackage.zip` packaging, optional local app-copy step, and optional GitHub release upload.
+The published `v8.3.0` binary dimensions are recorded above. The export script
+[`scripts/export-models.py`](scripts/export-models.py) defines future exports, int8 Core ML settings,
+`.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload. If its export matrix
+changes, publish the generated assets under a new tag and update this table and the app registry together; never
+replace an asset under an existing tag.
 
 ```bash
 uv venv --python 3.13 .venv

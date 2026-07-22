@@ -92,23 +92,25 @@ URL 模式：
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
-| 属性       | Core ML                                 | LiteRT                                  |
-| ---------- | --------------------------------------- | --------------------------------------- |
-| 模型 ID    | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
-| 任务       | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
-| 格式       | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize` | `8`                                     | `8`                                     |
-| `imgsz`    | 分类 `224`；OBB `1024`；其余 `640`      | 分类 `224`；其余 `640`                  |
-| `nms`      | `False`                                 | `False`                                 |
-| `end2end`  | `True`；depth 为 `False`                | `False`                                 |
-| 校准       | 导出器默认值                            | 按任务的 `TASK2CALIBRATIONDATA`         |
-| 后处理     | Swift/Core ML                           | Android 原生                            |
+| 属性       | Core ML                                     | LiteRT                                  |
+| ---------- | ------------------------------------------- | --------------------------------------- |
+| 模型 ID    | `yolo26{n,s,m,l,x}`                         | `yolo26{n,s,m,l,x}`                     |
+| 任务       | detect、seg、sem、depth、cls、pose、obb     | detect、seg、sem、depth、cls、pose、obb |
+| 格式       | `.mlpackage.zip`                            | `.tflite`                               |
+| `quantize` | `8`                                         | `8`                                     |
+| `imgsz`    | 分类 `224`；语义分割/OBB `1024`；其余 `640` | 分类 `224`；其余 `640`                  |
+| `nms`      | `False`                                     | `False`                                 |
+| `end2end`  | `True`；depth 为 `False`                    | `False`                                 |
+| 校准       | 导出器默认值                                | 按任务的 `TASK2CALIBRATIONDATA`         |
+| 后处理     | Swift/Core ML                               | Android 原生                            |
 
 Core ML 资源使用 `nms=False` 导出；检测类任务还使用 `end2end=True`，以提供由 Swift 解码器消费的解码输出契约，而深度任务通过 `end2end=False` 使用其直接密集输出。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
 
 ### Core ML 发布工作流
 
-权威导出脚本是 [`scripts/export-models.py`](scripts/export-models.py)。它定义了任务/尺寸矩阵、导出图像尺寸、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+上表记录了已发布 `v8.3.0` 二进制文件的实际尺寸。[`scripts/export-models.py`](scripts/export-models.py)
+定义未来导出、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+如果其导出矩阵发生变化，应使用新标签发布生成的资源，并同时更新此表和应用模型注册表；切勿替换现有标签下的资源。
 
 ```bash
 uv venv --python 3.13 .venv

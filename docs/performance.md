@@ -11,7 +11,8 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 - **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5.2).
 - **Host (relative screening only):** Apple M4 Pro, `coremltools`.
-- **Model:** `yolo26n` per task, 640×640 input (1024 for OBB, 224 for classify), int8 Core ML.
+- **Model:** `yolo26n` per task, int8 Core ML: 224×224 for classify, 1024×1024 for semantic and OBB, and
+  640×640 for detect, segment, depth, and pose.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
 
 ## 📊 Standardized Backend Benchmark
@@ -66,14 +67,16 @@ The on-screen figure is the **entire** `VNImageRequestHandler.perform` per frame
 
 | Stage                                      | Time        | Notes                                                                                       |
 | ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------- |
-| Preprocess (camera buffer → 640 letterbox) | dominant    | Cost scales with capture resolution — see below.                                            |
+| Preprocess (camera buffer → 640 letterbox) | dominant    | Detect test; cost scales with capture resolution — see below.                               |
 | Model inference                            | ≈7 ms       | In-app; vs ≈1.8 ms in the isolated Performance Report (thermal + live-pipeline contention). |
 | Postprocess (Swift decode)                 | ≈0.18 ms    | Raw-pointer reads; negligible.                                                              |
 | **Total**                                  | **15.9 ms** | The frame time is the pipeline, not the model head.                                         |
 
 ## 📷 Experiment: Camera Capture Resolution
 
-**Q:** How much of the frame is preprocessing, and does capture resolution drive it? **A:** `.photo` delivers full-sensor ~2 MP frames that are downscaled to 640 every frame — the dominant cost. Lowering the preset has **no accuracy impact** (the model always sees a 640 input).
+**Q:** How much of the frame is preprocessing, and does capture resolution drive it? **A:** In this detect test,
+`.photo` delivers full-sensor ~2 MP frames that are downscaled to the model's 640 input every frame — the dominant
+cost. Lowering the capture preset has no model-input-resolution impact because the detect model still receives 640.
 
 | Camera preset                           | Delivered frame   | Preprocess | Frame time  | FPS    |
 | --------------------------------------- | ----------------- | ---------- | ----------- | ------ |
@@ -247,7 +250,7 @@ end2end export remains the best size/speed/quality default.
 
 ## 📐 Aspect-Ratio Robustness (16:9 ↔ 4:3)
 
-Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` is 16:9), so letterbox bars fall on different axes. The pipeline is aspect-agnostic: `letterboxTransform` derives `gain = min(640/W, 640/H)` with independent centered `padX`/`padY` from the **live** frame size; `inputRect` inverts it; and on-screen overlays use aspect-**fill** mapping consistent with the preview's `.resizeAspectFill` gravity. Verified by `Tests/YOLOTests/LetterboxTests.swift` (round-trips both aspects in both orientations).
+Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` is 16:9), so letterbox bars fall on different axes. For the tested 640 detect model, `letterboxTransform` derives `gain = min(640/W, 640/H)` with independent centered `padX`/`padY` from the **live** frame size; `inputRect` inverts it; and on-screen overlays use aspect-**fill** mapping consistent with the preview's `.resizeAspectFill` gravity. The same transform uses each loaded model's dimensions. Verified by `Tests/YOLOTests/LetterboxTests.swift` (round-trips both aspects in both orientations).
 
 ## ✅ Shipped Configuration
 

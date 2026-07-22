@@ -100,11 +100,13 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 | `quantize`     | `8`                                     | `8`                                     |
 | `imgsz`        | `224` cls; `1024` sem/OBB; `640` others | `224` cls; `640` others                 |
 | `nms`          | `False`                                 | `False`                                 |
-| `end2end`      | `True`; depth `False`                   | `False`                                 |
+| `end2end`      | `False` cls/sem/depth; `True` others    | `False`                                 |
 | Calibration    | exporter default                        | `TASK2CALIBRATIONDATA` per task         |
 | Postprocessing | Swift/Core ML                           | Android native                          |
 
-Core ML assets use `nms=False`; detection-style tasks also use `end2end=True` for the decoded output contract consumed by the Swift decoders, while depth uses its direct dense output with `end2end=False`. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the YOLO26 end-to-end head for the Android LiteRT conversion path.
+Core ML assets use `nms=False`. Detect, segment, pose, and OBB use `end2end=True`; classification, semantic, and depth
+use `end2end=False`. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the
+YOLO26 end-to-end head for the Android LiteRT conversion path.
 
 ### Core ML Release Workflow
 

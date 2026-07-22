@@ -55,6 +55,30 @@ final class ObjectDetectorTests: XCTestCase {
     XCTAssertEqual(boxes.first?.xywh, CGRect(x: 0, y: 0, width: 2, height: 2))
   }
 
+  func testProcessRawResultsReadsPaddedFloat32End2EndOutput() throws {
+    // Regression test: a valid .float32 tensor whose storage is NOT densely packed (e.g. row-padded for
+    // alignment) must not be flat-copied — that would read across padding gaps and misalign every subsequent
+    // detection. Simulate 2 floats of padding after each 6-field detection row (real stride 8, not 6).
+    guard #available(iOS 18.0, *) else {
+      throw XCTSkip("MLMultiArray(shape:dataType:strides:) requires iOS 18+")
+    }
+    // Two detections, so a naive flat copy that ignores the padding after row 0 would misalign row 1 (and
+    // everything after it), corrupting or dropping the second detection.
+    let maxDet = 10
+    let output = try MLMultiArray(shape: [1, maxDet, 6], dataType: .float32, strides: [maxDet * 8, 8, 1])
+    fillEnd2EndOutput(
+      output,
+      detections: [
+        [0, 0, 2, 2, 0.9, 1],
+        [1, 1, 3, 3, 0.85, 2],
+      ])
+
+    let boxes = makeDetector().processRawResults(output)
+    XCTAssertEqual(boxes.count, 2)
+    XCTAssertTrue(boxes.contains { $0.index == 1 && $0.conf == 0.9 && $0.xywh == CGRect(x: 0, y: 0, width: 2, height: 2) })
+    XCTAssertTrue(boxes.contains { $0.index == 2 && $0.conf == 0.85 && $0.xywh == CGRect(x: 1, y: 1, width: 2, height: 2) })
+  }
+
   func testProcessRawResultsReadsFloat16TraditionalOutput() throws {
     // Traditional [1, 4+nc, num_anchors] layout requires num_anchors > 4+nc for the format heuristic to route
     // here (real models have far more anchors than features). Also exercised with a non-float32 backing type.

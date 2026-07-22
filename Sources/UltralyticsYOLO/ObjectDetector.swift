@@ -116,14 +116,13 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// - Returns: An array of detected boxes.
   func processRawResults(_ prediction: MLMultiArray) -> [Box] {
     let shape = prediction.shape.map { $0.intValue }
-    let strides = prediction.strides.map { $0.intValue }
     let confThreshold = Float(confidenceThreshold)
 
     // Detect format: end2end [1, max_det, 6] vs traditional [1, 4+nc, num_anchors]
-    guard shape.count == 3, strides.count == 3 else { return [] }
+    guard shape.count == 3 else { return [] }
     let isEnd2End = shape[2] < shape[1]
 
-    let values = Self.floatValues(from: prediction)
+    let (values, strides) = Self.denseFloatValues(from: prediction, shape: shape)
     return values.withUnsafeBufferPointer { buffer in
       guard let pointer = buffer.baseAddress else { return [] }
       if isEnd2End {
@@ -138,23 +137,37 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     }
   }
 
-  /// Copies a raw model output tensor into a contiguous `Float` buffer.
+  /// Copies a raw model output tensor into a densely packed, row-major `Float` buffer, along with the canonical
+  /// row-major strides matching that layout (not the source array's own `strides`, which may include padding).
   ///
-  /// Uses a fast direct memory copy when the tensor is already `.float32`, matching its natural storage, and falls
-  /// back to `MLMultiArray`'s safe per-element accessor for any other backing type (e.g. `.float16`, which some
-  /// ANE-optimized NMS-free exports use for their raw detection output). Reinterpreting a non-`.float32` buffer as
-  /// `Float` via `assumingMemoryBound` would silently read the wrong byte offsets and run past the tensor's actual
-  /// allocation as detections accumulate.
-  private static func floatValues(from multiArray: MLMultiArray) -> [Float] {
+  /// Takes a fast direct memory copy only when the tensor is already `.float32` *and* already densely packed (its
+  /// existing strides already equal the canonical row-major strides for its shape) — the only case where a flat
+  /// copy is equivalent to element-by-element access. Falls back to `MLMultiArray`'s safe per-element accessor
+  /// otherwise, which covers non-`.float32` backing types (e.g. `.float16`, used by some ANE-optimized NMS-free
+  /// exports) and any non-contiguous/padded storage. Reinterpreting a smaller-than-`Float32` buffer via
+  /// `assumingMemoryBound`, or flat-copying a padded buffer, would silently read the wrong byte offsets and run
+  /// past the tensor's actual allocation as detections accumulate.
+  private static func denseFloatValues(from multiArray: MLMultiArray, shape: [Int]) -> (
+    values: [Float], strides: [Int]
+  ) {
+    let denseStrides = Self.rowMajorStrides(for: shape)
     let count = multiArray.count
     var values = [Float](repeating: 0, count: count)
-    if multiArray.dataType == .float32 {
+    if multiArray.dataType == .float32, multiArray.strides.map({ $0.intValue }) == denseStrides {
       let source = multiArray.dataPointer.assumingMemoryBound(to: Float.self)
       values.withUnsafeMutableBufferPointer { $0.baseAddress!.update(from: source, count: count) }
     } else {
       for i in 0..<count { values[i] = multiArray[i].floatValue }
     }
-    return values
+    return (values, denseStrides)
+  }
+
+  private static func rowMajorStrides(for shape: [Int]) -> [Int] {
+    var strides = [Int](repeating: 1, count: shape.count)
+    for i in stride(from: shape.count - 2, through: 0, by: -1) {
+      strides[i] = strides[i + 1] * shape[i + 1]
+    }
+    return strides
   }
 
   /// Processes YOLO26 end2end output: [1, max_det, 6] = [x1, y1, x2, y2, conf, class_id] (xyxy pixel coords).

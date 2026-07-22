@@ -59,7 +59,7 @@ from ultralytics.utils.downloads import zip_directory
 
 
 def export_and_zip_yolo_models(
-    model_types=("", "-seg", "-sem", "-cls", "-pose", "-obb"),
+    model_types=("", "-seg", "-sem", "-depth", "-cls", "-pose", "-obb"),
     model_sizes=("n", "s", "m", "l", "x"),
 ):
     """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
@@ -69,7 +69,7 @@ def export_and_zip_yolo_models(
         # [384, 640] for landscape-only. Use orientation-only shapes only when locked to that orientation.
         imgsz = 224 if "cls" in model_type else 1024 if "sem" in model_type or "obb" in model_type else 640
         nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
-        end2end = model_type not in ("-sem", "-cls")
+        end2end = model_type not in ("-sem", "-depth", "-cls")
         for size in model_sizes:
             model_name = f"yolo26{size}{model_type}"
             model = YOLO(f"{model_name}.pt")

@@ -128,8 +128,9 @@ Useful variants:
 # Export only nano task models for local validation and copy them into YOLOiOSApp/Models/.
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# Export all official Core ML assets and upload them to the canonical release.
-uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+# After creating a new release tag, export and upload all official Core ML assets.
+# Never reuse v8.3.0 or another tag already consumed by released apps.
+uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag vX.Y.Z
 ```
 
 The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False`; detect, segment, pose, and OBB use `end2end=True`, while depth uses its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).

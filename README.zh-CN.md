@@ -126,8 +126,9 @@ uv run python scripts/export-models.py
 # 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# 导出全部官方 Core ML 资源并上传到规范发布版本。
-uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+# 创建新的发布标签后，导出并上传全部官方 Core ML 资源。
+# 切勿重复使用 v8.3.0 或已被发布应用使用的任何其他标签。
+uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag vX.Y.Z
 ```
 
 该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。在本 SDK 中 YOLO26 是无 NMS 的，因此官方 Core ML 资源使用 `nms=False` 导出；检测、分割、姿态和 OBB 使用 `end2end=True`，而深度任务使用原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。

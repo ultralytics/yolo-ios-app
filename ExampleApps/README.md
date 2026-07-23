@@ -64,13 +64,7 @@ Follow these steps to get the examples up and running:
       ):
           """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
           for model_type in model_types:
-              imgsz = (
-                  [224, 224]
-                  if "cls" in model_type
-                  else [1024, 1024]
-                  if "sem" in model_type or "obb" in model_type
-                  else [640, 640]
-              )  # official input image sizes
+              imgsz = [224, 224] if "cls" in model_type else [640, 640]  # official mobile input sizes
               nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
               end2end = model_type not in ("-sem", "-depth", "-cls")
               for size in model_sizes:

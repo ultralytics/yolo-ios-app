@@ -6,7 +6,7 @@
 
 set -e # Exit immediately if a command fails
 
-BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
+BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/models-v1.0.0"
 
 # Get absolute paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

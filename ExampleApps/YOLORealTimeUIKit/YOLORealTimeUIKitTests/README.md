@@ -29,7 +29,7 @@ model = YOLO("yolo26n.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
 # See https://docs.ultralytics.com/integrations/coreml for more details
-model.export(format="coreml", nms=False, end2end=True)
+model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 ### Adding Model Files to the Project

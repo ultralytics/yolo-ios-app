@@ -61,6 +61,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tag", default=DEFAULT_TAG)
     parser.add_argument("--sizes", nargs="+", choices=SIZES, default=list(SIZES))
     parser.add_argument("--tasks", nargs="+", choices=TASKS.keys(), default=list(TASKS))
+    parser.add_argument("--force", action="store_true", help="Re-export assets that already exist.")
     parser.add_argument(
         "--copy-to-app",
         action="store_true",
@@ -142,6 +143,13 @@ def main() -> None:
         task = TASKS[task_name]
         for size in args.sizes:
             model_id = f"yolo26{size}{task.suffix}"
+            package = output_dir / f"{model_id}.mlpackage"
+            asset = package.with_suffix(".mlpackage.zip")
+            if package.joinpath("Manifest.json").exists() and asset.exists() and not args.force:
+                verify_mlpackage(package, task.imgsz)
+                print(f"\nSkipping {model_id}; verified input={task.imgsz}x{task.imgsz}")
+                assets.append(asset)
+                continue
             print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
             model = YOLO(str(output_dir / f"{model_id}.pt"))
             exported = Path(

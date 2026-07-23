@@ -96,6 +96,14 @@ def verify_mlpackage(package: Path, imgsz: int) -> None:
         raise ValueError(f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}")
 
 
+def display_path(path: Path) -> str:
+    """Return a repository-relative path when possible."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def copy_to_app(package: Path, task: TaskSpec) -> None:
     """Copy an exported Core ML package into the app model bundle."""
     destination = APP_MODELS_DIR / task.model_dir / package.name
@@ -154,7 +162,7 @@ def main() -> None:
                 copy_to_app(package, task)
             asset = zip_mlpackage(package)
             assets.append(asset)
-            print(f"asset {asset.relative_to(ROOT)} input={task.imgsz}x{task.imgsz}")
+            print(f"asset {display_path(asset)} input={task.imgsz}x{task.imgsz}")
 
     if args.upload:
         upload_assets(args.repo, args.tag, assets)

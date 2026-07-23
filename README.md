@@ -114,10 +114,9 @@ YOLO26 end-to-end head for the Android LiteRT conversion path.
 ### Core ML Release Workflow
 
 The published `v8.3.0` binary dimensions are recorded above. The export script
-[`scripts/export-models.py`](scripts/export-models.py) defines future exports, int8 Core ML settings,
+[`scripts/export-models.py`](scripts/export-models.py) defines the official exports, int8 Core ML settings,
 `.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload. If its export matrix
-changes, publish the generated assets under a new tag and update this table and the app registry together; never
-replace an asset under an existing tag.
+changes, replace the generated assets in `v8.3.0` and update this table together.
 
 ```bash
 uv venv --python 3.13 .venv
@@ -132,7 +131,7 @@ Useful variants:
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
 # Export and replace all official Core ML assets in the existing release.
-uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag models-vX.Y.Z
+uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
 The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False`; detect, segment, pose, and OBB use `end2end=True`, while depth uses its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).

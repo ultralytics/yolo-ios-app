@@ -27,6 +27,7 @@ struct ModelEntry {
 
 class ModelCacheManager {
   static let shared = ModelCacheManager()
+  private static let assetRevision = "mobile-standard-v1"
   private var modelCache: [String: MLModel] = [:]
   private var accessOrder: [String] = []
   private let cacheLimit = 3
@@ -40,8 +41,9 @@ class ModelCacheManager {
     accessOrder.append(key)
   }
 
-  private func modelURL(for key: String) -> URL {
-    documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
+  func modelURL(for key: String) -> URL {
+    documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
+      .appendingPathExtension("mlmodelc")
   }
 
   private func loadLocalModel(key: String, completion: @escaping (MLModel?, String) -> Void) {
@@ -212,8 +214,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       do {
         let compiledModelURL = try MLModel.compileModel(at: url)
         let model = try MLModel(contentsOf: compiledModelURL)
-        let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
-          "mlmodelc")
+        let localModelURL = ModelCacheManager.shared.modelURL(for: key)
         ModelCacheManager.shared.addModelToCache(model, for: key)
         try FileManager.default.moveItem(at: compiledModelURL, to: localModelURL)
         DispatchQueue.main.async { completion(model) }

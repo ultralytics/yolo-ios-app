@@ -111,8 +111,8 @@ LiteRT 转换路径禁用 YOLO26 端到端头。
 ### Core ML 发布工作流
 
 上表记录了已发布 `v8.3.0` 二进制文件的实际尺寸。[`scripts/export-models.py`](scripts/export-models.py)
-定义未来导出、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
-如果其导出矩阵发生变化，应使用新标签发布生成的资源，并同时更新此表和应用模型注册表；切勿替换现有标签下的资源。
+定义官方导出、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+如果其导出矩阵发生变化，应替换 `v8.3.0` 中生成的资源并同时更新此表。
 
 ```bash
 uv venv --python 3.13 .venv
@@ -126,9 +126,8 @@ uv run python scripts/export-models.py
 # 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# 创建新的发布标签后，导出并上传全部官方 Core ML 资源。
 # 导出并替换现有 release 中的全部官方 Core ML 资产。
-uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag models-vX.Y.Z
+uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
 该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。在本 SDK 中 YOLO26 是无 NMS 的，因此官方 Core ML 资源使用 `nms=False` 导出；检测、分割、姿态和 OBB 使用 `end2end=True`，而深度任务使用原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。

@@ -277,8 +277,8 @@ uv run python scripts/export-models.py
 ```
 
 Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. After creating a
-new release, use `--upload --repo ultralytics/yolo-ios-app --tag vX.Y.Z` to publish the generated archives; never reuse
-`models-v1.0.0` or another tag already consumed by released apps.
+new release, use `--upload --repo ultralytics/yolo-ios-app --tag models-vX.Y.Z` to publish the generated archives;
+never reuse `models-v1.0.0` or another tag already consumed by released apps.
 
 YOLO26 is NMS-free in this SDK. The shipped Core ML assets use `nms=False`; detect, segment, pose, and OBB use
 `end2end=True`, while classification, semantic, and depth use `end2end=False`. The Swift package applies task-specific

@@ -52,7 +52,11 @@ final class YOLOSSOTMergeTests: XCTestCase {
     }
 
     wait(for: [expectation], timeout: 30)
-    return try XCTUnwrap(loaded.load()).get()
+    let predictor = try XCTUnwrap(loaded.load()).get()
+    let expectedInputSize = task == .classify ? 224 : 640
+    XCTAssertEqual(predictor.modelInputSize.width, expectedInputSize)
+    XCTAssertEqual(predictor.modelInputSize.height, expectedInputSize)
+    return predictor
   }
 
   private func testImage(width: CGFloat = 640, height: CGFloat = 640) -> CIImage {

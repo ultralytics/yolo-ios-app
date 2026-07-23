@@ -259,7 +259,7 @@ Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` 
 ## ✅ Shipped Configuration
 
 `.hd1280x720` preview · model-sized inference output · high-resolution photo capture · `.cpuAndNeuralEngine` · INT8
-end2end YOLO26 models · Vision preprocessing · optimized high-resolution segment/depth painting · default
+YOLO26 models · Vision preprocessing · optimized high-resolution segment/depth painting · default
 `minimum_deployment_target`.
 
 On A19, frame time is dominated by model inference plus Vision's fused scaling. The isolated Performance Report's

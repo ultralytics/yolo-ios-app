@@ -312,7 +312,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       guard !localModelNames.contains(modelName.lowercased()) else { return nil }
       return ModelEntry(
         displayName: modelName,
-        identifier: modelName,
+        identifier: "\(modelName)-\(url.deletingLastPathComponent().lastPathComponent)",
         isLocalBundle: false,
         remoteURL: url
       )

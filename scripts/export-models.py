@@ -22,13 +22,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import coremltools as ct
 from ultralytics import YOLO
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "exports" / "coreml"
 APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"
 DEFAULT_REPO = "ultralytics/yolo-ios-app"
-DEFAULT_TAG = "v8.3.0"
+DEFAULT_TAG = "models-v1.0.0"
 SIZES = ("n", "s", "m", "l", "x")
 
 
@@ -48,7 +49,7 @@ TASKS: dict[str, TaskSpec] = {
     "depth": TaskSpec("-depth", "Depth", 640),
     "classify": TaskSpec("-cls", "Classify", 224),
     "pose": TaskSpec("-pose", "Pose", 640),
-    "obb": TaskSpec("-obb", "OBB", 1024),
+    "obb": TaskSpec("-obb", "OBB", 640),
 }
 
 
@@ -84,6 +85,19 @@ def zip_mlpackage(package: Path) -> Path:
     return zip_path
 
 
+def verify_mlpackage(package: Path, imgsz: int) -> None:
+    """Verify that a Core ML package has the required fixed image input."""
+    spec = ct.utils.load_spec(str(package))
+    image_inputs = [feature.type.imageType for feature in spec.description.input if feature.type.HasField("imageType")]
+    if len(image_inputs) != 1:
+        raise ValueError(f"{package.name} has {len(image_inputs)} image inputs; expected 1")
+    image_input = image_inputs[0]
+    if (image_input.height, image_input.width) != (imgsz, imgsz):
+        raise ValueError(
+            f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}"
+        )
+
+
 def copy_to_app(package: Path, task: TaskSpec) -> None:
     """Copy an exported Core ML package into the app model bundle."""
     destination = APP_MODELS_DIR / task.model_dir / package.name
@@ -105,7 +119,6 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
         tag,
         "--repo",
         repo,
-        "--clobber",
         *(str(path) for path in assets),
     ]
     subprocess.run(command, check=True)
@@ -138,11 +151,12 @@ def main() -> None:
             manifest = package / "Manifest.json"
             if not manifest.exists():
                 raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
+            verify_mlpackage(package, task.imgsz)
             if args.copy_to_app:
                 copy_to_app(package, task)
             asset = zip_mlpackage(package)
             assets.append(asset)
-            print(f"asset {asset.relative_to(ROOT)}")
+            print(f"asset {asset.relative_to(ROOT)} input={task.imgsz}x{task.imgsz}")
 
     if args.upload:
         upload_assets(args.repo, args.tag, assets)

@@ -249,8 +249,8 @@ You can use the official hosted assets, export the official matrix yourself, or 
 
 Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0). They are int8 `.mlpackage.zip` archives named by model ID, for example `yolo26n.mlpackage.zip`, `yolo26n-seg.mlpackage.zip`, and `yolo26x-obb.mlpackage.zip`. Classification uses a fixed 224 × 224 input; every other task uses 640 × 640.
 
-| Runtime asset                 | Used by                                      | Release                                                                                                        |
-| ----------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Runtime asset                 | Used by                                      | Release                                                                                          |
+| ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Flutter on Android                           | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 

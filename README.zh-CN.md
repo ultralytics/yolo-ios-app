@@ -80,8 +80,8 @@ var body: some View {
 
 主应用 YOLOiOSApp 会将**全部七个 nano 模型**（每个任务一个：检测、分割、语义分割、深度、分类、姿态、OBB）打包进发布的应用中（包括 App Store/归档构建）。这些模型在构建时由运行 [`scripts/download-models.sh`](scripts/download-models.sh) 的 **Download YOLO Models** Xcode 构建阶段从 GitHub 发布资源下载——`.mlpackage` 文件**绝不会提交到仓库**（`*.mlpackage` 已被 gitignore 忽略）。该步骤是幂等的，在 GitHub Actions CI 上会被跳过，CI 会在单独的步骤中运行同一脚本。
 
-| 运行时资源                    | 使用方                                          | 发布版本                                                                                                       |
-| ----------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
+| ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Android 上的 Flutter                            | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 

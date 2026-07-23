@@ -149,7 +149,7 @@ def main() -> None:
                     format="coreml",
                     quantize=8,
                     nms=False,
-                    end2end=task_name != "depth",
+                    end2end=task_name in {"detect", "segment", "pose", "obb"},
                     imgsz=task.imgsz,
                 )
             )

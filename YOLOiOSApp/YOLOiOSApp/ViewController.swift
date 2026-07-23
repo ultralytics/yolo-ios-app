@@ -547,11 +547,14 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = localModelURL.path
             }
           }
-        }
-
-        if !fullModelPath.isEmpty {
-          ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
-          self.checkAndNotifyExternalDisplayIfReady()
+          if !fullModelPath.isEmpty {
+            ExternalDisplayManager.shared.notifyModelChange(
+              task: yoloTask,
+              modelPath: fullModelPath,
+              displayName: entry.displayName
+            )
+            self.checkAndNotifyExternalDisplayIfReady()
+          }
         }
       }
 

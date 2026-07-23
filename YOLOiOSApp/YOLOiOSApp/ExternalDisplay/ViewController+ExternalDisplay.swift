@@ -103,7 +103,11 @@ extension ViewController {
         ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
       let fullModelPath = modelPath(for: entry)
     else { return }
-    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+    ExternalDisplayManager.shared.notifyModelChange(
+      task: yoloTask,
+      modelPath: fullModelPath,
+      displayName: entry.displayName
+    )
   }
 
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
@@ -142,7 +146,11 @@ extension ViewController {
       ?? currentModels.first
     guard let entry = currentEntry, let fullModelPath = modelPath(for: entry) else { return }
 
-    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+    ExternalDisplayManager.shared.notifyModelChange(
+      task: yoloTask,
+      modelPath: fullModelPath,
+      displayName: entry.displayName
+    )
   }
 
   private func modelPath(for entry: ModelEntry) -> String? {

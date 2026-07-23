@@ -234,13 +234,14 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
   @objc private func handleModelChange(_ notification: Notification) {
     guard let userInfo = notification.userInfo,
       let taskString = userInfo["task"] as? String,
-      let modelName = userInfo["modelName"] as? String
+      let modelPath = userInfo["modelPath"] as? String,
+      let displayName = userInfo["displayName"] as? String
     else { return }
 
     let task = YOLOTask.fromString(taskString)
 
     currentTask = task
-    currentModelName = modelName
+    currentModelName = displayName
 
     if let taskIndex = appTasks.firstIndex(where: { $0.yoloTask == task }) {
       DispatchQueue.main.async { [weak self] in
@@ -248,19 +249,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
       }
     }
 
-    var actualModelPath = modelName
-    if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage")
-      && !modelName.contains(".mlmodel")
-    {
-      guard ModelCacheManager.shared.isModelDownloaded(key: modelName) else { return }
-      let documentsDirectory = FileManager.default.urls(
-        for: .documentDirectory, in: .userDomainMask)[0]
-      actualModelPath =
-        documentsDirectory.appendingPathComponent(modelName)
-        .appendingPathExtension("mlmodelc").path
-    }
-
-    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+    yoloView?.setModel(modelPathOrName: modelPath, task: task) { [weak self] result in
       guard case .success = result else { return }
       DispatchQueue.main.async {
         self?.updateModelNameLabel()

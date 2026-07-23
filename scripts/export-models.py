@@ -93,9 +93,7 @@ def verify_mlpackage(package: Path, imgsz: int) -> None:
         raise ValueError(f"{package.name} has {len(image_inputs)} image inputs; expected 1")
     image_input = image_inputs[0]
     if (image_input.height, image_input.width) != (imgsz, imgsz):
-        raise ValueError(
-            f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}"
-        )
+        raise ValueError(f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}")
 
 
 def copy_to_app(package: Path, task: TaskSpec) -> None:

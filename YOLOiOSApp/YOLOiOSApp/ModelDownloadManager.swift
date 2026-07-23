@@ -57,7 +57,7 @@ class ModelCacheManager {
     accessOrder.append(key)
   }
 
-  private func modelURL(for key: String) -> URL {
+  func modelURL(for key: String) -> URL {
     documentsDirectory.appendingPathComponent(key).appendingPathExtension("mlmodelc")
   }
 

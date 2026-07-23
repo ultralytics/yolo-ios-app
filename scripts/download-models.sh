@@ -36,13 +36,16 @@ process_model() {
   local model_path="$OUTPUT_DIR/$model_name.mlpackage"
   local zip_path="$OUTPUT_DIR/$model_name.mlpackage.zip"
   local app_model_path="$APP_DIR/$app_dir/$model_name.mlpackage"
+  local app_tmp_path="$app_model_path.download"
 
   if [[ -f "$RELEASE_MARKER" ]] && [[ "$(< "$RELEASE_MARKER")" == "$RELEASE_TAG" ]] \
     && [[ -f "$model_path/Manifest.json" ]]; then
-    if [[ ! -f "$app_model_path/Manifest.json" ]]; then
+    if [[ ! -d "$app_model_path" ]] || ! diff -qr "$model_path" "$app_model_path" > /dev/null; then
       mkdir -p "$APP_DIR/$app_dir"
+      rm -rf "$app_tmp_path"
+      cp -r "$model_path" "$app_tmp_path"
       rm -rf "$app_model_path"
-      cp -r "$model_path" "$app_model_path"
+      mv "$app_tmp_path" "$app_model_path"
     fi
     echo "✅ Model $model_name already matches $RELEASE_TAG"
     return
@@ -98,8 +101,10 @@ process_model() {
 
   echo "Copying $model_name to $app_dir..."
   mkdir -p "$APP_DIR/$app_dir"
+  rm -rf "$app_tmp_path"
+  cp -r "$model_path" "$app_tmp_path"
   rm -rf "$app_model_path"
-  cp -r "$model_path" "$app_model_path"
+  mv "$app_tmp_path" "$app_model_path"
   echo "✅ $model_name copied to app"
 }
 

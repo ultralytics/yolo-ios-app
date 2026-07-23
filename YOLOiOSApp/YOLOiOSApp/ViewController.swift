@@ -495,7 +495,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let keptCurrentModel =
         !success && !self.currentModelName.isEmpty
         && (self.currentLoadingEntry.map {
-          !$0.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: $0.identifier)
+          !$0.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: $0.cacheKey)
         } == true)
 
       if success {
@@ -542,15 +542,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
             }
           } else {
-            fullModelPath = entry.cacheKey
-            let documentsDirectory = FileManager.default.urls(
-              for: .documentDirectory, in: .userDomainMask)[0]
-            let localModelURL =
-              documentsDirectory
-              .appendingPathComponent(entry.cacheKey)
-              .appendingPathExtension("mlmodelc")
-            if !FileManager.default.fileExists(atPath: localModelURL.path) {
-              fullModelPath = ""
+            let localModelURL = ModelCacheManager.shared.modelURL(for: entry.cacheKey)
+            if FileManager.default.fileExists(atPath: localModelURL.path) {
+              fullModelPath = localModelURL.path
             }
           }
         }

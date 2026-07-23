@@ -143,7 +143,7 @@ def main() -> None:
         for size in args.sizes:
             model_id = f"yolo26{size}{task.suffix}"
             print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
-            model = YOLO(f"{model_id}.pt")
+            model = YOLO(str(output_dir / f"{model_id}.pt"))
             exported = Path(
                 model.export(
                     format="coreml",

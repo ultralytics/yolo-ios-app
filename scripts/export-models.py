@@ -159,7 +159,7 @@ def main() -> None:
             if package.exists():
                 shutil.rmtree(package)
             print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
-            model = YOLO(str(checkpoint))
+            model = YOLO(checkpoint)
             exported = Path(
                 model.export(
                     format="coreml",

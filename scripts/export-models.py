@@ -61,7 +61,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tag")
     parser.add_argument("--sizes", nargs="+", choices=SIZES, default=list(SIZES))
     parser.add_argument("--tasks", nargs="+", choices=TASKS.keys(), default=list(TASKS))
-    parser.add_argument("--force", action="store_true", help="Re-export assets that already exist.")
     parser.add_argument(
         "--copy-to-app",
         action="store_true",
@@ -89,19 +88,35 @@ def zip_mlpackage(package: Path) -> Path:
 def verify_mlpackage(package: Path, task_name: str, imgsz: int) -> None:
     """Verify that a Core ML package has the required mobile export contract."""
     spec = ct.utils.load_spec(str(package))
-    image_inputs = [feature.type.imageType for feature in spec.description.input if feature.type.HasField("imageType")]
+    image_inputs = [
+        feature.type.imageType
+        for feature in spec.description.input
+        if feature.type.HasField("imageType")
+    ]
     if len(image_inputs) != 1:
-        raise ValueError(f"{package.name} has {len(image_inputs)} image inputs; expected 1")
+        raise ValueError(
+            f"{package.name} has {len(image_inputs)} image inputs; expected 1"
+        )
     image_input = image_inputs[0]
     if (image_input.height, image_input.width) != (imgsz, imgsz):
-        raise ValueError(f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}")
+        raise ValueError(
+            f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}"
+        )
     metadata = dict(spec.description.metadata.userDefined)
     args = ast.literal_eval(metadata.get("args", "{}"))
     expected_end2end = task_name in {"detect", "segment", "pose", "obb"}
+    if metadata.get("task") != task_name:
+        raise ValueError(
+            f"{package.name} metadata task is {metadata.get('task')}; expected {task_name}"
+        )
     if args.get("quantize") != 8 or args.get("nms") is not False:
-        raise ValueError(f"{package.name} metadata does not record quantize=8 and nms=False")
+        raise ValueError(
+            f"{package.name} metadata does not record quantize=8 and nms=False"
+        )
     if metadata.get("end2end") != str(expected_end2end):
-        raise ValueError(f"{package.name} end2end metadata is {metadata.get('end2end')}; expected {expected_end2end}")
+        raise ValueError(
+            f"{package.name} end2end metadata is {metadata.get('end2end')}; expected {expected_end2end}"
+        )
 
 
 def display_path(path: Path) -> str:
@@ -151,16 +166,12 @@ def main() -> None:
         for size in args.sizes:
             model_id = f"yolo26{size}{task.suffix}"
             package = output_dir / f"{model_id}.mlpackage"
-            if package.joinpath("Manifest.json").exists() and not args.force:
-                verify_mlpackage(package, task_name, task.imgsz)
-                if args.copy_to_app:
-                    copy_to_app(package, task)
-                asset = zip_mlpackage(package)
-                print(f"\nSkipping {model_id}; verified input={task.imgsz}x{task.imgsz}")
-                assets.append(asset)
-                continue
+            checkpoint = output_dir / f"{model_id}.pt"
+            checkpoint.unlink(missing_ok=True)
+            if package.exists():
+                shutil.rmtree(package)
             print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
-            model = YOLO(str(output_dir / f"{model_id}.pt"))
+            model = YOLO(str(checkpoint))
             exported = Path(
                 model.export(
                     format="coreml",
@@ -173,7 +184,9 @@ def main() -> None:
             package = exported.resolve()
             manifest = package / "Manifest.json"
             if not manifest.exists():
-                raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
+                raise FileNotFoundError(
+                    f"Export did not create a valid mlpackage: {package}"
+                )
             verify_mlpackage(package, task_name, task.imgsz)
             if args.copy_to_app:
                 copy_to_app(package, task)
@@ -183,7 +196,9 @@ def main() -> None:
 
     if args.upload:
         if not args.tag:
-            raise ValueError("--tag is required with --upload; create a new immutable release tag")
+            raise ValueError(
+                "--tag is required with --upload; create a new immutable release tag"
+            )
         upload_assets(args.repo, args.tag, assets)
 
     print(f"\nPrepared {len(assets)} Core ML release assets in {output_dir}")

@@ -312,7 +312,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       guard !localModelNames.contains(modelName.lowercased()) else { return nil }
       return ModelEntry(
         displayName: modelName,
-        identifier: "\(modelName)-\(url.deletingLastPathComponent().lastPathComponent)",
+        identifier: modelName,
         isLocalBundle: false,
         remoteURL: url
       )
@@ -329,7 +329,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     let needsDownload =
-      !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+      !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.cacheKey)
 
     // Skip the local YOLOView reset when an external display owns the camera.
     let hasExternalDisplay = hasExternalScreen()
@@ -384,7 +384,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
     } else {
-      let key = entry.identifier  // e.g. "yolo26n", "yolo26m-seg"
+      let key = entry.cacheKey
 
       if ModelCacheManager.shared.isModelDownloaded(key: key) {
         loadCachedModelAndSetToYOLOView(
@@ -469,7 +469,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     guard isLoadingModel, let entry = currentLoadingEntry else { return }
 
     if !entry.isLocalBundle {
-      ModelDownloadManager.shared.cancelDownload(key: entry.identifier)
+      ModelDownloadManager.shared.cancelDownload(key: entry.cacheKey)
     }
 
     setLoadingState(false)
@@ -542,12 +542,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
             }
           } else {
-            fullModelPath = entry.identifier
+            fullModelPath = entry.cacheKey
             let documentsDirectory = FileManager.default.urls(
               for: .documentDirectory, in: .userDomainMask)[0]
             let localModelURL =
               documentsDirectory
-              .appendingPathComponent(entry.identifier)
+              .appendingPathComponent(entry.cacheKey)
               .appendingPathExtension("mlmodelc")
             if !FileManager.default.fileExists(atPath: localModelURL.path) {
               fullModelPath = ""

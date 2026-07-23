@@ -7,6 +7,7 @@
 set -e # Exit immediately if a command fails
 
 BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/models-v1.0.0"
+RELEASE_TAG="${BASE_URL##*/}"
 
 # Get absolute paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,6 +27,7 @@ MODELS=(
 
 # Ensure directories exist
 mkdir -p "$OUTPUT_DIR"
+RELEASE_MARKER="$OUTPUT_DIR/.model-release"
 
 process_model() {
   local model_info=$1
@@ -35,7 +37,16 @@ process_model() {
   local zip_path="$OUTPUT_DIR/$model_name.mlpackage.zip"
   local app_model_path="$APP_DIR/$app_dir/$model_name.mlpackage"
 
-  rm -rf "$model_path"
+  if [[ -f "$RELEASE_MARKER" ]] && [[ "$(< "$RELEASE_MARKER")" == "$RELEASE_TAG" ]] \
+    && [[ -f "$model_path/Manifest.json" ]]; then
+    if [[ ! -f "$app_model_path/Manifest.json" ]]; then
+      mkdir -p "$APP_DIR/$app_dir"
+      rm -rf "$app_model_path"
+      cp -r "$model_path" "$app_model_path"
+    fi
+    echo "✅ Model $model_name already matches $RELEASE_TAG"
+    return
+  fi
 
   # Download the model: -f fails on HTTP errors, --retry covers transient network/server failures,
   # and unzip -t catches truncated or corrupt archives before extraction
@@ -68,21 +79,21 @@ process_model() {
   find "$tmp_dir" -name "*.DS_Store" -delete 2> /dev/null || true
 
   # Handle nested directory: zip may contain model_name.mlpackage/ folder
+  local extracted_path="$tmp_dir"
   if [ -d "$tmp_dir/$model_name.mlpackage" ]; then
-    mv "$tmp_dir/$model_name.mlpackage" "$model_path"
-  else
-    mv "$tmp_dir" "$model_path"
+    extracted_path="$tmp_dir/$model_name.mlpackage"
   fi
 
-  # Clean up
-  rm -rf "$tmp_dir" "$zip_path"
-
-  # Verify extraction; remove the bad directory so a re-run re-downloads instead of skipping it
-  if [[ ! -f "$model_path/Manifest.json" ]]; then
-    rm -rf "$model_path"
+  # Verify the replacement before removing a previously working local model.
+  if [[ ! -f "$extracted_path/Manifest.json" ]]; then
+    rm -rf "$tmp_dir" "$zip_path"
     echo "❌ Model $model_name is incomplete (missing Manifest.json)"
     exit 1
   fi
+
+  rm -rf "$model_path"
+  mv "$extracted_path" "$model_path"
+  rm -rf "$tmp_dir" "$zip_path"
   echo "✅ Model $model_name ready"
 
   echo "Copying $model_name to $app_dir..."
@@ -97,4 +108,5 @@ for model in "${MODELS[@]}"; do
   process_model "$model"
 done
 
+printf '%s\n' "$RELEASE_TAG" > "$RELEASE_MARKER"
 echo "All models prepared successfully!"

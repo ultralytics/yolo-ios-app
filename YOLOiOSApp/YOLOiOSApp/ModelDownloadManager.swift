@@ -23,6 +23,15 @@ struct ModelEntry {
   let identifier: String
   let isLocalBundle: Bool
   let remoteURL: URL?
+
+  var cacheKey: String {
+    Self.cacheKey(for: identifier, remoteURL: remoteURL)
+  }
+
+  static func cacheKey(for identifier: String, remoteURL: URL?) -> String {
+    guard let remoteURL else { return identifier }
+    return "\(identifier)-\(remoteURL.deletingLastPathComponent().lastPathComponent)"
+  }
 }
 
 class ModelCacheManager {
@@ -31,7 +40,15 @@ class ModelCacheManager {
   private var accessOrder: [String] = []
   private let cacheLimit = 3
 
-  private init() {}
+  private init() {
+    let suffixes = ["", "-seg", "-sem", "-depth", "-cls", "-pose", "-obb"]
+    for size in ["n", "s", "m", "l", "x"] {
+      for suffix in suffixes {
+        try? FileManager.default.removeItem(
+          at: modelURL(for: "yolo26\(size)\(suffix)"))
+      }
+    }
+  }
 
   private func updateAccessOrder(for key: String) {
     if let index = accessOrder.firstIndex(of: key) {

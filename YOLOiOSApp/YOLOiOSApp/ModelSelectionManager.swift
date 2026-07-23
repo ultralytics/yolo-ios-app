@@ -107,7 +107,9 @@ struct ModelSelectionManager {
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal
-          || (model.url != nil && ModelCacheManager.shared.isModelDownloaded(key: modelKey))
+          || (model.url != nil
+            && ModelCacheManager.shared.isModelDownloaded(
+              key: ModelEntry.cacheKey(for: modelKey, remoteURL: model.url)))
 
         let titleWithIcon: String
         if isDownloaded {
@@ -150,7 +152,9 @@ struct ModelSelectionManager {
         let modelKey = (model.name as NSString).deletingPathExtension
         let isDownloaded =
           model.isLocal
-          || (model.url != nil && ModelCacheManager.shared.isModelDownloaded(key: modelKey))
+          || (model.url != nil
+            && ModelCacheManager.shared.isModelDownloaded(
+              key: ModelEntry.cacheKey(for: modelKey, remoteURL: model.url)))
 
         if !isDownloaded {
           setSegmentTextColor(control, at: index, color: .systemGray)

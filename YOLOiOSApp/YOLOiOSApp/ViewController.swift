@@ -539,16 +539,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
             }
           } else {
-            fullModelPath = entry.identifier
-            let documentsDirectory = FileManager.default.urls(
-              for: .documentDirectory, in: .userDomainMask)[0]
-            let localModelURL =
-              documentsDirectory
-              .appendingPathComponent(entry.identifier)
-              .appendingPathExtension("mlmodelc")
-            if !FileManager.default.fileExists(atPath: localModelURL.path) {
-              fullModelPath = ""
-            }
+            let localModelURL = ModelCacheManager.shared.modelURL(for: entry.identifier)
+            fullModelPath =
+              FileManager.default.fileExists(atPath: localModelURL.path)
+              ? localModelURL.path : ""
           }
         }
 

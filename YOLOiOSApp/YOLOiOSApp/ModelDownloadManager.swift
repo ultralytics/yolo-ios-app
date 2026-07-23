@@ -68,6 +68,12 @@ class ModelCacheManager {
     from fileName: String, remoteURL: URL, key: String,
     completion: @escaping (MLModel?, String) -> Void
   ) {
+    let legacyModelURL = documentsDirectory.appendingPathComponent(key)
+      .appendingPathExtension("mlmodelc")
+    if FileManager.default.fileExists(atPath: legacyModelURL.path) {
+      try? FileManager.default.removeItem(at: legacyModelURL)
+    }
+
     if let cachedModel = modelCache[key] {
       updateAccessOrder(for: key)
       completion(cachedModel, key)

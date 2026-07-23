@@ -100,13 +100,20 @@ extension ViewController {
 
     var fullModelPath = currentModelName
     if let entry = currentLoadingEntry
-      ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
-      entry.isLocalBundle,
-      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
-      let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
+      ?? currentModels.first(where: { processString($0.displayName) == currentModelName })
     {
-      let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
-      fullModelPath = modelURL.path
+      if entry.isLocalBundle,
+        let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
+        let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
+      {
+        fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
+      } else if !entry.isLocalBundle,
+        ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+      {
+        fullModelPath = ModelCacheManager.shared.modelURL(for: entry.identifier).path
+      } else {
+        fullModelPath = ""
+      }
     }
 
     ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
@@ -154,6 +161,10 @@ extension ViewController {
       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
     {
       fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
+    } else if !entry.isLocalBundle,
+      ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+    {
+      fullModelPath = ModelCacheManager.shared.modelURL(for: entry.identifier).path
     }
 
     guard !fullModelPath.isEmpty else { return }

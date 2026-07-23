@@ -12,7 +12,7 @@ import Foundation
 
 /// Maps task names to the YOLO models available for download, with their archive URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = {
-  let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/models-v1.0.0"
+  let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
   let sizes = ["n", "s", "m", "l", "x"]
   let tasks = [
     ("Detect", ""), ("Segment", "-seg"), ("Semantic", "-sem"), ("Depth", "-depth"),

@@ -50,7 +50,7 @@ class ExternalDisplayManager {
   }
 
   /// Notifies the external display that the selected task or model has changed.
-  func notifyModelChange(task: YOLOTask, modelPath: String, displayName: String) {
+  func notifyModelChange(task: YOLOTask, modelName: String) {
     let taskString = String(describing: task).lowercased()
 
     NotificationCenter.default.post(
@@ -58,8 +58,7 @@ class ExternalDisplayManager {
       object: nil,
       userInfo: [
         "task": taskString,
-        "modelPath": modelPath,
-        "displayName": displayName,
+        "modelName": modelName,
       ]
     )
   }

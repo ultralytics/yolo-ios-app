@@ -6,8 +6,7 @@
 
 set -e # Exit immediately if a command fails
 
-BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/models-v1.0.0"
-RELEASE_TAG="${BASE_URL##*/}"
+BASE_URL="https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
 
 # Get absolute paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,7 +26,6 @@ MODELS=(
 
 # Ensure directories exist
 mkdir -p "$OUTPUT_DIR"
-RELEASE_MARKER="$OUTPUT_DIR/.model-release"
 
 process_model() {
   local model_info=$1
@@ -36,76 +34,68 @@ process_model() {
   local model_path="$OUTPUT_DIR/$model_name.mlpackage"
   local zip_path="$OUTPUT_DIR/$model_name.mlpackage.zip"
   local app_model_path="$APP_DIR/$app_dir/$model_name.mlpackage"
-  local app_tmp_path="$app_model_path.download"
 
-  if [[ -f "$RELEASE_MARKER" ]] && [[ "$(< "$RELEASE_MARKER")" == "$RELEASE_TAG" ]] \
-    && [[ -f "$model_path/Manifest.json" ]]; then
-    if [[ ! -d "$app_model_path" ]] || ! diff -qr "$model_path" "$app_model_path" > /dev/null; then
-      mkdir -p "$APP_DIR/$app_dir"
-      rm -rf "$app_tmp_path"
-      cp -r "$model_path" "$app_tmp_path"
-      rm -rf "$app_model_path"
-      mv "$app_tmp_path" "$app_model_path"
-    fi
-    echo "✅ Model $model_name already matches $RELEASE_TAG"
-    return
-  fi
+  # Download and extract if not present
+  if [[ ! -d "$model_path" ]]; then
+    # Remove existing model directory if present
+    rm -rf "$model_path"
 
-  # Download the model: -f fails on HTTP errors, --retry covers transient network/server failures,
-  # and unzip -t catches truncated or corrupt archives before extraction
-  echo "Downloading $model_name..."
-  local attempt
-  for attempt in 1 2 3; do
-    if curl -fL --retry 3 --connect-timeout 15 "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar \
-      && unzip -tqq "$zip_path" > /dev/null; then
-      break
+    # Download the model: -f fails on HTTP errors, --retry covers transient network/server failures,
+    # and unzip -t catches truncated or corrupt archives before extraction
+    echo "Downloading $model_name..."
+    local attempt
+    for attempt in 1 2 3; do
+      if curl -fL --retry 3 --connect-timeout 15 "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar \
+        && unzip -tqq "$zip_path" > /dev/null; then
+        break
+      fi
+      rm -f "$zip_path"
+      if [[ $attempt -eq 3 ]]; then
+        echo "❌ Failed to download a valid $model_name archive after 3 attempts"
+        exit 1
+      fi
+      echo "⚠️ $model_name download failed or archive invalid (attempt $attempt), retrying..."
+      sleep 5
+    done
+
+    # Extract to temp directory to handle nested structure
+    local tmp_dir="$OUTPUT_DIR/_tmp_extract_$$"
+    rm -rf "$tmp_dir"
+    mkdir -p "$tmp_dir"
+
+    echo "Extracting $model_name..."
+    unzip -o "$zip_path" -d "$tmp_dir"
+
+    # Remove macOS metadata if present
+    rm -rf "$tmp_dir/__MACOSX" 2> /dev/null || true
+    find "$tmp_dir" -name "*.DS_Store" -delete 2> /dev/null || true
+
+    # Handle nested directory: zip may contain model_name.mlpackage/ folder
+    if [ -d "$tmp_dir/$model_name.mlpackage" ]; then
+      mv "$tmp_dir/$model_name.mlpackage" "$model_path"
+    else
+      mv "$tmp_dir" "$model_path"
     fi
-    rm -f "$zip_path"
-    if [[ $attempt -eq 3 ]]; then
-      echo "❌ Failed to download a valid $model_name archive after 3 attempts"
+
+    # Clean up
+    rm -rf "$tmp_dir" "$zip_path"
+
+    # Verify extraction; remove the bad directory so a re-run re-downloads instead of skipping it
+    if [[ ! -f "$model_path/Manifest.json" ]]; then
+      rm -rf "$model_path"
+      echo "❌ Model $model_name is incomplete (missing Manifest.json)"
       exit 1
     fi
-    echo "⚠️ $model_name download failed or archive invalid (attempt $attempt), retrying..."
-    sleep 5
-  done
-
-  # Extract to temp directory to handle nested structure
-  local tmp_dir="$OUTPUT_DIR/_tmp_extract_$$"
-  rm -rf "$tmp_dir"
-  mkdir -p "$tmp_dir"
-
-  echo "Extracting $model_name..."
-  unzip -o "$zip_path" -d "$tmp_dir"
-
-  # Remove macOS metadata if present
-  rm -rf "$tmp_dir/__MACOSX" 2> /dev/null || true
-  find "$tmp_dir" -name "*.DS_Store" -delete 2> /dev/null || true
-
-  # Handle nested directory: zip may contain model_name.mlpackage/ folder
-  local extracted_path="$tmp_dir"
-  if [ -d "$tmp_dir/$model_name.mlpackage" ]; then
-    extracted_path="$tmp_dir/$model_name.mlpackage"
+    echo "✅ Model $model_name ready"
   fi
 
-  # Verify the replacement before removing a previously working local model.
-  if [[ ! -f "$extracted_path/Manifest.json" ]]; then
-    rm -rf "$tmp_dir" "$zip_path"
-    echo "❌ Model $model_name is incomplete (missing Manifest.json)"
-    exit 1
+  # Copy to app model directory if not present
+  if [[ ! -d "$app_model_path" ]]; then
+    echo "Copying $model_name to $app_dir..."
+    mkdir -p "$APP_DIR/$app_dir"
+    cp -r "$model_path" "$app_model_path"
+    echo "✅ $model_name copied to app"
   fi
-
-  rm -rf "$model_path"
-  mv "$extracted_path" "$model_path"
-  rm -rf "$tmp_dir" "$zip_path"
-  echo "✅ Model $model_name ready"
-
-  echo "Copying $model_name to $app_dir..."
-  mkdir -p "$APP_DIR/$app_dir"
-  rm -rf "$app_tmp_path"
-  cp -r "$model_path" "$app_tmp_path"
-  rm -rf "$app_model_path"
-  mv "$app_tmp_path" "$app_model_path"
-  echo "✅ $model_name copied to app"
 }
 
 # Process each model
@@ -113,5 +103,4 @@ for model in "${MODELS[@]}"; do
   process_model "$model"
 done
 
-printf '%s\n' "$RELEASE_TAG" > "$RELEASE_MARKER"
 echo "All models prepared successfully!"

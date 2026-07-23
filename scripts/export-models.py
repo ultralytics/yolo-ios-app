@@ -30,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "exports" / "coreml"
 APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"
 DEFAULT_REPO = "ultralytics/yolo-ios-app"
+DEFAULT_TAG = "v8.3.0"
 SIZES = ("n", "s", "m", "l", "x")
 
 
@@ -58,7 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--repo", default=DEFAULT_REPO)
-    parser.add_argument("--tag")
+    parser.add_argument("--tag", default=DEFAULT_TAG)
     parser.add_argument("--sizes", nargs="+", choices=SIZES, default=list(SIZES))
     parser.add_argument("--tasks", nargs="+", choices=TASKS.keys(), default=list(TASKS))
     parser.add_argument(
@@ -69,7 +70,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--upload",
         action="store_true",
-        help="Upload generated .mlpackage.zip files to a new GitHub release without overwriting existing assets.",
+        help="Upload generated .mlpackage.zip files to the GitHub release with gh release upload --clobber.",
     )
     return parser.parse_args()
 
@@ -134,6 +135,7 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
         tag,
         "--repo",
         repo,
+        "--clobber",
         *(str(path) for path in assets),
     ]
     subprocess.run(command, check=True)
@@ -179,8 +181,6 @@ def main() -> None:
             print(f"asset {display_path(asset)} input={task.imgsz}x{task.imgsz}")
 
     if args.upload:
-        if not args.tag:
-            raise ValueError("--tag is required with --upload; create a new immutable release tag")
         upload_assets(args.repo, args.tag, assets)
 
     print(f"\nPrepared {len(assets)} Core ML release assets in {output_dir}")

@@ -11,7 +11,7 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 - **Device (ground truth):** iPhone 17 Pro (A19, iOS 26.5.2).
 - **Host (relative screening only):** Apple M4 Pro, `coremltools`.
-- **Current model standard:** `yolo26n` per task from `models-v1.0.0`, int8 Core ML: 224×224 for classify and
+- **Current model standard:** `yolo26n` per task from `v8.3.0`, int8 Core ML: 224×224 for classify and
   640×640 for every other task.
 - Numbers are EMA-smoothed steady-state. The device thermally settles under sustained use, so figures reflect continuous operation, not a cold burst.
 
@@ -19,7 +19,7 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 These results preserve the last complete on-device sweep of the retired `v8.3.0` assets. Semantic and OBB used
 1024×1024 inputs in that release, so these numbers must not be used as timings for the standardized
-`models-v1.0.0` assets. A replacement sweep is required before publishing current Core ML benchmark claims.
+`v8.3.0` assets. A replacement sweep is required before publishing current Core ML benchmark claims.
 
 End-to-end `predictOnImage` speeds for the retired YOLO26n INT8 Core ML models on the test device
 (iPhone 17 Pro, A19, iOS 26.5.2), as **total time** with the preprocess / inference / postprocess split beneath

@@ -98,16 +98,18 @@ extension ViewController {
   func notifyExternalDisplayOfCurrentModel() {
     let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
-    guard
-      let entry = currentLoadingEntry
-        ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
-      let fullModelPath = modelPath(for: entry)
-    else { return }
-    ExternalDisplayManager.shared.notifyModelChange(
-      task: yoloTask,
-      modelPath: fullModelPath,
-      displayName: entry.displayName
-    )
+    var fullModelPath = currentModelName
+    if let entry = currentLoadingEntry
+      ?? currentModels.first(where: { processString($0.displayName) == currentModelName }),
+      entry.isLocalBundle,
+      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
+      let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
+    {
+      let modelURL = folderPathURL.appendingPathComponent(entry.identifier)
+      fullModelPath = modelURL.path
+    }
+
+    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
   }
 
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
@@ -144,26 +146,19 @@ extension ViewController {
     let currentEntry =
       currentModels.first(where: { processString($0.displayName) == currentModelName })
       ?? currentModels.first
-    guard let entry = currentEntry, let fullModelPath = modelPath(for: entry) else { return }
+    guard let entry = currentEntry else { return }
 
-    ExternalDisplayManager.shared.notifyModelChange(
-      task: yoloTask,
-      modelPath: fullModelPath,
-      displayName: entry.displayName
-    )
-  }
-
-  private func modelPath(for entry: ModelEntry) -> String? {
-    if entry.isLocalBundle {
-      guard
-        let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
-        let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-      else { return nil }
-      return folderPathURL.appendingPathComponent(entry.identifier).path
+    var fullModelPath = ""
+    if entry.isLocalBundle,
+      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
+      let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
+    {
+      fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
     }
 
-    let modelURL = ModelCacheManager.shared.modelURL(for: entry.cacheKey)
-    return FileManager.default.fileExists(atPath: modelURL.path) ? modelURL.path : nil
+    guard !fullModelPath.isEmpty else { return }
+
+    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
   }
 
   func checkAndNotifyExternalDisplayIfReady() {

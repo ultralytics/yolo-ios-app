@@ -329,7 +329,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     let needsDownload =
-      !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.cacheKey)
+      !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
 
     // Skip the local YOLOView reset when an external display owns the camera.
     let hasExternalDisplay = hasExternalScreen()
@@ -384,7 +384,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
       }
     } else {
-      let key = entry.cacheKey
+      let key = entry.identifier  // e.g. "yolo26n", "yolo26m-seg"
 
       if ModelCacheManager.shared.isModelDownloaded(key: key) {
         loadCachedModelAndSetToYOLOView(
@@ -469,7 +469,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     guard isLoadingModel, let entry = currentLoadingEntry else { return }
 
     if !entry.isLocalBundle {
-      ModelDownloadManager.shared.cancelDownload(key: entry.cacheKey)
+      ModelDownloadManager.shared.cancelDownload(key: entry.identifier)
     }
 
     setLoadingState(false)
@@ -495,7 +495,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let keptCurrentModel =
         !success && !self.currentModelName.isEmpty
         && (self.currentLoadingEntry.map {
-          !$0.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: $0.cacheKey)
+          !$0.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: $0.identifier)
         } == true)
 
       if success {
@@ -542,19 +542,22 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
             }
           } else {
-            let localModelURL = ModelCacheManager.shared.modelURL(for: entry.cacheKey)
-            if FileManager.default.fileExists(atPath: localModelURL.path) {
-              fullModelPath = localModelURL.path
+            fullModelPath = entry.identifier
+            let documentsDirectory = FileManager.default.urls(
+              for: .documentDirectory, in: .userDomainMask)[0]
+            let localModelURL =
+              documentsDirectory
+              .appendingPathComponent(entry.identifier)
+              .appendingPathExtension("mlmodelc")
+            if !FileManager.default.fileExists(atPath: localModelURL.path) {
+              fullModelPath = ""
             }
           }
-          if !fullModelPath.isEmpty {
-            ExternalDisplayManager.shared.notifyModelChange(
-              task: yoloTask,
-              modelPath: fullModelPath,
-              displayName: entry.displayName
-            )
-            self.checkAndNotifyExternalDisplayIfReady()
-          }
+        }
+
+        if !fullModelPath.isEmpty {
+          ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+          self.checkAndNotifyExternalDisplayIfReady()
         }
       }
 

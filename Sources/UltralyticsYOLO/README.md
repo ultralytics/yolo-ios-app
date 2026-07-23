@@ -267,8 +267,8 @@ The [repository root README](../../README.md#-official-model-assets) is the auth
 
 The published `v8.3.0` binary properties are recorded in the
 [repository root README](../../README.md#-official-model-assets). The export workflow in
-[`scripts/export-models.py`](../../scripts/export-models.py) defines future exports, Core ML int8 settings,
-`.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload.
+[`scripts/export-models.py`](../../scripts/export-models.py) defines the official task/size matrix, Core ML int8
+settings, `.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload.
 
 ```bash
 uv venv --python 3.13 .venv
@@ -276,8 +276,8 @@ uv pip install -e "../ultralytics[export]"
 uv run python scripts/export-models.py
 ```
 
-Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. After creating a
-existing release, use `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives.
+Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
+`--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
 YOLO26 is NMS-free in this SDK. The shipped Core ML assets use `nms=False`; detect, segment, pose, and OBB use
 `end2end=True`, while classification, semantic, and depth use `end2end=False`. The Swift package applies task-specific

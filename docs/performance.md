@@ -17,11 +17,11 @@ Canonical record of the on-device and host profiling behind the Ultralytics YOLO
 
 ## 📊 Legacy Pre-Standard Backend Benchmark
 
-These results preserve the last complete on-device sweep of the retired `v8.3.0` assets. Semantic and OBB used
-1024×1024 inputs in that release, so these numbers must not be used as timings for the standardized
-`v8.3.0` assets. A replacement sweep is required before publishing current Core ML benchmark claims.
+These results preserve an on-device sweep of pre-standard binaries previously published under `v8.3.0`. Semantic
+and OBB used 1024×1024 inputs, so these numbers must not be used as timings for the standardized `v8.3.0` assets.
+Benchmark the standardized assets separately before publishing current Core ML performance claims.
 
-End-to-end `predictOnImage` speeds for the retired YOLO26n INT8 Core ML models on the test device
+End-to-end `predictOnImage` speeds for the pre-standard YOLO26n INT8 Core ML models on the test device
 (iPhone 17 Pro, A19, iOS 26.5.2), as **total time** with the preprocess / inference / postprocess split beneath
 each value. Annotation drawing is excluded. On iOS, Vision performs input scaling inside the inference request,
 so preprocess is reported as 0 and its cost is included in inference.
@@ -36,7 +36,7 @@ so preprocess is reported as 0 and its cost is included in inference.
 | YOLO26n-pose  | Pose     | 640                         | 12.0<br><sup>0.0 / 11.9 / 0.0</sup>  | **3.8**<br><sup>0.0 / 3.8 / 0.0</sup>                     |
 | YOLO26n-obb   | OBB      | 1024                        | 21.7<br><sup>0.0 / 21.7 / 0.0</sup>  | **7.2**<br><sup>0.0 / 7.2 / 0.0</sup>                     |
 
-- <sup>1</sup> The retired semantic model used the in-graph ArgMax class-map Core ML export at full resolution
+- <sup>1</sup> The pre-standard semantic model used the in-graph ArgMax class-map Core ML export at full resolution
   (ultralytics/ultralytics#24790 + #24799): the argmax runs in the graph and emits a `[1, 1024, 1024]` class map,
   so masks render pixel-sharp and `postProcessSemantic` is a sub-millisecond color sweep.
 - **Speed** values are the mean of 15 runs after 3 warmup runs on [bus.jpg](https://ultralytics.com/images/bus.jpg),
@@ -101,7 +101,7 @@ that can't honor it.
 `AVCaptureVideoDataOutput.videoSettings` supports independent width and height. `AVCaptureVideoPreviewLayer` remains
 attached directly to the 720p session; only the inference output is resized.
 
-Historical optimized Release build, sustained live camera, same scene and retired `v8.3.0` model assets:
+Historical optimized Release build, sustained live camera, same scene and pre-standard model binaries:
 
 | Task     | Model input     | Inference buffer | Before  | After       | Change   |
 | -------- | --------------- | ---------------- | ------- | ----------- | -------- |

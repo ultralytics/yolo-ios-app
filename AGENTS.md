@@ -58,7 +58,7 @@ periphery scan --project YOLOiOSApp/YOLOiOSApp.xcodeproj --schemes YOLOiOSApp \
 uv venv --python 3.13 .venv && uv pip install -e "../ultralytics[export]"
 ```
 
-CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + Codecov with `fail_ci_if_error: true`) and `periphery` (dead-code scan, `--strict` fails on any unused declaration). `Package.swift` is pinned to `swift-tools-version: 5.10` for CI compatibility — do not raise it.
+CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + a non-blocking Codecov upload) and `periphery` (dead-code scan, `--strict` fails on any unused declaration). `Package.swift` is pinned to `swift-tools-version: 5.10` for CI compatibility — do not raise it.
 
 ## Architecture
 

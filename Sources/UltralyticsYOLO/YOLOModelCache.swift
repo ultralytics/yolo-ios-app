@@ -16,6 +16,10 @@ public final class YOLOModelCache {
   /// Shared singleton instance.
   public static let shared = YOLOModelCache()
 
+  private static let standardizedReleaseBase =
+    "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/"
+  private static let standardizedAssetRevision = "mobile-standard-v1"
+
   /// Root cache directory for compiled models.
   let cacheDirectory: URL
 
@@ -59,8 +63,13 @@ public final class YOLOModelCache {
 
   /// Returns the SHA-256 cache key for the given URL and optional task.
   public func cacheKey(for url: URL, task: YOLOTask? = nil) -> String {
-    let urlString =
-      task.map { url.absoluteString + "_" + String(describing: $0) } ?? url.absoluteString
+    var urlString = url.absoluteString
+    if urlString.hasPrefix(Self.standardizedReleaseBase) {
+      urlString += "_\(Self.standardizedAssetRevision)"
+    }
+    if let task {
+      urlString += "_" + String(describing: task)
+    }
     return Data(urlString.utf8).sha256()
   }
 

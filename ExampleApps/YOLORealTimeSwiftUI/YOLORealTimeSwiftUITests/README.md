@@ -26,7 +26,7 @@ from ultralytics import YOLO
 model = YOLO("yolo26n-obb.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
-model.export(format="coreml", nms=False, end2end=True, imgsz=1024)  # Creates yolo26n-obb.mlpackage
+model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 ### Adding Model Files to the Project

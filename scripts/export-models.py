@@ -15,6 +15,7 @@ optionally uploads the archives to the release used by RemoteModels.swift.
 from __future__ import annotations
 
 import argparse
+import ast
 import os
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import coremltools as ct
 from ultralytics import YOLO
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +50,7 @@ TASKS: dict[str, TaskSpec] = {
     "depth": TaskSpec("-depth", "Depth", 640),
     "classify": TaskSpec("-cls", "Classify", 224),
     "pose": TaskSpec("-pose", "Pose", 640),
-    "obb": TaskSpec("-obb", "OBB", 1024),
+    "obb": TaskSpec("-obb", "OBB", 640),
 }
 
 
@@ -82,6 +84,34 @@ def zip_mlpackage(package: Path) -> Path:
         for path in package.rglob("*"):
             archive.write(path, Path(package.name) / path.relative_to(package))
     return zip_path
+
+
+def verify_mlpackage(package: Path, task_name: str, imgsz: int) -> None:
+    """Verify that a Core ML package has the required mobile export contract."""
+    spec = ct.utils.load_spec(str(package))
+    image_inputs = [feature.type.imageType for feature in spec.description.input if feature.type.HasField("imageType")]
+    if len(image_inputs) != 1:
+        raise ValueError(f"{package.name} has {len(image_inputs)} image inputs; expected 1")
+    image_input = image_inputs[0]
+    if (image_input.height, image_input.width) != (imgsz, imgsz):
+        raise ValueError(f"{package.name} input is {image_input.height}x{image_input.width}; expected {imgsz}x{imgsz}")
+    metadata = dict(spec.description.metadata.userDefined)
+    args = ast.literal_eval(metadata.get("args", "{}"))
+    expected_end2end = task_name in {"detect", "segment", "pose", "obb"}
+    if metadata.get("task") != task_name:
+        raise ValueError(f"{package.name} metadata task is {metadata.get('task')}; expected {task_name}")
+    if args.get("quantize") != 8 or args.get("nms") is not False:
+        raise ValueError(f"{package.name} metadata does not record quantize=8 and nms=False")
+    if metadata.get("end2end") != str(expected_end2end):
+        raise ValueError(f"{package.name} end2end metadata is {metadata.get('end2end')}; expected {expected_end2end}")
+
+
+def display_path(path: Path) -> str:
+    """Return a repository-relative path when possible."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def copy_to_app(package: Path, task: TaskSpec) -> None:
@@ -123,14 +153,18 @@ def main() -> None:
         task = TASKS[task_name]
         for size in args.sizes:
             model_id = f"yolo26{size}{task.suffix}"
+            package = output_dir / f"{model_id}.mlpackage"
+            checkpoint = output_dir / f"{model_id}.pt"
+            if package.exists():
+                shutil.rmtree(package)
             print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
-            model = YOLO(f"{model_id}.pt")
+            model = YOLO(checkpoint)
             exported = Path(
                 model.export(
                     format="coreml",
                     quantize=8,
                     nms=False,
-                    end2end=task_name != "depth",
+                    end2end=task_name in {"detect", "segment", "pose", "obb"},
                     imgsz=task.imgsz,
                 )
             )
@@ -138,11 +172,12 @@ def main() -> None:
             manifest = package / "Manifest.json"
             if not manifest.exists():
                 raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
+            verify_mlpackage(package, task_name, task.imgsz)
             if args.copy_to_app:
                 copy_to_app(package, task)
             asset = zip_mlpackage(package)
             assets.append(asset)
-            print(f"asset {asset.relative_to(ROOT)}")
+            print(f"asset {display_path(asset)} input={task.imgsz}x{task.imgsz}")
 
     if args.upload:
         upload_assets(args.repo, args.tag, assets)

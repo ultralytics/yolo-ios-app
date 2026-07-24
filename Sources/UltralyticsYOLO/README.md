@@ -247,17 +247,17 @@ You can use the official hosted assets, export the official matrix yourself, or 
 
 ### Official Hosted Assets
 
-Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0). They are int8 `.mlpackage.zip` archives named by model ID, for example `yolo26n.mlpackage.zip`, `yolo26n-seg.mlpackage.zip`, and `yolo26x-obb.mlpackage.zip`.
+Official Core ML assets are hosted in [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0). They are int8 `.mlpackage.zip` archives named by model ID, for example `yolo26n.mlpackage.zip`, `yolo26n-seg.mlpackage.zip`, and `yolo26x-obb.mlpackage.zip`. Classification uses a fixed 224 × 224 input; every other task uses 640 × 640.
 
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| LiteRT int8 `.tflite`         | Flutter on Android                           | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+| LiteRT w8a32 `.tflite`        | Flutter on Android                           | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
@@ -265,7 +265,10 @@ The [repository root README](../../README.md#-official-model-assets) is the auth
 
 ### Reproduce The Official Core ML Assets
 
-The authoritative export workflow lives in [`scripts/export-models.py`](../../scripts/export-models.py) at the repository root. That script defines the official YOLO26 task/size matrix, Core ML int8 export settings, `.mlpackage.zip` packaging, optional local app-copy step, and optional GitHub release upload.
+The published `v8.3.0` binary properties are recorded in the
+[repository root README](../../README.md#-official-model-assets). The export workflow in
+[`scripts/export-models.py`](../../scripts/export-models.py) defines the official task/size matrix, Core ML int8
+settings, `.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload.
 
 ```bash
 uv venv --python 3.13 .venv
@@ -273,9 +276,13 @@ uv pip install -e "../ultralytics[export]"
 uv run python scripts/export-models.py
 ```
 
-Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing, and `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to publish the generated zip archives to the canonical release.
+Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
+`--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
-YOLO26 is NMS-free in this SDK: official Core ML assets are exported with `nms=False` and `end2end=True`, and the Swift package applies postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) remain supported; the predictor detects the model's `nms` metadata flag at load time and dispatches to the correct path.
+YOLO26 is NMS-free in this SDK. The shipped Core ML assets use `nms=False`; detect, segment, pose, and OBB use
+`end2end=True`, while classification, semantic, and depth use `end2end=False`. The Swift package applies task-specific
+postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) remain supported; the predictor
+detects the model's `nms` metadata flag at load time and dispatches to the correct path.
 
 ## 🤝 Contributing
 

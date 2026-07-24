@@ -425,10 +425,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func loadCachedModelAndSetToYOLOView(key: String, yoloTask: YOLOTask, displayName: String)
   {
-    let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[
-      0]
-    let localModelURL = documentsDirectory.appendingPathComponent(key).appendingPathExtension(
-      "mlmodelc")
+    let localModelURL = ModelCacheManager.shared.modelURL(for: key)
 
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
@@ -542,16 +539,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
               fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
             }
           } else {
-            fullModelPath = entry.identifier
-            let documentsDirectory = FileManager.default.urls(
-              for: .documentDirectory, in: .userDomainMask)[0]
-            let localModelURL =
-              documentsDirectory
-              .appendingPathComponent(entry.identifier)
-              .appendingPathExtension("mlmodelc")
-            if !FileManager.default.fileExists(atPath: localModelURL.path) {
-              fullModelPath = ""
-            }
+            let localModelURL = ModelCacheManager.shared.modelURL(for: entry.identifier)
+            fullModelPath =
+              FileManager.default.fileExists(atPath: localModelURL.path)
+              ? localModelURL.path : ""
           }
         }
 

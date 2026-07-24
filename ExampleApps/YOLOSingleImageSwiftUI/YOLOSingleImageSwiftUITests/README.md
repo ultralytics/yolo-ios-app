@@ -28,7 +28,7 @@ from ultralytics import YOLO
 model = YOLO("yolo26n-seg.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
-model.export(format="coreml", nms=False, end2end=True)  # Creates yolo26n-seg.mlpackage
+model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export).

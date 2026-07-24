@@ -83,12 +83,12 @@ var body: some View {
 | 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| LiteRT int8 `.tflite`         | Android 上的 Flutter                            | [yolo-flutter-app `v0.3.5`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.3.5) |
+| LiteRT w8a32 `.tflite`        | Android 上的 Flutter                            | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.3.5/<model>_int8.tflite`
+- LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
@@ -97,18 +97,22 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | 模型 ID    | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
 | 任务       | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
 | 格式       | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize` | `8`                                     | `8`                                     |
-| `imgsz`    | 分类 `224`；OBB `1024`；其余 `640`      | 分类 `224`；其余 `640`                  |
+| `quantize` | `8`                                     | `w8a32`                                 |
+| `imgsz`    | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
 | `nms`      | `False`                                 | `False`                                 |
-| `end2end`  | `True`；depth 为 `False`                | `False`                                 |
-| 校准       | 导出器默认值                            | 按任务的 `TASK2CALIBRATIONDATA`         |
+| `end2end`  | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
+| 校准       | 导出器默认值                            | 无（动态范围量化）                      |
 | 后处理     | Swift/Core ML                           | Android 原生                            |
 
-Core ML 资源使用 `nms=False` 导出；检测类任务还使用 `end2end=True`，以提供由 Swift 解码器消费的解码输出契约，而深度任务通过 `end2end=False` 使用其直接密集输出。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android LiteRT 转换路径禁用 YOLO26 端到端头。
+Core ML 资源使用 `nms=False` 导出。检测、实例分割、姿态和 OBB 使用 `end2end=True`；分类、语义分割和深度
+使用 `end2end=False`。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android
+LiteRT 转换路径禁用 YOLO26 端到端头。
 
 ### Core ML 发布工作流
 
-权威导出脚本是 [`scripts/export-models.py`](scripts/export-models.py)。它定义了任务/尺寸矩阵、导出图像尺寸、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+上表记录了已发布 `v8.3.0` 二进制文件的实际尺寸。[`scripts/export-models.py`](scripts/export-models.py)
+定义官方导出、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+如果其导出矩阵发生变化，应替换 `v8.3.0` 中生成的资源并同时更新此表。
 
 ```bash
 uv venv --python 3.13 .venv
@@ -122,7 +126,7 @@ uv run python scripts/export-models.py
 # 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# 导出全部官方 Core ML 资源并上传到规范发布版本。
+# 导出并替换现有 release 中的全部官方 Core ML 资产。
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
@@ -130,7 +134,10 @@ uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app 
 
 ### Android LiteRT 对应资源
 
-Flutter package 使用的 Android 资源在 Flutter 仓库中维护，而不在本 iOS 仓库中。其规范导出脚本是 `ultralytics/yolo-flutter-app` 仓库中的 `scripts/export-tflite-models.py`；它将匹配的 YOLO26 任务/尺寸矩阵导出为 int8 `.tflite` 资源，使用按任务的 `ultralytics.cfg.TASK2CALIBRATIONDATA` 默认值进行校准，并上传到 `yolo-flutter-app` `v0.3.5`。
+Flutter package 使用的 Android 资源在 Flutter 仓库中维护，而不在本 iOS 仓库中。其规范导出脚本是
+`ultralytics/yolo-flutter-app` 仓库中的 `scripts/export-tflite-models.py`；它将匹配的 YOLO26 任务/尺寸矩阵导出为
+w8a32 `.tflite` 资源。此动态范围格式使用 int8 权重和 FP32 激活，无需校准数据，并发布在
+`yolo-flutter-app` `v0.6.6` 中。
 
 ## 🛠️ 快速开始
 

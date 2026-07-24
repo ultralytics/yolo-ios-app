@@ -133,6 +133,13 @@ class YOLOMainTests: XCTestCase {
     XCTAssertTrue(try cache.listCachedModels().contains(key))
     XCTAssertGreaterThanOrEqual(try cache.getCacheSize(), 18)
     XCTAssertNotEqual(cache.cacheKey(for: sourceURL, task: .detect), cache.cacheKey(for: sourceURL))
+
+    let officialURL = URL(
+      string:
+        "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n-sem.mlpackage.zip"
+    )!
+    let previousKey = Data((officialURL.absoluteString + "_semantic").utf8).sha256()
+    XCTAssertNotEqual(cache.cacheKey(for: officialURL, task: .semantic), previousKey)
   }
 
   func testLoggerEvaluatesMessages() {

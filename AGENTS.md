@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, etc.) when working
 
 ## Core Principles (CRITICAL)
 
-**Less is more. The simplest solution is the best solution.** The action hierarchy for every change: **Delete > Replace > Add**. The best code change is a deletion, the second best is modifying what exists, and adding new code is the last resort.
+**Less is more. The simplest solution is the best solution.** The action hierarchy for every change: **Delete > Replace > Add**.
 
 1. **Solve at the owner**: Put behavior in the code path that owns or observes it. For fixes, never guard a symptom with a staleness check, initialization flag, skip-first-call branch, or `do/catch` around broken logic; relocate the trigger and delete the wrong path. For features, extend the existing owner rather than creating a parallel abstraction.
 2. **Search and reuse first**: Search the whole repository before creating a feature, component, helper, view, workflow, or utility. Reuse or adapt what exists, consolidate in-scope duplication in the shared owner, and delete duplicate paths. Three similar lines beat a helper nobody else calls.

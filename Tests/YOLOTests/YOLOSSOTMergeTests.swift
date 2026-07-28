@@ -180,7 +180,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let detect = try loadPredictor(
       "yolo26n", task: .detect, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(detect.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(detect.boxes.count, 5)
     XCTAssertNil(detect.masks)
@@ -191,7 +191,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let segment = try loadPredictor(
       "yolo26n-seg", task: .segment, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(segment.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(segment.boxes.count, 5)
     XCTAssertNotNil(segment.masks)
@@ -201,7 +201,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let classify = try loadPredictor(
       "yolo26n-cls", task: .classify, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(classify.orig_shape, imageSize)
     XCTAssertNotNil(classify.probs)
     XCTAssertLessThanOrEqual(classify.probs?.top5.count ?? 0, 5)
@@ -210,7 +210,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let pose = try loadPredictor(
       "yolo26n-pose", task: .pose, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(pose.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(pose.boxes.count, 5)
     XCTAssertLessThanOrEqual(pose.keypointsList.count, 5)
@@ -219,7 +219,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let obb = try loadPredictor(
       "yolo26n-obb", task: .obb, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(obb.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(obb.obb.count, 5)
     XCTAssertNotNil(obb.originalImage)
@@ -227,7 +227,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let semantic = try loadPredictor(
       "yolo26n-sem", task: .semantic, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(semantic.orig_shape, imageSize)
     XCTAssertNotNil(semantic.semanticMask)
     XCTAssertNotNil(semantic.originalImage)
@@ -235,7 +235,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let depth = try loadPredictor(
       "yolo26n-depth", task: .depth, numItemsThreshold: 5, capturesOriginalImage: true
     )
-      .predictOnImage(image: image)
+    .predictOnImage(image: image)
     XCTAssertEqual(depth.orig_shape, imageSize)
     let depthMap = try XCTUnwrap(depth.depthMap)
     XCTAssertEqual(depthMap.values.count, depthMap.width * depthMap.height)

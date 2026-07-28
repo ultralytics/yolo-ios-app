@@ -116,15 +116,14 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
   /// - Returns: An array of detected boxes.
   func processRawResults(_ prediction: MLMultiArray) -> [Box] {
     let shape = prediction.shape.map { $0.intValue }
+    let strides = prediction.strides.map { $0.intValue }
     let confThreshold = Float(confidenceThreshold)
 
     // Detect format: end2end [1, max_det, 6] vs traditional [1, 4+nc, num_anchors]
     guard shape.count == 3 else { return [] }
     let isEnd2End = shape[2] < shape[1]
 
-    let (values, strides) = Self.denseFloatValues(from: prediction, shape: shape)
-    return values.withUnsafeBufferPointer { buffer in
-      guard let pointer = buffer.baseAddress else { return [] }
+    func decode(_ pointer: UnsafePointer<Float>, strides: [Int]) -> [Box] {
       if isEnd2End {
         return processEnd2EndResults(
           pointer: pointer, shape: shape, strides: strides,
@@ -135,39 +134,16 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
           confThreshold: confThreshold)
       }
     }
-  }
 
-  /// Copies a raw model output tensor into a densely packed, row-major `Float` buffer, along with the canonical
-  /// row-major strides matching that layout (not the source array's own `strides`, which may include padding).
-  ///
-  /// Takes a fast direct memory copy only when the tensor is already `.float32` *and* already densely packed (its
-  /// existing strides already equal the canonical row-major strides for its shape) — the only case where a flat
-  /// copy is equivalent to element-by-element access. Falls back to `MLMultiArray`'s safe per-element accessor
-  /// otherwise, which covers non-`.float32` backing types (e.g. `.float16`, used by some ANE-optimized NMS-free
-  /// exports) and any non-contiguous/padded storage. Reinterpreting a smaller-than-`Float32` buffer via
-  /// `assumingMemoryBound`, or flat-copying a padded buffer, would silently read the wrong byte offsets and run
-  /// past the tensor's actual allocation as detections accumulate.
-  private static func denseFloatValues(from multiArray: MLMultiArray, shape: [Int]) -> (
-    values: [Float], strides: [Int]
-  ) {
-    let denseStrides = Self.rowMajorStrides(for: shape)
-    let count = multiArray.count
-    var values = [Float](repeating: 0, count: count)
-    if multiArray.dataType == .float32, multiArray.strides.map({ $0.intValue }) == denseStrides {
-      let source = multiArray.dataPointer.assumingMemoryBound(to: Float.self)
-      values.withUnsafeMutableBufferPointer { $0.baseAddress!.update(from: source, count: count) }
-    } else {
-      for i in 0..<count { values[i] = multiArray[i].floatValue }
+    if prediction.dataType == .float32 {
+      return decode(
+        prediction.dataPointer.assumingMemoryBound(to: Float.self), strides: strides)
     }
-    return (values, denseStrides)
-  }
 
-  private static func rowMajorStrides(for shape: [Int]) -> [Int] {
-    var strides = [Int](repeating: 1, count: shape.count)
-    for i in stride(from: shape.count - 2, through: 0, by: -1) {
-      strides[i] = strides[i + 1] * shape[i + 1]
+    let values = (0..<prediction.count).map { prediction[$0].floatValue }
+    return values.withUnsafeBufferPointer {
+      decode($0.baseAddress!, strides: [shape[1] * shape[2], shape[2], 1])
     }
-    return strides
   }
 
   /// Processes YOLO26 end2end output: [1, max_det, 6] = [x1, y1, x2, y2, conf, class_id] (xyxy pixel coords).
@@ -226,7 +202,6 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     let numFeatures = shape[1]
     let numAnchors = shape[2]
     let numClasses = numFeatures - 4
-    guard numClasses > 0 else { return [] }
     let iouThresh = Float(iouThreshold)
     let featureStride = strides[1]
     let anchorStride = strides[2]

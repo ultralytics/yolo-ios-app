@@ -347,27 +347,19 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(boxes[1].xywh, CGRect(x: 75, y: 75, width: 10, height: 10))
   }
 
-  func testObjectDetectorDecodesEndToEndTensorAndAppliesLimit() throws {
+  func testObjectDetectorDecodesFloat16EndToEndTensorAndAppliesLimit() throws {
     let detector = ObjectDetector()
     detector.labels = ["person", "car"]
     detector.modelInputSize = (width: 100, height: 100)
     detector.inputSize = CGSize(width: 100, height: 100)
     detector.setNumItemsThreshold(numItems: 1)
 
-    let prediction = try makeArray(shape: [1, 8, 6]) { write in
-      write([0, 0, 0], 10)
-      write([0, 0, 1], 20)
-      write([0, 0, 2], 40)
-      write([0, 0, 3], 60)
-      write([0, 0, 4], 0.7)
-      write([0, 0, 5], 1)
-
-      write([0, 1, 0], 50)
-      write([0, 1, 1], 50)
-      write([0, 1, 2], 70)
-      write([0, 1, 3], 70)
-      write([0, 1, 4], 0.6)
-      write([0, 1, 5], 0)
+    let prediction = try MLMultiArray(shape: [1, 8, 6], dataType: .float16)
+    let values: [Float] =
+      [10, 20, 40, 60, 0.7, 1, 50, 50, 70, 70, 0.6, 0]
+      + Array(repeating: 0, count: prediction.count - 12)
+    for (index, value) in values.enumerated() {
+      prediction[index] = NSNumber(value: value)
     }
 
     let boxes = detector.processRawResults(prediction)

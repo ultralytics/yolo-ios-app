@@ -35,7 +35,8 @@ final class YOLOSSOTMergeTests: XCTestCase {
     _ name: String,
     task: YOLOTask,
     useGpu: Bool = false,
-    numItemsThreshold: Int = 30
+    numItemsThreshold: Int = 30,
+    capturesOriginalImage: Bool = false
   ) throws -> BasePredictor {
     let expectation = XCTestExpectation(description: "Load \(name)")
     let url = try modelURL(name)
@@ -53,6 +54,7 @@ final class YOLOSSOTMergeTests: XCTestCase {
 
     wait(for: [expectation], timeout: 30)
     let predictor = try XCTUnwrap(loaded.load()).get()
+    predictor.capturesOriginalImage = capturesOriginalImage
     let expectedInputSize = task == .classify ? 224 : 640
     XCTAssertEqual(predictor.modelInputSize.width, expectedInputSize)
     XCTAssertEqual(predictor.modelInputSize.height, expectedInputSize)
@@ -147,65 +149,97 @@ final class YOLOSSOTMergeTests: XCTestCase {
     let modelPath = try modelURL("yolo26n").path
     var yolo: YOLO?
     var threshold: Int?
+    var confidence: Double?
+    var iou: Double?
+    var isLoaded = false
 
     yolo = YOLO(modelPath, task: .detect, useGpu: false, numItemsThreshold: 4) { result in
       if case .success(let yolo) = result {
         threshold = yolo.getNumItemsThreshold()
+        confidence = yolo.getConfidenceThreshold()
+        iou = yolo.getIouThreshold()
+        isLoaded = yolo.isLoaded
       }
       expectation.fulfill()
     }
+    yolo?.setConfidenceThreshold(0.4)
+    yolo?.setIouThreshold(0.6)
 
     wait(for: [expectation], timeout: 30)
     XCTAssertNotNil(yolo)
     XCTAssertEqual(threshold, 4)
+    XCTAssertEqual(confidence ?? -1, 0.4, accuracy: 0.001)
+    XCTAssertEqual(iou ?? -1, 0.6, accuracy: 0.001)
+    XCTAssertTrue(isLoaded)
   }
 
   func testRepresentativeStaticImageOutputShapes() throws {
     let image = testImage()
     let imageSize = image.extent.size
 
-    let detect = try loadPredictor("yolo26n", task: .detect, numItemsThreshold: 5)
+    let detect = try loadPredictor(
+      "yolo26n", task: .detect, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(detect.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(detect.boxes.count, 5)
     XCTAssertNil(detect.masks)
     XCTAssertNil(detect.probs)
     XCTAssertNil(detect.semanticMask)
+    XCTAssertNotNil(detect.originalImage)
 
-    let segment = try loadPredictor("yolo26n-seg", task: .segment, numItemsThreshold: 5)
+    let segment = try loadPredictor(
+      "yolo26n-seg", task: .segment, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(segment.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(segment.boxes.count, 5)
     XCTAssertNotNil(segment.masks)
     XCTAssertNil(segment.probs)
+    XCTAssertNotNil(segment.originalImage)
 
-    let classify = try loadPredictor("yolo26n-cls", task: .classify, numItemsThreshold: 5)
+    let classify = try loadPredictor(
+      "yolo26n-cls", task: .classify, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(classify.orig_shape, imageSize)
     XCTAssertNotNil(classify.probs)
     XCTAssertLessThanOrEqual(classify.probs?.top5.count ?? 0, 5)
+    XCTAssertNotNil(classify.originalImage)
 
-    let pose = try loadPredictor("yolo26n-pose", task: .pose, numItemsThreshold: 5)
+    let pose = try loadPredictor(
+      "yolo26n-pose", task: .pose, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(pose.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(pose.boxes.count, 5)
     XCTAssertLessThanOrEqual(pose.keypointsList.count, 5)
+    XCTAssertNotNil(pose.originalImage)
 
-    let obb = try loadPredictor("yolo26n-obb", task: .obb, numItemsThreshold: 5)
+    let obb = try loadPredictor(
+      "yolo26n-obb", task: .obb, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(obb.orig_shape, imageSize)
     XCTAssertLessThanOrEqual(obb.obb.count, 5)
+    XCTAssertNotNil(obb.originalImage)
 
-    let semantic = try loadPredictor("yolo26n-sem", task: .semantic, numItemsThreshold: 5)
+    let semantic = try loadPredictor(
+      "yolo26n-sem", task: .semantic, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(semantic.orig_shape, imageSize)
     XCTAssertNotNil(semantic.semanticMask)
+    XCTAssertNotNil(semantic.originalImage)
 
-    let depth = try loadPredictor("yolo26n-depth", task: .depth, numItemsThreshold: 5)
+    let depth = try loadPredictor(
+      "yolo26n-depth", task: .depth, numItemsThreshold: 5, capturesOriginalImage: true
+    )
       .predictOnImage(image: image)
     XCTAssertEqual(depth.orig_shape, imageSize)
     let depthMap = try XCTUnwrap(depth.depthMap)
     XCTAssertEqual(depthMap.values.count, depthMap.width * depthMap.height)
     XCTAssertLessThan(depthMap.minDepth, depthMap.maxDepth)
+    XCTAssertNotNil(depth.originalImage)
   }
 }

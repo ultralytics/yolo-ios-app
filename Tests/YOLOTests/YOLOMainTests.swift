@@ -130,6 +130,7 @@ class YOLOMainTests: XCTestCase {
     try Data(repeating: 1, count: 16).write(to: packageURL.appendingPathComponent("weights.bin"))
 
     XCTAssertEqual(cache.getCachedModelPath(url: sourceURL, task: .detect), packageURL)
+    XCTAssertTrue(cache.isCached(url: sourceURL, task: .detect))
     XCTAssertTrue(try cache.listCachedModels().contains(key))
     XCTAssertGreaterThanOrEqual(try cache.getCacheSize(), 18)
     XCTAssertNotEqual(cache.cacheKey(for: sourceURL, task: .detect), cache.cacheKey(for: sourceURL))

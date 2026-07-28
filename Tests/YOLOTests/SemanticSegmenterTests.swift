@@ -70,4 +70,33 @@ final class SemanticSegmenterTests: XCTestCase {
       XCTAssertEqual(data[o + 3], 255, "alpha, pixel \(pixel)")
     }
   }
+
+  func testNonContiguousClassMapUsesStrides() throws {
+    let segmenter = SemanticSegmenter()
+    segmenter.labels = ["a", "b", "c"]
+    let pointer = UnsafeMutableRawPointer.allocate(
+      byteCount: 8 * MemoryLayout<Float>.stride, alignment: MemoryLayout<Float>.alignment)
+    pointer.initializeMemory(as: Float.self, repeating: 0, count: 8)
+    let values = pointer.assumingMemoryBound(to: Float.self)
+    values[0] = 1
+    values[2] = 0
+    values[4] = 2
+    values[6] = 1
+    let classMap = try MLMultiArray(
+      dataPointer: pointer, shape: [1, 2, 2], dataType: .float32, strides: [8, 4, 2]
+    ) { pointer in
+      pointer.deallocate()
+    }
+
+    let mask = try XCTUnwrap(segmenter.postProcessSemantic(classMap))
+
+    XCTAssertEqual(mask.classMap, [1, 0, 2, 1])
+  }
+
+  func testInvalidSemanticShapeReturnsNil() throws {
+    let segmenter = SemanticSegmenter()
+    let invalid = try MLMultiArray(shape: [2, 2], dataType: .float32)
+
+    XCTAssertNil(segmenter.postProcessSemantic(invalid))
+  }
 }

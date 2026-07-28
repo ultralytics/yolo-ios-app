@@ -38,6 +38,11 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(predictor.t3, 10)
     XCTAssertEqual(predictor.t4, 0.05)
     XCTAssertGreaterThan(predictor.timingBreakdownMs().post, 0)
+
+    var result = YOLOResult.empty
+    predictor.applyTimingBreakdown(&result, smoothed: true)
+    XCTAssertEqual(result.inferenceMs, 60, accuracy: 0.001)
+    XCTAssertEqual(result.postMs, 40, accuracy: 0.001)
   }
 
   func testConfidenceThresholdSetting() {
@@ -454,6 +459,38 @@ class BasePredictorTests: XCTestCase {
     XCTAssertEqual(result.keypoints.xy.count, 17)
     XCTAssertEqual(result.keypoints.xyn[16].x, 0.26, accuracy: 0.001)
     XCTAssertEqual(result.keypoints.conf[16], 0.8, accuracy: 0.001)
+  }
+
+  func testPoseEstimatorDecodesEndToEndTensorLayouts() throws {
+    let pose = PoseEstimator()
+    pose.labels = ["person"]
+    pose.modelInputSize = (width: 100, height: 100)
+    pose.inputSize = CGSize(width: 100, height: 100)
+
+    let withClass = try makeArray(shape: [1, 10, 9]) { write in
+      for (field, value) in [10, 20, 40, 60, 0.9, 0, 25, 35, 0.8].enumerated() {
+        write([0, 0, field], Float(value))
+      }
+    }
+    let classResults = pose.PostProcessPose(
+      prediction: withClass, confidenceThreshold: 0.25, iouThreshold: 0.5)
+
+    XCTAssertEqual(classResults.first?.box.xywh, CGRect(x: 10, y: 20, width: 30, height: 40))
+    XCTAssertEqual(classResults.first?.keypoints.xy.first?.x ?? -1, 25, accuracy: 0.001)
+    XCTAssertEqual(classResults.first?.keypoints.xyn.first?.y ?? -1, 0.35, accuracy: 0.001)
+    XCTAssertEqual(classResults.first?.keypoints.conf, [0.8])
+
+    let withoutClass = try makeArray(shape: [1, 9, 8]) { write in
+      for (field, value) in [5, 10, 15, 30, 0.7, 8, 12, 0.6].enumerated() {
+        write([0, 0, field], Float(value))
+      }
+    }
+    let noClassResults = pose.PostProcessPose(
+      prediction: withoutClass, confidenceThreshold: 0.25, iouThreshold: 0.5)
+
+    XCTAssertEqual(noClassResults.first?.box.xywh, CGRect(x: 5, y: 10, width: 10, height: 20))
+    XCTAssertEqual(noClassResults.first?.keypoints.xy.first?.x ?? -1, 8, accuracy: 0.001)
+    XCTAssertEqual(noClassResults.first?.keypoints.conf, [0.6])
   }
 
   func testObbDetectorDecodesTraditionalTensorAndRunsRotatedNMS() throws {

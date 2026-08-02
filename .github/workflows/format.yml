@@ -7,7 +7,7 @@ name: Ultralytics Actions
 
 on:
   issues:
-    types: [opened, edited]
+    types: [opened]
   pull_request:
     branches: [main]
     types: [opened, closed, synchronize, review_requested]

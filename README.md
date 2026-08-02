@@ -209,7 +209,7 @@ Ultralytics provides two licensing options to accommodate diverse use cases:
 - **AGPL-3.0 License**: An [OSI-approved](https://opensource.org/license/agpl-3.0) open-source license ideal for academic research, personal projects, and experimentation. It promotes open collaboration and knowledge sharing. See the [LICENSE](https://github.com/ultralytics/yolo-ios-app/blob/main/LICENSE) file for the full license text.
 - **Enterprise License**: Tailored for commercial applications, this license allows the integration of Ultralytics software and AI models into commercial products and services without the open-source requirements of AGPL-3.0. If your scenario involves commercial use, please contact us via [Ultralytics Licensing](https://www.ultralytics.com/license).
 
-## 🤝 Contact
+## 📮 Contact
 
 - For bug reports and feature requests related to this iOS project, please use [GitHub Issues](https://github.com/ultralytics/yolo-ios-app/issues).
 - For questions, discussions, and support regarding Ultralytics technologies, join our active [Discord](https://discord.com/invite/ultralytics) community!

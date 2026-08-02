@@ -56,7 +56,7 @@ Alternatively, declare the dependency in your own `Package.swift`:
 ```swift
 // In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.11")
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.13")
 ]
 
 // In your target's dependencies

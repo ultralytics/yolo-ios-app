@@ -157,7 +157,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 Add the `UltralyticsYOLO` package to your app with Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.11")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.13")
 ```
 
 Or with CocoaPods:

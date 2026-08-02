@@ -153,7 +153,7 @@ w8a32 `.tflite` 资源。此动态范围格式使用 int8 权重和 FP32 激活�
 使用 Swift Package Manager 将 `UltralyticsYOLO` package 添加到你的应用：
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.11")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.13")
 ```
 
 或使用 CocoaPods：

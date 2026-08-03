@@ -188,7 +188,7 @@ jobs:
 
   notify:
     needs: [check, release, pod, testflight]
-    if: always() && needs.check.outputs.new_version == 'true'
+    if: always() && (needs.check.outputs.new_version == 'true' || needs.testflight.result == 'failure')
     runs-on: ubuntu-latest
     permissions:
       contents: read

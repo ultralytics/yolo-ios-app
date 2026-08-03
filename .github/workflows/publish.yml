@@ -187,7 +187,7 @@ jobs:
         run: git push --force origin testflight
 
   notify:
-    needs: [check, release, testflight]
+    needs: [check, release, pod, testflight]
     if: always() && needs.check.outputs.new_version == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -204,7 +204,7 @@ jobs:
           TITLE=$(printf '%s' "$TITLE" | sed -E "s@#([0-9]+)@<https://github.com/$GH_REPO/pull/\1|#\1>@g")
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
       - name: Notify Success
-        if: needs.release.result == 'success' && github.event_name == 'push'
+        if: needs.release.result == 'success' && needs.pod.result == 'success' && needs.testflight.result == 'success' && github.event_name == 'push'
         uses: slackapi/slack-github-action@v4.0.0
         with:
           webhook-type: incoming-webhook
@@ -212,7 +212,7 @@ jobs:
           payload: |
             text: "<!subteam^S07NKMNECKH> *${{ github.workflow }}* ✅ `${{ github.repository }}` ${{ steps.release.outputs.title || needs.check.outputs.current_tag }}  <https://github.com/${{ github.repository }}/releases/tag/${{ needs.check.outputs.current_tag }}|*Release*>  ·  <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|*Run*>"
       - name: Notify Failure
-        if: needs.release.result != 'success'
+        if: needs.release.result == 'failure' || needs.pod.result == 'failure' || needs.testflight.result == 'failure'
         uses: slackapi/slack-github-action@v4.0.0
         with:
           webhook-type: incoming-webhook

@@ -51,10 +51,9 @@ body:
       description: Share the platform and version information relevant to your report.
       placeholder: |
         Please include:
-        - OS / platform (e.g., iOS version, Xcode version, macOS version)
-        - Language or framework version (Python, Swift, Flutter, etc.)
-        - Package or app version
-        - Hardware (e.g., CPU, GPU model, device model)
+        - Device and iOS version (e.g., iPhone 15 / iOS 18.2)
+        - Xcode and macOS versions (e.g., Xcode 26.0 / macOS 26.0)
+        - UltralyticsYOLO package or app version
         - Any other environment details
     validations:
       required: true
@@ -65,8 +64,8 @@ body:
       description: >
         Provide the smallest possible snippet, command, or steps required to reproduce the issue. This helps us pinpoint problems faster.
       placeholder: |
-        ```python
-        # Code or commands to reproduce your issue here
+        ```swift
+        // Code or commands to reproduce your issue here
         ```
     validations:
       required: false

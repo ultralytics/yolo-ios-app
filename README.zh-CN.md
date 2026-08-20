@@ -1,4 +1,4 @@
-<a href="https://www.ultralytics.com/"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
+<a href="https://www.ultralytics.com"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
@@ -10,7 +10,7 @@
 [![CocoaPods](https://img.shields.io/cocoapods/v/UltralyticsYOLO?logo=cocoapods&logoColor=white&label=CocoaPods)](https://cocoapods.org/pods/UltralyticsYOLO)
 
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
-[![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com/)
+[![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
 [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、深度估计、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。

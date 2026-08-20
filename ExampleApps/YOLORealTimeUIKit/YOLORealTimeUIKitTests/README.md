@@ -1,8 +1,8 @@
-<a href="https://www.ultralytics.com/"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
+<a href="https://www.ultralytics.com"><img src="https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg" width="320" alt="Ultralytics logo"></a>
 
 # YOLO RealTime UIKit Tests
 
-This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing) for the YOLO RealTime UIKit example application. These tests are designed to ensure the reliability and functionality of the app's various components, contributing to a robust final product. You can find more information about building robust applications in the [Ultralytics documentation](https://docs.ultralytics.com/).
+This directory contains [unit tests](https://en.wikipedia.org/wiki/Unit_testing) for the YOLO RealTime UIKit example application. These tests are designed to ensure the reliability and functionality of the app's various components, contributing to a robust final product. You can find more information about building robust applications in the [Ultralytics documentation](https://docs.ultralytics.com).
 
 ## 🧪 Running Tests
 

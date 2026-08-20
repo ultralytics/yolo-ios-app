@@ -6,7 +6,7 @@ contact_links:
     url: https://github.com/ultralytics/yolo-ios-app#readme
     about: Quickstart and Swift package docs for the YOLO iOS app
   - name: 💬 Forum
-    url: https://community.ultralytics.com/
+    url: https://community.ultralytics.com
     about: Ask the Ultralytics community for workflow help
   - name: 🎧 Discord
     url: https://ultralytics.com/discord

@@ -114,7 +114,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// Supports comma-separated `classes` metadata and dictionary/list-style `names` metadata. Sparse keyed `names`
   /// preserve their numeric indexes by filling missing slots with empty strings so `labelName(for:)` can fall back
   /// deterministically.
-  static func parseLabels(from userDefined: [String: String]) -> [String] {
+  public static func parseLabels(from userDefined: [String: String]) -> [String] {
     if let labelsData = userDefined["classes"] {
       return
         labelsData

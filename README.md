@@ -95,17 +95,17 @@ The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModel
 `v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the
 Flutter repo's Android export script and release assets.
 
-| Property       | Core ML                                 | LiteRT                                  |
-| -------------- | --------------------------------------- | --------------------------------------- |
-| Model IDs      | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
-| Tasks          | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
-| Format         | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize`     | `8`                                     | `w8a32`                                 |
-| `imgsz`        | `224` cls; `640` others                 | `224` cls; `640` others                 |
-| `nms`          | `False`                                 | `None`                                 |
-| `end2end` metadata      | `False` cls/sem/depth; `True` others    | `False`                                 |
-| Calibration    | exporter default                        | None (dynamic-range)                    |
-| Postprocessing | Swift/Core ML                           | Android native                          |
+| Property           | Core ML                                 | LiteRT                                  |
+| ------------------ | --------------------------------------- | --------------------------------------- |
+| Model IDs          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
+| Tasks              | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
+| Format             | `.mlpackage.zip`                        | `.tflite`                               |
+| `quantize`         | `8`                                     | `w8a32`                                 |
+| `imgsz`            | `224` cls; `640` others                 | `224` cls; `640` others                 |
+| `nms`              | `False`                                 | `None`                                  |
+| `end2end` metadata | `False` cls/sem/depth; `True` others    | `False`                                 |
+| Calibration        | exporter default                        | None (dynamic-range)                    |
+| Postprocessing     | Swift/Core ML                           | Android native                          |
 
 Export scripts require `ultralytics>=8.4.142`. Core ML assets use `nms=False` to select the NMS-free head for detect,
 segment, pose, and OBB. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`

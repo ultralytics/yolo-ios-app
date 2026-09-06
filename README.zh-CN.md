@@ -92,17 +92,17 @@ URL 模式：
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
-| 属性       | Core ML                                 | LiteRT                                  |
-| ---------- | --------------------------------------- | --------------------------------------- |
-| 模型 ID    | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
-| 任务       | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
-| 格式       | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize` | `8`                                     | `w8a32`                                 |
-| `imgsz`    | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
-| `nms`      | `False`                                 | `None`                                 |
-| `end2end` 元数据  | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
-| 校准       | 导出器默认值                            | 无（动态范围量化）                      |
-| 后处理     | Swift/Core ML                           | Android 原生                            |
+| 属性             | Core ML                                 | LiteRT                                  |
+| ---------------- | --------------------------------------- | --------------------------------------- |
+| 模型 ID          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
+| 任务             | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
+| 格式             | `.mlpackage.zip`                        | `.tflite`                               |
+| `quantize`       | `8`                                     | `w8a32`                                 |
+| `imgsz`          | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
+| `nms`            | `False`                                 | `None`                                  |
+| `end2end` 元数据 | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
+| 校准             | 导出器默认值                            | 无（动态范围量化）                      |
+| 后处理           | Swift/Core ML                           | Android 原生                            |
 
 导出脚本要求 `ultralytics>=8.4.142`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头；
 分类、语义分割和深度保留原生输出。LiteRT 使用 `nms=None` 导出原始一对多输出，由 Android 端执行 NMS。

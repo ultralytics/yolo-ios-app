@@ -200,11 +200,11 @@ Export arguments below use the equivalent `nms` settings from Ultralytics >=8.4.
 
 Host (`coremltools` NE median, interleaved, `yolo26n`):
 
-| Variant (`yolo26n`)                          | NE latency | ANE op-share |
-| -------------------------------------------- | ---------- | ------------ |
-| end2end (`nms=False`, shipped) | 2.60 ms    | 92.9%        |
-| legacy raw (`nms=None`)      | 2.26 ms    | 99.3%        |
-| legacy + Core ML NMS (`nms=True`)            | 2.37 ms    | (pipeline)   |
+| Variant (`yolo26n`)               | NE latency | ANE op-share |
+| --------------------------------- | ---------- | ------------ |
+| end2end (`nms=False`, shipped)    | 2.60 ms    | 92.9%        |
+| legacy raw (`nms=None`)           | 2.26 ms    | 99.3%        |
+| legacy + Core ML NMS (`nms=True`) | 2.37 ms    | (pipeline)   |
 
 Host end2end penalty vs legacy+NMS: **n +9.4%, s +6.4%, m +3.9%** (fixed ~0.25 ms CPU decode cost, so a larger % on smaller models). Compute plan: end2end adds ~19 CPU ops (top-k/gather/decode), dropping ANE op-share 99.3%→92.9%.
 

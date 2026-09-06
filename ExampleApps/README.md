@@ -48,6 +48,7 @@ Follow these steps to get the examples up and running:
     - Install the export dependencies:
 
       ```bash
+      uv venv --python 3.13 .venv
       uv pip install "ultralytics[export-coreml]>=8.4.142"
       ```
 

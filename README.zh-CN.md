@@ -106,7 +106,7 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 
 导出脚本要求 `ultralytics>=8.4.142`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头；
 分类、语义分割和深度保留原生输出。LiteRT 使用 `nms=None` 导出原始一对多输出，由 Android 端执行 NMS。
-`nms=True` 在支持的格式中嵌入 NMS。`end2end` 元数据字段描述导出图，而不是导出参数。
+`nms=True` 在支持的格式中嵌入 NMS。`end2end` 元数据字段描述导出图；请使用 `nms` 配置导出。
 
 ### Core ML 发布工作流
 

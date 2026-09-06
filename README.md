@@ -110,7 +110,7 @@ Flutter repo's Android export script and release assets.
 Export scripts require `ultralytics>=8.4.142`. Core ML assets use `nms=False` to select the NMS-free head for detect,
 segment, pose, and OBB. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
 for raw one-to-many outputs with Android-side NMS. `nms=True` embeds NMS where supported. The `end2end` metadata
-field describes the exported graph; it is not an export argument.
+field describes the exported graph; use `nms` to configure exports.
 
 ### Core ML Release Workflow
 

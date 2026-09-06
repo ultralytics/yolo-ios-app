@@ -13,7 +13,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, depth estimation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (NMS-free, with Swift-side postprocessing). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS provides on-device [real-time inference](https://www.ultralytics.com/glossary/real-time-inference) for [object detection](https://www.ultralytics.com/glossary/object-detection), instance segmentation, semantic segmentation, depth estimation, classification, pose estimation, and oriented bounding box detection. The SDK supports both [YOLO11](https://docs.ultralytics.com/models/yolo11) (with Core ML NMS) and [YOLO26 models](https://platform.ultralytics.com/ultralytics/yolo26) (shipped with `nms=False` for NMS-free inference). Download the app from the [App Store](https://apps.apple.com/app/ultralytics-yolo/id1452689527), or integrate the Swift package into your own applications.
 
 <div align="center">
   <br>
@@ -32,7 +32,7 @@
 - Swift and Core ML throughout, running on the Apple Neural Engine and GPU
 - Camera-rate (~30 FPS) real-time inference on recent iPhones — see [docs/performance.md](docs/performance.md) for on-device profiling
 - Native UI following Apple interface guidelines
-- YOLO26 (NMS-free) and YOLO11 models both supported
+- YOLO26 and YOLO11 models supported, including NMS-free and raw outputs
 - No third-party dependencies — pure Swift on Apple's first-party frameworks
 
 | Feature                               | iOS | Details                                       |
@@ -102,14 +102,15 @@ Flutter repo's Android export script and release assets.
 | Format         | `.mlpackage.zip`                        | `.tflite`                               |
 | `quantize`     | `8`                                     | `w8a32`                                 |
 | `imgsz`        | `224` cls; `640` others                 | `224` cls; `640` others                 |
-| `nms`          | `False`                                 | `False`                                 |
-| `end2end`      | `False` cls/sem/depth; `True` others    | `False`                                 |
+| `nms`          | `False`                                 | `None`                                 |
+| `end2end` metadata      | `False` cls/sem/depth; `True` others    | `False`                                 |
 | Calibration    | exporter default                        | None (dynamic-range)                    |
 | Postprocessing | Swift/Core ML                           | Android native                          |
 
-Core ML assets use `nms=False`. Detect, segment, pose, and OBB use `end2end=True`; classification, semantic, and depth
-use `end2end=False`. The LiteRT export script passes both `nms=False` and `end2end=False`; `end2end=False` disables the
-YOLO26 end-to-end head for the Android LiteRT conversion path.
+Export scripts require `ultralytics>=8.4.142`. Core ML assets use `nms=False` to select the NMS-free head for detect,
+segment, pose, and OBB. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
+for raw one-to-many outputs with Android-side NMS. `nms=True` embeds NMS where supported. The `end2end` metadata
+field describes the exported graph; it is not an export argument.
 
 ### Core ML Release Workflow
 
@@ -120,7 +121,7 @@ changes, replace the generated assets in `v8.3.0` and update this table together
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install -e "../ultralytics[export]"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 
@@ -134,7 +135,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. YOLO26 is NMS-free in this SDK, so official Core ML assets are exported with `nms=False`; detect, segment, pose, and OBB use `end2end=True`, while depth uses its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
+The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
 
 ### Android LiteRT Counterparts
 

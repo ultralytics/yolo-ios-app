@@ -55,8 +55,8 @@ periphery scan --project YOLOiOSApp/YOLOiOSApp.xcodeproj --schemes YOLOiOSApp \
   --exclude-tests --retain-public --report-include 'Sources/UltralyticsYOLO/**/*.swift' \
   --strict -- -destination "platform=iOS Simulator,id=<SIMULATOR_UDID>,arch=arm64"
 
-# Model export env (scripts/export-models.py; needs a sibling ultralytics checkout)
-uv venv --python 3.13 .venv && uv pip install -e "../ultralytics[export]"
+# Model export env (scripts/export-models.py)
+uv venv --python 3.13 .venv && uv pip install "ultralytics[export-coreml]>=8.4.142"
 ```
 
 CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + a non-blocking Codecov upload) and `periphery` (dead-code scan, `--strict` fails on any unused declaration). `Package.swift` is pinned to `swift-tools-version: 5.10` for CI compatibility — do not raise it.
@@ -66,7 +66,7 @@ CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + a non-blocking
 - Single SPM library target `UltralyticsYOLO` (`Sources/UltralyticsYOLO/`), also published as the `UltralyticsYOLO` CocoaPod; the `ultralytics/yolo-flutter-app` plugin depends on the pod (pinned `< 9.0`), so public API breaks there too. Package floor is iOS 13 (with `@available` fallbacks) while the main app `YOLOiOSApp/` targets iOS 16.
 - Zero third-party dependencies: ZIP extraction of downloaded models is the in-repo `MiniZip.swift` (Foundation + Compression only).
 - Inference flow: `YOLO.swift` facade (`callAsFunction` overloads for URL/String/UIImage/CIImage/CGImage) → `BasePredictor` subclasses (`ObjectDetector`, `Segmenter`, `SemanticSegmenter`, `DepthEstimator`, `Classifier`, `PoseEstimator`, `ObbDetector`) → Vision `VNCoreMLRequest`. `YOLOView` (UIKit, wraps `AVCaptureSession` + overlays) and `YOLOCamera` (SwiftUI) provide real-time camera UI.
-- YOLO26 vs YOLO11: model metadata key `nms == "false"` marks NMS-free YOLO26 end2end models (detect output `[1, 300, 6]` xyxy pixel coords, decoded in Swift); default `requiresNMS = true` keeps the Core ML NMS path for YOLO11 (`[1, 4+nc, 8400]` xywh). Always index `MLMultiArray` via `strides`.
+- Export scripts require `ultralytics>=8.4.142`: Core ML uses `nms=False` for NMS-free YOLO26 outputs; `nms=None` exports raw one-to-many outputs and `nms=True` embeds NMS where supported. `end2end` remains graph metadata, not an export argument. Predictors decode Vision NMS observations or raw tensors by their actual layouts. Always index `MLMultiArray` via `strides`.
 - `.mlpackage` models are never committed (gitignored); tests and the app get them from the `v8.3.0` release assets via `scripts/download-models.sh` (an Xcode "Download YOLO Models" build phase runs it locally and is skipped on GitHub Actions, where CI runs the script as its own step).
 - Publishing (`publish.yml`, push to `main`, runs only when the pushing actor is `glenn-jocher`): a new `MARKETING_VERSION` in `YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj` triggers tag `v{version}` + GitHub release + `pod trunk push` + a squashed `testflight` branch force-pushed for Xcode Cloud; an unchanged version still ships a TestFlight build.
 

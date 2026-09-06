@@ -22,13 +22,14 @@ To execute these tests, you will need the following [Core ML](https://developer.
 2.  Convert the [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` functionality:
 
 ```python
+# Requires ultralytics>=8.4.142
 from ultralytics import YOLO
 
 # Load the YOLO26 nano segmentation model
 model = YOLO("yolo26n-seg.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
-model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
+model.export(format="coreml", nms=False, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 For more details on exporting models, refer to the [Ultralytics Export documentation](https://docs.ultralytics.com/modes/export).

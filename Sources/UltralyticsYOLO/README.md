@@ -261,7 +261,7 @@ URL patterns:
 
 The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
-The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `quantize`, `nms`, `end2end`, calibration, postprocessing, and release hosting.
+The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `quantize`, `nms`, graph metadata, calibration, postprocessing, and release hosting.
 
 ### Reproduce The Official Core ML Assets
 
@@ -272,17 +272,17 @@ settings, `.mlpackage.zip` packaging, the optional local app-copy step, and opti
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install -e "../ultralytics[export]"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 
 Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
 `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
-YOLO26 is NMS-free in this SDK. The shipped Core ML assets use `nms=False`; detect, segment, pose, and OBB use
-`end2end=True`, while classification, semantic, and depth use `end2end=False`. The Swift package applies task-specific
-postprocessing internally. Legacy YOLO11 models exported with Core ML NMS (`nms=True`) remain supported; the predictor
-detects the model's `nms` metadata flag at load time and dispatches to the correct path.
+With `ultralytics>=8.4.142`, use `nms=False` to reproduce the shipped NMS-free Core ML assets. Detect, segment, pose,
+and OBB use the one-to-one head; classification, semantic, and depth retain their native outputs. Use `nms=None`
+for raw one-to-many outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. The predictors
+decode the actual Vision observations and tensor layouts, so existing YOLO11 and YOLO26 assets remain supported.
 
 ## 🤝 Contributing
 

@@ -51,7 +51,7 @@ The automated downloader is the recommended path. You can also obtain compatible
 #### Method 1: Download and Convert Official Models
 
 1.  Download the base [PyTorch](https://pytorch.org/) (`.pt`) models from the [Ultralytics GitHub repository](https://github.com/ultralytics/ultralytics) releases or train your own.
-2.  Convert these models to the Core ML format using the Ultralytics [`export` mode](https://docs.ultralytics.com/modes/export). You'll need a [Python](https://www.python.org/) environment with the `ultralytics` package installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart) for installation).
+2.  Convert these models to the Core ML format using the Ultralytics [`export` mode](https://docs.ultralytics.com/modes/export). You'll need a [Python](https://www.python.org/) environment with `ultralytics[export-coreml]>=8.4.142` installed (see the [Ultralytics Quickstart guide](https://docs.ultralytics.com/quickstart) for installation).
 
 ```python
 from ultralytics import YOLO
@@ -68,12 +68,10 @@ def export_and_zip_yolo_models(
         # Ultralytics imgsz order is [height, width]; use [640, 384] for portrait-only or
         # [384, 640] for landscape-only. Use orientation-only shapes only when locked to that orientation.
         imgsz = 224 if "cls" in model_type else 640
-        nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
-        end2end = model_type not in ("-sem", "-depth", "-cls")
         for size in model_sizes:
             model_name = f"yolo26{size}{model_type}"
             model = YOLO(f"{model_name}.pt")
-            model.export(format="coreml", quantize=8, imgsz=[imgsz, imgsz], nms=nms, end2end=end2end)
+            model.export(format="coreml", quantize=8, imgsz=[imgsz, imgsz], nms=False)
             zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 

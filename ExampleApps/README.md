@@ -45,10 +45,10 @@ Follow these steps to get the examples up and running:
     - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases). Unzip the downloaded `.mlpackage.zip` asset and place the model package into your Xcode project.
     - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
-    - Install the package using [pip](https://pip.pypa.io/en/stable/installation/):
+    - Install the export dependencies:
 
       ```bash
-      pip install ultralytics
+      uv pip install "ultralytics[export-coreml]>=8.4.142"
       ```
 
     - Run a Python script to [export](https://docs.ultralytics.com/modes/export):
@@ -65,12 +65,10 @@ Follow these steps to get the examples up and running:
           """Exports YOLO26 models to Core ML format and optionally zips the output packages."""
           for model_type in model_types:
               imgsz = [224, 224] if "cls" in model_type else [640, 640]  # official mobile input sizes
-              nms = False  # YOLO26 is NMS-free for detect; non-detect tasks also use nms=False
-              end2end = model_type not in ("-sem", "-depth", "-cls")
               for size in model_sizes:
                   model_name = f"yolo26{size}{model_type}"
                   model = YOLO(f"{model_name}.pt")
-                  model.export(format="coreml", quantize=8, imgsz=imgsz, nms=nms, end2end=end2end)
+                  model.export(format="coreml", quantize=8, imgsz=imgsz, nms=False)
                   zip_directory(f"{model_name}.mlpackage").rename(f"{model_name}.mlpackage.zip")
 
 

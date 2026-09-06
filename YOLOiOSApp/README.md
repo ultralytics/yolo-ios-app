@@ -62,7 +62,7 @@ Ensure you have the following before you begin:
 
     ```bash
     uv venv --python 3.13 .venv
-    uv pip install -e "../ultralytics[export]"
+    uv pip install "ultralytics[export-coreml]>=8.4.142"
     uv run python scripts/export-models.py --sizes n --copy-to-app
     ```
 

@@ -13,7 +13,7 @@
 [![Ultralytics Forums](https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue)](https://community.ultralytics.com)
 [![Ultralytics Reddit](https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue)](https://reddit.com/r/ultralytics)
 
-[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、深度估计、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（无 NMS，使用 Swift 侧后处理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。
+[Ultralytics YOLO](https://github.com/ultralytics/ultralytics) for iOS 提供设备端[实时推理](https://www.ultralytics.com/glossary/real-time-inference)，支持[目标检测](https://www.ultralytics.com/glossary/object-detection)、实例分割、语义分割、深度估计、图像分类、姿态估计以及旋转框检测。该 SDK 同时支持 [YOLO11](https://docs.ultralytics.com/models/yolo11)（使用 Core ML NMS）和 [YOLO26 模型](https://platform.ultralytics.com/ultralytics/yolo26)（官方资源使用 `nms=False` 实现无 NMS 推理）。你可以从 [App Store](https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527) 下载应用，或将 Swift package 集成到你自己的应用中。
 
 <div align="center">
   <br>
@@ -32,7 +32,7 @@
 - 全程使用 Swift 与 Core ML，运行在 Apple Neural Engine 和 GPU 上
 - 在最新款 iPhone 上达到相机帧率（约 30 FPS）的实时推理——设备端性能分析见 [docs/performance.md](docs/performance.md)
 - 遵循 Apple 界面规范的原生 UI
-- 同时支持 YOLO26（无 NMS）与 YOLO11 模型
+- 同时支持 YOLO26 与 YOLO11 模型，包括无 NMS 和原始输出
 - 无第三方依赖——纯 Swift，仅依赖 Apple 官方框架
 
 | 功能                  | iOS | 详细说明                     |
@@ -99,14 +99,14 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | 格式       | `.mlpackage.zip`                        | `.tflite`                               |
 | `quantize` | `8`                                     | `w8a32`                                 |
 | `imgsz`    | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
-| `nms`      | `False`                                 | `False`                                 |
-| `end2end`  | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
+| `nms`      | `False`                                 | `None`                                 |
+| `end2end` 元数据  | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
 | 校准       | 导出器默认值                            | 无（动态范围量化）                      |
 | 后处理     | Swift/Core ML                           | Android 原生                            |
 
-Core ML 资源使用 `nms=False` 导出。检测、实例分割、姿态和 OBB 使用 `end2end=True`；分类、语义分割和深度
-使用 `end2end=False`。LiteRT 导出脚本同时传入 `nms=False` 和 `end2end=False`；`end2end=False` 会为 Android
-LiteRT 转换路径禁用 YOLO26 端到端头。
+导出脚本要求 `ultralytics>=8.4.142`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头；
+分类、语义分割和深度保留原生输出。LiteRT 使用 `nms=None` 导出原始一对多输出，由 Android 端执行 NMS。
+`nms=True` 在支持的格式中嵌入 NMS。`end2end` 元数据字段描述导出图，而不是导出参数。
 
 ### Core ML 发布工作流
 
@@ -116,7 +116,7 @@ LiteRT 转换路径禁用 YOLO26 端到端头。
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install -e "../ultralytics[export]"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 
@@ -130,7 +130,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。在本 SDK 中 YOLO26 是无 NMS 的，因此官方 Core ML 资源使用 `nms=False` 导出；检测、分割、姿态和 OBB 使用 `end2end=True`，而深度任务使用原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
+该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
 
 ### Android LiteRT 对应资源
 

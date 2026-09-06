@@ -22,6 +22,7 @@ To execute the complete test suite, you will need the [Core ML](https://develope
 2.  **Convert**: Convert the PyTorch model to the Core ML format using the Ultralytics Python package. Detailed instructions can be found in our [Core ML export documentation](https://docs.ultralytics.com/integrations/coreml).
 
 ```python
+# Requires ultralytics>=8.4.142
 from ultralytics import YOLO
 
 # Load the YOLO26 detection model
@@ -29,7 +30,7 @@ model = YOLO("yolo26n.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
 # This will create the yolo26n.mlpackage file.
-model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
+model.export(format="coreml", nms=False, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 ### Adding Model Files to the Project

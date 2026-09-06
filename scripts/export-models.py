@@ -4,7 +4,7 @@
 Usage from the repository root:
 
     uv venv --python 3.13 .venv
-    uv pip install -e "../ultralytics[export]"
+    uv pip install "ultralytics[export-coreml]>=8.4.142"
     uv run python scripts/export-models.py
 
 The script exports the official YOLO26 task x size matrix to int8 Core ML
@@ -24,7 +24,8 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import coremltools as ct
-from ultralytics import YOLO
+from ultralytics import YOLO, __version__
+from ultralytics.utils.checks import check_version
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "exports" / "coreml"
@@ -144,6 +145,7 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
 def main() -> None:
     """Export, package, and optionally upload Core ML assets."""
     args = parse_args()
+    check_version(__version__, ">=8.4.142", name="ultralytics", hard=True)
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(output_dir)
@@ -164,7 +166,6 @@ def main() -> None:
                     format="coreml",
                     quantize=8,
                     nms=False,
-                    end2end=task_name in {"detect", "segment", "pose", "obb"},
                     imgsz=task.imgsz,
                 )
             )

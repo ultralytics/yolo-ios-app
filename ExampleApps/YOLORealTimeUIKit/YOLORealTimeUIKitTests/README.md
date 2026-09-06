@@ -22,6 +22,7 @@ To execute the full test suite effectively, you will need the following [Apple C
 2.  Convert the downloaded model (e.g., `yolo26n.pt`) to the Core ML format using the [Ultralytics `export` mode](https://docs.ultralytics.com/modes/export). See our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml) for detailed instructions.
 
 ```python
+# Requires ultralytics>=8.4.142
 from ultralytics import YOLO
 
 # Load the YOLO26 nano detection model
@@ -29,7 +30,7 @@ model = YOLO("yolo26n.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
 # See https://docs.ultralytics.com/integrations/coreml for more details
-model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
+model.export(format="coreml", nms=False, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 ### Adding Model Files to the Project

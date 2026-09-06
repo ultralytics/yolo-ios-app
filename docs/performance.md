@@ -194,14 +194,16 @@ The same applies to the **Ultralytics Python package on a Mac**: its CoreML back
 
 ## 🎯 Experiment: YOLO26 End2end Head vs. Legacy Head + NMS
 
+Export arguments below use the equivalent `nms` settings from Ultralytics >=8.4.142.
+
 **Q:** The YOLO26 in-graph end2end decode (top-k/gather, no NMS) puts some ops on the CPU — is it slower than a legacy head + Core ML/Vision NMS? **A:** On host it looks slower; **on device it is as fast or faster.** Keep end2end.
 
 Host (`coremltools` NE median, interleaved, `yolo26n`):
 
 | Variant (`yolo26n`)                          | NE latency | ANE op-share |
 | -------------------------------------------- | ---------- | ------------ |
-| end2end (`end2end=True, nms=False`, shipped) | 2.60 ms    | 92.9%        |
-| legacy raw (`end2end=False, nms=False`)      | 2.26 ms    | 99.3%        |
+| end2end (`nms=False`, shipped) | 2.60 ms    | 92.9%        |
+| legacy raw (`nms=None`)      | 2.26 ms    | 99.3%        |
 | legacy + Core ML NMS (`nms=True`)            | 2.37 ms    | (pipeline)   |
 
 Host end2end penalty vs legacy+NMS: **n +9.4%, s +6.4%, m +3.9%** (fixed ~0.25 ms CPU decode cost, so a larger % on smaller models). Compute plan: end2end adds ~19 CPU ops (top-k/gather/decode), dropping ANE op-share 99.3%→92.9%.
@@ -213,7 +215,7 @@ Device (Xcode Performance Report, A19 Pro, `yolo26n`):
 | end2end      | 1.81 ms | 1.52 ms | 21      | 276     |
 | legacy + NMS | 1.90 ms | 1.76 ms | 2       | 282     |
 
-**On device the sign flips: end2end is faster** — the A19 Pro ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting `end2end=False` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The end2end export stays the default.
+**On device the sign flips: end2end is faster** — the A19 Pro ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting with `nms=None` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The end2end export stays the default.
 
 ## 📦 Experiment: Core ML Export Variants
 

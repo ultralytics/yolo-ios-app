@@ -20,13 +20,14 @@ To execute the complete test suite, including tests involving model [inference](
 2.  Convert the desired [PyTorch](https://pytorch.org/) model (`.pt`) to Core ML format (`.mlpackage`) using the Ultralytics `export` mode. See the [Export documentation](https://docs.ultralytics.com/modes/export) and our [Core ML integration guide](https://docs.ultralytics.com/integrations/coreml) for more details.
 
 ```python
+# Requires ultralytics>=8.4.142
 from ultralytics import YOLO
 
 # Load a pretrained OBB model (e.g., yolo26n-obb.pt)
 model = YOLO("yolo26n-obb.pt")
 
 # Export the YOLO26 model to the NMS-free Core ML format used by the iOS decoders.
-model.export(format="coreml", nms=False, end2end=True, imgsz=640)  # Classification models use imgsz=224.
+model.export(format="coreml", nms=False, imgsz=640)  # Classification models use imgsz=224.
 ```
 
 ### Adding Model Files to the Project

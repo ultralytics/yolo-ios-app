@@ -215,7 +215,7 @@ Device (Xcode Performance Report, A19 Pro, `yolo26n`):
 | end2end      | 1.81 ms | 1.52 ms | 21      | 276     |
 | legacy + NMS | 1.90 ms | 1.76 ms | 2       | 282     |
 
-**On device the sign flips: end2end is faster** — the A19 Pro ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting with `nms=None` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The end2end export stays the default.
+**On device the sign flips: end2end is faster** — the A19 Pro ANE runs the in-graph top-k cheaper than a separate Vision NMS stage. The 21 CPU ops are real but cheap. Re-exporting with `nms=None` for speed is a no-op-to-loss on device, and would force Swift-side NMS for OBB/pose/seg. The app export script keeps `nms=False`; the Ultralytics export default is `nms=None`.
 
 ## 📦 Experiment: Core ML Export Variants
 

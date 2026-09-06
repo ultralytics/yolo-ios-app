@@ -11,6 +11,7 @@ To execute the test suite successfully, ensure the following [Core ML](https://d
 - `yolo26n.mlpackage` - [Detection](https://docs.ultralytics.com/tasks/detect) model
 - `yolo26n-seg.mlpackage` - [Instance segmentation](https://docs.ultralytics.com/tasks/segment) model
 - `yolo26n-sem.mlpackage` - [Semantic segmentation](https://docs.ultralytics.com/tasks/semantic) model
+- `yolo26n-depth.mlpackage` - [Depth estimation](https://docs.ultralytics.com/tasks/depth) model
 - `yolo26n-cls.mlpackage` - [Classification](https://docs.ultralytics.com/tasks/classify) model
 - `yolo26n-pose.mlpackage` - [Pose estimation](https://docs.ultralytics.com/tasks/pose) model
 - `yolo26n-obb.mlpackage` - [Oriented bounding box](https://docs.ultralytics.com/tasks/obb) model
@@ -27,6 +28,7 @@ Tests/YOLOTests/Resources/
 ├── yolo26n.mlpackage/             # Detection model package
 ├── yolo26n-seg.mlpackage/         # Instance segmentation model package
 ├── yolo26n-sem.mlpackage/         # Semantic segmentation model package
+├── yolo26n-depth.mlpackage/       # Depth estimation model package
 ├── yolo26n-cls.mlpackage/         # Classification model package
 ├── yolo26n-pose.mlpackage/        # Pose estimation model package
 └── yolo26n-obb.mlpackage/         # Oriented bounding box model package
@@ -52,7 +54,7 @@ This script will:
 
 ### Manual Setup
 
-For comprehensive instructions on manually acquiring and placing these model files, please consult the main `Tests/YOLOTests/README.md` file located in the parent test directory. This guide provides the necessary steps for exporting models in the required format.
+Follow the [manual export instructions](../README.md#method-1-download-and-convert-official-models) with `ultralytics[export-coreml]>=8.4.142` and `nms=False`. Use `imgsz=224` for classification and `imgsz=640` for every other task.
 
 ---
 

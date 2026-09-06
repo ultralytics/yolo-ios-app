@@ -212,7 +212,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
   /// Processes YOLO26 end2end pose output: [1, max_det, 6+51].
   /// Each detection: [x1, y1, x2, y2, conf, class_id, kp0_x, kp0_y, kp0_conf, ...] in xyxy pixel coords.
-  /// NMS is already applied by the model.
+  /// The one-to-one head needs no NMS; embedded-NMS exports are already suppressed.
   private func postProcessEnd2EndPose(
     prediction: MLMultiArray,
     shape: [Int],

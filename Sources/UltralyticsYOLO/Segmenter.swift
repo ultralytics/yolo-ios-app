@@ -261,7 +261,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
   /// Processes YOLO26 end2end segmentation output: [1, max_det, 6+32].
   /// Each detection: [x1, y1, x2, y2, conf, class_id, mask_0...mask_31] in xyxy pixel coords.
-  /// NMS is already applied by the model, so no additional NMS is needed.
+  /// The one-to-one head needs no NMS; embedded-NMS exports are already suppressed.
   private nonisolated func postProcessEnd2EndSegment(
     feature: MLMultiArray,
     shape: [Int],

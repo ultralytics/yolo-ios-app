@@ -179,7 +179,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   /// Processes YOLO26 end2end OBB output `[1, max_det, 7]` where each detection is
   /// `[cx, cy, w, h, conf, class_id, angle]` in pixel coords. OBB uses `dist2rbox()` which always outputs center-based
-  /// xywh (not xyxy like detect). NMS is already applied by the model.
+  /// xywh (not xyxy like detect). The one-to-one head needs no NMS.
   private func postProcessEnd2EndOBB(
     feature: MLMultiArray,
     shape: [Int],

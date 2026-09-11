@@ -40,7 +40,8 @@ Use Xcode and an available simulator UDID; `swift test` cannot build this UIKit 
 
 ## Where to look
 
-- Public SDK and inference → `Sources/UltralyticsYOLO/`.
+- Model loading and decoding → `Sources/UltralyticsYOLO/BasePredictor.swift`, `ModelPathResolver.swift`, and the task predictor.
+- Camera and overlay geometry → `Sources/UltralyticsYOLO/VideoCapture.swift`, `YOLOView.swift`, and `Plot.swift`.
 - App integration → `YOLOiOSApp/`.
 - Tests and model resources → `Tests/YOLOTests/`.
 - Model download and export → `scripts/download-models.sh`, `scripts/export-models.py`.
@@ -60,6 +61,6 @@ Use Xcode and an available simulator UDID; `swift test` cannot build this UIKit 
 
 ## Pitfalls
 
-- `useGpu` is a misnomer kept for Flutter parity: `true` means ANE + CPU (`.cpuAndNeuralEngine` on iOS 16+, `.all` on iOS 13–15); the GPU is deliberately excluded in a live camera app. Do not switch to `.all` (measured slower/jitterier, `docs/performance.md`).
+- `useGpu` is a misnomer kept for Flutter parity: `true` means ANE + CPU (`.cpuAndNeuralEngine` on iOS 16+, `.all` on iOS 13–15); the GPU is deliberately excluded on iOS 16+. Preserve the iOS 13–15 fallback; do not switch the iOS 16+ branch to `.all` (measured slower/jitterier, `docs/performance.md`).
 - YOLO26 (NMS-free) models ignore `iouThreshold` — the provider forces `1.0` and the end2end decoders skip NMS — so IoU-slider bugs only reproduce with YOLO11 or `nms=None` exports. `confidenceThreshold` reaches the Vision NMS pipeline only through the `ThresholdProvider`; raw-tensor decoders filter it in Swift.
 - Two independent on-device model caches: SDK `YOLOModelCache` (`Library/Caches/YOLOModels`, SHA-256 keys) and app `ModelCacheManager` (`Documents/<key>-mobile-standard-v1.mlmodelc`). Replacing release assets in place without bumping the revision strings leaves devices on stale models.

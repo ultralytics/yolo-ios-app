@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to AI coding agents (Claude Code, etc.) when working with code in this repository. CLAUDE.md is a symlink to this file.
+Repository guidance for coding agents. `CLAUDE.md` is a symlink to this file.
 
 ## Core Principles (CRITICAL)
 
@@ -26,55 +26,41 @@ After opening a PR:
 4. Never fight other commits: Ultralytics Actions pushes auto-format and header commits, and multiple users may work on the same PR. `git pull --rebase` before pushing; never reset or revert commits you did not author.
 5. After the PR merges, clean up: remove local worktrees and branches for it, then `git checkout main && git pull`.
 
-## Commands
+## Commands and validation
 
 ```bash
-# One-time: download the seven nano Core ML models (required by model-backed tests;
-# also copies them into YOLOiOSApp/Models/ for the app bundle)
 bash scripts/download-models.sh
-
-# Run all package tests (mirrors .github/workflows/ci.yml; get a simulator UDID
-# from `xcrun simctl list devices available` — use id=, name= resolves unreliably)
+xcrun simctl list devices available
 xcodebuild -scheme UltralyticsYOLO -sdk iphonesimulator -derivedDataPath Build/ \
   -destination "platform=iOS Simulator,id=<SIMULATOR_UDID>,arch=arm64" \
   IPHONEOS_DEPLOYMENT_TARGET=16.0 build test
-
-# Run a single test class or method: append e.g.
-#   -only-testing:YOLOTests/PlotTests
-#   -only-testing:YOLOTests/PlotTests/testUltralyticsColorsExist
-
-# Coverage as CI runs it: add `-enableCodeCoverage YES clean` to the command above;
-# ci.yml then exports lcov with llvm-cov and filters out camera/UI files before Codecov upload
-
-# Format (what format.yml auto-applies to PRs; no .swift-format config file = defaults)
-swift-format --in-place --recursive .     # brew install swift-format
-npx prettier --write "**/*.{md,yml,json}" # YAML/JSON/Markdown
-
-# Dead-code check (CI `periphery` job, strict; brew install periphery)
-periphery scan --project YOLOiOSApp/YOLOiOSApp.xcodeproj --schemes YOLOiOSApp \
-  --exclude-tests --retain-public --report-include 'Sources/UltralyticsYOLO/**/*.swift' \
-  --strict -- -destination "platform=iOS Simulator,id=<SIMULATOR_UDID>,arch=arm64"
-
-# Model export env (scripts/export-models.py)
-uv venv --python 3.13 .venv && uv pip install "ultralytics[export-coreml]>=8.4.142"
 ```
 
-CI (`ci.yml`) runs two jobs on `macos-26`: `test` (build + test + a non-blocking Codecov upload) and `periphery` (dead-code scan, `--strict` fails on any unused declaration). `Package.swift` is pinned to `swift-tools-version: 5.10` for CI compatibility — do not raise it.
+Use Xcode and an available simulator UDID; `swift test` cannot build this UIKit package. Add `-only-testing:YOLOTests/PlotTests` for focused tests. Model resources must exist even to build the test target. Camera changes need a physical device. CI also runs strict Periphery against the app project; see `.github/workflows/ci.yml`. Keep `swift-tools-version: 5.10` and iOS 13 compatibility in the SDK, guarding newer APIs even though CI and the app target iOS 16.
 
-## Architecture
+## Where to look
 
-- Single SPM library target `UltralyticsYOLO` (`Sources/UltralyticsYOLO/`), also published as the `UltralyticsYOLO` CocoaPod; the `ultralytics/yolo-flutter-app` plugin depends on the pod (pinned `< 9.0`), so public API breaks there too. Package floor is iOS 13 (with `@available` fallbacks) while the main app `YOLOiOSApp/` targets iOS 16.
-- Zero third-party dependencies: ZIP extraction of downloaded models is the in-repo `MiniZip.swift` (Foundation + Compression only).
-- Inference flow: `YOLO.swift` facade (`callAsFunction` overloads for URL/String/UIImage/CIImage/CGImage) → `BasePredictor` subclasses (`ObjectDetector`, `Segmenter`, `SemanticSegmenter`, `DepthEstimator`, `Classifier`, `PoseEstimator`, `ObbDetector`) → Vision `VNCoreMLRequest`. `YOLOView` (UIKit, wraps `AVCaptureSession` + overlays) and `YOLOCamera` (SwiftUI) provide real-time camera UI.
-- Export scripts require `ultralytics>=8.4.142`: Core ML uses `nms=False` for NMS-free YOLO26 outputs; `nms=None` exports raw one-to-many outputs and `nms=True` embeds NMS where supported. `end2end` describes graph metadata; use `nms` to configure exports. Predictors decode Vision NMS observations or raw tensors by their actual layouts. Always index `MLMultiArray` via `strides`.
-- `.mlpackage` models are never committed (gitignored); tests and the app get them from the `v8.3.0` release assets via `scripts/download-models.sh` (an Xcode "Download YOLO Models" build phase runs it locally and is skipped on GitHub Actions, where CI runs the script as its own step).
-- Publishing (`publish.yml`, push to `main`, runs only when the pushing actor is `glenn-jocher`): a new `MARKETING_VERSION` in `YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj` triggers tag `v{version}` + GitHub release + `pod trunk push` + a squashed `testflight` branch force-pushed for Xcode Cloud; an unchanged version still ships a TestFlight build.
+- Model loading and decoding → `Sources/UltralyticsYOLO/BasePredictor.swift`, `ModelPathResolver.swift`, and the task predictor.
+- Camera and overlay geometry → `Sources/UltralyticsYOLO/VideoCapture.swift`, `YOLOView.swift`, and `Plot.swift`.
+- App integration → `YOLOiOSApp/`.
+- Tests and model resources → `Tests/YOLOTests/`.
+- Model download and export → `scripts/download-models.sh`, `scripts/export-models.py`.
+- Measured native configuration → `docs/performance.md`.
+- Public API docs → `Sources/UltralyticsYOLO/README.md`.
 
 ## Conventions
 
-- License header `// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license` on every source file — Ultralytics Actions adds it automatically; don't add or revert it manually.
-- Formatting is enforced by `format.yml` pushing commits onto PRs (swift-format, Prettier, codespell, Ruff/docformatter for Python) — pull its commits instead of re-formatting locally.
+- License header `// Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license` on every source file (`#` form for shell/Python/YAML) — Ultralytics Actions adds it automatically; don't add or revert it manually.
+- Formatting is enforced by `format.yml` pushing commits onto PRs (swift-format, Prettier, shfmt, codespell, Ruff for Python) — pull its commits instead of re-formatting locally.
 - Tests are XCTest in `Tests/YOLOTests`; model-backed tests load `.mlpackage` bundles from test resources (run the download script first) and none hit the live network.
-- Releases: bump `MARKETING_VERSION` (two build configurations in `project.pbxproj`) and `s.version` in `UltralyticsYOLO.podspec` together in the release PR; merging to `main` then auto-tags, releases, and publishes the pod.
-- Archive app builds auto-bump `CFBundleVersion` in `YOLOiOSApp/YOLOiOSApp/Info.plist` — never commit a stray build-number bump.
-- `README.md` and `README.zh-CN.md` are translations of each other — apply any README change to both.
+- Releases: bump `MARKETING_VERSION` (two build configurations in `project.pbxproj`) and `s.version` in `UltralyticsYOLO.podspec` together in the release PR; merging to `main` then auto-tags, releases, and publishes the pod. The SPM `from:` version in `README.md`, `README.zh-CN.md`, and `Sources/UltralyticsYOLO/README.md` is refreshed to the latest released tag alongside. `ultralytics/yolo-flutter-app` consumes the pod (its `ios/ultralytics_yolo.podspec` pins `'>= 8.9.14', '< 9.0'` at the time of writing), so a public API break there is a `9.0` change.
+- Archive app builds auto-bump `CFBundleVersion` in `YOLOiOSApp/YOLOiOSApp/Info.plist` (a Run Script phase gated on `ACTION == install`) — never commit a stray build-number bump.
+- `README.md` and `README.zh-CN.md` are translations of each other — apply any README change to both. `Sources/UltralyticsYOLO/README.md` is the package README (API usage, asset tables) and `docs/performance.md` is the canonical profiling record; update them when public API or shipped configuration changes.
+- Task order in user-facing tables, `appTasks`, `remoteModelsInfo`, the export matrix, and the download script is `detect, segment, semantic, depth, classify, pose, obb`.
+- Model naming: `yolo26{n,s,m,l,x}{"",-seg,-sem,-depth,-cls,-pose,-obb}`; official assets are int8 `.mlpackage.zip` archives at `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`, 224×224 input for classify and 640×640 for every other task, exported with `nms=False`.
+
+## Pitfalls
+
+- `useGpu` is a misnomer kept for Flutter parity: `true` means ANE + CPU (`.cpuAndNeuralEngine` on iOS 16+, `.all` on iOS 13–15); the GPU is deliberately excluded on iOS 16+. Preserve the iOS 13–15 fallback; do not switch the iOS 16+ branch to `.all` (measured slower/jitterier, `docs/performance.md`).
+- YOLO26 (NMS-free) models ignore `iouThreshold` — the provider forces `1.0` and the end2end decoders skip NMS — so IoU-slider bugs only reproduce with YOLO11 or `nms=None` exports. `confidenceThreshold` reaches the Vision NMS pipeline only through the `ThresholdProvider`; raw-tensor decoders filter it in Swift.
+- Two independent on-device model caches: SDK `YOLOModelCache` (`Library/Caches/YOLOModels`, SHA-256 keys) and app `ModelCacheManager` (`Documents/<key>-mobile-standard-v1.mlmodelc`). Replacing release assets in place without bumping the revision strings leaves devices on stale models.

@@ -67,8 +67,8 @@ periphery scan --project YOLOiOSApp/YOLOiOSApp.xcodeproj --schemes YOLOiOSApp \
 
 # Model export env (scripts/export-models.py; reproduces the official int8 224/640 nms=False assets)
 uv venv --python 3.13 .venv && uv pip install "ultralytics[export-coreml]>=8.4.142"
-uv run python scripts/export-models.py --sizes n --copy-to-app   # local dev models
-uv run python scripts/export-models.py --upload --tag v8.3.0      # replace release assets (gh release upload --clobber)
+uv run python scripts/export-models.py --sizes n --copy-to-app # local dev models
+uv run python scripts/export-models.py --upload --tag v8.3.0   # replace release assets (gh release upload --clobber)
 ```
 
 - `Package.swift` is pinned to `swift-tools-version: 5.10` for CI compatibility — do not raise it. The package floor is `.iOS(.v13)`, CI tests with `IPHONEOS_DEPLOYMENT_TARGET=16.0`, and the app target is iOS 16.0 (`SWIFT_VERSION = 5.0`, i.e. Swift 5 language mode). Keep `#available(iOS 16.0, *)` branches compiling for iOS 13 and never call iOS 16+ API unguarded inside `Sources/`.

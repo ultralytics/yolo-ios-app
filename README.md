@@ -90,7 +90,7 @@ The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, seg
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- Core AI: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`, published with the release that enables Core AI
+- Core AI: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26

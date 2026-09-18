@@ -90,7 +90,7 @@ var body: some View {
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- Core AI：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`，随启用 Core AI 的版本一同发布
+- Core AI：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
 - LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` 发布版本。下表中的 Core ML 和 Core AI 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。

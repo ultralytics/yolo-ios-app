@@ -3,7 +3,7 @@
 
 # Script to download and prepare YOLO model files for the package tests and the app bundle
 # Run from repository root: $ bash scripts/download-models.sh
-# Add --coreai to also bundle the Core AI (.aimodel, iOS 27+) nano models and a benchmark image into the app
+# Add --coreai to also bundle the Core AI (.aimodel, iOS 27+) nano models into the app
 
 set -e # Exit immediately if a command fails
 
@@ -112,8 +112,5 @@ for model in "${MODELS[@]}"; do
   fi
 done
 
-if [[ $1 == --coreai && ! -f "$APP_DIR/Models/bus.jpg" ]]; then
-  curl -fL --retry 3 "https://ultralytics.com/images/bus.jpg" -o "$APP_DIR/Models/bus.jpg"
-fi
 
 echo "All models prepared successfully!"

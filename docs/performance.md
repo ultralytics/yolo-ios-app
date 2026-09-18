@@ -64,7 +64,7 @@ one head.
 
 ### On-Device Results
 
-Measured with the app's `--benchmark` mode: median of 3 interleaved rounds of 15 runs after 3 warmup runs, `bus.jpg`,
+Measured with a benchmark build of the app (harness in [#320](https://github.com/ultralytics/yolo-ios-app/issues/320)): median of 3 interleaved rounds of 15 runs after 3 warmup runs, `bus.jpg`,
 Release build, iPhone 17 Pro, iOS 27.0, YOLO26n, Core AI FP16 against the shipped Core ML INT8 assets, hardware
 acceleration enabled for both. Times are per `predictOnImage` call in milliseconds; Total is their sum. "End-to-end" is
 the NMS-free head in the graph (`nms=False`), "raw head" is the package default (`nms=None`) decoded by the SDK's
@@ -134,21 +134,7 @@ the timed loop, three interleaved blocks of 50 iterations):
 The model body is at parity; the gap of the end-to-end head is one `topk` charged at the Neural Engine partition
 boundary (`apple/coreai-torch#66`), which is why the raw head wins above. The same PR reports that some FP16
 `.aimodel` assets abort the process while loading their Neural Engine program, inside Apple's runtime and before any
-SDK code runs. The abort cannot be caught, so the benchmark names each asset and compute unit before loading it.
-
-### Reproducing
-
-```bash
-bash scripts/download-models.sh --coreai # bundles the nano Core AI models and bus.jpg next to the Core ML models
-# optionally add other exports (for example nms=False Core AI assets) to YOLOiOSApp/Models/<Task>/ under distinct names
-xcrun devicectl device process launch --console --device "$UDID" com.ultralytics.iDetection --benchmark
-```
-
-Launching with `--benchmark` (it never runs otherwise) loads every model bundled under `Models/<Task>/`, Core ML and
-Core AI, with hardware acceleration and CPU-only, logging `BENCHMARK loading <asset> | <task> | <compute>` before each load. It
-times a task's models in interleaved rounds on `Models/bus.jpg` so thermal drift and run order affect every backend
-equally, and prints a markdown table of the median load, preprocess, inference, and postprocess times plus what each
-model found.
+SDK code runs. The abort cannot be caught.
 
 Official model IDs resolve to the Core AI asset on iOS 27 and later devices and to the Core ML asset everywhere else
 (`remoteModelExtension` in `RemoteModels.swift`); explicit `.mlpackage` and `.aimodel` paths and URLs load on either.

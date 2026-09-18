@@ -54,7 +54,6 @@ Build/
 *.mlprogram
 *.mlpackage
 *.aimodel
-YOLOiOSApp/Models/bus.jpg
 
 # GitHub Python GitIgnore ----------------------------------------------------------------------------------------------
 # Byte-compiled / optimized / DLL files

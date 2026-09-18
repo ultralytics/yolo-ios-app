@@ -12,7 +12,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     UIApplication.shared.isIdleTimerDisabled = true
     ExternalDisplayManager.registerDefaults()
-    if CommandLine.arguments.contains("--benchmark") { Benchmark.run() }
     return true
   }
 

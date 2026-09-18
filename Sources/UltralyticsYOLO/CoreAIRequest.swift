@@ -173,7 +173,7 @@ extension BasePredictor {
       let tensor = InputTensor(NDArray(shape: shape, scalarType: input.scalarType))
 
       return try CoreAIRequest(width: shape[3], height: shape[2]) { floats in
-        try tensor.fill(from: floats, isHalf: isHalf)
+        tensor.fill(from: floats, isHalf: isHalf)
         let array = tensor.array
         return try blocking {
           var outputs = try await function.run(inputs: [inputName: array])
@@ -192,11 +192,10 @@ extension BasePredictor {
       var array: NDArray
       init(_ array: NDArray) { self.array = array }
 
-      func fill(from floats: [Float], isHalf: Bool) throws {
+      func fill(from floats: [Float], isHalf: Bool) {
         let count = floats.count
-        let contiguous =
-          isHalf
-          ? Self.write(Float16.self, to: &array, count: count) { destination in
+        if isHalf {
+          Self.write(Float16.self, to: &array) { destination in
             floats.withUnsafeBytes { source in
               var src = vImage_Buffer(
                 data: UnsafeMutableRawPointer(mutating: source.baseAddress!), height: 1,
@@ -207,27 +206,16 @@ extension BasePredictor {
               vImageConvert_PlanarFtoPlanar16F(&src, &dst, vImage_Flags(kvImageNoFlags))
             }
           }
-          : Self.write(Float.self, to: &array, count: count) {
-            $0.update(from: floats, count: count)
-          }
-        guard contiguous else { throw PredictorError.invalidCoreAIModel("non-contiguous input") }
+        } else {
+          Self.write(Float.self, to: &array) { $0.update(from: floats, count: count) }
+        }
       }
 
-      /// Hands `body` the tensor's storage when it is one contiguous run of `count` elements.
+      /// The tensor's mutable view is lifetime-bound, so it is reached through an `inout` tensor.
       private static func write<T: BitwiseCopyable>(
-        _ type: T.Type, to array: inout NDArray, count: Int,
-        _ body: (UnsafeMutablePointer<T>) -> Void
-      ) -> Bool {
-        array.mutableView(as: type).withUnsafeMutablePointer { pointer, shape, strides in
-          var expected = 1
-          for axis in (0..<shape.count).reversed() {
-            guard strides[axis] == expected || shape[axis] == 1 else { return false }
-            expected *= shape[axis]
-          }
-          guard expected == count else { return false }
-          body(pointer)
-          return true
-        }
+        _ type: T.Type, to array: inout NDArray, _ body: (UnsafeMutablePointer<T>) -> Void
+      ) {
+        array.mutableView(as: type).withUnsafeMutablePointer { pointer, _, _ in body(pointer) }
       }
     }
 

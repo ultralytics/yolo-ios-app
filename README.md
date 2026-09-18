@@ -106,17 +106,21 @@ Flutter repo's Android export script and release assets.
 | Runs on            | iOS 13+, iOS Simulator                  | iOS 27+ devices                         | Android                                 |
 | `quantize`         | `8`                                     | `16`                                    | `w8a32`                                 |
 | `imgsz`            | `224` cls; `640` others                 | `224` cls; `640` others                 | `224` cls; `640` others                 |
-| `nms`              | `False`                                 | `False`                                 | `None`                                  |
-| `end2end` metadata | `False` cls/sem/depth; `True` others    | `False` cls/sem/depth; `True` others    | `False`                                 |
+| `nms`              | `False`                                 | `None`                                  | `None`                                  |
+| `end2end` metadata | `False` cls/sem/depth; `True` others    | `False`                                 | `False`                                 |
 | Calibration        | exporter default                        | None (FP16)                             | None (dynamic-range)                    |
 | Preprocessing      | Vision                                  | Swift (letterbox, Accelerate)           | Android native                          |
-| Postprocessing     | Swift                                   | Swift                                   | Android native                          |
+| Postprocessing     | Swift                                   | Swift (with NMS)                        | Android native                          |
 
-Export scripts require `ultralytics>=8.4.156`. Core ML and Core AI assets use `nms=False` to select the NMS-free head
-for detect, segment, pose, and OBB. Core AI has no NMS operator, so there is no NMS pipeline stage as in Core ML, and
-the Ultralytics package has no int8 Core AI export, so Core AI assets are FP16 and roughly twice the download size of
-the int8 Core ML assets. Both formats carry the same Ultralytics metadata keys and values (`task`, `names`, `imgsz`,
-`stride`, `end2end`, ...), and the SDK decodes either head by output shape. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
+Export scripts require `ultralytics>=8.4.156`. Core ML assets use `nms=False` to select the NMS-free head for detect,
+segment, pose, and OBB. Core AI assets keep the package default raw head (`nms=None`), which the SDK decodes with its
+existing Swift NMS: on an iPhone 17 Pro it is about twice as fast in inference as both the Core AI end-to-end head and
+the Core ML assets ([docs/performance.md](docs/performance.md#-core-ai-backend)). Core AI has no NMS operator, so there
+is no NMS pipeline stage as in Core ML, and the Ultralytics package has no int8 Core AI export, so Core AI assets are
+FP16 and roughly twice the download size of the int8 Core ML assets. Both formats carry the same Ultralytics metadata
+keys and values (`task`, `names`, `imgsz`, `stride`, `end2end`, ...), and the SDK decodes either head by output shape.
+With `useGpu` true (hardware acceleration) Core AI places the model across the Neural Engine, GPU and CPU; `useGpu`
+false pins it to the CPU. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
 for raw one-to-many outputs with Android-side NMS. `nms=True` embeds NMS where supported. The `end2end` metadata
 field describes the exported graph; use `nms` to configure exports.
 
@@ -144,7 +148,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML and Core AI assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
+The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs, while Core AI assets keep the raw head and the SDK applies its Swift NMS; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
 
 ### Android LiteRT Counterparts
 

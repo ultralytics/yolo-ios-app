@@ -103,13 +103,16 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | 运行环境         | iOS 13+、iOS 模拟器                     | iOS 27+ 真机                            | Android                                 |
 | `quantize`       | `8`                                     | `16`                                    | `w8a32`                                 |
 | `imgsz`          | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
-| `nms`            | `False`                                 | `False`                                 | `None`                                  |
-| `end2end` 元数据 | cls/sem/depth 为 `False`；其余为 `True` | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
+| `nms`            | `False`                                 | `None`                                  | `None`                                  |
+| `end2end` 元数据 | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 | `False`                                 |
 | 校准             | 导出器默认值                            | 无（FP16）                              | 无（动态范围量化）                      |
 | 预处理           | Vision                                  | Swift（letterbox、Accelerate）          | Android 原生                            |
-| 后处理           | Swift                                   | Swift                                   | Android 原生                            |
+| 后处理           | Swift                                   | Swift（含 NMS）                         | Android 原生                            |
 
-导出脚本要求 `ultralytics>=8.4.156`。Core ML 和 Core AI 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头。
+导出脚本要求 `ultralytics>=8.4.156`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头。
+Core AI 资源保留包默认的原始头（`nms=None`），由 SDK 现有的 Swift NMS 解码：在 iPhone 17 Pro 上，其推理速度约为
+Core AI 端到端头和 Core ML 资源的两倍（[docs/performance.md](docs/performance.md#-core-ai-backend)）。
+当 `useGpu` 为 true（硬件加速）时，Core AI 会将模型分配到 Neural Engine、GPU 和 CPU 上；`useGpu` 为 false 时固定在 CPU 上运行。
 Core AI 没有 NMS 算子，因此不存在 Core ML 那样的 NMS 流水线阶段；Ultralytics 包也没有 int8 Core AI 导出，
 所以 Core AI 资源为 FP16，下载体积约为 int8 Core ML 资源的两倍。两种格式携带相同的 Ultralytics 元数据键和值
 （`task`、`names`、`imgsz`、`stride`、`end2end` 等），SDK 根据输出形状解码任一种头；
@@ -139,7 +142,7 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 和 Core AI 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
+该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出，Core AI 资源则保留原始头并由 SDK 执行 Swift NMS；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
 
 ### Android LiteRT 对应资源
 

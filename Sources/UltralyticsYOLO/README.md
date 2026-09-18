@@ -289,11 +289,14 @@ uv run python scripts/export-models.py
 Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
 `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
-With `ultralytics>=8.4.156`, use `nms=False` to reproduce the shipped NMS-free Core ML assets, and
-`format="coreai", quantize=16, nms=False` (macOS 26 or later on Apple silicon) for the Core AI assets. Detect, segment, pose,
-and OBB use the one-to-one head; classification, semantic, and depth retain their native outputs. Use `nms=None`
-for raw one-to-many outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. Core AI has no
-NMS operator, so `nms=True` does not apply to it. The predictors decode the actual Vision observations and tensor
+With `ultralytics>=8.4.156`, use `nms=False` to reproduce the shipped NMS-free Core ML assets, where detect, segment,
+pose, and OBB use the one-to-one head, and `format="coreai", quantize=16` (macOS 26 or later on Apple silicon) for the
+Core AI assets. Core AI assets keep the raw one-to-many head, which the SDK decodes with its existing Swift NMS and
+which measured about twice as fast on device ([docs/performance.md](../../docs/performance.md#-core-ai-backend)).
+Classification, semantic, and depth retain their native outputs. For Core ML, use `nms=None` for raw one-to-many
+outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. Core AI has no NMS operator, so
+`nms=True` does not apply to it. With `useGpu: true` (hardware acceleration) Core AI places the model across the
+Neural Engine, GPU and CPU; `useGpu: false` pins it to the CPU. The predictors decode the actual Vision observations and tensor
 layouts of either backend by shape, so existing YOLO11 and YOLO26 assets and both heads remain supported.
 
 ## 🤝 Contributing

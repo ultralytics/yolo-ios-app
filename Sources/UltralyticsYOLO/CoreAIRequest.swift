@@ -110,7 +110,8 @@ extension BasePredictor {
         .concatenating(CGAffineTransform(scaleX: gain, y: gain))
         .concatenating(
           CGAffineTransform(translationX: padX, y: CGFloat(height) - padY - extent.height * gain)))
-    let gray = CIColor(red: 114.0 / 255, green: 114.0 / 255, blue: 114.0 / 255)  // Ultralytics LetterBox padding
+    // Ultralytics LetterBox padding
+    let gray = CIColor(red: 114.0 / 255, green: 114.0 / 255, blue: 114.0 / 255)
     Self.ciContext.render(
       scaled.composited(over: CIImage(color: gray)), to: request.pixelBuffer, bounds: bounds,
       colorSpace: CGColorSpaceCreateDeviceRGB())

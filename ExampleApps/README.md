@@ -42,7 +42,7 @@ Follow these steps to get the examples up and running:
     #### Obtaining YOLO Core ML Models
 
     You have two primary ways to get Ultralytics YOLO models in [Core ML format](https://docs.ultralytics.com/integrations/coreml):
-    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases). Unzip the downloaded `.mlpackage.zip` asset and place the model package into your Xcode project. On iOS 27 and later devices the package also loads Core AI `.aimodel` models (`format="coreai", quantize=16, nms=False`) the same way; the examples use Core ML so they also run on earlier iOS versions and on the iOS Simulator, which does not ship Core AI.
+    - **Download Pre-Exported Models:** Download optimized Core ML [INT8](https://www.ultralytics.com/glossary/model-quantization) models directly from the [YOLO iOS App releases](https://github.com/ultralytics/yolo-ios-app/releases). Unzip the downloaded `.mlpackage.zip` asset and place the model package into your Xcode project. On iOS 27 and later devices the package also loads Core AI `.aimodel` models (`format="coreai", quantize=16`, decoded with the package's Swift NMS) the same way; the examples use Core ML so they also run on earlier iOS versions and on the iOS Simulator, which does not ship Core AI.
     - **Export Your Own Models:** Use the [`ultralytics` Python package](https://docs.ultralytics.com/quickstart) to export models tailored to your needs. This offers flexibility in choosing model types and configurations.
 
     - Install the export dependencies:

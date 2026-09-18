@@ -57,54 +57,101 @@ included in inference.
 Core AI (`.aimodel`) models run on iOS 27 and later devices; Core ML (`.mlpackage`) remains the backend for earlier iOS
 versions and for the iOS Simulator, which does not ship Core AI. The SDK loads an `.aimodel` through
 `CoreAIRequest.swift`: it letterboxes the frame itself (Core Image render plus Accelerate BGRA → RGB CHW conversion,
-centered exactly like Vision's `.scaleFit`, 114-gray padding), runs the model with the Neural Engine preferred
-(`useGpu: true`) or pinned to the CPU (`useGpu: false`), and hands the output tensors to the same task decoders the
-Core ML path uses. Both heads decode by output shape, so nothing in the SDK is tied to the end2end head.
+centered exactly like Vision's `.scaleFit`, 114-gray padding) and hands the output tensors to the same task decoders
+the Core ML path uses. `useGpu: true` means hardware acceleration: Core AI places the model across the Neural Engine,
+GPU and CPU. `useGpu: false` pins it to the CPU. Both heads decode by output shape, so nothing in the SDK is tied to
+one head.
 
-The only on-device Core AI measurements so far come from the Ultralytics package PR that added the export,
-[ultralytics/ultralytics#25926](https://github.com/ultralytics/ultralytics/pull/25926): iPhone 17 Pro, iOS 27.0 beta 6,
-YOLO26n detect at 640, FP16, the same graph on both backends, model time only (input allocated outside the timed
-loop, three interleaved blocks of 50 iterations):
+### On-Device Results
+
+Measured with the app's `--benchmark` mode: median of 3 interleaved rounds of 15 runs after 3 warmup runs, `bus.jpg`,
+Release build, iPhone 17 Pro, iOS 27.0, YOLO26n, Core AI FP16 against the shipped Core ML INT8 assets, hardware
+acceleration enabled for both. Times are per `predictOnImage` call in milliseconds; Total is their sum. "End-to-end" is
+the NMS-free head in the graph (`nms=False`), "raw head" is the package default (`nms=None`) decoded by the SDK's
+Swift NMS.
+
+| Task     | Asset                   | Pre  | Inference | Post | Total | Result on `bus.jpg`      |
+| -------- | ----------------------- | ---- | --------- | ---- | ----- | ------------------------ |
+| Detect   | Core ML INT8            | 0.00 | 4.09      | 0.01 | 4.10  | 5 boxes, top 0.925       |
+| Detect   | Core AI FP16 end-to-end | 0.88 | 4.04      | 0.01 | 4.93  | 5 boxes, top 0.926       |
+| Detect   | Core AI FP16 raw head   | 1.03 | **2.08**  | 0.56 | 3.67  | 5 boxes, top 0.906       |
+| Segment  | Core ML INT8            | 0.00 | 4.91      | 0.67 | 5.58  | 4 instances              |
+| Segment  | Core AI FP16 end-to-end | 0.98 | 6.18      | 0.60 | 7.76  | 4 instances              |
+| Segment  | Core AI FP16 raw head   | 1.12 | **2.65**  | 1.13 | 4.90  | 5 instances              |
+| Semantic | Core ML INT8            | 0.00 | 4.72      | 0.34 | 5.06  | 12 classes               |
+| Semantic | Core AI FP16            | 1.16 | **3.05**  | 3.72 | 7.93  | 12 classes               |
+| Depth    | Core ML INT8            | 0.00 | 5.43      | 0.82 | 6.25  | depth 1.47–14.81         |
+| Depth    | Core AI FP16            | 1.09 | 4.95      | 0.81 | 6.85  | depth 1.29–16.59         |
+| Classify | Core ML INT8            | 0.00 | 2.15      | 0.02 | 2.17  | minibus 0.654            |
+| Classify | Core AI FP16            | 0.57 | **0.52**  | 0.01 | 1.10  | minibus 0.696            |
+| Pose     | Core ML INT8            | 0.00 | 5.09      | 0.01 | 5.10  | 4 people                 |
+| Pose     | Core AI FP16 end-to-end | 1.02 | 3.87      | 0.00 | 4.89  | **0 people (incorrect)** |
+| Pose     | Core AI FP16 raw head   | 1.15 | **2.14**  | 0.27 | 3.56  | 4 people                 |
+| OBB      | Core ML INT8            | 0.00 | 5.15      | 0.00 | 5.15  | no aerial objects        |
+| OBB      | Core AI FP16 end-to-end | 1.04 | 4.66      | 0.00 | 5.70  | no aerial objects        |
+| OBB      | Core AI FP16 raw head   | 1.25 | **2.02**  | 0.40 | 3.67  | no aerial objects        |
+
+Findings:
+
+- **The raw head is about 2x faster in inference** than both the Core AI end-to-end head and Core ML INT8 for detect,
+  segment, pose, and OBB (detect 2.08 ms against 4.04 and 4.09 ms). It is the official Core AI recipe:
+  `model.export(format="coreai", quantize=16, imgsz=640)`.
+- **Semantic**: Core AI wins inference (3.05 against 4.72 ms), but its output is 4-D logits and the Swift argmax costs
+  3.7 ms of postprocessing against 0.34 ms for the Core ML class map, so Core AI is slower end to end (7.93 against
+  5.06 ms).
+- **Classify**: Core AI wins (0.52 against 2.15 ms inference, 1.10 against 2.17 ms total). **Depth** is at parity.
+- **Preprocessing**: Core AI adds about 1 ms of CPU preprocessing per frame (0.6 ms at 224) that Vision hides inside
+  the Core ML inference time, so compare totals, not inference alone.
+- **Swift NMS cost grows with object count.** On `bus.jpg` it is 0.3–1.1 ms. On a dense aerial OBB scene
+  postprocessing reached 4.7 ms and the raw-head total 10.9 ms against 9.0 ms for Core ML, erasing the win.
+- **The FP16 end-to-end pose asset returns no detections under default placement**
+  ([apple/coreai-torch#115](https://github.com/apple/coreai-torch/issues/115)); it is correct on the CPU, as FP32, and
+  as the raw head, so the raw-head recipe avoids it.
+- **Load time**: the first load of an `.aimodel` specializes it once (0.6–3 s); afterwards it loads from the system
+  cache in tens of milliseconds, against a Core ML compile of about 1–1.3 s on every launch for a bundled
+  `.mlpackage`.
+- **Stability**: a 22,000-inference soak on the device did not reproduce
+  [apple/coreai-torch#75](https://github.com/apple/coreai-torch/issues/75).
+- Core AI assets are FP16 because the Ultralytics package has no int8 Core AI export; the shipped Core ML assets are
+  INT8, so a Core AI asset is roughly twice the download size.
+
+Two SDK fixes came out of this run: the input tensor is allocated once and filled in bulk (`NDArray(scalars:)` copied
+it element by element, about 55 ms per 640 × 640 frame), and hardware acceleration uses the default specialization
+options, because explicitly preferring the Neural Engine fails the load of models it cannot compile.
+
+### Prior Evidence
+
+The Ultralytics package PR that added the export,
+[ultralytics/ultralytics#25926](https://github.com/ultralytics/ultralytics/pull/25926), measured model time only
+(iPhone 17 Pro, iOS 27.0 beta 6, YOLO26n detect at 640, FP16, the same graph on both backends, input allocated outside
+the timed loop, three interleaved blocks of 50 iterations):
 
 | YOLO26n detect, FP16                      | Core AI | Core ML |
 | ----------------------------------------- | ------- | ------- |
 | end2end head in the graph (`nms=False`)   | 3.06 ms | 1.53 ms |
 | postprocess out of the graph (`nms=None`) | 1.32 ms | 1.32 ms |
 
-With the recipe the app ships today (`nms=False`), Core AI is therefore about twice as slow as Core ML on the Neural
-Engine. The model body is at parity; the whole gap is one `topk` charged at the Neural Engine partition boundary
-(tracked upstream in `apple/coreai-torch#66`), so parity needs the raw head plus the SDK's Swift NMS. The same PR
-reports that some FP16 `.aimodel` assets abort the process while loading their Neural Engine program, inside Apple's
-runtime and before any SDK code runs, while the same asset loads on a CPU-only specialization. The abort cannot be
-caught, so the benchmark below names each asset and compute unit before loading it.
+The model body is at parity; the gap of the end-to-end head is one `topk` charged at the Neural Engine partition
+boundary (`apple/coreai-torch#66`), which is why the raw head wins above. The same PR reports that some FP16
+`.aimodel` assets abort the process while loading their Neural Engine program, inside Apple's runtime and before any
+SDK code runs. The abort cannot be caught, so the benchmark names each asset and compute unit before loading it.
 
-Core AI assets are FP16 because the Ultralytics package has no int8 Core AI export; the shipped Core ML assets are
-INT8, so a Core AI asset is roughly twice the download size.
-
-### In-App Benchmark (SDK Path, Pending)
-
-The numbers above isolate the model. The SDK path adds Swift preprocessing, the FP32 → FP16 input conversion, an
-output copy, and the task decoder, and has not been measured yet. To measure it on a device:
+### Reproducing
 
 ```bash
 bash scripts/download-models.sh --coreai # bundles the nano Core AI models and bus.jpg next to the Core ML models
-# optionally add raw-head assets (nms=None exports) to YOLOiOSApp/Models/<Task>/ under distinct names
-xcrun devicectl device process launch --console --device --benchmark < UDID > com.ultralytics.iDetection
+# optionally add other exports (for example nms=False Core AI assets) to YOLOiOSApp/Models/<Task>/ under distinct names
+xcrun devicectl device process launch --console --device "$UDID" com.ultralytics.iDetection --benchmark
 ```
 
 Launching with `--benchmark` (it never runs otherwise) loads every model bundled under `Models/<Task>/`, Core ML and
-Core AI, first accelerated and then CPU-only, logs `BENCHMARK loading <asset> [<compute>]` before each load, runs 3
-warmup and 15 measured `predictOnImage` calls on `Models/bus.jpg`, and prints a markdown table of the median load,
-preprocess, inference, and postprocess times.
-
-| Model | Task | Compute | Load ms | Pre ms  | Inference ms | Post ms |
-| ----- | ---- | ------- | ------- | ------- | ------------ | ------- |
-| —     | —    | —       | pending | pending | pending      | pending |
+Core AI, with hardware acceleration and CPU-only, logging `BENCHMARK loading <asset> | <task> | <compute>` before each load. It
+times a task's models in interleaved rounds on `Models/bus.jpg` so thermal drift and run order affect every backend
+equally, and prints a markdown table of the median load, preprocess, inference, and postprocess times plus what each
+model found.
 
 Official model IDs resolve to the Core AI asset on iOS 27 and later devices and to the Core ML asset everywhere else
 (`remoteModelExtension` in `RemoteModels.swift`); explicit `.mlpackage` and `.aimodel` paths and URLs load on either.
-That default ships only if this table shows parity or better against the shipped Core ML INT8 assets and every
-official asset loads without aborting.
 
 ## 🔬 Methodology (How to Reproduce)
 

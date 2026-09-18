@@ -35,8 +35,9 @@ APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"
 DEFAULT_REPO = "ultralytics/yolo-ios-app"
 DEFAULT_TAG = "v8.3.0"
 SIZES = ("n", "s", "m", "l", "x")
-# Export arguments per format. Core AI has no int8 export, so its assets are FP16.
-FORMATS = {"coreml": {"quantize": 8}, "coreai": {"quantize": 16}}
+# Export arguments per format. Core ML uses the NMS-free head; Core AI keeps the package default raw head, which is
+# about twice as fast on device with the SDK's Swift NMS, and has no int8 export, so its assets are FP16.
+FORMATS = {"coreml": {"quantize": 8, "nms": False}, "coreai": {"quantize": 16}}
 
 
 @dataclass(frozen=True)
@@ -112,7 +113,7 @@ def verify_model(package: Path, task_name: str, imgsz: int, quantize: int) -> No
         if ast.literal_eval(metadata.get("args", "{}")).get("nms") is not False:
             raise ValueError(f"{package.name} metadata does not record nms=False")
     args = ast.literal_eval(metadata.get("args", "{}"))
-    expected_end2end = task_name in {"detect", "segment", "pose", "obb"}
+    expected_end2end = package.suffix != ".aimodel" and task_name in {"detect", "segment", "pose", "obb"}
     if metadata.get("task") != task_name:
         raise ValueError(f"{package.name} metadata task is {metadata.get('task')}; expected {task_name}")
     if args.get("quantize") != quantize:
@@ -172,7 +173,7 @@ def main() -> None:
             for fmt in args.formats:
                 print(f"\nExporting {model_id} ({task_name}, {fmt}, imgsz={task.imgsz})")
                 model = YOLO(output_dir / f"{model_id}.pt")
-                package = Path(model.export(format=fmt, nms=False, imgsz=task.imgsz, **FORMATS[fmt])).resolve()
+                package = Path(model.export(format=fmt, imgsz=task.imgsz, **FORMATS[fmt])).resolve()
                 verify_model(package, task_name, task.imgsz, FORMATS[fmt]["quantize"])
                 if args.copy_to_app:
                     copy_to_app(package, task)

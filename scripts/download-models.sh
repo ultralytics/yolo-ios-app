@@ -112,5 +112,4 @@ for model in "${MODELS[@]}"; do
   fi
 done
 
-
 echo "All models prepared successfully!"

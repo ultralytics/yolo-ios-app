@@ -4,8 +4,9 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  BasePredictor is the foundation for all task-specific predictors. It loads Core ML models asynchronously on a
-//  background thread, extracts class labels, measures inference timing, and exposes confidence and IoU thresholds.
+//  BasePredictor is the foundation for all task-specific predictors. It loads Core ML and Core AI (`.aimodel`, iOS 27+)
+//  models asynchronously on a background thread, extracts class labels, measures inference timing, and exposes
+//  confidence and IoU thresholds.
 //  Task-specific subclasses (detection, segmentation, semantic segmentation, classification, pose, OBB) override the
 //  prediction methods to handle their own output formats.
 
@@ -28,8 +29,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The Vision Core ML model used for inference operations.
   var detector: VNCoreMLModel?
 
-  /// The Vision request that processes images using the Core ML model.
-  var visionRequest: VNCoreMLRequest?
+  /// The request that runs the model: a `VNCoreMLRequest` for Core ML, a `CoreAIRequest` for Core AI.
+  var visionRequest: VNRequest?
+
+  /// The image of the current Core AI prediction, which is preprocessed without Vision. Released once consumed so a
+  /// camera frame's pixel buffer returns to the capture pool.
+  private var currentImage: CIImage?
 
   /// Vision preprocessing mode for this predictor. Localization tasks use Ultralytics LetterBox-style aspect-fit
   /// preprocessing; classification overrides this to center crop.
@@ -70,7 +75,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Duration of a single inference operation.
   var t1 = 0.0  // inference dt
-  var tInferEnd = 0.0  // timestamp when the Vision request returned (postprocessing starts)
+  var tPreEnd = 0.0  // timestamp when Core AI preprocessing finished
+  var tInferEnd = 0.0  // timestamp when the request returned (postprocessing starts)
 
   /// Smoothed inference duration (averaged over recent operations).
   var t2 = 0.0  // inference dt smoothed
@@ -217,11 +223,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Asynchronously creates and initializes a predictor with the specified model.
   ///
-  /// Loads the Core ML model on a background thread, then invokes the completion handler on the main thread with the
-  /// initialized predictor or an error.
+  /// Loads the Core ML or Core AI (`.aimodel`, iOS 27+) model on a background thread, then invokes the completion
+  /// handler on the main thread with the initialized predictor or an error.
   ///
   /// - Parameters:
-  ///   - unwrappedModelURL: The URL of the Core ML model file to load.
+  ///   - unwrappedModelURL: The URL of the model to load.
   ///   - isRealTime: Pass `true` when the predictor will be driven by a camera feed.
   ///   - completion: Callback that receives the initialized predictor or an error.
   public static func create(
@@ -238,8 +244,15 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     // Kick off the expensive loading on a background thread
     DispatchQueue.global(qos: .userInitiated).async {
       do {
-        // (1) Load the MLModel
         let ext = unwrappedModelURL.pathExtension.lowercased()
+        if ext == "aimodel" {
+          try predictor.loadCoreAIModel(at: unwrappedModelURL, useGpu: useGpu)
+          predictor.isModelLoaded = true
+          DispatchQueue.main.async { completion(.success(predictor)) }
+          return
+        }
+
+        // (1) Load the MLModel
         let isCompiled = (ext == "mlmodelc")
         let config = MLModelConfiguration()
         // `useGpu` selects hardware-accelerated inference, NOT the GPU specifically. When true (default), Core ML runs
@@ -342,7 +355,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
 
   /// Shared rendering context. `CIContext` is expensive to build (it compiles Metal pipelines and allocates GPU
   /// resources), so it must never be created per frame — original-image capture runs on every camera frame.
-  private static let ciContext = CIContext()
+  static let ciContext = CIContext()
 
   private func makeUIImage(from pixelBuffer: CVPixelBuffer) -> UIImage? {
     let image = CIImage(cvPixelBuffer: pixelBuffer)
@@ -351,12 +364,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   func makeRequestHandler(for image: CIImage) -> VNImageRequestHandler {
+    if visionRequest is CoreAIRequest { currentImage = image }
     inputSize = image.extent.size
     t0 = CACurrentMediaTime()
     return VNImageRequestHandler(ciImage: image, options: [:])
   }
 
   func makeRequestHandler(for pixelBuffer: CVPixelBuffer) -> VNImageRequestHandler {
+    if visionRequest is CoreAIRequest { currentImage = CIImage(cvPixelBuffer: pixelBuffer) }
     inputSize = CGSize(
       width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
     t0 = CACurrentMediaTime()
@@ -371,7 +386,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     -> Bool
   {
     do {
-      try handler.perform([request])
+      if let request = request as? CoreAIRequest, let image = currentImage {
+        currentImage = nil
+        let input = try coreAIInput(from: image, for: request)
+        tPreEnd = CACurrentMediaTime()
+        request.outputs = try request.infer(input)
+      } else {
+        try handler.perform([request])
+      }
       return true
     } catch {
       YOLOLog.error("\(errorMessage): \(error)")
@@ -379,8 +401,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     }
   }
 
-  func firstFeatureArray(_ request: VNRequest) -> MLMultiArray? {
-    (request.results as? [VNCoreMLFeatureValueObservation])?.first?.featureValue.multiArrayValue
+  /// The raw output tensors of a completed request, in declared order, for either backend.
+  func featureArrays(_ request: VNRequest) -> [MLMultiArray] {
+    if let request = request as? CoreAIRequest { return request.outputs }
+    return (request.results as? [VNCoreMLFeatureValueObservation])?
+      .compactMap { $0.featureValue.multiArrayValue } ?? []
   }
 
   @discardableResult
@@ -394,11 +419,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     tInferEnd = CACurrentMediaTime()
   }
 
-  /// Per-stage timing in milliseconds: (pre, inference, post). On iOS Vision fuses input scaling into the
-  /// request, so `pre` is folded into `inference` and reported as zero. Call after `finishTiming`/`updateTime`.
+  /// Per-stage timing in milliseconds: (pre, inference, post). Vision fuses input scaling into the Core ML request,
+  /// so there `pre` is folded into `inference` and reported as zero. Core AI preprocessing is reported separately by
+  /// `predictOnImage`; the smoothed camera path folds it into `inference` as well. Call after
+  /// `finishTiming`/`updateTime`.
   func timingBreakdownMs() -> (pre: Double, inference: Double, post: Double) {
     guard tInferEnd > t0 else { return (0, t1 * 1000, 0) }
-    return (0, (tInferEnd - t0) * 1000, (t0 + t1 - tInferEnd) * 1000)
+    let inferStart = max(t0, tPreEnd)
+    return ((inferStart - t0) * 1000, (tInferEnd - inferStart) * 1000, (t0 + t1 - tInferEnd) * 1000)
   }
 
   /// Applies the current timing breakdown to a result. Pass `smoothed: true` on the camera path so the
@@ -510,7 +538,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     }
   }
 
-  private func letterboxTransform(
+  func letterboxTransform(
     inputSize: CGSize,
     modelInputSize: (width: Int, height: Int)
   ) -> (gain: CGFloat, padX: CGFloat, padY: CGFloat)? {

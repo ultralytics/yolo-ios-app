@@ -20,7 +20,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
-    let semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
+    let semanticMask = featureArrays(request).first.flatMap { postProcessSemantic($0) }
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask, speed: self.t2,
@@ -39,7 +39,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     let requestHandler = makeRequestHandler(for: image)
     if perform(request, with: requestHandler, errorMessage: "Semantic segmentation failed") {
       markInferenceEnd()
-      semanticMask = firstFeatureArray(request).flatMap { postProcessSemantic($0) }
+      semanticMask = featureArrays(request).first.flatMap { postProcessSemantic($0) }
     }
 
     var result = YOLOResult(

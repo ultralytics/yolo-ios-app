@@ -71,12 +71,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       return boxes
     }
     // NMS-free models (YOLO26) return raw MLMultiArray tensors
-    if let results = request.results as? [VNCoreMLFeatureValueObservation],
-      let prediction = results.first?.featureValue.multiArrayValue
-    {
-      return processRawResults(prediction)
-    }
-    return []
+    return featureArrays(request).first.map(processRawResults) ?? []
   }
 
   /// Runs synchronous object detection on a static image and returns the results.

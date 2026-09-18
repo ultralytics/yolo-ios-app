@@ -16,7 +16,7 @@ From the repository root, run:
 bash scripts/download-models.sh
 ```
 
-The script downloads the seven nano `.mlpackage` files into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` so the main app bundle uses the same assets. The `.mlpackage` directories are intentionally gitignored and are not committed to the repository.
+The script downloads the seven nano `.mlpackage` files into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` so the main app bundle uses the same assets. The `.mlpackage` directories are intentionally gitignored and are not committed to the repository. The tests run on the iOS Simulator, which does not ship Core AI, so they cover the Core ML backend and the shared decoders; the Core AI backend is validated on an iOS 27 device ([docs/performance.md](../../docs/performance.md#-core-ai-backend)).
 
 ### 2. Check the Test Resource Directory
 

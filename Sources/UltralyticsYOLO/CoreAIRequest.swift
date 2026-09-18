@@ -59,8 +59,7 @@ extension BasePredictor {
   static func coreAIMetadata(at url: URL) throws -> [String: String] {
     let data = try Data(contentsOf: url.appendingPathComponent("metadata.json"))
     let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    let metadata = json?["creatorDefinedMetadata"] as? [String: Any] ?? [:]
-    return metadata.mapValues { "\($0)" }
+    return json?["creatorDefinedMetadata"] as? [String: String] ?? [:]
   }
 
   /// Loads a Core AI model and installs it as this predictor's request.
@@ -69,7 +68,6 @@ extension BasePredictor {
       if #available(iOS 27.0, *) {
         let metadata = try Self.coreAIMetadata(at: url)
         labels = Self.parseLabels(from: metadata)
-        requiresNMS = metadata["end2end"]?.lowercased() != "true"
         let request = try CoreAIRequest.load(url: url, useGpu: useGpu)
         modelInputSize = (
           CVPixelBufferGetWidth(request.pixelBuffer), CVPixelBufferGetHeight(request.pixelBuffer)

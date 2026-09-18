@@ -188,7 +188,7 @@ pod 'UltralyticsYOLO', '~> 8.9'
 bash scripts/download-models.sh
 ```
 
-该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。测试在不包含 Core AI 的 iOS 模拟器上运行，因此验证的是 Core ML 后端；`bash scripts/download-models.sh --coreai` 会额外将 nano Core AI 模型和一张基准测试图片打包进应用，用于[真机基准测试](docs/performance.md#-core-ai-backend)。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
+该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。测试在不包含 Core AI 的 iOS 模拟器上运行，因此验证的是 Core ML 后端；`bash scripts/download-models.sh --coreai` 会额外将 nano Core AI 模型打包进应用，用于[真机验证](docs/performance.md#-core-ai-backend)。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
 
 ### 测试覆盖范围
 

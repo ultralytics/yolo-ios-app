@@ -30,7 +30,16 @@ class ModelCacheManager {
 
   private init() {}
 
+  /// The installed model to load. A Core ML model cached before the device could run Core AI stays in use until its
+  /// Core AI replacement is installed, so it still loads when that download is not possible.
   func modelURL(for key: String) -> URL {
+    let cachedCoreML = modelURL(for: key, extension: "mlmodelc")
+    return !isModelDownloaded(key: key) && FileManager.default.fileExists(atPath: cachedCoreML.path)
+      ? cachedCoreML : installURL(for: key)
+  }
+
+  /// Where a download of the format this device prefers is installed.
+  fileprivate func installURL(for key: String) -> URL {
     modelURL(for: key, extension: remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
   }
 
@@ -52,13 +61,17 @@ class ModelCacheManager {
     if isModelDownloaded(key: key) {
       completion(true, key)
     } else {
-      ModelDownloadManager.shared.startDownload(
-        url: remoteURL, fileName: fileName, key: key, completion: completion)
+      ModelDownloadManager.shared.startDownload(url: remoteURL, fileName: fileName, key: key) {
+        success, key in
+        completion(
+          success || FileManager.default.fileExists(atPath: self.modelURL(for: key).path), key)
+      }
     }
   }
 
+  /// Whether the format this device prefers is installed; a cached Core ML copy alone still triggers the download.
   func isModelDownloaded(key: String) -> Bool {
-    FileManager.default.fileExists(atPath: modelURL(for: key).path)
+    FileManager.default.fileExists(atPath: installURL(for: key).path)
   }
 }
 
@@ -181,15 +194,14 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
         let isCoreAI = url.pathExtension == "aimodel"
-        let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
-        let localModelURL = ModelCacheManager.shared.modelURL(for: key)
-        try FileManager.default.moveItem(at: installURL, to: localModelURL)
+        let marker = url.appendingPathComponent("metadata.json")
+        if isCoreAI && !FileManager.default.fileExists(atPath: marker.path) {
+          throw CocoaError(.fileReadCorruptFile)
+        }
+        let extractedURL = isCoreAI ? url : try MLModel.compileModel(at: url)
+        try FileManager.default.moveItem(
+          at: extractedURL, to: ModelCacheManager.shared.installURL(for: key))
         if isCoreAI {
-          let marker = localModelURL.appendingPathComponent("metadata.json")
-          guard FileManager.default.fileExists(atPath: marker.path) else {
-            try? FileManager.default.removeItem(at: localModelURL)
-            throw CocoaError(.fileReadCorruptFile)
-          }
           try? FileManager.default.removeItem(
             at: ModelCacheManager.shared.modelURL(for: key, extension: "mlmodelc"))
         }

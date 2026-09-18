@@ -197,7 +197,8 @@ boundary (`apple/coreai-torch#66`), which is why the raw head wins above. The sa
 SDK code runs. The abort cannot be caught.
 
 Official model IDs resolve to the Core AI asset on iOS 27 and later devices and to the Core ML asset everywhere else
-(`remoteModelExtension` in `RemoteModels.swift`); explicit `.mlpackage` and `.aimodel` paths and URLs load on either.
+(`remoteModelExtension` in `RemoteModels.swift`); an explicit `.mlpackage` path or URL loads everywhere, while an explicit `.aimodel` requires iOS 27 or later on a device and throws
+`PredictorError.coreAIUnavailable` otherwise.
 
 ## 🔬 Methodology (How to Reproduce)
 

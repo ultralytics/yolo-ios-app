@@ -194,7 +194,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. Tests run on the iOS Simulator, which does not ship Core AI, so they exercise the Core ML backend; `bash scripts/download-models.sh --coreai` additionally bundles the nano Core AI models and a benchmark image into the app for [on-device benchmarking](docs/performance.md#-core-ai-backend). You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. Tests run on the iOS Simulator, which does not ship Core AI, so they exercise the Core ML backend; `bash scripts/download-models.sh --coreai` additionally bundles the nano Core AI models into the app for [on-device validation](docs/performance.md#-core-ai-backend). You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

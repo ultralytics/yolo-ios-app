@@ -56,7 +56,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   var currentOriginalImage: UIImage?
 
   /// Whether the model requires NMS post-processing (false for YOLO26 nms-free models).
-  public internal(set) var requiresNMS: Bool = true
+  public private(set) var requiresNMS: Bool = true
 
   /// The current listener to receive prediction results.
   weak var currentOnResultsListener: ResultsListener?
@@ -420,8 +420,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// Per-stage timing in milliseconds: (pre, inference, post). Vision fuses input scaling into the Core ML request,
-  /// so there `pre` is folded into `inference` and reported as zero; Core AI preprocessing is measured separately.
-  /// Call after `finishTiming`/`updateTime`.
+  /// so there `pre` is folded into `inference` and reported as zero. Core AI preprocessing is reported separately by
+  /// `predictOnImage`; the smoothed camera path folds it into `inference` as well. Call after
+  /// `finishTiming`/`updateTime`.
   func timingBreakdownMs() -> (pre: Double, inference: Double, post: Double) {
     guard tInferEnd > t0 else { return (0, t1 * 1000, 0) }
     let inferStart = max(t0, tPreEnd)

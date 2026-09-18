@@ -31,8 +31,12 @@ class ModelCacheManager {
   private init() {}
 
   func modelURL(for key: String) -> URL {
+    modelURL(for: key, extension: remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
+  }
+
+  fileprivate func modelURL(for key: String, extension ext: String) -> URL {
     documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
-      .appendingPathExtension(remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
+      .appendingPathExtension(ext)
   }
 
   func loadModel(
@@ -171,13 +175,24 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     completeTask(downloadTask, success: false, key: key)
   }
 
-  /// Moves the extracted model into Documents, compiling it first when it is a Core ML model.
+  /// Moves the extracted model into Documents, compiling it first when it is a Core ML model. The Core ML copy a
+  /// device cached before it could run Core AI is removed only once its Core AI replacement is installed and valid.
   private func installModel(from url: URL, key: String, completion: @escaping (Bool) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
-        let installURL = url.pathExtension == "aimodel" ? url : try MLModel.compileModel(at: url)
-        try FileManager.default.moveItem(
-          at: installURL, to: ModelCacheManager.shared.modelURL(for: key))
+        let isCoreAI = url.pathExtension == "aimodel"
+        let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
+        let localModelURL = ModelCacheManager.shared.modelURL(for: key)
+        try FileManager.default.moveItem(at: installURL, to: localModelURL)
+        if isCoreAI {
+          let marker = localModelURL.appendingPathComponent("metadata.json")
+          guard FileManager.default.fileExists(atPath: marker.path) else {
+            try? FileManager.default.removeItem(at: localModelURL)
+            throw CocoaError(.fileReadCorruptFile)
+          }
+          try? FileManager.default.removeItem(
+            at: ModelCacheManager.shared.modelURL(for: key, extension: "mlmodelc"))
+        }
         DispatchQueue.main.async { completion(true) }
       } catch {
         print("Failed to install model: \(error)")

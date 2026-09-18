@@ -101,9 +101,10 @@ preprocess, inference, and postprocess times.
 | ----- | ---- | ------- | ------- | ------- | ------------ | ------- |
 | —     | —    | —       | pending | pending | pending      | pending |
 
-The app's default asset format changes to Core AI only if this table shows parity or better against the shipped Core
-ML INT8 assets and every official asset loads without aborting; until then Core AI is selectable
-(`remoteModelExtension` in `RemoteModels.swift`, or any explicit `.aimodel` path or URL) and Core ML stays the default.
+Official model IDs resolve to the Core AI asset on iOS 27 and later devices and to the Core ML asset everywhere else
+(`remoteModelExtension` in `RemoteModels.swift`); explicit `.mlpackage` and `.aimodel` paths and URLs load on either.
+That default ships only if this table shows parity or better against the shipped Core ML INT8 assets and every
+official asset loads without aborting.
 
 ## 🔬 Methodology (How to Reproduce)
 

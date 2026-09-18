@@ -89,7 +89,7 @@ output copy, and the task decoder, and has not been measured yet. To measure it 
 ```bash
 bash scripts/download-models.sh --coreai # bundles the nano Core AI models and bus.jpg next to the Core ML models
 # optionally add raw-head assets (nms=None exports) to YOLOiOSApp/Models/<Task>/ under distinct names
-xcrun devicectl device process launch --console --device <UDID> com.ultralytics.iDetection --benchmark
+xcrun devicectl device process launch --console --device --benchmark < UDID > com.ultralytics.iDetection
 ```
 
 Launching with `--benchmark` (it never runs otherwise) loads every model bundled under `Models/<Task>/`, Core ML and

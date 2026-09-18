@@ -159,7 +159,10 @@ Findings:
   argmax costs 3.8 ms, while the Core ML export emits a class map. Emitting the class map from the Core AI graph was
   tested and rejected: under hardware acceleration it returns a wrong map (class 0 on 200,317 pixels against about
   84,000 in every other variant), while the same asset is correct on the CPU.
-- **Depth is slower on Core AI** by the preprocessing cost (7.87 against 6.42 ms); model time is equal.
+  Reported as [apple/coreai-torch#116](https://github.com/apple/coreai-torch/issues/116); the Swift argmax is tracked in
+  [#322](https://github.com/ultralytics/yolo-ios-app/issues/322).
+- **Depth is slower on Core AI** by the preprocessing cost (7.87 against 6.42 ms); model time is equal. Tracked in
+  [#321](https://github.com/ultralytics/yolo-ios-app/issues/321).
 - **CPU only, Core AI is 1.5–2x slower than Core ML** for every 640 task; only classify is faster.
 - **The FP16 end-to-end pose asset returns no detections under hardware acceleration**
   ([apple/coreai-torch#115](https://github.com/apple/coreai-torch/issues/115)); it is correct on the CPU, as FP32, and

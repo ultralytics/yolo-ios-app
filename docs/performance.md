@@ -52,6 +52,59 @@ included in inference.
 - The matching Snapdragon CPU/GPU/NPU table lives in the
   [Flutter plugin performance guide](https://github.com/ultralytics/yolo-flutter-app/blob/main/doc/performance.md).
 
+## 🍏 Core AI Backend
+
+Core AI (`.aimodel`) models run on iOS 27 and later devices; Core ML (`.mlpackage`) remains the backend for earlier iOS
+versions and for the iOS Simulator, which does not ship Core AI. The SDK loads an `.aimodel` through
+`CoreAIRequest.swift`: it letterboxes the frame itself (Core Image render plus Accelerate BGRA → RGB CHW conversion,
+centered exactly like Vision's `.scaleFit`, 114-gray padding), runs the model with the Neural Engine preferred
+(`useGpu: true`) or pinned to the CPU (`useGpu: false`), and hands the output tensors to the same task decoders the
+Core ML path uses. Both heads decode by output shape, so nothing in the SDK is tied to the end2end head.
+
+The only on-device Core AI measurements so far come from the Ultralytics package PR that added the export,
+[ultralytics/ultralytics#25926](https://github.com/ultralytics/ultralytics/pull/25926): iPhone 17 Pro, iOS 27.0 beta 6,
+YOLO26n detect at 640, FP16, the same graph on both backends, model time only (input allocated outside the timed
+loop, three interleaved blocks of 50 iterations):
+
+| YOLO26n detect, FP16                      | Core AI | Core ML |
+| ----------------------------------------- | ------- | ------- |
+| end2end head in the graph (`nms=False`)   | 3.06 ms | 1.53 ms |
+| postprocess out of the graph (`nms=None`) | 1.32 ms | 1.32 ms |
+
+With the recipe the app ships today (`nms=False`), Core AI is therefore about twice as slow as Core ML on the Neural
+Engine. The model body is at parity; the whole gap is one `topk` charged at the Neural Engine partition boundary
+(tracked upstream in `apple/coreai-torch#66`), so parity needs the raw head plus the SDK's Swift NMS. The same PR
+reports that some FP16 `.aimodel` assets abort the process while loading their Neural Engine program, inside Apple's
+runtime and before any SDK code runs, while the same asset loads on a CPU-only specialization. The abort cannot be
+caught, so the benchmark below names each asset and compute unit before loading it.
+
+Core AI assets are FP16 because the Ultralytics package has no int8 Core AI export; the shipped Core ML assets are
+INT8, so a Core AI asset is roughly twice the download size.
+
+### In-App Benchmark (SDK Path, Pending)
+
+The numbers above isolate the model. The SDK path adds Swift preprocessing, the FP32 → FP16 input conversion, an
+output copy, and the task decoder, and has not been measured yet. To measure it on a device:
+
+```bash
+bash scripts/download-models.sh --coreai # bundles the nano Core AI models and bus.jpg next to the Core ML models
+# optionally add raw-head assets (nms=None exports) to YOLOiOSApp/Models/<Task>/ under distinct names
+xcrun devicectl device process launch --console --device <UDID> com.ultralytics.iDetection --benchmark
+```
+
+Launching with `--benchmark` (it never runs otherwise) loads every model bundled under `Models/<Task>/`, Core ML and
+Core AI, first accelerated and then CPU-only, logs `BENCHMARK loading <asset> [<compute>]` before each load, runs 3
+warmup and 15 measured `predictOnImage` calls on `Models/bus.jpg`, and prints a markdown table of the median load,
+preprocess, inference, and postprocess times.
+
+| Model | Task | Compute | Load ms | Pre ms  | Inference ms | Post ms |
+| ----- | ---- | ------- | ------- | ------- | ------------ | ------- |
+| —     | —    | —       | pending | pending | pending      | pending |
+
+The app's default asset format changes to Core AI only if this table shows parity or better against the shipped Core
+ML INT8 assets and every official asset loads without aborting; until then Core AI is selectable
+(`remoteModelExtension` in `RemoteModels.swift`, or any explicit `.aimodel` path or URL) and Core ML stays the default.
+
 ## 🔬 Methodology (How to Reproduce)
 
 | Tool                                                                                              | What it measures                                                         | Notes                                                                                                                                                                                                                                                           |

@@ -53,6 +53,8 @@ Build/
 *.mlarchive
 *.mlprogram
 *.mlpackage
+*.aimodel
+YOLOiOSApp/Models/bus.jpg
 
 # GitHub Python GitIgnore ----------------------------------------------------------------------------------------------
 # Byte-compiled / optimized / DLL files
@@ -251,3 +253,4 @@ Tests/YOLOTests/Resources/*.mlpackage
 .build/
 
 Package.resolved
+exports/

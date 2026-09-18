@@ -218,10 +218,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
       )
     else { return [] }
 
-    let modelFiles =
-      fileURLs
-      .filter { ["mlmodel", "mlpackage"].contains($0.pathExtension) }
-      .map { $0.lastPathComponent }
+    // One entry per model: a model bundled in both formats is listed in the format this device downloads.
+    let usesCoreAI = remoteModelExtension == "aimodel"
+    let names = fileURLs.map { $0.lastPathComponent }
+    let modelFiles = names.filter { name in
+      let base = (name as NSString).deletingPathExtension
+      switch (name as NSString).pathExtension {
+      case "aimodel": return usesCoreAI
+      case "mlmodel", "mlpackage": return !(usesCoreAI && names.contains(base + ".aimodel"))
+      default: return false
+      }
+    }
 
     return folderName == "Models/Detect" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
   }
@@ -402,15 +409,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
         // Show the initial download message with a properly formatted model name.
         self.downloadProgressLabel.text = "Downloading \(processString(entry.displayName))"
 
-        let localZipFileName = remoteURL.lastPathComponent  // e.g. "yolo26n.mlpackage.zip"
+        let localZipFileName = remoteURL.lastPathComponent  // e.g. "yolo26n.mlpackage.zip" or "yolo26n.aimodel.zip"
 
         ModelCacheManager.shared.loadModel(
           from: localZipFileName,
           remoteURL: remoteURL,
           key: key
-        ) { [weak self] mlModel, loadedKey in
+        ) { [weak self] success, loadedKey in
           guard let self = self else { return }
-          if mlModel == nil {
+          if !success {
             self.finishLoadingModel(success: false, modelName: entry.displayName)
             return
           }

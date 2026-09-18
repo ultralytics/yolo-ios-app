@@ -145,7 +145,7 @@ public final class YOLOModelDownloader: NSObject {
       // Find model file
       let modelPath = try findModelPath(in: extractedPath, for: url)
 
-      // Compile and cache model
+      // Compile (Core ML only) and cache model
       let compiledPath = try compileModelIfNeeded(at: modelPath)
       let cachedPath = try cacheModel(compiledPath, for: url)
 
@@ -181,7 +181,7 @@ public final class YOLOModelDownloader: NSObject {
   private func cacheModel(_ compiledPath: URL, for url: URL) throws -> URL {
     let key = YOLOModelCache.shared.cacheKey(for: url, task: currentTask)
     let cachedPath = YOLOModelCache.shared.cacheDirectory.appendingPathComponent(key)
-      .appendingPathExtension("mlmodelc")
+      .appendingPathExtension(compiledPath.pathExtension)
 
     if FileManager.default.fileExists(atPath: cachedPath.path) {
       try FileManager.default.removeItem(at: cachedPath)
@@ -206,16 +206,17 @@ public final class YOLOModelDownloader: NSObject {
     }
   }
 
-  /// Recursively searches `directory` for an `.mlpackage`, `.mlmodel`, or `.mlmodelc` and returns the first match.
+  /// Recursively searches `directory` for an `.aimodel`, `.mlpackage`, `.mlmodel`, or `.mlmodelc` and returns the
+  /// first match.
   private func findModelFile(in directory: URL) throws -> URL? {
     let contents = try FileManager.default.contentsOfDirectory(
       at: directory, includingPropertiesForKeys: [.isDirectoryKey])
 
     // Look for model files in current directory
     for url in contents {
-      if url.pathExtension == "mlpackage" {
-        let manifestPath = url.appendingPathComponent("Manifest.json")
-        if FileManager.default.fileExists(atPath: manifestPath.path) { return url }
+      if let marker = YOLOModelCache.validityMarkers[url.pathExtension] {
+        let markerPath = url.appendingPathComponent(marker)
+        if FileManager.default.fileExists(atPath: markerPath.path) { return url }
       }
 
       if ["mlmodel", "mlmodelc"].contains(url.pathExtension) { return url }
@@ -224,7 +225,9 @@ public final class YOLOModelDownloader: NSObject {
     // Search subdirectories recursively
     for url in contents {
       let resourceValues = try url.resourceValues(forKeys: [.isDirectoryKey])
-      if resourceValues.isDirectory == true && url.pathExtension != "mlpackage" {
+      if resourceValues.isDirectory == true
+        && YOLOModelCache.validityMarkers[url.pathExtension] == nil
+      {
         if let found = try findModelFile(in: url) { return found }
       }
     }
@@ -243,7 +246,7 @@ public final class YOLOModelDownloader: NSObject {
       } catch {
         throw DownloadError.compilationFailed(error)
       }
-    case "mlmodelc":
+    case "mlmodelc", "aimodel":  // Core AI specializes an `.aimodel` on load
       return modelURL
     default:
       throw DownloadError.modelNotFoundInArchive

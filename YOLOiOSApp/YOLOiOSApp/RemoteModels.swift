@@ -10,6 +10,11 @@
 
 import Foundation
 
+/// The official asset format the app downloads and lists. Core ML (`.mlpackage`) runs on every supported iOS version;
+/// set this to `BasePredictor.isCoreAIAvailable ? "aimodel" : "mlpackage"` to use Core AI on iOS 27 and later
+/// devices once the on-device benchmark in docs/performance.md shows parity.
+let remoteModelExtension = "mlpackage"
+
 /// Maps task names to the YOLO models available for download, with their archive URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = {
   let base = "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0"
@@ -21,7 +26,7 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   return tasks.reduce(into: [:]) { result, task in
     result[task.0] = sizes.map { size in
       let model = "yolo26\(size)\(task.1)"
-      return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
+      return (model, URL(string: "\(base)/\(model).\(remoteModelExtension).zip")!)
     }
   }
 }()

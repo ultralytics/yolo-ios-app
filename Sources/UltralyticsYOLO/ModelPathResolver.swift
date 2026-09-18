@@ -4,18 +4,20 @@ import Foundation
 
 /// Resolves a user-supplied model string to an on-disk URL.
 ///
-/// Accepts either an absolute filesystem path to `.mlmodel`/`.mlpackage`/`.mlmodelc`, or a bundle resource name
-/// (searched for `.mlmodelc` then `.mlpackage` in the main bundle).
+/// Accepts either an absolute filesystem path to `.aimodel`/`.mlmodel`/`.mlpackage`/`.mlmodelc`, or a bundle resource
+/// name (searched for `.aimodel` when Core AI is available, then `.mlmodelc` and `.mlpackage`, in the main bundle).
 enum ModelPathResolver {
   static func resolve(_ modelPathOrName: String) -> URL? {
     let lowercased = modelPathOrName.lowercased()
-    if lowercased.hasSuffix(".mlmodel") || lowercased.hasSuffix(".mlpackage")
-      || lowercased.hasSuffix(".mlmodelc")
-    {
+    if [".aimodel", ".mlmodel", ".mlpackage", ".mlmodelc"].contains(where: lowercased.hasSuffix) {
       let url = URL(fileURLWithPath: modelPathOrName)
       return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
-    return Bundle.main.url(forResource: modelPathOrName, withExtension: "mlmodelc")
-      ?? Bundle.main.url(forResource: modelPathOrName, withExtension: "mlpackage")
+    let extensions =
+      (BasePredictor.isCoreAIAvailable ? ["aimodel"] : []) + ["mlmodelc", "mlpackage"]
+    return extensions.lazy.compactMap {
+      Bundle.main.url(forResource: modelPathOrName, withExtension: $0)
+    }
+    .first
   }
 }

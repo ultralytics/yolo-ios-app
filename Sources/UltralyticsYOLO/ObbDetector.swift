@@ -20,7 +20,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
-    guard let prediction = firstFeatureArray(request) else {
+    guard let prediction = featureArrays(request).first else {
       self.isUpdating = false
       return
     }
@@ -41,7 +41,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     let requestHandler = makeRequestHandler(for: image)
 
     guard perform(request, with: requestHandler, errorMessage: "OBB detection failed"),
-      let prediction = firstFeatureArray(request)
+      let prediction = featureArrays(request).first
     else {
       return YOLOResult(
         orig_shape: inputSize, boxes: [], speed: finishTiming(notify: false), names: labels)

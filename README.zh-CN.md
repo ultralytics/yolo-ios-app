@@ -30,6 +30,7 @@
 ## ✨ 功能特性
 
 - 全程使用 Swift 与 Core ML，运行在 Apple Neural Engine 和 GPU 上
+- 在 iOS 27 及更高版本上支持 Apple Core AI（`.aimodel`）模型；更早的 iOS 版本以及不包含 Core AI 的 iOS 模拟器使用 Core ML（`.mlpackage`）
 - 在最新款 iPhone 上达到相机帧率（约 30 FPS）的实时推理——设备端性能分析见 [docs/performance.md](docs/performance.md)
 - 遵循 Apple 界面规范的原生 UI
 - 同时支持 YOLO26 与 YOLO11 模型，包括无 NMS 和原始输出
@@ -51,7 +52,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。发布的应用打包了全部七个官方 nano Core ML 模型，更大的变体可按需下载；你也可以将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 模型添加到应用工程中进行测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。发布的应用打包了全部七个官方 nano Core ML 模型，更大的变体可按需下载；你也可以将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 或 Core AI（`.aimodel`，iOS 27+）模型添加到应用工程中进行测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -83,40 +84,48 @@ var body: some View {
 | 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | iOS 应用、Swift package、iOS 27+ 上的 Flutter   | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Android 上的 Flutter                            | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
+- Core AI：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`，随启用 Core AI 的版本一同发布
 - LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
-iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` Core ML 发布版本。下表中的 Core ML 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
+iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` 发布版本。下表中的 Core ML 和 Core AI 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
-| 属性             | Core ML                                 | LiteRT                                  |
-| ---------------- | --------------------------------------- | --------------------------------------- |
-| 模型 ID          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
-| 任务             | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
-| 格式             | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize`       | `8`                                     | `w8a32`                                 |
-| `imgsz`          | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
-| `nms`            | `False`                                 | `None`                                  |
-| `end2end` 元数据 | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
-| 校准             | 导出器默认值                            | 无（动态范围量化）                      |
-| 后处理           | Swift/Core ML                           | Android 原生                            |
+| 属性             | Core ML                                 | Core AI                                 | LiteRT                                  |
+| ---------------- | --------------------------------------- | --------------------------------------- | --------------------------------------- |
+| 模型 ID          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
+| 任务             | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb | detect、seg、sem、depth、cls、pose、obb |
+| 格式             | `.mlpackage.zip`                        | `.aimodel.zip`                          | `.tflite`                               |
+| 运行环境         | iOS 13+、iOS 模拟器                     | iOS 27+ 真机                            | Android                                 |
+| `quantize`       | `8`                                     | `16`                                    | `w8a32`                                 |
+| `imgsz`          | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  | 分类 `224`；其余 `640`                  |
+| `nms`            | `False`                                 | `False`                                 | `None`                                  |
+| `end2end` 元数据 | cls/sem/depth 为 `False`；其余为 `True` | cls/sem/depth 为 `False`；其余为 `True` | `False`                                 |
+| 校准             | 导出器默认值                            | 无（FP16）                              | 无（动态范围量化）                      |
+| 预处理           | Vision                                  | Swift（letterbox、Accelerate）          | Android 原生                            |
+| 后处理           | Swift                                   | Swift                                   | Android 原生                            |
 
-导出脚本要求 `ultralytics>=8.4.142`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头；
+导出脚本要求 `ultralytics>=8.4.156`。Core ML 和 Core AI 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头。
+Core AI 没有 NMS 算子，因此不存在 Core ML 那样的 NMS 流水线阶段；Ultralytics 包也没有 int8 Core AI 导出，
+所以 Core AI 资源为 FP16，下载体积约为 int8 Core ML 资源的两倍。两种格式携带相同的 Ultralytics 元数据键和值
+（`task`、`names`、`imgsz`、`stride`、`end2end` 等），SDK 根据输出形状解码任一种头；
 分类、语义分割和深度保留原生输出。LiteRT 使用 `nms=None` 导出原始一对多输出，由 Android 端执行 NMS。
 `nms=True` 在支持的格式中嵌入 NMS。`end2end` 元数据字段描述导出图；请使用 `nms` 配置导出。
 
-### Core ML 发布工作流
+### Core ML 与 Core AI 发布工作流
 
 上表记录了已发布 `v8.3.0` 二进制文件的实际尺寸。[`scripts/export-models.py`](scripts/export-models.py)
-定义官方导出、int8 Core ML 设置、`.mlpackage.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+定义官方导出、int8 Core ML 与 FP16 Core AI 设置、`.mlpackage.zip` 和 `.aimodel.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
+Core AI 导出需要 Apple 芯片上的 macOS 26 或更高版本；在其他平台请传入 `--formats coreml`。
 如果其导出矩阵发生变化，应替换 `v8.3.0` 中生成的资源并同时更新此表。
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install "ultralytics[export-coreml]>=8.4.142"
+uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
 uv run python scripts/export-models.py
 ```
 
@@ -126,11 +135,11 @@ uv run python scripts/export-models.py
 # 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# 导出并替换现有 release 中的全部官方 Core ML 资产。
+# 导出并替换现有 release 中的全部官方 Core ML 和 Core AI 资产。
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
+该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 和 Core AI 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。
 
 ### Android LiteRT 对应资源
 
@@ -176,7 +185,7 @@ pod 'UltralyticsYOLO', '~> 8.9'
 bash scripts/download-models.sh
 ```
 
-该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
+该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。测试在不包含 Core AI 的 iOS 模拟器上运行，因此验证的是 Core ML 后端；`bash scripts/download-models.sh --coreai` 会额外将 nano Core AI 模型和一张基准测试图片打包进应用，用于[真机基准测试](docs/performance.md#-core-ai-backend)。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
 
 ### 测试覆盖范围
 

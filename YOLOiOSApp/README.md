@@ -56,13 +56,13 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Bundled and Optional YOLO26 Models:**
-    The app ships with all seven nano models (one per task: detect, segment, semantic, depth, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift). Classification uses a fixed 224 × 224 input; every other task uses 640 × 640.
+    The app ships with all seven nano models (one per task: detect, segment, semantic, depth, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift). Classification uses a fixed 224 × 224 input; every other task uses 640 × 640. Core AI (`.aimodel`) models run on iOS 27 and later devices; Core ML (`.mlpackage`) remains the format for earlier iOS versions and for the iOS Simulator, which does not ship Core AI. `remoteModelExtension` in `RemoteModels.swift` selects the format the app downloads, and `bash scripts/download-models.sh --coreai` also bundles the nano Core AI models for [on-device benchmarking](../docs/performance.md#-core-ai-backend).
 
     From the repository root, you can also prepare local model files for development or tests:
 
     ```bash
     uv venv --python 3.13 .venv
-    uv pip install "ultralytics[export-coreml]>=8.4.142"
+    uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
     uv run python scripts/export-models.py --sizes n --copy-to-app
     ```
 
@@ -81,7 +81,7 @@ The Ultralytics YOLO iOS App offers an intuitive user experience:
 
 - **Real-Time Inference:** Launch the app and point your device's camera at objects. The app will perform real-time [object detection](https://docs.ultralytics.com/tasks/detect), [instance segmentation](https://docs.ultralytics.com/tasks/segment), [semantic segmentation](https://docs.ultralytics.com/tasks/semantic), depth estimation, [image classification](https://docs.ultralytics.com/tasks/classify), [pose estimation](https://docs.ultralytics.com/tasks/pose), or [oriented bounding box detection](https://docs.ultralytics.com/tasks/obb) depending on the selected task and model.
 - **Flexible Task Selection:** Easily switch between different computer vision tasks supported by the loaded models using the app's interface.
-- **Multiple AI Models:** Use the bundled YOLO26n ('nano') models for all seven tasks immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. Custom Core ML models are supported too.
+- **Multiple AI Models:** Use the bundled YOLO26n ('nano') models for all seven tasks immediately after build, then download larger `s/m/l/x` variants on demand for higher accuracy. Custom Core ML models, and Core AI models on iOS 27 and later, are supported too.
 
 ### 📺 External Display Support (Optional)
 

@@ -30,7 +30,7 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
-    let depthMap = firstFeatureArray(request).flatMap { postProcessDepth($0) }
+    let depthMap = featureArrays(request).first.flatMap { postProcessDepth($0) }
     updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], depthMap: depthMap, speed: t2,
@@ -50,7 +50,7 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
       request, with: makeRequestHandler(for: image), errorMessage: "Depth estimation failed")
     {
       markInferenceEnd()
-      depthMap = firstFeatureArray(request).flatMap { postProcessDepth($0) }
+      depthMap = featureArrays(request).first.flatMap { postProcessDepth($0) }
     }
 
     var result = YOLOResult(

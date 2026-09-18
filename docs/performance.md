@@ -64,54 +64,114 @@ one head.
 
 ### On-Device Results
 
-Measured with a benchmark build of the app (harness in [#320](https://github.com/ultralytics/yolo-ios-app/issues/320)): median of 3 interleaved rounds of 15 runs after 3 warmup runs, `bus.jpg`,
-Release build, iPhone 17 Pro, iOS 27.0, YOLO26n, Core AI FP16 against the shipped Core ML INT8 assets, hardware
-acceleration enabled for both. Times are per `predictOnImage` call in milliseconds; Total is their sum. "End-to-end" is
-the NMS-free head in the graph (`nms=False`), "raw head" is the package default (`nms=None`) decoded by the SDK's
-Swift NMS.
+Apples-to-apples comparison on one device: every row is the same YOLO26n weights exported to a different format,
+precision or head, run through the same SDK call (`predictOnImage`) on the same image. iPhone 17 Pro, iOS 27.0, Release
+build, `bus.jpg`, imgsz 640 (224 for classify). Each value is the median of 3 interleaved rounds of 15 runs after 3
+warmup runs, averaged over two cooled launches; a task's models are loaded together and timed in alternating rounds so
+thermal drift and run order affect every row equally. Median run-to-run spread of inference time is 3%, worst case 17%,
+so treat differences under about 10% as ties. The harness is in
+[#320](https://github.com/ultralytics/yolo-ios-app/issues/320). Times are milliseconds; Total is pre + inference + post
+and is the number to compare, because Vision performs Core ML's preprocessing inside its inference time. ✅ marks the
+official assets. "End-to-end" is the NMS-free head in the graph (`nms=False`); "raw head" is the package default
+(`nms=None`) decoded by the SDK's Swift NMS.
 
-| Task     | Asset                   | Pre  | Inference | Post | Total | Result on `bus.jpg`      |
-| -------- | ----------------------- | ---- | --------- | ---- | ----- | ------------------------ |
-| Detect   | Core ML INT8            | 0.00 | 4.09      | 0.01 | 4.10  | 5 boxes, top 0.925       |
-| Detect   | Core AI FP16 end-to-end | 0.88 | 4.04      | 0.01 | 4.93  | 5 boxes, top 0.926       |
-| Detect   | Core AI FP16 raw head   | 1.03 | **2.08**  | 0.56 | 3.67  | 5 boxes, top 0.906       |
-| Segment  | Core ML INT8            | 0.00 | 4.91      | 0.67 | 5.58  | 4 instances              |
-| Segment  | Core AI FP16 end-to-end | 0.98 | 6.18      | 0.60 | 7.76  | 4 instances              |
-| Segment  | Core AI FP16 raw head   | 1.12 | **2.65**  | 1.13 | 4.90  | 5 instances              |
-| Semantic | Core ML INT8            | 0.00 | 4.72      | 0.34 | 5.06  | 12 classes               |
-| Semantic | Core AI FP16            | 1.16 | **3.05**  | 3.72 | 7.93  | 12 classes               |
-| Depth    | Core ML INT8            | 0.00 | 5.43      | 0.82 | 6.25  | depth 1.47–14.81         |
-| Depth    | Core AI FP16            | 1.09 | 4.95      | 0.81 | 6.85  | depth 1.29–16.59         |
-| Classify | Core ML INT8            | 0.00 | 2.15      | 0.02 | 2.17  | minibus 0.654            |
-| Classify | Core AI FP16            | 0.57 | **0.52**  | 0.01 | 1.10  | minibus 0.696            |
-| Pose     | Core ML INT8            | 0.00 | 5.09      | 0.01 | 5.10  | 4 people                 |
-| Pose     | Core AI FP16 end-to-end | 1.02 | 3.87      | 0.00 | 4.89  | **0 people (incorrect)** |
-| Pose     | Core AI FP16 raw head   | 1.15 | **2.14**  | 0.27 | 3.56  | 4 people                 |
-| OBB      | Core ML INT8            | 0.00 | 5.15      | 0.00 | 5.15  | no aerial objects        |
-| OBB      | Core AI FP16 end-to-end | 1.04 | 4.66      | 0.00 | 5.70  | no aerial objects        |
-| OBB      | Core AI FP16 raw head   | 1.25 | **2.02**  | 0.40 | 3.67  | no aerial objects        |
+#### Hardware acceleration (`useGpu: true`)
+
+| Task     | Model                      | Pre  | Inference | Post | Total    | Result on `bus.jpg`      |
+| -------- | -------------------------- | ---- | --------- | ---- | -------- | ------------------------ |
+| Detect   | Core ML INT8 end-to-end ✅ | 0.00 | 4.58      | 0.01 | 4.59     | 5 boxes, top 0.925       |
+| Detect   | Core ML FP16 end-to-end    | 0.00 | 4.04      | 0.01 | 4.05     | 5 boxes, top 0.922       |
+| Detect   | Core ML FP16 raw head      | 0.00 | 3.58      | 0.58 | 4.17     | 5 boxes, top 0.905       |
+| Detect   | Core AI FP16 end-to-end    | 0.94 | 4.12      | 0.01 | 5.06     | 5 boxes, top 0.926       |
+| Detect   | Core AI FP16 raw head ✅   | 1.15 | 2.05      | 0.54 | **3.73** | 5 boxes, top 0.906       |
+| Segment  | Core ML INT8 end-to-end ✅ | 0.00 | 5.12      | 0.67 | 5.79     | 4 instances, top 0.920   |
+| Segment  | Core ML FP16 end-to-end    | 0.00 | 4.60      | 0.64 | **5.24** | 4 instances, top 0.922   |
+| Segment  | Core ML FP16 raw head      | 0.00 | 4.21      | 1.26 | 5.47     | 5 instances, top 0.870   |
+| Segment  | Core AI FP16 end-to-end    | 0.99 | 5.54      | 0.60 | 7.13     | 4 instances, top 0.919   |
+| Segment  | Core AI FP16 raw head ✅   | 1.30 | 2.79      | 1.23 | 5.33     | 5 instances, top 0.873   |
+| Semantic | Core ML INT8 ✅            | 0.00 | 4.60      | 0.35 | 4.95     | 12 classes               |
+| Semantic | Core ML FP16               | 0.00 | 4.52      | 0.34 | **4.86** | 12 classes               |
+| Semantic | Core AI FP16 ✅            | 1.29 | 3.47      | 3.79 | 8.55     | 12 classes               |
+| Depth    | Core ML INT8 ✅            | 0.00 | 5.58      | 0.84 | **6.42** | depth 1.47–14.81         |
+| Depth    | Core ML FP16               | 0.00 | 5.79      | 0.82 | 6.62     | depth 1.47–15.03         |
+| Depth    | Core AI FP16 ✅            | 1.37 | 5.64      | 0.85 | 7.87     | depth 1.29–16.59         |
+| Classify | Core ML INT8 ✅            | 0.00 | 1.97      | 0.01 | 1.98     | minibus 0.654            |
+| Classify | Core ML FP16               | 0.00 | 2.32      | 0.02 | 2.34     | minibus 0.703            |
+| Classify | Core AI FP16 ✅            | 0.68 | 0.51      | 0.01 | **1.19** | minibus 0.696            |
+| Pose     | Core ML INT8 end-to-end ✅ | 0.00 | 4.08      | 0.01 | 4.09     | 4 people, top 0.887      |
+| Pose     | Core ML FP16 end-to-end    | 0.00 | 4.05      | 0.01 | 4.06     | 4 people, top 0.886      |
+| Pose     | Core ML FP16 raw head      | 0.00 | 4.05      | 0.30 | 4.35     | 4 people, top 0.853      |
+| Pose     | Core AI FP16 end-to-end    | 1.14 | 4.97      | 0.00 | 6.11     | **0 people (incorrect)** |
+| Pose     | Core AI FP16 raw head ✅   | 1.40 | 2.31      | 0.31 | **4.02** | 4 people, top 0.857      |
+| OBB      | Core ML INT8 end-to-end ✅ | 0.00 | 3.79      | 0.00 | 3.79     | no aerial objects        |
+| OBB      | Core ML FP16 end-to-end    | 0.00 | 3.99      | 0.00 | 3.99     | no aerial objects        |
+| OBB      | Core ML FP16 raw head      | 0.00 | 3.92      | 0.41 | 4.33     | no aerial objects        |
+| OBB      | Core AI FP16 end-to-end    | 0.94 | 4.26      | 0.00 | 5.20     | no aerial objects        |
+| OBB      | Core AI FP16 raw head ✅   | 1.27 | 1.97      | 0.41 | **3.65** | no aerial objects        |
+
+#### CPU only (`useGpu: false`)
+
+| Task     | Model                      | Pre  | Inference | Post | Total     | Result on `bus.jpg`    |
+| -------- | -------------------------- | ---- | --------- | ---- | --------- | ---------------------- |
+| Detect   | Core ML INT8 end-to-end ✅ | 0.00 | 11.50     | 0.01 | 11.51     | 5 boxes, top 0.926     |
+| Detect   | Core ML FP16 end-to-end    | 0.00 | 10.25     | 0.01 | **10.26** | 5 boxes, top 0.925     |
+| Detect   | Core ML FP16 raw head      | 0.00 | 10.21     | 0.58 | 10.79     | 5 boxes, top 0.904     |
+| Detect   | Core AI FP16 end-to-end    | 1.15 | 21.30     | 0.01 | 22.45     | 5 boxes, top 0.926     |
+| Detect   | Core AI FP16 raw head ✅   | 1.15 | 17.49     | 0.60 | 19.25     | 5 boxes, top 0.902     |
+| Segment  | Core ML INT8 end-to-end ✅ | 0.00 | 14.79     | 0.77 | 15.56     | 5 instances, top 0.919 |
+| Segment  | Core ML FP16 end-to-end    | 0.00 | 14.30     | 0.54 | **14.84** | 3 instances, top 0.919 |
+| Segment  | Core ML FP16 raw head      | 0.00 | 13.82     | 1.29 | 15.11     | 5 instances, top 0.872 |
+| Segment  | Core AI FP16 end-to-end    | 1.14 | 29.91     | 0.69 | 31.73     | 4 instances, top 0.916 |
+| Segment  | Core AI FP16 raw head ✅   | 1.17 | 25.53     | 1.31 | 28.02     | 5 instances, top 0.871 |
+| Semantic | Core ML INT8 ✅            | 0.00 | 10.57     | 0.36 | **10.93** | 12 classes             |
+| Semantic | Core ML FP16               | 0.00 | 11.04     | 0.37 | 11.40     | 12 classes             |
+| Semantic | Core AI FP16 ✅            | 1.20 | 16.38     | 4.08 | 21.66     | 12 classes             |
+| Depth    | Core ML INT8 ✅            | 0.00 | 30.74     | 0.90 | 31.64     | depth 1.44–12.34       |
+| Depth    | Core ML FP16               | 0.00 | 30.67     | 0.91 | **31.58** | depth 1.43–12.42       |
+| Depth    | Core AI FP16 ✅            | 1.21 | 36.95     | 0.91 | 39.07     | depth 1.26–14.10       |
+| Classify | Core ML INT8 ✅            | 0.00 | 4.71      | 0.02 | 4.73      | minibus 0.795          |
+| Classify | Core ML FP16               | 0.00 | 2.50      | 0.02 | 2.52      | minibus 0.689          |
+| Classify | Core AI FP16 ✅            | 0.65 | 0.79      | 0.00 | **1.44**  | minibus 0.684          |
+| Pose     | Core ML INT8 end-to-end ✅ | 0.00 | 14.45     | 0.01 | 14.46     | 4 people, top 0.887    |
+| Pose     | Core ML FP16 end-to-end    | 0.00 | 14.92     | 0.01 | 14.93     | 4 people, top 0.886    |
+| Pose     | Core ML FP16 raw head      | 0.00 | 14.09     | 0.33 | **14.42** | 4 people, top 0.856    |
+| Pose     | Core AI FP16 end-to-end    | 1.16 | 21.91     | 0.01 | 23.08     | 4 people, top 0.886    |
+| Pose     | Core AI FP16 raw head ✅   | 1.17 | 21.18     | 0.34 | 22.69     | 4 people, top 0.856    |
+| OBB      | Core ML INT8 end-to-end ✅ | 0.00 | 13.18     | 0.00 | **13.18** | no aerial objects      |
+| OBB      | Core ML FP16 end-to-end    | 0.00 | 13.19     | 0.00 | 13.19     | no aerial objects      |
+| OBB      | Core ML FP16 raw head      | 0.00 | 13.30     | 0.42 | 13.72     | no aerial objects      |
+| OBB      | Core AI FP16 end-to-end    | 1.11 | 21.07     | 0.00 | 22.18     | no aerial objects      |
+| OBB      | Core AI FP16 raw head ✅   | 1.17 | 19.68     | 0.41 | 21.25     | no aerial objects      |
 
 Findings:
 
-- **The raw head is about 2x faster in inference** than both the Core AI end-to-end head and Core ML INT8 for detect,
-  segment, pose, and OBB (detect 2.08 ms against 4.04 and 4.09 ms). It is the official Core AI recipe:
-  `model.export(format="coreai", quantize=16, imgsz=640)`.
-- **Semantic**: Core AI wins inference (3.05 against 4.72 ms), but its output is 4-D logits and the Swift argmax costs
-  3.7 ms of postprocessing against 0.34 ms for the Core ML class map, so Core AI is slower end to end (7.93 against
-  5.06 ms).
-- **Classify**: Core AI wins (0.52 against 2.15 ms inference, 1.10 against 2.17 ms total). **Depth** is at parity.
-- **Preprocessing**: Core AI adds about 1 ms of CPU preprocessing per frame (0.6 ms at 224) that Vision hides inside
-  the Core ML inference time, so compare totals, not inference alone.
-- **Swift NMS cost grows with object count.** On `bus.jpg` it is 0.3–1.1 ms. On a dense aerial OBB scene
-  postprocessing reached 4.7 ms and the raw-head total 10.9 ms against 9.0 ms for Core ML, erasing the win.
-- **The FP16 end-to-end pose asset returns no detections under default placement**
+- **End to end, Core AI and Core ML are close.** The official Core AI raw-head assets are ahead for detect (3.73
+  against 4.05–4.59 ms), OBB and classify, tied for segment and pose, and behind for semantic and depth.
+- **Core AI's model time is about half of Core ML's with the raw head** (detect 2.05 against 3.58–4.58 ms inference),
+  but about 1.2 ms of CPU preprocessing per frame and the Swift NMS give most of that back. Preprocessing is the next
+  lever: Core ML gets it from Vision inside its inference time.
+- **Precision is not the difference.** Core ML FP16 and INT8 are within noise of each other on this device, so the
+  comparison with FP16 Core AI is fair; INT8 only halves the download.
+- **The raw head helps Core AI much more than Core ML.** Core AI's end-to-end head pays a fixed `topk` cost at the
+  Neural Engine boundary ([apple/coreai-torch#66](https://github.com/apple/coreai-torch/issues/66)), so its raw head is
+  the official recipe: `model.export(format="coreai", quantize=16, imgsz=640)`.
+- **Semantic is slower on Core AI end to end** (8.55 against 4.86–4.95 ms): its output is 4-D logits and the Swift
+  argmax costs 3.8 ms, while the Core ML export emits a class map. Emitting the class map from the Core AI graph was
+  tested and rejected: under hardware acceleration it returns a wrong map (class 0 on 200,317 pixels against about
+  84,000 in every other variant), while the same asset is correct on the CPU.
+- **Depth is slower on Core AI** by the preprocessing cost (7.87 against 6.42 ms); model time is equal.
+- **CPU only, Core AI is 1.5–2x slower than Core ML** for every 640 task; only classify is faster.
+- **The FP16 end-to-end pose asset returns no detections under hardware acceleration**
   ([apple/coreai-torch#115](https://github.com/apple/coreai-torch/issues/115)); it is correct on the CPU, as FP32, and
   as the raw head, so the raw-head recipe avoids it.
-- **Load time**: the first load of an `.aimodel` specializes it once (0.6–3 s); afterwards it loads from the system
-  cache in tens of milliseconds, against a Core ML compile of about 1–1.3 s on every launch for a bundled
-  `.mlpackage`.
+- **Swift NMS cost grows with object count.** On `bus.jpg` it is 0.3–1.3 ms. On a dense aerial OBB scene
+  postprocessing reached 4.7 ms and the raw-head total 10.9 ms against 9.0 ms for Core ML.
+- **Load time**: the first load of an `.aimodel` specializes it once (0.6–3 s for nano, 2–7 s for the largest models);
+  afterwards it loads from the system cache in tens of milliseconds, against a Core ML compile of about 1–2 s on every
+  launch for a bundled `.mlpackage`. Switching models in the app is visibly faster.
 - **Stability**: a 22,000-inference soak on the device did not reproduce
-  [apple/coreai-torch#75](https://github.com/apple/coreai-torch/issues/75).
+  [apple/coreai-torch#75](https://github.com/apple/coreai-torch/issues/75), and detect s/m/l/x plus the x model of
+  every other task load and return correct results.
 - Core AI assets are FP16 because the Ultralytics package has no int8 Core AI export; the shipped Core ML assets are
   INT8, so a Core AI asset is roughly twice the download size.
 

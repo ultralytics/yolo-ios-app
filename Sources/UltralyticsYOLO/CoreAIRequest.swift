@@ -149,11 +149,12 @@ extension BasePredictor {
 #if canImport(CoreAI)
   @available(iOS 27.0, *)
   extension CoreAIRequest {
-    /// Loads and specializes an `.aimodel`. `useGpu` keeps its SDK meaning of hardware acceleration: the Neural Engine
-    /// is preferred when true and inference is pinned to the CPU when false.
+    /// Loads and specializes an `.aimodel`. `useGpu` keeps its SDK meaning of hardware acceleration: when true Core AI
+    /// places the model across the Neural Engine, GPU and CPU itself, and when false inference is pinned to the CPU.
+    /// Preferring the Neural Engine explicitly is avoided: on iOS 27.0 it fails the load of models the Neural Engine
+    /// cannot compile instead of falling back.
     static func load(url: URL, useGpu: Bool) throws -> CoreAIRequest {
-      let options: SpecializationOptions =
-        useGpu ? SpecializationOptions(preferredComputeUnitKind: .neuralEngine) : .cpuOnly
+      let options: SpecializationOptions = useGpu ? .default : .cpuOnly
       let function = try blocking {
         try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
       }
@@ -166,15 +167,15 @@ extension BasePredictor {
       let shape = input.shape
       let isHalf = input.scalarType == .float16
       let outputNames = function.descriptor.outputNames
+      // Allocated once and refilled in bulk: `NDArray(scalars:)` copies element by element, which costs far more than
+      // the model itself at 640x640.
+      let tensor = InputTensor(NDArray(shape: shape, scalarType: input.scalarType))
 
       return try CoreAIRequest(width: shape[3], height: shape[2]) { floats in
-        try blocking {
-          var outputs = try await function.run(
-            inputs: [
-              inputName: isHalf
-                ? NDArray(scalars: half(floats), shape: shape)
-                : NDArray(scalars: floats, shape: shape)
-            ])
+        try tensor.fill(from: floats, isHalf: isHalf)
+        let array = tensor.array
+        return try blocking {
+          var outputs = try await function.run(inputs: [inputName: array])
           return try outputNames.map { name in
             guard let array = outputs.remove(name)?.ndArray else {
               throw PredictorError.invalidCoreAIModel("missing output '\(name)'")
@@ -185,20 +186,48 @@ extension BasePredictor {
       }
     }
 
-    private static func half(_ floats: [Float]) -> [Float16] {
-      var halves = [Float16](repeating: 0, count: floats.count)
-      floats.withUnsafeBytes { source in
-        halves.withUnsafeMutableBytes { destination in
-          var src = vImage_Buffer(
-            data: UnsafeMutableRawPointer(mutating: source.baseAddress!), height: 1,
-            width: vImagePixelCount(floats.count), rowBytes: source.count)
-          var dst = vImage_Buffer(
-            data: destination.baseAddress!, height: 1, width: vImagePixelCount(floats.count),
-            rowBytes: destination.count)
-          vImageConvert_PlanarFtoPlanar16F(&src, &dst, vImage_Flags(kvImageNoFlags))
+    /// The reused model input. Predictors run one inference at a time, so the tensor is never written concurrently.
+    private final class InputTensor: @unchecked Sendable {
+      var array: NDArray
+      init(_ array: NDArray) { self.array = array }
+
+      func fill(from floats: [Float], isHalf: Bool) throws {
+        let count = floats.count
+        let contiguous =
+          isHalf
+          ? Self.write(Float16.self, to: &array, count: count) { destination in
+            floats.withUnsafeBytes { source in
+              var src = vImage_Buffer(
+                data: UnsafeMutableRawPointer(mutating: source.baseAddress!), height: 1,
+                width: vImagePixelCount(count), rowBytes: source.count)
+              var dst = vImage_Buffer(
+                data: destination, height: 1, width: vImagePixelCount(count),
+                rowBytes: count * MemoryLayout<Float16>.stride)
+              vImageConvert_PlanarFtoPlanar16F(&src, &dst, vImage_Flags(kvImageNoFlags))
+            }
+          }
+          : Self.write(Float.self, to: &array, count: count) {
+            $0.update(from: floats, count: count)
+          }
+        guard contiguous else { throw PredictorError.invalidCoreAIModel("non-contiguous input") }
+      }
+
+      /// Hands `body` the tensor's storage when it is one contiguous run of `count` elements.
+      private static func write<T: BitwiseCopyable>(
+        _ type: T.Type, to array: inout NDArray, count: Int,
+        _ body: (UnsafeMutablePointer<T>) -> Void
+      ) -> Bool {
+        array.mutableView(as: type).withUnsafeMutablePointer { pointer, shape, strides in
+          var expected = 1
+          for axis in (0..<shape.count).reversed() {
+            guard strides[axis] == expected || shape[axis] == 1 else { return false }
+            expected *= shape[axis]
+          }
+          guard expected == count else { return false }
+          body(pointer)
+          return true
         }
       }
-      return halves
     }
 
     /// Copies a Core AI output into the Float32 `MLMultiArray` layout the task decoders read.

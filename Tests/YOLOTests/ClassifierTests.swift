@@ -5,7 +5,7 @@ import XCTest
 
 @testable import UltralyticsYOLO
 
-/// Tests for Classifier top-5 selection.
+/// Tests for Classifier softmax + top-5 selection.
 final class ClassifierTests: XCTestCase {
 
   /// The linear top-5 selection must match a full-sort reference (lowest class index wins ties).
@@ -15,18 +15,19 @@ final class ClassifierTests: XCTestCase {
     classifier.labels = (0..<count).map { "class\($0)" }
 
     for _ in 0..<50 {
-      // Classify exports apply softmax inside the model, so the tensor already holds probabilities.
-      let raw = (0..<count).map { _ in Float.random(in: 0...1) }
-      let total = raw.reduce(0, +)
-      let probs = raw.map { $0 / total }
+      let logits = (0..<count).map { _ in Float.random(in: -10...10) }
       let arr = try! MLMultiArray(shape: [NSNumber(value: count)], dataType: .float32)
       let p = arr.dataPointer.assumingMemoryBound(to: Float.self)
-      for i in 0..<count { p[i] = probs[i] }
+      for i in 0..<count { p[i] = logits[i] }
 
-      // Reference top-5 via a full sort.
+      // Reference top-5 from softmax of the same logits via a full sort.
+      let mx = logits.max()!
+      let exps = logits.map { expf($0 - mx) }
+      let s = exps.reduce(0, +)
+      let probs = exps.map { $0 / s }
       let expected = probs.enumerated().sorted { $0.element > $1.element }.prefix(5)
 
-      let result = classifier.topProbs(from: arr)
+      let result = classifier.softmaxProbs(from: arr)
 
       XCTAssertEqual(result.top5.count, 5)
       XCTAssertEqual(result.top5Confs.count, 5)

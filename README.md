@@ -84,24 +84,23 @@ The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, seg
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| Core AI FP16 `.aimodel.zip`   | Opt-in: Swift package, Flutter on iOS 27+    | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | Opt-in: iOS app, Swift package on iOS 27+    | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Flutter on Android                           | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - Core AI (opt-in): `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an
 `.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. See
-[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs.
+[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs. In the iOS app, turn on **Settings → YOLO → Core AI Models (iOS 27+)** (off by default) to download and list the Core AI assets instead of the Core ML ones.
 
 ```swift
 let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
 let remote = YOLO(url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!, task: .detect)
 ```
-
-- LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26
 `n/s/m/l/x` assets for detect, segment, semantic, depth, classify, pose, and OBB and points each model ID at the
@@ -122,7 +121,7 @@ Flutter repo's Android export script and release assets.
 | Preprocessing      | Vision                                  | Swift (letterbox, Accelerate)           | Android native                          |
 | Postprocessing     | Swift                                   | Swift (with NMS)                        | Android native                          |
 
-Export scripts require `ultralytics>=8.4.156`. Core ML assets use `nms=False` to select the NMS-free head for detect,
+Export scripts require `ultralytics>=8.4.142`, and `>=8.4.155` for Core AI. Core ML assets use `nms=False` to select the NMS-free head for detect,
 segment, pose, and OBB. Core AI assets keep the package default raw head (`nms=None`), which the SDK decodes with its
 existing Swift NMS: on an iPhone 17 Pro it is about twice as fast in inference as both the Core AI end-to-end head and
 the Core ML assets ([docs/performance.md](docs/performance.md#-core-ai-backend)). Core AI has no NMS operator, so there
@@ -139,12 +138,12 @@ field describes the exported graph; use `nms` to configure exports.
 The published `v8.3.0` binary dimensions are recorded above. The export script
 [`scripts/export-models.py`](scripts/export-models.py) defines the official exports, int8 Core ML and FP16 Core AI
 settings, `.mlpackage.zip` and `.aimodel.zip` packaging, the optional local app-copy step, and optional GitHub release
-upload. Core AI export requires macOS 26 or later on Apple silicon; pass `--formats coreml` elsewhere. If its export matrix
+upload. It exports Core ML by default; add `--formats coreai` (or `--formats coreml coreai`) for the opt-in Core AI assets, which needs macOS 26 or later on Apple silicon, `ultralytics>=8.4.155` and `coreai-torch>=0.4.2`. If its export matrix
 changes, replace the generated assets in `v8.3.0` and update this table together.
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 

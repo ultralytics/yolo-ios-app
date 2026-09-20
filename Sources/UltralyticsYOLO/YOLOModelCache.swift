@@ -88,7 +88,7 @@ public final class YOLOModelCache {
 
     let key = cacheKey(for: url, task: task)
 
-    for ext in ["aimodel", "mlmodelc", "mlpackage", "mlmodel"] {
+    for ext in ["mlmodelc", "mlpackage", "mlmodel", "aimodel"] {
       let path = cacheDirectory.appendingPathComponent(key).appendingPathExtension(ext)
 
       if FileManager.default.fileExists(atPath: path.path) {

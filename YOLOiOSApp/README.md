@@ -56,13 +56,13 @@ Ensure you have the following before you begin:
     In Xcode, navigate to the project's target settings. Under the "Signing & Capabilities" tab, select your Apple Developer account to sign the app.
 
 3.  **Bundled and Optional YOLO26 Models:**
-    The app ships with all seven nano models (one per task: detect, segment, semantic, depth, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift). Classification uses a fixed 224 × 224 input; every other task uses 640 × 640. Core ML (`.mlpackage`) remains the default, and the app bundles and downloads Core ML only. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: a developer-bundled `.aimodel` under `Models/<Task>/` is listed on those devices. Each size slot holds one model, so bundle it at a size whose Core ML model is not bundled (the build phase bundles nano), for example `yolo26s.aimodel`. See [docs/performance.md](../docs/performance.md#-core-ai-backend) for the trade-offs.
+    The app ships with all seven nano models (one per task: detect, segment, semantic, depth, classify, pose, OBB). They are downloaded from the [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0) release assets at build time by a **Download YOLO Models** Xcode build phase that runs [`scripts/download-models.sh`](../scripts/download-models.sh), and are **never committed to the repo** (`*.mlpackage` is gitignored). Larger sizes (`s/m/l/x`) download on demand on first use and are cached on device; the URL registry is [`RemoteModels.swift`](YOLOiOSApp/RemoteModels.swift). Classification uses a fixed 224 × 224 input; every other task uses 640 × 640. Core ML (`.mlpackage`) remains the default, and the app bundles and downloads Core ML only. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: turn on **Settings → YOLO → Core AI Models (iOS 27+)**, off by default, and return to the app. The app then downloads the official `.aimodel.zip` assets for every size and lists any `.aimodel` bundled under `Models/<Task>/` instead of the Core ML models; Core ML and Core AI downloads are cached side by side, so switching back re-downloads nothing. With the setting off, or on a device without Core AI, the app behaves exactly as before. See [docs/performance.md](../docs/performance.md#-core-ai-backend) for the trade-offs.
 
     From the repository root, you can also prepare local model files for development or tests:
 
     ```bash
     uv venv --python 3.13 .venv
-    uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
+    uv pip install "ultralytics[export-coreml]>=8.4.142"
     uv run python scripts/export-models.py --sizes n --copy-to-app
     ```
 

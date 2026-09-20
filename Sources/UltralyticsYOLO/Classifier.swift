@@ -5,9 +5,10 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  Classifier identifies the primary subject of an image rather than locating objects within it. It accepts both
-//  raw probability tensors (Core AI, and Core ML models without a classifier config) and
-//  `VNClassificationObservation` results, and reports the top-1 plus top-5 predictions with confidence scores.
+//  `VNCoreMLFeatureValueObservation` (raw logits requiring softmax) and `VNClassificationObservation` (already
+//  normalized) result types, and reports the top-1 plus top-5 predictions with confidence scores.
 
+import Accelerate
 import Foundation
 import UIKit
 import Vision
@@ -52,11 +53,13 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     return result
   }
 
-  /// Extracts top-1 and top-5 probabilities from a completed request, handling both a raw probability tensor and
-  /// `VNClassificationObservation` results. Ultralytics classify exports apply softmax inside the model.
+  /// Extracts top-1 and top-5 probabilities from a Vision request result, handling both
+  /// `VNCoreMLFeatureValueObservation` (raw logits requiring softmax) and `VNClassificationObservation` (already
+  /// normalized scores).
   private func extractProbs(from request: VNRequest) -> Probs {
     if let multiArray = featureArrays(request).first {
-      return topProbs(from: multiArray)
+      // Core AI exports apply softmax inside the model; Core ML raw-tensor results keep the Swift softmax.
+      return softmaxProbs(from: multiArray, isProbabilities: request is CoreAIRequest)
     }
     if let observations = request.results as? [VNClassificationObservation] {
       let top = observations.prefix(5)
@@ -70,21 +73,36 @@ public final class Classifier: BasePredictor, @unchecked Sendable {
     return Probs(top1: "", top5: [], top1Conf: 0, top5Confs: [])
   }
 
-  /// Returns the top-1/top-5 classes of a probability tensor.
-  func topProbs(from multiArray: MLMultiArray) -> Probs {
+  /// Applies softmax to raw logits and returns the top-1/top-5 probabilities.
+  func softmaxProbs(from multiArray: MLMultiArray, isProbabilities: Bool = false) -> Probs {
     let count = multiArray.count
-    var output = [Float](repeating: 0, count: count)
+    var logits = [Float](repeating: 0, count: count)
     if multiArray.dataType == .float32, multiArray.strides.last?.intValue == 1 {
       let src = multiArray.dataPointer.assumingMemoryBound(to: Float.self)
-      output.withUnsafeMutableBufferPointer { $0.baseAddress!.update(from: src, count: count) }
+      logits.withUnsafeMutableBufferPointer { $0.baseAddress!.update(from: src, count: count) }
     } else {
-      for i in 0..<count { output[i] = multiArray[i].floatValue }
+      for i in 0..<count { logits[i] = multiArray[i].floatValue }
+    }
+
+    var output = logits
+    if !isProbabilities {
+      var maxLogit: Float = 0
+      vDSP_maxv(logits, 1, &maxLogit, vDSP_Length(count))
+      var negMax = -maxLogit
+      vDSP_vsadd(logits, 1, &negMax, &output, 1, vDSP_Length(count))
+      var n = Int32(count)
+      vvexpf(&output, output, &n)
+      var sum: Float = 0
+      vDSP_sve(output, 1, &sum, vDSP_Length(count))
+      if sum > 0 {
+        vDSP_vsdiv(output, 1, &sum, &output, 1, vDSP_Length(count))
+      }
     }
 
     // Select the top-5 with a single linear pass and a tiny sorted insertion buffer instead of sorting the whole
     // vector. For a 1000-class head this avoids an O(n log n) sort and the enumerated() tuple-array allocation
     // every frame. Equal scores resolve to the lower class index (deterministic; exact ties don't occur for real
-    // model outputs).
+    // softmax outputs).
     let k = min(5, count)
     var topIdx = [Int](repeating: -1, count: k)
     var topVal = [Float](repeating: -.greatestFiniteMagnitude, count: k)

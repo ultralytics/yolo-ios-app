@@ -84,24 +84,23 @@ var body: some View {
 | 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| Core AI FP16 `.aimodel.zip`   | 可选启用：Swift package、iOS 27+ 上的 Flutter   | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | 可选启用：iOS 27+ 上的 iOS 应用、Swift package  | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Android 上的 Flutter                            | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - Core AI（可选启用）：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+- LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 Core ML（`.mlpackage`）仍是默认格式。Core AI（`.aimodel`）是面向 iOS 27 及更高版本真机的可选功能：传入 `.aimodel` 路径或
 `.aimodel.zip` URL 即可启用。更早的 iOS 版本和 iOS 模拟器不支持 Core AI。实测的取舍见
-[docs/performance.md](docs/performance.md#-core-ai-backend)。
+[docs/performance.md](docs/performance.md#-core-ai-backend)。在 iOS 应用中，打开**设置 → YOLO → Core AI Models (iOS 27+)**（默认关闭）即可下载并列出 Core AI 资源，而不是 Core ML 资源。
 
 ```swift
 let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
 let remote = YOLO(url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!, task: .detect)
 ```
-
-- LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` 发布版本。下表中的 Core ML 和 Core AI 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
 
@@ -119,7 +118,7 @@ iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/Rem
 | 预处理           | Vision                                  | Swift（letterbox、Accelerate）          | Android 原生                            |
 | 后处理           | Swift                                   | Swift（含 NMS）                         | Android 原生                            |
 
-导出脚本要求 `ultralytics>=8.4.156`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头。
+导出脚本要求 `ultralytics>=8.4.142`，Core AI 要求 `>=8.4.155`。Core ML 使用 `nms=False` 为检测、实例分割、姿态和 OBB 选择无 NMS 头。
 Core AI 资源保留包默认的原始头（`nms=None`），由 SDK 现有的 Swift NMS 解码：在 iPhone 17 Pro 上，其推理速度约为
 Core AI 端到端头和 Core ML 资源的两倍（[docs/performance.md](docs/performance.md#-core-ai-backend)）。
 当 `useGpu` 为 true（硬件加速）时，Core AI 会将模型分配到 Neural Engine、GPU 和 CPU 上；`useGpu` 为 false 时固定在 CPU 上运行。
@@ -133,12 +132,12 @@ Core AI 没有 NMS 算子，因此不存在 Core ML 那样的 NMS 流水线阶�
 
 上表记录了已发布 `v8.3.0` 二进制文件的实际尺寸。[`scripts/export-models.py`](scripts/export-models.py)
 定义官方导出、int8 Core ML 与 FP16 Core AI 设置、`.mlpackage.zip` 和 `.aimodel.zip` 打包、可选的本地应用复制步骤以及可选的 GitHub 发布上传。
-Core AI 导出需要 Apple 芯片上的 macOS 26 或更高版本；在其他平台请传入 `--formats coreml`。
+脚本默认只导出 Core ML；添加 `--formats coreai`（或 `--formats coreml coreai`）可导出可选的 Core AI 资源，这需要 Apple 芯片上的 macOS 26 或更高版本、`ultralytics>=8.4.155` 和 `coreai-torch>=0.4.2`。
 如果其导出矩阵发生变化，应替换 `v8.3.0` 中生成的资源并同时更新此表。
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 

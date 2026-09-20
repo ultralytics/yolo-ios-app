@@ -5,9 +5,8 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  ModelCacheManager and ModelDownloadManager together handle the YOLO model lifecycle: downloading from remote URLs,
-//  extracting ZIP archives, compiling MLModels, caching loaded models in memory, and tracking what is on disk. The
-//  in-memory cache is bounded to keep memory in check on resource-constrained devices, while progress callbacks keep
-//  the UI responsive during downloads.
+//  extracting ZIP archives, compiling Core ML models (Core AI `.aimodel` assets need no compile step), and tracking
+//  what is on disk, while progress callbacks keep the UI responsive during downloads.
 
 import CoreML
 import Foundation
@@ -28,45 +27,18 @@ struct ModelEntry {
 class ModelCacheManager {
   static let shared = ModelCacheManager()
   private static let assetRevision = "mobile-standard-v1"
-  private var modelCache: [String: MLModel] = [:]
-  private var accessOrder: [String] = []
-  private let cacheLimit = 3
 
   private init() {}
 
-  private func updateAccessOrder(for key: String) {
-    if let index = accessOrder.firstIndex(of: key) {
-      accessOrder.remove(at: index)
-    }
-    accessOrder.append(key)
-  }
-
-  func modelURL(for key: String) -> URL {
+  /// Core ML and Core AI downloads of one model are cached side by side under their own extensions.
+  func modelURL(for key: String, coreAI: Bool = remoteModelExtension == "aimodel") -> URL {
     documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
-      .appendingPathExtension("mlmodelc")
-  }
-
-  private func loadLocalModel(key: String, completion: @escaping (MLModel?, String) -> Void) {
-    if let cachedModel = modelCache[key] {
-      updateAccessOrder(for: key)
-      completion(cachedModel, key)
-      return
-    }
-
-    let localModelURL = modelURL(for: key)
-    do {
-      let model = try MLModel(contentsOf: localModelURL)
-      addModelToCache(model, for: key)
-      completion(model, key)
-    } catch {
-      print("Error loading local model: \(error)")
-      completion(nil, key)
-    }
+      .appendingPathExtension(coreAI ? "aimodel" : "mlmodelc")
   }
 
   func loadModel(
     from fileName: String, remoteURL: URL, key: String,
-    completion: @escaping (MLModel?, String) -> Void
+    completion: @escaping (Bool, String) -> Void
   ) {
     let legacyModelURL = documentsDirectory.appendingPathComponent(key)
       .appendingPathExtension("mlmodelc")
@@ -74,27 +46,12 @@ class ModelCacheManager {
       try? FileManager.default.removeItem(at: legacyModelURL)
     }
 
-    if let cachedModel = modelCache[key] {
-      updateAccessOrder(for: key)
-      completion(cachedModel, key)
-      return
-    }
-
-    if FileManager.default.fileExists(atPath: modelURL(for: key).path) {
-      loadLocalModel(key: key, completion: completion)
+    if isModelDownloaded(key: key) {
+      completion(true, key)
     } else {
       ModelDownloadManager.shared.startDownload(
         url: remoteURL, fileName: fileName, key: key, completion: completion)
     }
-  }
-
-  func addModelToCache(_ model: MLModel, for key: String) {
-    if modelCache.count >= cacheLimit {
-      let oldKey = accessOrder.removeFirst()
-      modelCache.removeValue(forKey: oldKey)
-    }
-    modelCache[key] = model
-    accessOrder.append(key)
   }
 
   func isModelDownloaded(key: String) -> Bool {
@@ -105,21 +62,21 @@ class ModelCacheManager {
 class ModelDownloadManager: NSObject {
   static let shared = ModelDownloadManager()
   private var downloadTasks: [URLSessionDownloadTask: (url: URL, key: String)] = [:]
-  private var downloadCompletionHandlers: [URLSessionDownloadTask: (MLModel?, String) -> Void] = [:]
+  private var downloadCompletionHandlers: [URLSessionDownloadTask: (Bool, String) -> Void] = [:]
   private lazy var session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
   var progressHandler: ((Double) -> Void)?
 
   private override init() {}
 
-  private func completeTask(_ task: URLSessionDownloadTask, model: MLModel?, key: String) {
+  private func completeTask(_ task: URLSessionDownloadTask, success: Bool, key: String) {
     let completion = downloadCompletionHandlers[task]
     downloadCompletionHandlers.removeValue(forKey: task)
     downloadTasks.removeValue(forKey: task)
-    completion?(model, key)
+    completion?(success, key)
   }
 
   func startDownload(
-    url: URL, fileName: String, key: String, completion: @escaping (MLModel?, String) -> Void
+    url: URL, fileName: String, key: String, completion: @escaping (Bool, String) -> Void
   ) {
     let downloadTask = session.downloadTask(with: url)
     let destinationURL = documentsDirectory.appendingPathComponent(fileName)
@@ -169,7 +126,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
 
         // Prefer model files in the current directory before descending.
         for url in contents {
-          if ["mlmodel", "mlpackage"].contains(url.pathExtension) {
+          if ["aimodel", "mlmodel", "mlpackage"].contains(url.pathExtension) {
             return url
           }
         }
@@ -193,15 +150,15 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           userInfo: [NSLocalizedDescriptionKey: "No model file found in extracted archive"])
       }
 
-      loadModel(from: foundModelURL, key: key) { model in
+      installModel(from: foundModelURL, key: key) { success in
         // Clean up temp extraction directory and downloaded zip.
         try? FileManager.default.removeItem(at: tempExtractionURL)
         try? FileManager.default.removeItem(at: zipURL)
-        self.completeTask(downloadTask, model: model, key: key)
+        self.completeTask(downloadTask, success: success, key: key)
       }
     } catch {
       print("Download processing failed: \(error)")
-      completeTask(downloadTask, model: nil, key: key)
+      completeTask(downloadTask, success: false, key: key)
     }
   }
 
@@ -212,21 +169,25 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     else { return }
 
     print("Download failed: \(error)")
-    completeTask(downloadTask, model: nil, key: key)
+    completeTask(downloadTask, success: false, key: key)
   }
 
-  private func loadModel(from url: URL, key: String, completion: @escaping (MLModel?) -> Void) {
+  /// Moves the extracted model into Documents, compiling it first when it is a Core ML model.
+  private func installModel(from url: URL, key: String, completion: @escaping (Bool) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
-        let compiledModelURL = try MLModel.compileModel(at: url)
-        let model = try MLModel(contentsOf: compiledModelURL)
-        let localModelURL = ModelCacheManager.shared.modelURL(for: key)
-        ModelCacheManager.shared.addModelToCache(model, for: key)
-        try FileManager.default.moveItem(at: compiledModelURL, to: localModelURL)
-        DispatchQueue.main.async { completion(model) }
+        let isCoreAI = url.pathExtension == "aimodel"
+        let marker = url.appendingPathComponent("metadata.json")
+        if isCoreAI && !FileManager.default.fileExists(atPath: marker.path) {
+          throw CocoaError(.fileReadCorruptFile)
+        }
+        let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
+        try FileManager.default.moveItem(
+          at: installURL, to: ModelCacheManager.shared.modelURL(for: key, coreAI: isCoreAI))
+        DispatchQueue.main.async { completion(true) }
       } catch {
-        print("Failed to load model: \(error)")
-        DispatchQueue.main.async { completion(nil) }
+        print("Failed to install model: \(error)")
+        DispatchQueue.main.async { completion(false) }
       }
     }
   }

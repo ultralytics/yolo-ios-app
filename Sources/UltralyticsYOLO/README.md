@@ -288,16 +288,16 @@ and Core AI FP16 settings, `.mlpackage.zip` and `.aimodel.zip` packaging, the op
 
 ```bash
 uv venv --python 3.13 .venv
-uv pip install "ultralytics[export-coreml]>=8.4.156" "coreai-torch>=0.4.2"
+uv pip install "ultralytics[export-coreml]>=8.4.142"
 uv run python scripts/export-models.py
 ```
 
 Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
 `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
-With `ultralytics>=8.4.156`, use `nms=False` to reproduce the shipped NMS-free Core ML assets, where detect, segment,
-pose, and OBB use the one-to-one head, and `format="coreai", quantize=16` (macOS 26 or later on Apple silicon) for the
-Core AI assets. Core AI assets keep the raw one-to-many head, which the SDK decodes with its existing Swift NMS and
+With `ultralytics>=8.4.142`, use `nms=False` to reproduce the shipped NMS-free Core ML assets, where detect, segment,
+pose, and OBB use the one-to-one head. For the opt-in Core AI assets pass `--formats coreai` to the script, or export
+with `format="coreai", quantize=16` (macOS 26 or later on Apple silicon, `ultralytics>=8.4.155`, `coreai-torch>=0.4.2`). Core AI assets keep the raw one-to-many head, which the SDK decodes with its existing Swift NMS and
 which measured about twice as fast on device ([docs/performance.md](../../docs/performance.md#-core-ai-backend)).
 Classification, semantic, and depth retain their native outputs. For Core ML, use `nms=None` for raw one-to-many
 outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. Core AI has no NMS operator, so

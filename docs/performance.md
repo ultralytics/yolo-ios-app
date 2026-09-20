@@ -172,7 +172,7 @@ Findings:
   postprocessing reached 4.7 ms and the raw-head total 10.9 ms against 9.0 ms for Core ML.
 - **Load time**: the first load of an `.aimodel` specializes it once (0.6–3 s for nano, 2–7 s for the largest models);
   afterwards it loads from the system cache in tens of milliseconds, against a Core ML compile of about 1–2 s on every
-  launch for a bundled `.mlpackage`. Switching models in the app is visibly faster.
+  launch for a bundled `.mlpackage`. Switching between already-specialized Core AI models in the app is visibly faster than switching between Core ML models.
 - **Stability**: a 22,000-inference soak on the device did not reproduce
   [apple/coreai-torch#75](https://github.com/apple/coreai-torch/issues/75), and detect s/m/l/x plus the x model of
   every other task load and return correct results.

@@ -5,8 +5,9 @@
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
 //  Core ML remains the default. Core AI is an opt-in for iOS 27 and later devices, selected by passing an `.aimodel`
-//  path or an `.aimodel.zip` URL; it is not available on earlier iOS versions or in the iOS Simulator. A Core AI model has no Vision integration, so this backend letterboxes the
-//  image itself and hands the raw output tensors to the same task decoders the Core ML path uses.
+//  path or an `.aimodel.zip` URL; it is not available on earlier iOS versions or in the iOS Simulator. A Core AI model
+//  has no Vision integration, so this backend letterboxes the image itself and hands the raw output tensors to the same
+//  task decoders the Core ML path uses.
 
 import Accelerate
 import CoreImage
@@ -85,20 +86,14 @@ extension BasePredictor {
     let width = modelInputSize.width
     let height = modelInputSize.height
     let extent = image.extent
-    guard width > 0, height > 0, extent.width > 0, extent.height > 0 else {
-      throw PredictorError.invalidCoreAIModel("empty input")
-    }
-    var gain = min(CGFloat(height) / extent.height, CGFloat(width) / extent.width)
-    var padX = CGFloat(0)
-    var padY = CGFloat(0)
+    guard
+      var (gain, padX, padY) = letterboxTransform(
+        inputSize: extent.size, modelInputSize: modelInputSize)
+    else { throw PredictorError.invalidCoreAIModel("empty image") }
     if imageCropAndScaleOption == .centerCrop {
       gain = max(CGFloat(height) / extent.height, CGFloat(width) / extent.width)
       padX = (CGFloat(width) - extent.width * gain) / 2
       padY = (CGFloat(height) - extent.height * gain) / 2
-    } else if let transform = letterboxTransform(
-      inputSize: extent.size, modelInputSize: modelInputSize)
-    {
-      (gain, padX, padY) = transform
     }
 
     // Core Image is bottom-left origin while `padY` is measured from the top row of the model input.
@@ -158,7 +153,7 @@ extension BasePredictor {
         } catch {
           // On iOS 27.0 a stale specialization cache entry (the asset was replaced under the same path, or the app was
           // reinstalled) fails the load with `nilError` instead of being rebuilt, so evict it and specialize again.
-          try AIModelCache.default.deleteEntries(for: url)
+          try? AIModelCache.default.deleteEntries(for: url)
           return try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
         }
       }

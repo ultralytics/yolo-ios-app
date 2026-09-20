@@ -129,6 +129,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Always load models initially; external display handling will stop the camera if needed.
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
+    // Re-read the Core AI setting when returning from Settings: relist models in the selected format.
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      guard let self = self, !self.isLoadingModel else { return }
+      appTasks.forEach { self.modelsForTask[$0.name] = self.getModelFiles(in: $0.folder) }
+      self.restoreCurrentModelSelection()
+    }
+
     // Wire up gestures and delegates.
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
@@ -221,9 +230,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let modelFiles =
       fileURLs
       .filter {
-        // A developer-bundled Core AI model is listed where it can run. Each size slot holds one model, so bundle it
-        // at a size whose Core ML model is not bundled (the build phase bundles nano), e.g. `yolo26s.aimodel`.
-        (["mlmodel", "mlpackage"] + (BasePredictor.isCoreAIAvailable ? ["aimodel"] : []))
+        // With the Core AI setting on, the app lists Core AI models only: bundled `.aimodel` and remote `.aimodel.zip`.
+        (remoteModelExtension == "aimodel" ? ["aimodel"] : ["mlmodel", "mlpackage"])
           .contains($0.pathExtension)
       }
       .map { $0.lastPathComponent }
@@ -413,9 +421,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           from: localZipFileName,
           remoteURL: remoteURL,
           key: key
-        ) { [weak self] mlModel, loadedKey in
+        ) { [weak self] success, loadedKey in
           guard let self = self else { return }
-          if mlModel == nil {
+          if !success {
             self.finishLoadingModel(success: false, modelName: entry.displayName)
             return
           }

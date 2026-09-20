@@ -182,8 +182,10 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           throw CocoaError(.fileReadCorruptFile)
         }
         let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
-        try FileManager.default.moveItem(
-          at: installURL, to: ModelCacheManager.shared.modelURL(for: key))
+        // The destination follows the installed artifact, not the live setting, which can change during an install.
+        let destination = ModelCacheManager.shared.modelURL(for: key).deletingPathExtension()
+          .appendingPathExtension(installURL.pathExtension)
+        try FileManager.default.moveItem(at: installURL, to: destination)
         DispatchQueue.main.async { completion(true) }
       } catch {
         print("Failed to install model: \(error)")

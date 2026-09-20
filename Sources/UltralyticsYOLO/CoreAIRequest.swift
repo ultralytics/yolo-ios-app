@@ -150,12 +150,17 @@ extension BasePredictor {
   extension CoreAIRequest {
     /// Loads and specializes an `.aimodel`. `useGpu` keeps its SDK meaning of hardware acceleration: when true Core AI
     /// places the model across the Neural Engine, GPU and CPU itself, and when false inference is pinned to the CPU.
-    /// Preferring the Neural Engine explicitly is avoided: on iOS 27.0 it fails the load of models the Neural Engine
-    /// cannot compile instead of falling back.
     static func load(url: URL, useGpu: Bool) throws -> CoreAIRequest {
       let options: SpecializationOptions = useGpu ? .default : .cpuOnly
       let function = try blocking {
-        try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
+        do {
+          return try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
+        } catch {
+          // On iOS 27.0 a stale specialization cache entry (the asset was replaced under the same path, or the app was
+          // reinstalled) fails the load with `nilError` instead of being rebuilt, so evict it and specialize again.
+          try AIModelCache.default.deleteEntries(for: url)
+          return try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
+        }
       }
       guard let function, let inputName = function.descriptor.inputNames.first,
         case .ndArray(let input)? = function.descriptor.inputDescriptor(of: inputName),

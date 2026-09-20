@@ -178,9 +178,14 @@ Findings:
 - Core AI assets are FP16 because the Ultralytics package has no int8 Core AI export; the shipped Core ML assets are
   INT8, so a Core AI asset is roughly twice the download size.
 
-Two SDK fixes came out of this run: the input tensor is allocated once and filled in bulk (`NDArray(scalars:)` copied
-it element by element, about 55 ms per 640 × 640 frame), and hardware acceleration uses the default specialization
-options, because explicitly preferring the Neural Engine fails the load of models it cannot compile.
+Two SDK fixes came out of these runs. The input tensor is allocated once and filled in bulk (`NDArray(scalars:)` copied
+it element by element, about 55 ms per 640 × 640 frame). And a load that fails is retried once after evicting the
+asset's specialization cache entries: on iOS 27.0 a stale entry (the asset was replaced under the same path, or the app
+was reinstalled) fails the load in a few milliseconds with `_GenericObjCError.nilError` instead of being rebuilt, and
+after `AIModelCache.default.deleteEntries(for:)` the same asset specializes again (0.4–1.5 s for nano) and loads
+normally. Six of the seven official nano assets hit this after two days of reinstalls and recovered with the retry.
+Hardware acceleration uses the default specialization options; an earlier reading that explicitly preferring the Neural
+Engine caused these failures was wrong, since a fresh cache entry loads with either option.
 
 ### Prior Evidence
 

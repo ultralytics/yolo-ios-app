@@ -53,6 +53,7 @@ Build/
 *.mlarchive
 *.mlprogram
 *.mlpackage
+*.aimodel
 
 # GitHub Python GitIgnore ----------------------------------------------------------------------------------------------
 # Byte-compiled / optimized / DLL files
@@ -251,3 +252,4 @@ Tests/YOLOTests/Resources/*.mlpackage
 .build/
 
 Package.resolved
+exports/

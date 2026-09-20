@@ -129,6 +129,19 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Always load models initially; external display handling will stop the camera if needed.
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
+    // Returning from Settings with the Core AI setting changed: relist models in the new format and load the current
+    // task's first model in it. A change made while a model loads is picked up on the next return to the foreground.
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      guard let self = self, !self.isLoadingModel,
+        preferredModelExtension != remoteModelExtension
+      else { return }
+      remoteModelExtension = preferredModelExtension
+      appTasks.forEach { self.modelsForTask[$0.name] = self.getModelFiles(in: $0.folder) }
+      self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+    }
+
     // Wire up gestures and delegates.
     logoImage.isUserInteractionEnabled = true
     logoImage.addGestureRecognizer(
@@ -220,7 +233,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     let modelFiles =
       fileURLs
-      .filter { ["mlmodel", "mlpackage"].contains($0.pathExtension) }
+      .filter {
+        // With the Core AI setting on, the app lists Core AI models only: bundled `.aimodel` and remote `.aimodel.zip`.
+        (remoteModelExtension == "aimodel" ? ["aimodel"] : ["mlmodel", "mlpackage"])
+          .contains($0.pathExtension)
+      }
       .map { $0.lastPathComponent }
 
     return folderName == "Models/Detect" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
@@ -408,9 +425,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           from: localZipFileName,
           remoteURL: remoteURL,
           key: key
-        ) { [weak self] mlModel, loadedKey in
+        ) { [weak self] success, loadedKey in
           guard let self = self else { return }
-          if mlModel == nil {
+          if !success {
             self.finishLoadingModel(success: false, modelName: entry.displayName)
             return
           }

@@ -20,6 +20,9 @@ public final class YOLOModelCache {
     "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/"
   private static let standardizedAssetRevision = "mobile-standard-v1"
 
+  /// The file whose presence marks a model directory as completely extracted, by path extension.
+  static let validityMarkers = ["mlpackage": "Manifest.json", "aimodel": "metadata.json"]
+
   /// Root cache directory for compiled models.
   let cacheDirectory: URL
 
@@ -85,14 +88,14 @@ public final class YOLOModelCache {
 
     let key = cacheKey(for: url, task: task)
 
-    for ext in ["mlmodelc", "mlpackage", "mlmodel"] {
+    for ext in ["mlmodelc", "mlpackage", "mlmodel", "aimodel"] {
       let path = cacheDirectory.appendingPathComponent(key).appendingPathExtension(ext)
 
       if FileManager.default.fileExists(atPath: path.path) {
-        // For mlpackage, verify it's valid by checking for Manifest.json
-        if ext == "mlpackage" {
-          let manifestPath = path.appendingPathComponent("Manifest.json")
-          guard FileManager.default.fileExists(atPath: manifestPath.path) else { continue }
+        // A model directory is valid only once its marker file has been extracted
+        if let marker = Self.validityMarkers[ext] {
+          let markerPath = path.appendingPathComponent(marker)
+          guard FileManager.default.fileExists(atPath: markerPath.path) else { continue }
         }
         return path
       }

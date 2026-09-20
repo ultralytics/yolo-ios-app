@@ -68,4 +68,8 @@ public protocol Predictor {
 public enum PredictorError: Error {
   /// The model file could not be found at the specified location.
   case modelFileNotFound
+  /// A Core AI (`.aimodel`) model was given to an OS or build without Core AI (requires iOS 27+ on a device).
+  case coreAIUnavailable
+  /// The Core AI model cannot be run by the SDK.
+  case invalidCoreAIModel(String)
 }

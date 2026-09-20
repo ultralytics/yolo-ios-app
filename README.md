@@ -30,6 +30,7 @@
 ## ✨ Features
 
 - Swift and Core ML throughout, running on the Apple Neural Engine and GPU
+- Opt-in Apple Core AI (`.aimodel`) models on iOS 27 and later devices; Core ML (`.mlpackage`) remains the default
 - Camera-rate (~30 FPS) real-time inference on recent iPhones — see [docs/performance.md](docs/performance.md) for on-device profiling
 - Native UI following Apple interface guidelines
 - YOLO26 and YOLO11 models supported, including NMS-free and raw outputs
@@ -51,7 +52,7 @@ This repository contains two components for running YOLO models on Apple platfor
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) or opt-in Core AI (`.aimodel`, iOS 27+ devices) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -83,40 +84,61 @@ The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, seg
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | Opt-in: iOS app, Swift package on iOS 27+    | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Flutter on Android                           | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
+- Core AI (opt-in): `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
+
+Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an
+`.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. See
+[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs. In the iOS app, turn on **Settings → Ultralytics YOLO → Core AI Models (iOS 27+)** (off by default) and return to the app: it then lists, downloads and loads the Core AI assets instead of the Core ML ones.
+
+```swift
+let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
+let remote = YOLO(url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!, task: .detect)
+```
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26
 `n/s/m/l/x` assets for detect, segment, semantic, depth, classify, pose, and OBB and points each model ID at the
-`v8.3.0` Core ML release. The Core ML column below is owned by this repo; the LiteRT column summarizes the
+`v8.3.0` release. The Core ML and Core AI columns below are owned by this repo; the LiteRT column summarizes the
 Flutter repo's Android export script and release assets.
 
-| Property           | Core ML                                 | LiteRT                                  |
-| ------------------ | --------------------------------------- | --------------------------------------- |
-| Model IDs          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
-| Tasks              | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
-| Format             | `.mlpackage.zip`                        | `.tflite`                               |
-| `quantize`         | `8`                                     | `w8a32`                                 |
-| `imgsz`            | `224` cls; `640` others                 | `224` cls; `640` others                 |
-| `nms`              | `False`                                 | `None`                                  |
-| `end2end` metadata | `False` cls/sem/depth; `True` others    | `False`                                 |
-| Calibration        | exporter default                        | None (dynamic-range)                    |
-| Postprocessing     | Swift/Core ML                           | Android native                          |
+| Property           | Core ML                                 | Core AI                                 | LiteRT                                  |
+| ------------------ | --------------------------------------- | --------------------------------------- | --------------------------------------- |
+| Model IDs          | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     | `yolo26{n,s,m,l,x}`                     |
+| Tasks              | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb | detect, seg, sem, depth, cls, pose, obb |
+| Format             | `.mlpackage.zip`                        | `.aimodel.zip`                          | `.tflite`                               |
+| Runs on            | iOS 13+, iOS Simulator                  | iOS 27+ devices                         | Android                                 |
+| `quantize`         | `8`                                     | `16`                                    | `w8a32`                                 |
+| `imgsz`            | `224` cls; `640` others                 | `224` cls; `640` others                 | `224` cls; `640` others                 |
+| `nms`              | `False`                                 | `None`                                  | `None`                                  |
+| `end2end` metadata | `False` cls/sem/depth; `True` others    | `False`                                 | `False`                                 |
+| Calibration        | exporter default                        | None (FP16)                             | None (dynamic-range)                    |
+| Preprocessing      | Vision                                  | Swift (letterbox, Accelerate)           | Android native                          |
+| Postprocessing     | Swift                                   | Swift (with NMS)                        | Android native                          |
 
-Export scripts require `ultralytics>=8.4.142`. Core ML assets use `nms=False` to select the NMS-free head for detect,
-segment, pose, and OBB. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
+Export scripts require `ultralytics>=8.4.142`, and `>=8.4.155` for Core AI. Core ML assets use `nms=False` to select the NMS-free head for detect,
+segment, pose, and OBB. Core AI assets keep the package default raw head (`nms=None`), which the SDK decodes with its
+existing Swift NMS: on an iPhone 17 Pro it is about twice as fast in inference as both the Core AI end-to-end head and
+the Core ML assets ([docs/performance.md](docs/performance.md#-core-ai-backend)). Core AI has no NMS operator, so there
+is no NMS pipeline stage as in Core ML, and the Ultralytics package has no int8 Core AI export, so Core AI assets are
+FP16 and roughly twice the download size of the int8 Core ML assets. Both formats carry the same Ultralytics metadata
+keys and values (`task`, `names`, `imgsz`, `stride`, `end2end`, ...), and the SDK decodes either head by output shape.
+With `useGpu` true (hardware acceleration) Core AI places the model across the Neural Engine, GPU and CPU; `useGpu`
+false pins it to the CPU. Classification, semantic, and depth retain their native outputs. LiteRT uses `nms=None`
 for raw one-to-many outputs with Android-side NMS. `nms=True` embeds NMS where supported. The `end2end` metadata
 field describes the exported graph; use `nms` to configure exports.
 
-### Core ML Release Workflow
+### Core ML and Core AI Release Workflow
 
 The published `v8.3.0` binary dimensions are recorded above. The export script
-[`scripts/export-models.py`](scripts/export-models.py) defines the official exports, int8 Core ML settings,
-`.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload. If its export matrix
+[`scripts/export-models.py`](scripts/export-models.py) defines the official exports, int8 Core ML and FP16 Core AI
+settings, `.mlpackage.zip` and `.aimodel.zip` packaging, the optional local app-copy step, and optional GitHub release
+upload. It exports Core ML by default; add `--formats coreai` (or `--formats coreml coreai`) for the opt-in Core AI assets, which needs macOS 26 or later on Apple silicon, `ultralytics>=8.4.155` and `coreai-torch>=0.4.2`. If its export matrix
 changes, replace the generated assets in `v8.3.0` and update this table together.
 
 ```bash
@@ -133,9 +155,12 @@ uv run python scripts/export-models.py --sizes n --copy-to-app
 
 # Export and replace all official Core ML assets in the existing release.
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+
+# Export and replace the opt-in Core AI assets (macOS 26 or later on Apple silicon).
+uv run python scripts/export-models.py --formats coreai --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
-The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
+The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs, while Core AI assets keep the raw head and the SDK applies its Swift NMS; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).
 
 ### Android LiteRT Counterparts
 
@@ -181,7 +206,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. Tests run on the iOS Simulator, which does not ship Core AI, so they exercise the Core ML backend; the opt-in Core AI backend is validated on an iOS 27 device ([docs/performance.md](docs/performance.md#-core-ai-backend)). You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

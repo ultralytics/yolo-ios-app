@@ -34,6 +34,16 @@
                 <key>DefaultValue</key>
                 <false/>
             </dict>
+            <dict>
+                <key>Type</key>
+                <string>PSToggleSwitchSpecifier</string>
+                <key>Title</key>
+                <string>Core AI Models (iOS 27+)</string>
+                <key>Key</key>
+                <string>use_core_ai</string>
+                <key>DefaultValue</key>
+                <false/>
+            </dict>
         </array>
     </dict>
 </plist>

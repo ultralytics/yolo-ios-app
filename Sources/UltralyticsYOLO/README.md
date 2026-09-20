@@ -2,7 +2,7 @@
 
 # YOLO Swift Package: Simple, Powerful YOLO Integration in Swift
 
-The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultralytics YOLO](https://docs.ultralytics.com) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment), [Semantic Segmentation](https://docs.ultralytics.com/tasks/semantic), Depth Estimation, [Image Classification](https://docs.ultralytics.com/tasks/classify), [Pose Estimation](https://docs.ultralytics.com/tasks/pose), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
+The YOLO Swift Package provides an easy way to integrate Core ML- and Core AI-exported [Ultralytics YOLO](https://docs.ultralytics.com) models into your native Swift applications. It supports multiple computer vision tasks, including [Object Detection](https://docs.ultralytics.com/tasks/detect), [Instance Segmentation](https://docs.ultralytics.com/tasks/segment), [Semantic Segmentation](https://docs.ultralytics.com/tasks/semantic), Depth Estimation, [Image Classification](https://docs.ultralytics.com/tasks/classify), [Pose Estimation](https://docs.ultralytics.com/tasks/pose), and [Oriented Bounding Box Detection](https://docs.ultralytics.com/tasks/obb). With minimal code, you can add powerful YOLO-based features to your app and leverage real-time inference with camera streams in both [SwiftUI](https://developer.apple.com/xcode/swiftui/) and [UIKit](https://developer.apple.com/documentation/uikit).
 
 [![Ultralytics Actions](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml/badge.svg)](https://github.com/ultralytics/yolo-ios-app/actions/workflows/format.yml)
 [![Ultralytics Discord](https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue)](https://discord.com/invite/ultralytics)
@@ -20,11 +20,11 @@ The YOLO Swift Package provides an easy way to integrate Core ML-exported [Ultra
 
 ## ✨ Features
 
-- ✅ **Simple API**: Easily utilize Core ML YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
+- ✅ **Simple API**: Easily utilize Core ML and Core AI YOLO models with Python-like code syntax in [Swift](https://developer.apple.com/swift/).
 - ✅ **Multiple Task Support**: Handles Object Detection, Instance Segmentation, Semantic Segmentation, Depth Estimation, Classification, Pose Estimation, and Oriented Bounding Box Detection tasks seamlessly. Explore more about these tasks in the [Ultralytics documentation](https://docs.ultralytics.com/tasks).
 - ✅ **SwiftUI / UIKit Integration**: Includes pre-built view components for straightforward integration of real-time camera inference.
 - ✅ **URL-Based Model Loading**: Load models directly from remote URLs with automatic downloading and caching via the `YOLO` class.
-- ✅ **Zero Dependencies**: Pure Swift built only on Apple's first-party frameworks (Foundation, Core ML, Vision, Compression) — **no third-party packages** to vet, license, or keep up to date. Even ZIP extraction for downloaded models is handled by a small, self-contained extractor, so the package installs instantly via [Swift Package Manager](https://www.swift.org/package-manager/) with nothing to resolve.
+- ✅ **Zero Dependencies**: Pure Swift built only on Apple's first-party frameworks (Foundation, Core ML, Core AI, Vision, Accelerate, Compression) — **no third-party packages** to vet, license, or keep up to date. Even ZIP extraction for downloaded models is handled by a small, self-contained extractor, so the package installs instantly via [Swift Package Manager](https://www.swift.org/package-manager/) with nothing to resolve.
 
 **Compatibility note:** `YOLOTask.semantic` and `YOLOTask.depth` are public enum cases for semantic segmentation and depth estimation. Apps with exhaustive `switch` statements over `YOLOTask` should add these cases or include a `default`.
 
@@ -96,7 +96,7 @@ import UltralyticsYOLO
 
 Use the `YOLO` class for performing inference on static images ([`UIImage`](https://developer.apple.com/documentation/uikit/uiimage), `CIImage`, `CGImage`), image file paths, or URLs. It supports Object Detection, Instance Segmentation, Semantic Segmentation, Depth Estimation, Classification, Pose Estimation, and Oriented Bounding Box Detection.
 
-Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML format. You can load an official model from a remote URL, point to your own local `.mlpackage` or `.mlmodelc`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
+Initialize the `YOLO` class with a valid Ultralytics YOLO model exported to Core ML or Core AI format. You can load an official model from a remote URL, point to your own local `.mlpackage`, `.mlmodelc`, or `.aimodel`, or reference a model already included in your app [bundle](https://developer.apple.com/documentation/foundation/bundle).
 
 ```swift
 import UltralyticsYOLO
@@ -122,6 +122,20 @@ model = YOLO(url: officialModelURL, task: .detect) { result in
 model = YOLO("/path/to/your-custom-model.mlpackage", task: .detect) { result in
     // handle result
     _ = result
+}
+
+// Opt in to Core AI on iOS 27 and later devices by passing an `.aimodel` path or an `.aimodel.zip` URL. On an earlier
+// iOS version or in the iOS Simulator it fails with `PredictorError.coreAIUnavailable`.
+if BasePredictor.isCoreAIAvailable {
+    model = YOLO("/path/to/yolo26n.aimodel", task: .detect) { result in
+        _ = result
+    }
+    model = YOLO(
+        url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!,
+        task: .detect
+    ) { result in
+        _ = result
+    }
 }
 
 // Or load a model you've bundled into your app by resource name.
@@ -259,16 +273,18 @@ URL patterns:
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
-The `YOLO` class can load a Core ML release URL directly; it downloads once and caches the compiled model locally. If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
+Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an `.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. The official opt-in assets are FP16 `.aimodel.zip` archives with the same model IDs in the same `v8.3.0` release; both formats carry the same Ultralytics metadata, `BasePredictor.isCoreAIAvailable` tells you whether the current device can run them, and [docs/performance.md](../../docs/performance.md#-core-ai-backend) records the measured trade-offs.
+
+The `YOLO` class can load a Core ML or Core AI release URL directly; it downloads once and caches the model locally (compiling Core ML models; Core AI models are specialized by the system on first load). If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 
 The [repository root README](../../README.md#-official-model-assets) is the authoritative reference for official model properties, including `imgsz`, `quantize`, `nms`, graph metadata, calibration, postprocessing, and release hosting.
 
-### Reproduce The Official Core ML Assets
+### Reproduce The Official Core ML And Core AI Assets
 
 The published `v8.3.0` binary properties are recorded in the
 [repository root README](../../README.md#-official-model-assets). The export workflow in
 [`scripts/export-models.py`](../../scripts/export-models.py) defines the official task/size matrix, Core ML int8
-settings, `.mlpackage.zip` packaging, the optional local app-copy step, and optional GitHub release upload.
+and Core AI FP16 settings, `.mlpackage.zip` and `.aimodel.zip` packaging, the optional local app-copy step, and optional GitHub release upload.
 
 ```bash
 uv venv --python 3.13 .venv
@@ -279,10 +295,15 @@ uv run python scripts/export-models.py
 Use `--copy-to-app` to copy exported packages into `YOLOiOSApp/Models/<Task>/` for local app testing. Use
 `--upload --repo ultralytics/yolo-ios-app --tag v8.3.0` to replace the generated archives in the existing release.
 
-With `ultralytics>=8.4.142`, use `nms=False` to reproduce the shipped NMS-free Core ML assets. Detect, segment, pose,
-and OBB use the one-to-one head; classification, semantic, and depth retain their native outputs. Use `nms=None`
-for raw one-to-many outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. The predictors
-decode the actual Vision observations and tensor layouts, so existing YOLO11 and YOLO26 assets remain supported.
+With `ultralytics>=8.4.142`, use `nms=False` to reproduce the shipped NMS-free Core ML assets, where detect, segment,
+pose, and OBB use the one-to-one head. For the opt-in Core AI assets pass `--formats coreai` to the script, or export
+with `format="coreai", quantize=16` (macOS 26 or later on Apple silicon, `ultralytics>=8.4.155`, `coreai-torch>=0.4.2`). Core AI assets keep the raw one-to-many head, which the SDK decodes with its existing Swift NMS and
+which measured about twice as fast on device ([docs/performance.md](../../docs/performance.md#-core-ai-backend)).
+Classification, semantic, and depth retain their native outputs. For Core ML, use `nms=None` for raw one-to-many
+outputs with Swift-side NMS, or `nms=True` for embedded NMS on supported tasks. Core AI has no NMS operator, so
+`nms=True` does not apply to it. With `useGpu: true` (hardware acceleration) Core AI places the model across the
+Neural Engine, GPU and CPU; `useGpu: false` pins it to the CPU. The predictors decode the actual Vision observations and tensor
+layouts of either backend by shape, so existing YOLO11 and YOLO26 assets and both heads remain supported.
 
 ## 🤝 Contributing
 

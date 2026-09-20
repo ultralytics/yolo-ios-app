@@ -20,9 +20,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
-    guard let results = request.results as? [VNCoreMLFeatureValueObservation],
-      let prediction = results.first?.featureValue.multiArrayValue
-    else {
+    guard let prediction = featureArrays(request).first else {
       self.isUpdating = false
       return
     }
@@ -55,8 +53,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
     let requestHandler = makeRequestHandler(for: image)
     if perform(request, with: requestHandler, errorMessage: "Pose estimation failed"),
-      let results = request.results as? [VNCoreMLFeatureValueObservation],
-      let prediction = results.first?.featureValue.multiArrayValue
+      let prediction = featureArrays(request).first
     {
       markInferenceEnd()
       let preds = PostProcessPose(

@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Export official YOLO26 Core ML assets for the iOS app release.
+"""Export official YOLO26 Core ML, and optionally Core AI, assets for the iOS app release.
 
 Usage from the repository root:
 
@@ -10,12 +10,17 @@ Usage from the repository root:
 The script exports the official YOLO26 task x size matrix to int8 Core ML
 `.mlpackage` directories, zips each package as `<model>.mlpackage.zip`, and
 optionally uploads the archives to the release used by RemoteModels.swift.
+
+Add `--formats coreai` (or `--formats coreml coreai`) to export the opt-in FP16
+Core AI `.aimodel` assets. That needs macOS 26+ on Apple silicon,
+`ultralytics>=8.4.155` and `uv pip install "coreai-torch>=0.4.2"`.
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
+import json
 import os
 import shutil
 import subprocess
@@ -33,11 +38,17 @@ APP_MODELS_DIR = ROOT / "YOLOiOSApp" / "Models"
 DEFAULT_REPO = "ultralytics/yolo-ios-app"
 DEFAULT_TAG = "v8.3.0"
 SIZES = ("n", "s", "m", "l", "x")
+# Export arguments and the file that marks a complete export, per format. Core ML uses the NMS-free head. Core AI keeps
+# the package default raw head, which measured about 2x faster on device with the SDK's Swift NMS, and has no int8 export.
+FORMATS = {
+    "coreml": ({"quantize": 8, "nms": False}, ".mlpackage", "Manifest.json"),
+    "coreai": ({"quantize": 16}, ".aimodel", "metadata.json"),
+}
 
 
 @dataclass(frozen=True)
 class TaskSpec:
-    """Core ML export settings for one prediction task."""
+    """Export settings for one prediction task."""
 
     suffix: str
     model_dir: str
@@ -63,6 +74,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tag", default=DEFAULT_TAG)
     parser.add_argument("--sizes", nargs="+", choices=SIZES, default=list(SIZES))
     parser.add_argument("--tasks", nargs="+", choices=TASKS.keys(), default=list(TASKS))
+    parser.add_argument("--formats", nargs="+", choices=FORMATS.keys(), default=["coreml"])
     parser.add_argument(
         "--copy-to-app",
         action="store_true",
@@ -76,15 +88,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def zip_mlpackage(package: Path) -> Path:
-    """Create a zip archive for a Core ML package directory."""
-    zip_path = package.with_suffix(".mlpackage.zip")
+def zip_model(package: Path) -> Path:
+    """Create a zip archive for a Core ML or Core AI model directory."""
+    zip_path = package.with_name(f"{package.name}.zip")
     if zip_path.exists():
         zip_path.unlink()
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
         for path in package.rglob("*"):
             archive.write(path, Path(package.name) / path.relative_to(package))
     return zip_path
+
+
+def verify_aimodel(package: Path, task_name: str, imgsz: int) -> None:
+    """Verify that a Core AI asset has the required mobile export contract: FP16 with the raw head."""
+    metadata = json.loads((package / "metadata.json").read_text())["creatorDefinedMetadata"]
+    if ast.literal_eval(metadata.get("imgsz", "[]")) != [imgsz, imgsz]:
+        raise ValueError(f"{package.name} input is {metadata.get('imgsz')}; expected {imgsz}x{imgsz}")
+    if metadata.get("task") != task_name:
+        raise ValueError(f"{package.name} metadata task is {metadata.get('task')}; expected {task_name}")
+    if ast.literal_eval(metadata.get("args", "{}")).get("quantize") != 16 or metadata.get("end2end") != "False":
+        raise ValueError(f"{package.name} metadata does not record quantize=16 and end2end=False")
 
 
 def verify_mlpackage(package: Path, task_name: str, imgsz: int) -> None:
@@ -116,7 +139,7 @@ def display_path(path: Path) -> str:
 
 
 def copy_to_app(package: Path, task: TaskSpec) -> None:
-    """Copy an exported Core ML package into the app model bundle."""
+    """Copy an exported model directory into the app model bundle."""
     destination = APP_MODELS_DIR / task.model_dir / package.name
     if destination.exists():
         shutil.rmtree(destination)
@@ -126,7 +149,7 @@ def copy_to_app(package: Path, task: TaskSpec) -> None:
 
 
 def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
-    """Upload exported Core ML assets to a GitHub release."""
+    """Upload exported assets to a GitHub release."""
     if not assets:
         return
     command = [
@@ -143,9 +166,10 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
 
 
 def main() -> None:
-    """Export, package, and optionally upload Core ML assets."""
+    """Export, package, and optionally upload the selected formats' assets."""
     args = parse_args()
-    check_version(__version__, ">=8.4.142", name="ultralytics", hard=True)
+    required = ">=8.4.155" if "coreai" in args.formats else ">=8.4.142"
+    check_version(__version__, required, name="ultralytics", hard=True)
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(output_dir)
@@ -155,35 +179,28 @@ def main() -> None:
         task = TASKS[task_name]
         for size in args.sizes:
             model_id = f"yolo26{size}{task.suffix}"
-            package = output_dir / f"{model_id}.mlpackage"
             checkpoint = output_dir / f"{model_id}.pt"
-            if package.exists():
-                shutil.rmtree(package)
-            print(f"\nExporting {model_id} ({task_name}, imgsz={task.imgsz})")
-            model = YOLO(checkpoint)
-            exported = Path(
-                model.export(
-                    format="coreml",
-                    quantize=8,
-                    nms=False,
-                    imgsz=task.imgsz,
-                )
-            )
-            package = exported.resolve()
-            manifest = package / "Manifest.json"
-            if not manifest.exists():
-                raise FileNotFoundError(f"Export did not create a valid mlpackage: {package}")
-            verify_mlpackage(package, task_name, task.imgsz)
-            if args.copy_to_app:
-                copy_to_app(package, task)
-            asset = zip_mlpackage(package)
-            assets.append(asset)
-            print(f"asset {display_path(asset)} input={task.imgsz}x{task.imgsz}")
+            for fmt in args.formats:
+                export_args, suffix, marker = FORMATS[fmt]
+                package = output_dir / f"{model_id}{suffix}"
+                if package.exists():
+                    shutil.rmtree(package)
+                print(f"\nExporting {model_id} ({task_name}, {fmt}, imgsz={task.imgsz})")
+                model = YOLO(checkpoint)
+                package = Path(model.export(format=fmt, imgsz=task.imgsz, **export_args)).resolve()
+                if not (package / marker).exists():
+                    raise FileNotFoundError(f"Export did not create a valid {suffix}: {package}")
+                (verify_aimodel if fmt == "coreai" else verify_mlpackage)(package, task_name, task.imgsz)
+                if args.copy_to_app:
+                    copy_to_app(package, task)
+                asset = zip_model(package)
+                assets.append(asset)
+                print(f"asset {display_path(asset)} input={task.imgsz}x{task.imgsz}")
 
     if args.upload:
         upload_assets(args.repo, args.tag, assets)
 
-    print(f"\nPrepared {len(assets)} Core ML release assets in {output_dir}")
+    print(f"\nPrepared {len(assets)} release assets in {output_dir}")
 
 
 if __name__ == "__main__":

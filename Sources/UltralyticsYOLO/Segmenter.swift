@@ -123,11 +123,9 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
   private func parseSegmentationRequest(
     _ request: VNRequest
   ) -> (masks: MLMultiArray, detectedObjects: [(CGRect, Int, Float, [Float])])? {
-    guard let results = request.results as? [VNCoreMLFeatureValueObservation],
-      results.count == 2,
-      let out0 = results[0].featureValue.multiArrayValue,
-      let out1 = results[1].featureValue.multiArrayValue
-    else { return nil }
+    let results = featureArrays(request)
+    guard results.count == 2 else { return nil }
+    let (out0, out1) = (results[0], results[1])
 
     let (masks, pred): (MLMultiArray, MLMultiArray) =
       checkShapeDimensions(of: out0) == 4 ? (out0, out1) : (out1, out0)

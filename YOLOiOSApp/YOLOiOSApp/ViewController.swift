@@ -129,13 +129,17 @@ class ViewController: UIViewController, YOLOViewDelegate {
     // Always load models initially; external display handling will stop the camera if needed.
     reloadModelEntriesAndLoadFirst(for: currentTask)
 
-    // Re-read the Core AI setting when returning from Settings: relist models in the selected format.
+    // Returning from Settings with the Core AI setting changed: relist models in the new format and load the current
+    // task's first model in it. A change made while a model loads is picked up on the next return to the foreground.
     NotificationCenter.default.addObserver(
       forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
     ) { [weak self] _ in
-      guard let self = self, !self.isLoadingModel else { return }
+      guard let self = self, !self.isLoadingModel,
+        preferredModelExtension != remoteModelExtension
+      else { return }
+      remoteModelExtension = preferredModelExtension
       appTasks.forEach { self.modelsForTask[$0.name] = self.getModelFiles(in: $0.folder) }
-      self.restoreCurrentModelSelection()
+      self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
     }
 
     // Wire up gestures and delegates.

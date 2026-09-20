@@ -95,7 +95,7 @@ URL patterns:
 
 Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an
 `.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. See
-[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs. In the iOS app, turn on **Settings → YOLO → Core AI Models (iOS 27+)** (off by default) to download and list the Core AI assets instead of the Core ML ones.
+[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs. In the iOS app, turn on **Settings → Ultralytics YOLO → Core AI Models (iOS 27+)** (off by default) and return to the app: it then lists, downloads and loads the Core AI assets instead of the Core ML ones.
 
 ```swift
 let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
@@ -153,8 +153,11 @@ Useful variants:
 # Export only nano task models for local validation and copy them into YOLOiOSApp/Models/.
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# Export and replace all official Core ML and Core AI assets in the existing release.
+# Export and replace all official Core ML assets in the existing release.
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+
+# Export and replace the opt-in Core AI assets (macOS 26 or later on Apple silicon).
+uv run python scripts/export-models.py --formats coreai --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
 The script exports from checkpoints named `yolo26<size><suffix>.pt`, for example `yolo26n.pt`, `yolo26s-seg.pt`, `yolo26m-sem.pt`, `yolo26l-pose.pt`, and `yolo26x-obb.pt`. Official Core ML assets use `nms=False` to select NMS-free detect, segment, pose, and OBB outputs, while Core AI assets keep the raw head and the SDK applies its Swift NMS; depth retains its raw dense output. Swift-side postprocessing handles these task outputs (classify and semantic outputs need no NMS decode).

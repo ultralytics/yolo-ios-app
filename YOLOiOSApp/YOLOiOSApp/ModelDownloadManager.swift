@@ -31,9 +31,9 @@ class ModelCacheManager {
   private init() {}
 
   /// Core ML and Core AI downloads of one model are cached side by side under their own extensions.
-  func modelURL(for key: String, coreAI: Bool = remoteModelExtension == "aimodel") -> URL {
+  func modelURL(for key: String) -> URL {
     documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
-      .appendingPathExtension(coreAI ? "aimodel" : "mlmodelc")
+      .appendingPathExtension(remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
   }
 
   func loadModel(
@@ -183,7 +183,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         }
         let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
         try FileManager.default.moveItem(
-          at: installURL, to: ModelCacheManager.shared.modelURL(for: key, coreAI: isCoreAI))
+          at: installURL, to: ModelCacheManager.shared.modelURL(for: key))
         DispatchQueue.main.async { completion(true) }
       } catch {
         print("Failed to install model: \(error)")

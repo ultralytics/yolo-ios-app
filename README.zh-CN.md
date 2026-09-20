@@ -95,7 +95,7 @@ URL 模式：
 
 Core ML（`.mlpackage`）仍是默认格式。Core AI（`.aimodel`）是面向 iOS 27 及更高版本真机的可选功能：传入 `.aimodel` 路径或
 `.aimodel.zip` URL 即可启用。更早的 iOS 版本和 iOS 模拟器不支持 Core AI。实测的取舍见
-[docs/performance.md](docs/performance.md#-core-ai-backend)。在 iOS 应用中，打开**设置 → YOLO → Core AI Models (iOS 27+)**（默认关闭）即可下载并列出 Core AI 资源，而不是 Core ML 资源。
+[docs/performance.md](docs/performance.md#-core-ai-backend)。在 iOS 应用中，打开**设置 → Ultralytics YOLO → Core AI Models (iOS 27+)**（默认关闭）并返回应用，应用随后会列出、下载并加载 Core AI 资源，而不是 Core ML 资源。
 
 ```swift
 let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
@@ -147,8 +147,11 @@ uv run python scripts/export-models.py
 # 仅导出 nano 任务模型用于本地验证，并将其复制到 YOLOiOSApp/Models/。
 uv run python scripts/export-models.py --sizes n --copy-to-app
 
-# 导出并替换现有 release 中的全部官方 Core ML 和 Core AI 资产。
+# 导出并替换现有 release 中的全部官方 Core ML 资产。
 uv run python scripts/export-models.py --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
+
+# 导出并替换可选的 Core AI 资产（需要 Apple 芯片上的 macOS 26 或更高版本）。
+uv run python scripts/export-models.py --formats coreai --upload --repo ultralytics/yolo-ios-app --tag v8.3.0
 ```
 
 该脚本从名为 `yolo26<size><suffix>.pt` 的检查点导出，例如 `yolo26n.pt`、`yolo26s-seg.pt`、`yolo26m-sem.pt`、`yolo26l-pose.pt` 和 `yolo26x-obb.pt`。官方 Core ML 资源使用 `nms=False` 为检测、分割、姿态和 OBB 选择无 NMS 输出，Core AI 资源则保留原始头并由 SDK 执行 Swift NMS；深度任务保留原始稠密输出。Swift 侧后处理负责处理这些任务输出（分类和语义分割输出无需 NMS 解码）。

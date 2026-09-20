@@ -185,8 +185,7 @@ asset's specialization cache entries: on iOS 27.0 a stale entry (the asset was r
 was reinstalled) fails the load in a few milliseconds with `_GenericObjCError.nilError` instead of being rebuilt, and
 after `AIModelCache.default.deleteEntries(for:)` the same asset specializes again (0.4–1.5 s for nano) and loads
 normally. Six of the seven official nano assets hit this after two days of reinstalls and recovered with the retry.
-Hardware acceleration uses the default specialization options; an earlier reading that explicitly preferring the Neural
-Engine caused these failures was wrong, since a fresh cache entry loads with either option.
+Hardware acceleration uses the default specialization options.
 
 ### Prior Evidence
 

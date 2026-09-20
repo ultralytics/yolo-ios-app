@@ -11,13 +11,17 @@
 import Foundation
 import UltralyticsYOLO
 
-/// The official asset format the app downloads and lists: Core ML (`.mlpackage`) unless the user turned on
-/// Settings → YOLO → Core AI Models on a device that can run Core AI (iOS 27 and later). Read on every use, so a
-/// change applies when the app returns to the foreground.
-var remoteModelExtension: String {
+/// The format the Core AI setting asks for: Core ML (`.mlpackage`) unless the user turned on Settings → Ultralytics
+/// YOLO → Core AI Models on a device that can run Core AI (iOS 27 and later).
+var preferredModelExtension: String {
   UserDefaults.standard.bool(forKey: "use_core_ai") && BasePredictor.isCoreAIAvailable
     ? "aimodel" : "mlpackage"
 }
+
+/// The official asset format the app lists, downloads and caches. It follows `preferredModelExtension` only when the
+/// app relists its models (at launch, and on returning to the foreground with the setting changed), so a list, its
+/// downloads and its cache paths always agree.
+var remoteModelExtension = preferredModelExtension
 
 /// Maps task names to the YOLO models available for download, with their archive URLs.
 public var remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] {

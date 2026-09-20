@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Export official YOLO26 Core ML assets for the iOS app release.
+"""Export official YOLO26 Core ML, and optionally Core AI, assets for the iOS app release.
 
 Usage from the repository root:
 
@@ -48,7 +48,7 @@ FORMATS = {
 
 @dataclass(frozen=True)
 class TaskSpec:
-    """Core ML export settings for one prediction task."""
+    """Export settings for one prediction task."""
 
     suffix: str
     model_dir: str
@@ -139,7 +139,7 @@ def display_path(path: Path) -> str:
 
 
 def copy_to_app(package: Path, task: TaskSpec) -> None:
-    """Copy an exported Core ML package into the app model bundle."""
+    """Copy an exported model directory into the app model bundle."""
     destination = APP_MODELS_DIR / task.model_dir / package.name
     if destination.exists():
         shutil.rmtree(destination)
@@ -149,7 +149,7 @@ def copy_to_app(package: Path, task: TaskSpec) -> None:
 
 
 def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
-    """Upload exported Core ML assets to a GitHub release."""
+    """Upload exported assets to a GitHub release."""
     if not assets:
         return
     command = [
@@ -166,7 +166,7 @@ def upload_assets(repo: str, tag: str, assets: list[Path]) -> None:
 
 
 def main() -> None:
-    """Export, package, and optionally upload Core ML assets."""
+    """Export, package, and optionally upload the selected formats' assets."""
     args = parse_args()
     required = ">=8.4.155" if "coreai" in args.formats else ">=8.4.142"
     check_version(__version__, required, name="ultralytics", hard=True)

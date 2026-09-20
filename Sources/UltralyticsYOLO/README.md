@@ -124,10 +124,16 @@ model = YOLO("/path/to/your-custom-model.mlpackage", task: .detect) { result in
     _ = result
 }
 
-// Core AI (`.aimodel`) models load the same way on iOS 27 and later. Loading one on an earlier iOS version or on the
-// iOS Simulator, which does not ship Core AI, fails with `PredictorError.coreAIUnavailable`.
+// Opt in to Core AI on iOS 27 and later devices by passing an `.aimodel` path or an `.aimodel.zip` URL. On an earlier
+// iOS version or in the iOS Simulator it fails with `PredictorError.coreAIUnavailable`.
 if BasePredictor.isCoreAIAvailable {
-    model = YOLO("/path/to/your-custom-model.aimodel", task: .detect) { result in
+    model = YOLO("/path/to/yolo26n.aimodel", task: .detect) { result in
+        _ = result
+    }
+    model = YOLO(
+        url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!,
+        task: .detect
+    ) { result in
         _ = result
     }
 }
@@ -267,7 +273,7 @@ URL patterns:
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
-Core AI FP16 `.aimodel.zip` archives with the same model IDs are published in the same release with the SDK version that enables Core AI; they run on iOS 27 and later devices, while Core ML `.mlpackage` remains the format for earlier iOS versions and for the iOS Simulator, which does not ship Core AI. Both formats carry the same Ultralytics metadata, and `BasePredictor.isCoreAIAvailable` tells you which one the current device can run.
+Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an `.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. The official opt-in assets are FP16 `.aimodel.zip` archives with the same model IDs in the same `v8.3.0` release; both formats carry the same Ultralytics metadata, `BasePredictor.isCoreAIAvailable` tells you whether the current device can run them, and [docs/performance.md](../../docs/performance.md#-core-ai-backend) records the measured trade-offs.
 
 The `YOLO` class can load a Core ML or Core AI release URL directly; it downloads once and caches the model locally (compiling Core ML models; Core AI models are specialized by the system on first load). If you download manually, unzip the `.mlpackage.zip` asset and add the `.mlpackage` to your app target's "Copy Bundle Resources" build phase.
 

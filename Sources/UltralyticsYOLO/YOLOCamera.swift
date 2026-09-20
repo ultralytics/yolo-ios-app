@@ -22,8 +22,8 @@ public struct YOLOCamera: View {
   ///
   /// - Parameters:
   ///   - modelPathOrName: A resource name to look up in the main bundle (e.g. `"yolo11n"` — the
-  ///     initializer searches for `.aimodel` when Core AI is available, then `.mlmodelc` and
-  ///     `.mlpackage`) or an absolute filesystem path
+  ///     initializer searches for `.mlmodelc` then `.mlpackage`; a bundled Core AI model needs its
+  ///     `.aimodel` extension in the name) or an absolute filesystem path
   ///     to a `.mlmodel`/`.mlpackage`/`.mlmodelc`/`.aimodel` file.
   ///   - task: The YOLO task to run (detect/segment/semantic/depth/classify/pose/obb). Defaults to `.detect`.
   ///   - cameraPosition: Which camera to use. Defaults to `.back`.

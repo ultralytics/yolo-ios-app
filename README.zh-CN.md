@@ -30,7 +30,7 @@
 ## ✨ 功能特性
 
 - 全程使用 Swift 与 Core ML，运行在 Apple Neural Engine 和 GPU 上
-- 在 iOS 27 及更高版本上支持 Apple Core AI（`.aimodel`）模型；更早的 iOS 版本以及不包含 Core AI 的 iOS 模拟器使用 Core ML（`.mlpackage`）
+- 可在 iOS 27 及更高版本的真机上选择启用 Apple Core AI（`.aimodel`）模型；Core ML（`.mlpackage`）仍是默认格式
 - 在最新款 iPhone 上达到相机帧率（约 30 FPS）的实时推理——设备端性能分析见 [docs/performance.md](docs/performance.md)
 - 遵循 Apple 界面规范的原生 UI
 - 同时支持 YOLO26 与 YOLO11 模型，包括无 NMS 和原始输出
@@ -52,7 +52,7 @@
 
 ### [**Ultralytics YOLO iOS App（主应用）**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。发布的应用打包了全部七个官方 nano Core ML 模型，更大的变体可按需下载；你也可以将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 或 Core AI（`.aimodel`，iOS 27+）模型添加到应用工程中进行测试。
+这是主要的 iOS 应用，可通过设备相机或图片库轻松进行实时 YOLO 推理。发布的应用打包了全部七个官方 nano Core ML 模型，更大的变体可按需下载；你也可以将自己的 [Core ML](https://developer.apple.com/documentation/coreml) 或可选启用的 Core AI（`.aimodel`，iOS 27+ 真机）模型添加到应用工程中进行测试。
 
 ### [**Swift Package（YOLO 库）**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -84,13 +84,23 @@ var body: some View {
 | 运行时资源                    | 使用方                                          | 发布版本                                                                                         |
 | ----------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS 应用、Swift package、iOS/macOS 上的 Flutter | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| Core AI FP16 `.aimodel.zip`   | iOS 应用、Swift package、iOS 27+ 上的 Flutter   | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | 可选启用：Swift package、iOS 27+ 上的 Flutter   | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Android 上的 Flutter                            | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL 模式：
 
 - Core ML：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- Core AI：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+- Core AI（可选启用）：`https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+
+Core ML（`.mlpackage`）仍是默认格式。Core AI（`.aimodel`）是面向 iOS 27 及更高版本真机的可选功能：传入 `.aimodel` 路径或
+`.aimodel.zip` URL 即可启用。更早的 iOS 版本和 iOS 模拟器不支持 Core AI。实测的取舍见
+[docs/performance.md](docs/performance.md#-core-ai-backend)。
+
+```swift
+let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
+let remote = YOLO(url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!, task: .detect)
+```
+
 - LiteRT：`https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 iOS 应用的模型注册表是 [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift)。它枚举了检测、分割、语义分割、深度、分类、姿态和 OBB 任务的 YOLO26 `n/s/m/l/x` 资源，并将每个模型 ID 指向 `v8.3.0` 发布版本。下表中的 Core ML 和 Core AI 列由本仓库维护；LiteRT 列概述了 Flutter 仓库的 Android 导出脚本及其发布资源。
@@ -188,7 +198,7 @@ pod 'UltralyticsYOLO', '~> 8.9'
 bash scripts/download-models.sh
 ```
 
-该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。测试在不包含 Core AI 的 iOS 模拟器上运行，因此验证的是 Core ML 后端；`bash scripts/download-models.sh --coreai` 会额外将 nano Core AI 模型打包进应用，用于[真机验证](docs/performance.md#-core-ai-backend)。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
+该脚本会将七个 nano Core ML package 下载到 `Tests/YOLOTests/Resources/`，并复制到 `YOLOiOSApp/Models/<Task>/`，供主应用在构建时打包进应用。测试在不包含 Core AI 的 iOS 模拟器上运行，因此验证的是 Core ML 后端；可选的 Core AI 后端需在 iOS 27 真机上验证（[docs/performance.md](docs/performance.md#-core-ai-backend)）。你也可以使用 [Ultralytics Python 库的导出功能](https://docs.ultralytics.com/modes/export) 导出或替换为自定义 Core ML 模型。如果某个测试 target 支持 `SKIP_MODEL_TESTS`，保持为 `true` 会跳过需要加载和运行模型的测试。
 
 ### 测试覆盖范围
 

@@ -3,7 +3,6 @@
 
 # Script to download and prepare YOLO model files for the package tests and the app bundle
 # Run from repository root: $ bash scripts/download-models.sh
-# Add --coreai to also bundle the Core AI (.aimodel, iOS 27+) nano models into the app
 
 set -e # Exit immediately if a command fails
 
@@ -30,16 +29,11 @@ mkdir -p "$OUTPUT_DIR"
 
 process_model() {
   local model_info=$1
-  local ext=$2    # mlpackage (Core ML) or aimodel (Core AI)
-  local marker=$3 # file that marks a complete model directory
   local model_name="${model_info%:*}"
   local app_dir="${model_info#*:}"
-  local app_model_path="$APP_DIR/$app_dir/$model_name.$ext"
-  # Core ML models are shared with the package tests; Core AI models are only bundled into the app
-  local model_path="$OUTPUT_DIR/$model_name.$ext"
-  [[ $ext == aimodel ]] && model_path="$app_model_path"
-  local zip_path="$model_path.zip"
-  mkdir -p "$(dirname "$model_path")"
+  local model_path="$OUTPUT_DIR/$model_name.mlpackage"
+  local zip_path="$OUTPUT_DIR/$model_name.mlpackage.zip"
+  local app_model_path="$APP_DIR/$app_dir/$model_name.mlpackage"
 
   # Download and extract if not present
   if [[ ! -d "$model_path" ]]; then
@@ -51,7 +45,7 @@ process_model() {
     echo "Downloading $model_name..."
     local attempt
     for attempt in 1 2 3; do
-      if curl -fL --retry 3 --connect-timeout 15 "$BASE_URL/$model_name.$ext.zip" -o "$zip_path" --progress-bar \
+      if curl -fL --retry 3 --connect-timeout 15 "$BASE_URL/$model_name.mlpackage.zip" -o "$zip_path" --progress-bar \
         && unzip -tqq "$zip_path" > /dev/null; then
         break
       fi
@@ -76,9 +70,9 @@ process_model() {
     rm -rf "$tmp_dir/__MACOSX" 2> /dev/null || true
     find "$tmp_dir" -name "*.DS_Store" -delete 2> /dev/null || true
 
-    # Handle nested directory: zip may contain model_name.$ext/ folder
-    if [ -d "$tmp_dir/$model_name.$ext" ]; then
-      mv "$tmp_dir/$model_name.$ext" "$model_path"
+    # Handle nested directory: zip may contain model_name.mlpackage/ folder
+    if [ -d "$tmp_dir/$model_name.mlpackage" ]; then
+      mv "$tmp_dir/$model_name.mlpackage" "$model_path"
     else
       mv "$tmp_dir" "$model_path"
     fi
@@ -87,9 +81,9 @@ process_model() {
     rm -rf "$tmp_dir" "$zip_path"
 
     # Verify extraction; remove the bad directory so a re-run re-downloads instead of skipping it
-    if [[ ! -f "$model_path/$marker" ]]; then
+    if [[ ! -f "$model_path/Manifest.json" ]]; then
       rm -rf "$model_path"
-      echo "❌ Model $model_name is incomplete (missing $marker)"
+      echo "❌ Model $model_name is incomplete (missing Manifest.json)"
       exit 1
     fi
     echo "✅ Model $model_name ready"
@@ -106,10 +100,7 @@ process_model() {
 
 # Process each model
 for model in "${MODELS[@]}"; do
-  process_model "$model" mlpackage Manifest.json
-  if [[ $1 == --coreai ]]; then
-    process_model "$model" aimodel metadata.json
-  fi
+  process_model "$model"
 done
 
 echo "All models prepared successfully!"

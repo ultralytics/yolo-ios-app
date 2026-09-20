@@ -250,7 +250,7 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
 
     var actualModelPath = modelName
     if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage")
-      && !modelName.contains(".mlmodel") && !modelName.contains(".aimodel")
+      && !modelName.contains(".mlmodel")
     {
       guard ModelCacheManager.shared.isModelDownloaded(key: modelName) else { return }
       actualModelPath = ModelCacheManager.shared.modelURL(for: modelName).path

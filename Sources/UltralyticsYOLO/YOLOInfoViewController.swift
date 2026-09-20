@@ -92,7 +92,7 @@ final class YOLOInfoViewController: UIViewController {
       infoSection(
         title: "The App",
         body:
-          "Ultralytics YOLO runs real-time computer vision on your iPhone or iPad with Core ML and Core AI. Use it to try detection, segmentation, classification, pose estimation, and oriented bounding box models directly on-device."
+          "Ultralytics YOLO runs real-time computer vision on your iPhone or iPad with Core ML. Use it to try detection, segmentation, classification, pose estimation, and oriented bounding box models directly on-device."
       ))
     stackView.addArrangedSubview(
       infoSection(

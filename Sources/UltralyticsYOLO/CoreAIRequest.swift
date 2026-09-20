@@ -4,8 +4,8 @@
 //  Licensed under AGPL-3.0. For commercial use, refer to Ultralytics licensing: https://ultralytics.com/license
 //  Access the source code: https://github.com/ultralytics/yolo-ios-app
 //
-//  Core AI runs `.aimodel` models on iOS 27 and later; Core ML remains the backend for earlier iOS versions and for the
-//  iOS Simulator, which does not ship Core AI. A Core AI model has no Vision integration, so this backend letterboxes the
+//  Core ML remains the default. Core AI is an opt-in for iOS 27 and later devices, selected by passing an `.aimodel`
+//  path or an `.aimodel.zip` URL; it is not available on earlier iOS versions or in the iOS Simulator. A Core AI model has no Vision integration, so this backend letterboxes the
 //  image itself and hands the raw output tensors to the same task decoders the Core ML path uses.
 
 import Accelerate

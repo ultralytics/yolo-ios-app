@@ -30,7 +30,7 @@
 ## ✨ Features
 
 - Swift and Core ML throughout, running on the Apple Neural Engine and GPU
-- Apple Core AI (`.aimodel`) models on iOS 27 and later, with Core ML (`.mlpackage`) for earlier iOS versions and the iOS Simulator, which does not ship Core AI
+- Opt-in Apple Core AI (`.aimodel`) models on iOS 27 and later devices; Core ML (`.mlpackage`) remains the default
 - Camera-rate (~30 FPS) real-time inference on recent iPhones — see [docs/performance.md](docs/performance.md) for on-device profiling
 - Native UI following Apple interface guidelines
 - YOLO26 and YOLO11 models supported, including NMS-free and raw outputs
@@ -52,7 +52,7 @@ This repository contains two components for running YOLO models on Apple platfor
 
 ### [**Ultralytics YOLO iOS App (Main App)**](https://github.com/ultralytics/yolo-ios-app/tree/main/YOLOiOSApp)
 
-The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) or Core AI (`.aimodel`, iOS 27+) models by adding them to the app project.
+The primary iOS application allows easy real-time YOLO inference using your device's camera or image library. The shipped app bundles all seven official nano Core ML models, larger variants download on demand, and you can also test your custom [Core ML](https://developer.apple.com/documentation/coreml) or opt-in Core AI (`.aimodel`, iOS 27+ devices) models by adding them to the app project.
 
 ### [**Swift Package (YOLO Library)**](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)
 
@@ -84,13 +84,23 @@ The main YOLOiOSApp **bundles all seven nano models** (one per task: detect, seg
 | Runtime asset                 | Used by                                      | Release                                                                                          |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Core ML int8 `.mlpackage.zip` | iOS app, Swift package, Flutter on iOS/macOS | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
-| Core AI FP16 `.aimodel.zip`   | iOS app, Swift package, Flutter on iOS 27+   | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
+| Core AI FP16 `.aimodel.zip`   | Opt-in: Swift package, Flutter on iOS 27+    | [yolo-ios-app `v8.3.0`](https://github.com/ultralytics/yolo-ios-app/releases/tag/v8.3.0)         |
 | LiteRT w8a32 `.tflite`        | Flutter on Android                           | [yolo-flutter-app `v0.6.6`](https://github.com/ultralytics/yolo-flutter-app/releases/tag/v0.6.6) |
 
 URL patterns:
 
 - Core ML: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.mlpackage.zip`
-- Core AI: `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+- Core AI (opt-in): `https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/<model>.aimodel.zip`
+
+Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an
+`.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. See
+[docs/performance.md](docs/performance.md#-core-ai-backend) for the measured trade-offs.
+
+```swift
+let local = YOLO("/path/to/yolo26n.aimodel", task: .detect)
+let remote = YOLO(url: URL(string: "https://github.com/ultralytics/yolo-ios-app/releases/download/v8.3.0/yolo26n.aimodel.zip")!, task: .detect)
+```
+
 - LiteRT: `https://github.com/ultralytics/yolo-flutter-app/releases/download/v0.6.6/<model>_w8a32.tflite`
 
 The iOS app registry is [`RemoteModels.swift`](YOLOiOSApp/YOLOiOSApp/RemoteModels.swift). It enumerates YOLO26
@@ -194,7 +204,7 @@ Tests require Core ML model files (`.mlpackage`), which are not committed to the
 bash scripts/download-models.sh
 ```
 
-This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. Tests run on the iOS Simulator, which does not ship Core AI, so they exercise the Core ML backend; `bash scripts/download-models.sh --coreai` additionally bundles the nano Core AI models into the app for [on-device validation](docs/performance.md#-core-ai-backend). You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
+This downloads the seven nano Core ML packages into `Tests/YOLOTests/Resources/` and copies them into `YOLOiOSApp/Models/<Task>/` for the main app bundle. Tests run on the iOS Simulator, which does not ship Core AI, so they exercise the Core ML backend; the opt-in Core AI backend is validated on an iOS 27 device ([docs/performance.md](docs/performance.md#-core-ai-backend)). You can also export or replace these packages with custom Core ML models using the [Ultralytics Python library's export function](https://docs.ultralytics.com/modes/export). If a specific test target supports `SKIP_MODEL_TESTS`, keeping it set to `true` skips tests that require loading and running a model.
 
 ### Test Coverage
 

@@ -218,17 +218,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
       )
     else { return [] }
 
-    // One entry per model: a model bundled in both formats is listed in the format this device downloads.
-    let usesCoreAI = remoteModelExtension == "aimodel"
-    let names = fileURLs.map { $0.lastPathComponent }
-    let modelFiles = names.filter { name in
-      let base = (name as NSString).deletingPathExtension
-      switch (name as NSString).pathExtension {
-      case "aimodel": return usesCoreAI
-      case "mlmodel", "mlpackage": return !(usesCoreAI && names.contains(base + ".aimodel"))
-      default: return false
+    let modelFiles =
+      fileURLs
+      .filter {
+        // A developer-bundled Core AI model is listed where it can run. Each size slot holds one model, so bundle it
+        // at a size whose Core ML model is not bundled (the build phase bundles nano), e.g. `yolo26s.aimodel`.
+        (["mlmodel", "mlpackage"] + (BasePredictor.isCoreAIAvailable ? ["aimodel"] : []))
+          .contains($0.pathExtension)
       }
-    }
+      .map { $0.lastPathComponent }
 
     return folderName == "Models/Detect" ? reorderDetectionModels(modelFiles) : modelFiles.sorted()
   }
@@ -409,15 +407,15 @@ class ViewController: UIViewController, YOLOViewDelegate {
         // Show the initial download message with a properly formatted model name.
         self.downloadProgressLabel.text = "Downloading \(processString(entry.displayName))"
 
-        let localZipFileName = remoteURL.lastPathComponent  // e.g. "yolo26n.mlpackage.zip" or "yolo26n.aimodel.zip"
+        let localZipFileName = remoteURL.lastPathComponent  // e.g. "yolo26n.mlpackage.zip"
 
         ModelCacheManager.shared.loadModel(
           from: localZipFileName,
           remoteURL: remoteURL,
           key: key
-        ) { [weak self] success, loadedKey in
+        ) { [weak self] mlModel, loadedKey in
           guard let self = self else { return }
-          if !success {
+          if mlModel == nil {
             self.finishLoadingModel(success: false, modelName: entry.displayName)
             return
           }

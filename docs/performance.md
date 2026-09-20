@@ -54,8 +54,9 @@ included in inference.
 
 ## 🍏 Core AI Backend
 
-Core AI (`.aimodel`) models run on iOS 27 and later devices; Core ML (`.mlpackage`) remains the backend for earlier iOS
-versions and for the iOS Simulator, which does not ship Core AI. The SDK loads an `.aimodel` through
+Core ML (`.mlpackage`) remains the default. Core AI (`.aimodel`) is an opt-in for iOS 27 and later devices: pass an
+`.aimodel` path or an `.aimodel.zip` URL. It is not available on earlier iOS versions or in the iOS Simulator. This
+section records the measured trade-offs behind that decision. The SDK loads an `.aimodel` through
 `CoreAIRequest.swift`: it letterboxes the frame itself (Core Image render plus Accelerate BGRA → RGB CHW conversion,
 centered exactly like Vision's `.scaleFit`, 114-gray padding) and hands the output tensors to the same task decoders
 the Core ML path uses. `useGpu: true` means hardware acceleration: Core AI places the model across the Neural Engine,
@@ -204,8 +205,8 @@ boundary (`apple/coreai-torch#66`), which is why the raw head wins above. The sa
 `.aimodel` assets abort the process while loading their Neural Engine program, inside Apple's runtime and before any
 SDK code runs. The abort cannot be caught.
 
-Official model IDs resolve to the Core AI asset on iOS 27 and later devices and to the Core ML asset everywhere else
-(`remoteModelExtension` in `RemoteModels.swift`); an explicit `.mlpackage` path or URL loads everywhere, while an explicit `.aimodel` requires iOS 27 or later on a device and throws
+Official model IDs and bare bundle names always resolve to Core ML. An explicit `.mlpackage` path or URL loads
+everywhere, while an explicit `.aimodel` requires iOS 27 or later on a device and throws
 `PredictorError.coreAIUnavailable` otherwise.
 
 ## 🔬 Methodology (How to Reproduce)
@@ -413,8 +414,8 @@ Capture presets differ in aspect (`.photo`/`.vga640x480` are 4:3, `.hd1280x720` 
 ## ✅ Shipped Configuration
 
 `.hd1280x720` preview · model-sized inference output · high-resolution photo capture · `.cpuAndNeuralEngine` · INT8
-YOLO26 models · Vision preprocessing · optimized high-resolution segment/depth painting · default
-`minimum_deployment_target`.
+YOLO26 Core ML models · Vision preprocessing · optimized high-resolution segment/depth painting · default
+`minimum_deployment_target`. Core AI is opt-in only ([Core AI Backend](#-core-ai-backend)).
 
 On A19 Pro, frame time is dominated by model inference plus Vision's fused scaling. The isolated Performance Report's
 ~1.8 ms model time is not achievable inside a sustained live camera pipeline.

@@ -9,11 +9,6 @@
 //  appear as downloadable options in the UI; ModelDownloadManager fetches and installs them on demand.
 
 import Foundation
-import UltralyticsYOLO
-
-/// The official asset format this device downloads and lists: Core AI (`.aimodel`) where it can run, iOS 27 and later
-/// on a device, and Core ML (`.mlpackage`) on earlier iOS versions and on the iOS Simulator.
-let remoteModelExtension = BasePredictor.isCoreAIAvailable ? "aimodel" : "mlpackage"
 
 /// Maps task names to the YOLO models available for download, with their archive URLs.
 public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] = {
@@ -26,7 +21,7 @@ public let remoteModelsInfo: [String: [(modelName: String, downloadURL: URL)]] =
   return tasks.reduce(into: [:]) { result, task in
     result[task.0] = sizes.map { size in
       let model = "yolo26\(size)\(task.1)"
-      return (model, URL(string: "\(base)/\(model).\(remoteModelExtension).zip")!)
+      return (model, URL(string: "\(base)/\(model).mlpackage.zip")!)
     }
   }
 }()

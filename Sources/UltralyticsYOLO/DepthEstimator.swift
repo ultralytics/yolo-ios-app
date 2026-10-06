@@ -28,6 +28,9 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     return (red, green, blue)
   }()
 
+  /// Stretches the image to the model input without padding, matching Ultralytics depth validation and calibration.
+  override var imageCropAndScaleOption: VNImageCropAndScaleOption { .scaleFill }
+
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
     let depthMap = featureArrays(request).first.flatMap { postProcessDepth($0) }
@@ -80,30 +83,19 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     let colStride = strides[strides.count - 1]
     guard width > 0, height > 0 else { return nil }
 
-    let bounds = CGRect(x: 0, y: 0, width: width, height: height)
-    let rect =
-      (inputMaskCropRect(
-        maskWidth: width, maskHeight: height, inputSize: inputSize,
-        modelInputSize: modelInputSize) ?? bounds).intersection(bounds).integral
-    let x0 = Int(rect.minX)
-    let y0 = Int(rect.minY)
-    let outputWidth = Int(rect.width)
-    let outputHeight = Int(rect.height)
-    guard outputWidth > 0, outputHeight > 0 else { return nil }
-
-    var values = [Float](repeating: 0, count: outputWidth * outputHeight)
+    var values = [Float](repeating: 0, count: width * height)
     values.withUnsafeMutableBufferPointer { destination in
       if output.dataType == .float32, colStride == 1 {
         let source = output.dataPointer.assumingMemoryBound(to: Float.self)
-        for y in 0..<outputHeight {
-          destination.baseAddress!.advanced(by: y * outputWidth).update(
-            from: source.advanced(by: (y + y0) * rowStride + x0), count: outputWidth)
+        for y in 0..<height {
+          destination.baseAddress!.advanced(by: y * width).update(
+            from: source.advanced(by: y * rowStride), count: width)
         }
       } else {
-        for y in 0..<outputHeight {
-          let sourceRow = (y + y0) * rowStride + x0 * colStride
-          let destinationRow = y * outputWidth
-          for x in 0..<outputWidth {
+        for y in 0..<height {
+          let sourceRow = y * rowStride
+          let destinationRow = y * width
+          for x in 0..<width {
             destination[destinationRow + x] = output[sourceRow + x * colStride].floatValue
           }
         }
@@ -129,12 +121,11 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     guard minDepth.isFinite, maxDepth.isFinite else { return nil }
     return DepthMap(
       values: values,
-      width: outputWidth,
-      height: outputHeight,
+      width: width,
+      height: height,
       minDepth: minDepth,
       maxDepth: maxDepth,
-      image: colorizeDepth(
-        values, width: outputWidth, height: outputHeight, min: minDepth, max: maxDepth)
+      image: colorizeDepth(values, width: width, height: height, min: minDepth, max: maxDepth)
     )
   }
 

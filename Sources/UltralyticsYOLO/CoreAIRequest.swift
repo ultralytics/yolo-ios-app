@@ -80,8 +80,8 @@ extension BasePredictor {
     throw PredictorError.coreAIUnavailable
   }
 
-  /// Letterboxes (or center-crops, for classification) the image into the model input and returns it as RGB CHW 0-1,
-  /// with the same centered aspect-fit geometry as Vision's `.scaleFit` so the un-letterbox math is shared.
+  /// Letterboxes (or center-crops for classification, stretches for depth) the image into the model input and
+  /// returns it as RGB CHW 0-1, with the same geometry as Vision's matching crop-and-scale option.
   func coreAIInput(from image: CIImage, for request: CoreAIRequest) throws -> [Float] {
     let width = modelInputSize.width
     let height = modelInputSize.height
@@ -95,14 +95,18 @@ extension BasePredictor {
       padX = (CGFloat(width) - extent.width * gain) / 2
       padY = (CGFloat(height) - extent.height * gain) / 2
     }
+    var gainY = gain
+    if imageCropAndScaleOption == .scaleFill {
+      (gain, gainY, padX, padY) = (CGFloat(width) / extent.width, CGFloat(height) / extent.height, 0, 0)
+    }
 
     // Core Image is bottom-left origin while `padY` is measured from the top row of the model input.
     let bounds = CGRect(x: 0, y: 0, width: width, height: height)
     let scaled = image.transformed(
       by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY)
-        .concatenating(CGAffineTransform(scaleX: gain, y: gain))
+        .concatenating(CGAffineTransform(scaleX: gain, y: gainY))
         .concatenating(
-          CGAffineTransform(translationX: padX, y: CGFloat(height) - padY - extent.height * gain)))
+          CGAffineTransform(translationX: padX, y: CGFloat(height) - padY - extent.height * gainY)))
     // Ultralytics LetterBox padding
     let gray = CIColor(red: 114.0 / 255, green: 114.0 / 255, blue: 114.0 / 255)
     Self.ciContext.render(

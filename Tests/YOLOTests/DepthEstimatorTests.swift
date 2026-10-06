@@ -6,7 +6,7 @@ import XCTest
 @testable import UltralyticsYOLO
 
 final class DepthEstimatorTests: XCTestCase {
-  func testPostProcessDepthCropsLetterboxPadding() throws {
+  func testPostProcessDepthKeepsFullStretchedMap() throws {
     let output = try MLMultiArray(shape: [1, 1, 4, 4], dataType: .float32)
     let pointer = output.dataPointer.assumingMemoryBound(to: Float.self)
     for index in 0..<16 {
@@ -19,10 +19,10 @@ final class DepthEstimatorTests: XCTestCase {
     let result = try XCTUnwrap(predictor.postProcessDepth(output))
 
     XCTAssertEqual(result.width, 4)
-    XCTAssertEqual(result.height, 2)
-    XCTAssertEqual(result.values, [5, 6, 7, 8, 9, 10, 11, 12])
-    XCTAssertEqual(result.minDepth, 5)
-    XCTAssertEqual(result.maxDepth, 12)
+    XCTAssertEqual(result.height, 4)
+    XCTAssertEqual(result.values, (1...16).map(Float.init))
+    XCTAssertEqual(result.minDepth, 1)
+    XCTAssertEqual(result.maxDepth, 16)
     XCTAssertNotNil(result.image)
   }
 

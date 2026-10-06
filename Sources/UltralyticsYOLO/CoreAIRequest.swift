@@ -97,7 +97,9 @@ extension BasePredictor {
     }
     var gainY = gain
     if imageCropAndScaleOption == .scaleFill {
-      (gain, gainY, padX, padY) = (CGFloat(width) / extent.width, CGFloat(height) / extent.height, 0, 0)
+      (gain, gainY, padX, padY) = (
+        CGFloat(width) / extent.width, CGFloat(height) / extent.height, 0, 0
+      )
     }
 
     // Core Image is bottom-left origin while `padY` is measured from the top row of the model input.

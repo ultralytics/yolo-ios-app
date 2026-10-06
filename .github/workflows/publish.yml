@@ -46,11 +46,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.x"
       - uses: ultralytics/actions/setup-uv@main
-      - run: uv pip install --system --no-cache ultralytics-actions
+      - run: uv pip install --no-cache ultralytics-actions
       - id: check_version
         shell: python
         run: |
@@ -93,11 +90,8 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets._GITHUB_TOKEN }}
           ref: ${{ inputs.source_branch || 'main' }}
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.x"
       - uses: ultralytics/actions/setup-uv@main
-      - run: uv pip install --system --no-cache ultralytics-actions
+      - run: uv pip install --no-cache ultralytics-actions
       - name: Create tag and release
         env:
           GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}

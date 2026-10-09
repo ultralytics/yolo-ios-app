@@ -281,7 +281,7 @@ portrait and 1138×640 in landscape. Classification remains 224×398 and detecti
 
 Validated on an iPhone 17 Pro running iOS 27: Core ML and Core AI depth inference on 1280×720, 720×1280 and 1242×375
 images; 60 live frames each for depth on both backends, classification and detection, spanning portrait and both landscape
-orientations. All depth maps were finite, positive and full-size. The historical letterboxed depth timings above describe
+orientations. All depth results returned a positive, finite range and full-size maps. The historical letterboxed depth timings above describe
 the earlier configuration, not this release.
 
 ## 🖼️ Experiment: Preprocessing — Vision vs. Manual vImage

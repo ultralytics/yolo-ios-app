@@ -142,10 +142,10 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     didSet {
       guard let predictor = predictor as? BasePredictor else { return }
       let modelInputSize = predictor.modelInputSize
-      let centerCrop = predictor.imageCropAndScaleOption == .centerCrop
+      let fills = predictor.imageCropAndScaleOption != .scaleFit  // center crop or stretch
       cameraQueue.async { [weak self] in
         self?.modelInputSize = modelInputSize
-        self?.centerCropsModelInput = centerCrop
+        self?.fillsModelInput = fills
         self?.configureInferenceBufferSize()
       }
     }
@@ -166,7 +166,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   private var pendingPhotoCapture: (UIImage, (UIImage?, YOLOResult?) -> Void)?
   private var nativeBufferDimensions: (long: Int, short: Int)?
   private var modelInputSize: (width: Int, height: Int)?
-  private var centerCropsModelInput = false
+  private var fillsModelInput = false
 
   deinit {
     captureSession.stopRunning()
@@ -487,8 +487,8 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     let nativeAspect = Double(formatLong) / Double(formatShort)
     let targetLong: Int
     let targetShort: Int
-    if centerCropsModelInput {
-      targetShort = min(modelInputSize.width, modelInputSize.height)
+    if fillsModelInput {  // keep both axes at least the model size in either orientation
+      targetShort = max(modelInputSize.width, modelInputSize.height)
       targetLong = Int((Double(targetShort) * nativeAspect).rounded())
     } else {
       targetLong = max(modelInputSize.width, modelInputSize.height)

@@ -272,6 +272,18 @@ supported still image, runs inference on that exact photo so overlays remain ali
 share composite while live inference continues on the smaller buffer. The device test captured and inferred on the
 same 2376×4224 photo, then produced the expected 1206×2622-pixel composite.
 
+### Depth input geometry (8.9.16)
+
+Depth now stretches the full frame to the model input on both Core ML and Core AI, matching depth validation and
+calibration. Its output map stays at 640×640 for the official models. Camera buffers preserve the camera aspect ratio
+and keep both axes at least the model size when the native format permits: the iPhone 17 Pro delivered 640×1138 in
+portrait and 1138×640 in landscape. Classification remains 224×398 and detection 360×640 in portrait.
+
+Validated on an iPhone 17 Pro running iOS 27: Core ML and Core AI depth inference on 1280×720, 720×1280 and 1242×375
+images; 60 live frames each for depth on both backends, classification and detection, spanning portrait and both landscape
+orientations. All depth results returned a positive, finite range and full-size maps. The historical letterboxed depth timings above describe
+the earlier configuration, not this release.
+
 ## 🖼️ Experiment: Preprocessing — Vision vs. Manual vImage
 
 **Q:** How much of the frame is Vision framework overhead vs. the model? **A:** Bypassing Vision with a manual `vImage` letterbox into a reused buffer fed directly to `MLModel.prediction` removes ~5 ms/frame of Vision overhead. (Device, `yolo26n` detect.)

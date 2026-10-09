@@ -56,7 +56,7 @@ Alternatively, declare the dependency in your own `Package.swift`:
 ```swift
 // In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.15")
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.16")
 ]
 
 // In your target's dependencies
@@ -164,6 +164,10 @@ for box in output.boxes {
 //   .keypointsList   — PoseEstimator
 //   .obb             — ObbDetector (oriented bounding boxes)
 ```
+
+Depth estimation stretches the whole image to the model input, matching Ultralytics validation and calibration.
+`DepthMap.width` and `height` are the model output dimensions (640×640 for official models); the full map covers the
+original image without cropped padding. Scale it to the original image dimensions when mapping pixels to depth.
 
 ### YOLOCamera / YOLOView (Real-Time Camera Inference)
 

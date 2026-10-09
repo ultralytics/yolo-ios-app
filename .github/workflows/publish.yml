@@ -182,7 +182,7 @@ jobs:
 
   notify:
     needs: [check, release, pod, testflight]
-    if: always() && (needs.check.outputs.new_version == 'true' || needs.testflight.result == 'failure')
+    if: always() && (needs.check.outputs.new_version == 'true' || needs.testflight.result == 'failure') && github.run_attempt == '1'
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -342,6 +342,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     videoCapture.start()
     playButton.isEnabled = false
     pauseButton.isEnabled = true
+    playButton.isHidden = true
+    pauseButton.isHidden = false
   }
 
   // MARK: - Threshold Configuration Methods
@@ -362,7 +364,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public func setConfidenceThreshold(_ confidence: Double) {
     guard validateUnitRange(confidence, name: "Confidence threshold") else { return }
     sliderConf.value = Float(confidence)
-    labelSliderConf.text = String(format: "%.2f Confidence Threshold", confidence)
+    renderThresholdLabels()
     (videoCapture.predictor as? BasePredictor)?.setConfidenceThreshold(confidence: confidence)
   }
 
@@ -375,7 +377,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public func setIouThreshold(_ iou: Double) {
     guard validateUnitRange(iou, name: "IoU threshold") else { return }
     sliderIoU.value = Float(iou)
-    labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    renderThresholdLabels()
     (videoCapture.predictor as? BasePredictor)?.setIouThreshold(iou: iou)
   }
 
@@ -650,26 +652,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     configureSlider(sliderNumItems, min: 1, max: 100, value: Float(defaultMaxDetectionItems))
     sliderNumItems.isHidden = true
 
-    labelSliderConf.text = "0.25 Confidence Threshold"
-    labelSliderConf.textAlignment = .left
-    labelSliderConf.textColor = .white
     labelSliderConf.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderConf)
 
     configureSlider(sliderConf, min: 0, max: 1, value: 0.25)
     self.addSubview(sliderConf)
 
-    labelSliderIoU.text = "0.70 IoU Threshold"
-    labelSliderIoU.textAlignment = .left
-    labelSliderIoU.textColor = .white
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
     configureSlider(sliderIoU, min: 0, max: 1, value: 0.7)
     self.addSubview(sliderIoU)
-
-    self.labelSliderConf.text = "0.25 Confidence Threshold"
-    self.labelSliderIoU.text = "0.70 IoU Threshold"
+    renderThresholdLabels()
 
     labelZoom.text = "1.00x"
     labelZoom.textColor = .white
@@ -690,6 +684,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     infoButton.accessibilityLabel = "Ultralytics"
     playButton.isEnabled = false
     pauseButton.isEnabled = true
+    playButton.isHidden = true
     playButton.addTarget(self, action: #selector(playTapped), for: .touchUpInside)
     pauseButton.addTarget(self, action: #selector(pauseTapped), for: .touchUpInside)
     switchCameraButton.addTarget(self, action: #selector(switchCameraTapped), for: .touchUpInside)
@@ -723,18 +718,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   private func setupLensControl() {
     lensControl.isHidden = true
-    lensControl.backgroundColor = UIColor.black.withAlphaComponent(0.38)
-    lensControl.selectedSegmentTintColor = UIColor.white.withAlphaComponent(0.18)
-    lensControl.setTitleTextAttributes(
-      [
-        .foregroundColor: UIColor.white,
-        .font: UIFont.systemFont(ofSize: 13, weight: .semibold),
-      ], for: .normal)
-    lensControl.setTitleTextAttributes(
-      [
-        .foregroundColor: UIColor.systemYellow,
-        .font: UIFont.systemFont(ofSize: 13, weight: .bold),
-      ], for: .selected)
+    lensControl.applyCameraStyle()
     lensControl.addTarget(self, action: #selector(lensChanged(_:)), for: .valueChanged)
     self.addSubview(lensControl)
 
@@ -806,43 +790,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
     )
 
-    let sliderWidth: CGFloat = width * 0.2
-    let sliderHeight: CGFloat = height * 0.06
-
-    let bottomMargin: CGFloat = lensControl.isHidden ? 80 : 144
-    let totalSliderHeight = (sliderHeight + 3) * 6
-    let startY = height - bottomMargin - totalSliderHeight
-
-    let thresholdStartY = startY + (sliderHeight + 3) * 2 + 10
-
-    labelSliderConf.frame = CGRect(
-      x: width * 0.1, y: thresholdStartY,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderConf.frame = CGRect(
-      x: width * 0.1, y: labelSliderConf.frame.maxY + 3,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    labelSliderIoU.frame = CGRect(
-      x: width * 0.1, y: sliderConf.frame.maxY + 3,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderIoU.frame = CGRect(
-      x: width * 0.1, y: labelSliderIoU.frame.maxY + 3,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    let zoomLabelWidth: CGFloat = width * 0.2
-    labelZoom.frame = CGRect(
-      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
-      width: zoomLabelWidth, height: height * 0.03
-    )
-
-    layoutToolbarButtons(width: width, height: height)
-    layoutLensControl(width: width, height: height)
+    layoutBottomControls(width: width, height: height, sliderX: width * 0.1, sliderWidth: width * 0.2)
   }
 
   /// Lays out the controls and overlays for portrait orientation.
@@ -863,59 +811,69 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
     )
 
-    let sliderWidth: CGFloat = width * 0.46
-    let sliderHeight: CGFloat = height * 0.02
-    let leftPadding: CGFloat = 20
-
-    let cameraControlsOffset: CGFloat = lensControl.isHidden ? 0 : 64
-    let thresholdStartY =
-      center.y + height * 0.16 + sliderHeight * 2 + 40 - cameraControlsOffset
-
-    labelSliderConf.frame = CGRect(
-      x: leftPadding, y: thresholdStartY,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderConf.frame = CGRect(
-      x: leftPadding, y: labelSliderConf.frame.maxY + 10,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    labelSliderIoU.frame = CGRect(
-      x: leftPadding, y: sliderConf.frame.maxY + 10,
-      width: sliderWidth * 1.5, height: sliderHeight
-    )
-
-    sliderIoU.frame = CGRect(
-      x: leftPadding, y: labelSliderIoU.frame.maxY + 10,
-      width: sliderWidth, height: sliderHeight
-    )
-
-    let zoomLabelWidth: CGFloat = width * 0.2
-    labelZoom.frame = CGRect(
-      x: center.x - zoomLabelWidth / 2, y: self.bounds.maxY - 120,
-      width: zoomLabelWidth, height: height * 0.03
-    )
-
-    layoutToolbarButtons(width: width, height: height)
-    layoutLensControl(width: width, height: height)
+    layoutBottomControls(width: width, height: height, sliderX: 20, sliderWidth: width * 0.46)
   }
 
-  /// Lays out toolbar buttons; shared between portrait and landscape layouts.
+  /// Lays out the toolbar, the zoom row above it (or the lens controls), then stacks the threshold labels and sliders
+  /// upward from that row so they never overlap it; shared between portrait and landscape layouts.
+  private func layoutBottomControls(
+    width: CGFloat, height: CGFloat, sliderX: CGFloat, sliderWidth: CGFloat
+  ) {
+    layoutToolbarButtons(width: width, height: height)
+    labelZoom.frame = CGRect(x: width / 2 - 50, y: toolbar.frame.minY - 26, width: 100, height: 18)
+    layoutLensControl(width: width, height: height)
+
+    let labelHeight = ceil(labelSliderConf.font.lineHeight)
+    let sliderHeight: CGFloat = 30
+    let iouY = labelZoom.frame.minY - 12 - sliderHeight
+    let confY = iouY - labelHeight - 2 - 10 - sliderHeight
+    labelSliderConf.frame = CGRect(
+      x: sliderX, y: confY - labelHeight - 2, width: sliderWidth, height: labelHeight)
+    sliderConf.frame = CGRect(x: sliderX, y: confY, width: sliderWidth, height: sliderHeight)
+    labelSliderIoU.frame = CGRect(
+      x: sliderX, y: iouY - labelHeight - 2, width: sliderWidth, height: labelHeight)
+    sliderIoU.frame = CGRect(x: sliderX, y: iouY, width: sliderWidth, height: sliderHeight)
+    renderThresholdLabels()
+  }
+
+  /// Threshold name on the left and its value right-aligned at the slider's trailing edge, as in the Flutter showcase.
+  private func renderThresholdLabels() {
+    for (label, name, value) in [
+      (labelSliderConf, "Confidence", sliderConf.value), (labelSliderIoU, "IoU", sliderIoU.value),
+    ] {
+      let paragraph = NSMutableParagraphStyle()
+      paragraph.tabStops = [NSTextTab(textAlignment: .right, location: max(label.bounds.width - 1, 0))]
+      let text = NSMutableAttributedString(
+        string: name + "\t",
+        attributes: [.foregroundColor: UIColor.white.withAlphaComponent(0.62), .paragraphStyle: paragraph])
+      text.append(
+        NSAttributedString(
+          string: String(format: "%.2f", value),
+          attributes: [
+            .foregroundColor: UIColor.white, .paragraphStyle: paragraph,
+            .font: UIFont.monospacedDigitSystemFont(ofSize: label.font.pointSize, weight: .medium),
+          ]))
+      label.attributedText = text
+    }
+  }
+
+  /// Gives every toolbar button an equal slot; play and pause share one because only one of them is visible.
   private func layoutToolbarButtons(width: CGFloat, height: CGFloat) {
     let toolBarHeight: CGFloat = 66
     let buttonHeight: CGFloat = toolBarHeight * 0.75
-    let horizontalInset = buttonHeight * 0.25
 
     toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-    var x = horizontalInset
-    for case let button as UIButton in toolbar.subviews where button !== infoButton {
-      button.frame = CGRect(x: x, y: 0, width: buttonHeight, height: buttonHeight)
-      x += buttonHeight
+    let buttons =
+      toolbar.subviews.compactMap { $0 as? UIButton }.filter {
+        $0 !== playButton && $0 !== infoButton
+      } + [infoButton]
+    let slot = width / CGFloat(buttons.count)
+    for (index, button) in buttons.enumerated() {
+      button.frame = CGRect(
+        x: slot * (CGFloat(index) + 0.5) - buttonHeight / 2, y: 0, width: buttonHeight,
+        height: buttonHeight)
     }
-    infoButton.frame = CGRect(
-      x: width - buttonHeight - horizontalInset, y: 0, width: buttonHeight, height: buttonHeight
-    )
+    playButton.frame = pauseButton.frame
   }
 
   private func layoutLensControl(width: CGFloat, height: CGFloat) {
@@ -999,11 +957,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       predictor?.setNumItemsThreshold(numItems: numItems)
     } else if slider === sliderConf {
       let conf = Double(round(100 * sliderConf.value)) / 100
-      self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
+      renderThresholdLabels()
       predictor?.setConfidenceThreshold(confidence: conf)
     } else if slider === sliderIoU {
       let iou = Double(round(100 * sliderIoU.value)) / 100
-      self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+      renderThresholdLabels()
       predictor?.setIouThreshold(iou: iou)
     }
   }
@@ -1013,8 +971,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     sliderConf.value = Float(conf)
     sliderIoU.value = Float(iou)
     sliderNumItems.value = Float(numItems)
-    self.labelSliderConf.text = String(format: "%.2f Confidence Threshold", conf)
-    self.labelSliderIoU.text = String(format: "%.2f IoU Threshold", iou)
+    renderThresholdLabels()
 
     if let predictor = videoCapture.predictor as? BasePredictor {
       predictor.setConfidenceThreshold(confidence: conf)
@@ -1123,6 +1080,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       self?.pausedShareImage = image
       self?.showPausedImage(image)
       self?.playButton.isEnabled = true
+      self?.playButton.isHidden = false
+      self?.pauseButton.isHidden = true
     }
   }
 
@@ -1497,4 +1456,18 @@ public func processString(_ input: String) -> String {
   }
 
   return output
+}
+
+extension UISegmentedControl {
+  /// Camera HUD segment style shared by the lens picker and host controls such as the app's model sizes.
+  public func applyCameraStyle() {
+    backgroundColor = UIColor.black.withAlphaComponent(0.38)
+    selectedSegmentTintColor = UIColor.white.withAlphaComponent(0.18)
+    setTitleTextAttributes(
+      [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 13, weight: .semibold)],
+      for: .normal)
+    setTitleTextAttributes(
+      [.foregroundColor: UIColor.systemYellow, .font: UIFont.systemFont(ofSize: 13, weight: .bold)],
+      for: .selected)
+  }
 }

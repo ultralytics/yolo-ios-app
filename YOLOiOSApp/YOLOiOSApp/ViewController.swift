@@ -86,7 +86,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     modelsButton.isEnabled = !isLoadingModel && !scanning
     qrOverlay.isHidden = !scanning
     [
-      labelFPS, yoloView.labelSliderConf, yoloView.sliderConf, yoloView.labelSliderIoU,
+      labelFPS, logoImage, yoloView.labelSliderConf, yoloView.sliderConf, yoloView.labelSliderIoU,
       yoloView.sliderIoU,
     ]
     .forEach { $0?.isHidden = scanning }
@@ -767,15 +767,21 @@ class ViewController: UIViewController, YOLOViewDelegate {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     loadingOverlayView?.frame = view.bounds
-    alignLogoWithThresholdSliders()
+    alignWithThresholdSliders()
   }
 
-  private func alignLogoWithThresholdSliders() {
+  /// Keeps the logo beside the sliders, near the content so screenshots keep it, and the version on the zoom row.
+  private func alignWithThresholdSliders() {
     guard logoImage != nil, yoloView != nil else { return }
+    // YOLOView lays out after this controller's pass; read its frames for the new bounds, not the previous ones.
+    yoloView.layoutIfNeeded()
     let sliderMidY = (yoloView.sliderConf.frame.midY + yoloView.sliderIoU.frame.midY) / 2
     guard sliderMidY.isFinite, sliderMidY > 0 else { return }
 
     logoImage.center = CGPoint(x: logoImage.center.x, y: sliderMidY + 6)
+    labelVersion.frame.origin = CGPoint(
+      x: yoloView.sliderConf.frame.minX,
+      y: yoloView.labelZoom.frame.midY - labelVersion.frame.height / 2)
   }
 
   @objc func shareButtonTapped() {
@@ -1074,29 +1080,28 @@ private final class ModelPickerController: UITableViewController,
     if indexPath.section == 1 {
       let group = official[indexPath.row]
       content.text = group.task
-      let control = UISegmentedControl(
-        items: group.entries.map { entry in
-          let size = String(entry.displayName.split(separator: "-")[0].suffix(1))
-          return entry.isLocalBundle
-            || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
-            ? size : "↓\(size)"
-        })
+      let sizes = group.entries.map { String($0.displayName.split(separator: "-")[0].suffix(1)) }
+      let control = UISegmentedControl(items: sizes)
+      control.applyCameraStyle()
+      // Segments share one title color, so sizes still to download draw their letter as a dimmed image.
+      for (index, entry) in group.entries.enumerated()
+      where !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) {
+        let title = NSAttributedString(
+          string: sizes[index],
+          attributes: [
+            .font: UIFont.systemFont(ofSize: 13, weight: .semibold),
+            .foregroundColor: UIColor.white.withAlphaComponent(0.5),
+          ])
+        let image = UIGraphicsImageRenderer(size: title.size()).image { _ in title.draw(at: .zero) }
+          .withRenderingMode(.alwaysOriginal)
+        image.accessibilityLabel = "\(sizes[index]), not downloaded"
+        control.setImage(image, forSegmentAt: index)
+      }
       control.selectedSegmentIndex =
         group.entries.firstIndex { $0.identifier == selectedID }
         ?? UISegmentedControl.noSegment
       control.accessibilityLabel = "\(group.task) model size"
-      control.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-      control.selectedSegmentTintColor = .white.withAlphaComponent(0.18)
-      control.setTitleTextAttributes(
-        [.font: UIFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: UIColor.white],
-        for: .selected)
-      control.setTitleTextAttributes(
-        [
-          .font: UIFont.systemFont(ofSize: 12, weight: .medium),
-          .foregroundColor: UIColor.white.withAlphaComponent(0.72),
-        ],
-        for: .normal)
-      control.frame = CGRect(x: 0, y: 0, width: 220, height: 44)
+      control.frame = CGRect(x: 0, y: 0, width: 220, height: 34)
       control.addAction(
         UIAction { [weak self] action in
           guard let self, let control = action.sender as? UISegmentedControl else { return }

@@ -183,7 +183,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 Add the `UltralyticsYOLO` package to your app with Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.16")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.17")
 ```
 
 Or with CocoaPods:
@@ -193,6 +193,12 @@ pod 'UltralyticsYOLO', '~> 8.9'
 ```
 
 Then `import UltralyticsYOLO` and use the `YOLO` class — see the [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO) for full usage. The same `UltralyticsYOLO` package powers both this native iOS app and the [Ultralytics YOLO Flutter plugin](https://github.com/ultralytics/yolo-flutter-app), keeping one source of truth across platforms.
+
+## Import a custom model from Ultralytics Platform
+
+In Platform, click the QR button on a completed Core ML or Core AI export, then open Ultralytics YOLO, tap the QR button in the bottom toolbar, and point the existing camera preview at the code. While scanning, the camera dims around a viewfinder; tap **Cancel** or the QR button again to return to inference. Confirm the model name, task, and download size. The app installs the model and adds it to the **Custom** section of the model picker. The header shows the task, with **Custom** added for imported models, above the active model name. Tap it to choose a custom import or any official model in one compact list, with size choices grouped into one row per task. The **Custom** section also provides **Scan QR** and a help button for the [Platform export guide](https://docs.ultralytics.com/platform/train/models#export-model). Tap the trash icon next to a custom model to remove it. The last selected custom model is restored on launch and works offline.
+
+Exports must use batch 1 and static inputs. Core AI requires a supported iOS 27+ device; use Core ML for broader compatibility. Importing a model uses its actual format independently of the official-model Core AI setting. Links authorize one export for 24 hours; anyone with the link can download during that window. Installed models continue working after expiry, and separate exports never overwrite each other even when their names match.
 
 ## 🧪 Testing Procedures
 

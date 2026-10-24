@@ -7,7 +7,7 @@ import UltralyticsYOLO
 
 class ExternalViewController: UIViewController, YOLOViewDelegate {
 
-  private var yoloView: YOLOView?
+  private(set) var yoloView: YOLOView?
   private var isInitialized = false
   private var currentTask: YOLOTask = .detect
   private var currentModelName: String = "yolo26n"

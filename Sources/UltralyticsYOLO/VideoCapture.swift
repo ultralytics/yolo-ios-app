@@ -14,6 +14,43 @@ import CoreVideo
 import UIKit
 import Vision
 
+/// A QR request processed on its owning camera queue; it does not create or control a camera.
+public final class QRCodeScan {
+  private var active:
+    (
+      request: VNDetectBarcodesRequest,
+      completion: @MainActor @Sendable (Result<String?, Error>) -> Void
+    )?
+
+  public init() {}
+
+  public func start(completion: @escaping @MainActor @Sendable (Result<String?, Error>) -> Void) {
+    cancel()
+    let request = VNDetectBarcodesRequest()
+    request.symbologies = [.qr]
+    active = (request, completion)
+  }
+
+  public func cancel() { finish(.success(nil)) }
+
+  /// Returns true when this frame belongs to the active QR request instead of model inference.
+  public func process(_ sampleBuffer: CMSampleBuffer) -> Bool {
+    guard let active else { return false }
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return true }
+    do {
+      try VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([active.request])
+      if let value = active.request.results?.first?.payloadStringValue { finish(.success(value)) }
+    } catch { finish(.failure(error)) }
+    return true
+  }
+
+  private func finish(_ result: Result<String?, Error>) {
+    let completion = active?.completion
+    active = nil
+    DispatchQueue.main.async { completion?(result) }
+  }
+}
+
 let physicalLensTypes: [AVCaptureDevice.DeviceType] = [
   .builtInUltraWideCamera,
   .builtInWideAngleCamera,
@@ -161,6 +198,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   let cameraQueue = DispatchQueue(label: "camera-queue")
   var inferenceOK = true
 
+  private let qrScan = QRCodeScan()
   private var currentBuffer: CVPixelBuffer?
   private var photoCaptureProcessor: PhotoCaptureProcessor?
   private var pendingPhotoCapture: (UIImage, (UIImage?, YOLOResult?) -> Void)?
@@ -169,6 +207,7 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
   private var fillsModelInput = false
 
   deinit {
+    qrScan.cancel()
     captureSession.stopRunning()
     videoOutput.setSampleBufferDelegate(nil, queue: nil)
   }
@@ -403,8 +442,17 @@ public final class VideoCapture: NSObject, @unchecked Sendable {
     }
   }
 
+  func scanQRCode(completion: @escaping @MainActor @Sendable (Result<String?, Error>) -> Void) {
+    cameraQueue.async { self.qrScan.start(completion: completion) }
+  }
+
+  func cancelQRCodeScan() {
+    cameraQueue.async { self.qrScan.cancel() }
+  }
+
   func stop() {
     cameraQueue.async { [weak self] in
+      self?.qrScan.cancel()
       guard let self, self.captureSession.isRunning else { return }
       self.captureSession.stopRunning()
     }
@@ -588,6 +636,7 @@ extension VideoCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
       nativeBufferDimensions = (max(width, height), min(width, height))
       configureInferenceBufferSize()
     }
+    if qrScan.process(sampleBuffer) { return }
     guard inferenceOK, photoCaptureProcessor == nil, pendingPhotoCapture == nil else { return }
     predictOnFrame(sampleBuffer: sampleBuffer)
   }

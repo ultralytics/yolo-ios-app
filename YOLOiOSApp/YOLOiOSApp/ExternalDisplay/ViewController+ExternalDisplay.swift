@@ -66,8 +66,6 @@ extension ViewController {
         [
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
-          self.yoloView.playButton, self.yoloView.pauseButton,
-          self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
 
         [
@@ -77,8 +75,6 @@ extension ViewController {
         ].forEach { $0.isHidden = true }
         // Lens and torch controls derive their visibility from switchCameraButton during layout.
         self.yoloView.setNeedsLayout()
-        self.modelSegmentedControl.setNeedsLayout()
-        self.modelSegmentedControl.layoutIfNeeded()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -100,9 +96,11 @@ extension ViewController {
 
     var fullModelPath = currentModelName
     if let entry = currentLoadingEntry
-      ?? currentModels.first(where: { processString($0.displayName) == currentModelName })
+      ?? currentModels.first(where: { $0.identifier == currentModelIdentifier })
     {
-      if entry.isLocalBundle,
+      if let url = entry.installedURL {
+        fullModelPath = url.path
+      } else if entry.isLocalBundle,
         let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
         let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
       {
@@ -124,7 +122,6 @@ extension ViewController {
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
 
-      self.modelSegmentedControl.isHidden = false
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,
@@ -139,7 +136,10 @@ extension ViewController {
       if let currentEntry = self.currentLoadingEntry {
         self.loadModel(entry: currentEntry, forTask: self.currentTask)
       } else if !self.currentModels.isEmpty {
-        self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
+        self.loadModel(
+          entry: self.currentModels.first { $0.identifier == self.currentModelIdentifier }
+            ?? self.currentModels[0],
+          forTask: self.currentTask)
       }
     }
   }
@@ -151,12 +151,14 @@ extension ViewController {
     let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     let currentEntry =
-      currentModels.first(where: { processString($0.displayName) == currentModelName })
+      currentModels.first(where: { $0.identifier == currentModelIdentifier })
       ?? currentModels.first
     guard let entry = currentEntry else { return }
 
     var fullModelPath = ""
-    if entry.isLocalBundle,
+    if let url = entry.installedURL {
+      fullModelPath = url.path
+    } else if entry.isLocalBundle,
       let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
     {

@@ -91,7 +91,11 @@ struct MobileModelImport: Decodable {
       appTasks.contains(where: { String(describing: $0.yoloTask) == model.task }),
       model.downloadUrl.scheme == "https", model.size > 0,
       dateFormatter.date(from: model.expiresAt).map({ $0 > Date() }) == true
-    else { throw CocoaError(.fileReadCorruptFile) }
+    else {
+      throw NSError(domain: "ModelImport", code: 1, userInfo: [
+        NSLocalizedDescriptionKey: "This model is unavailable or incompatible. Create a new QR code in Platform."
+      ])
+    }
     if model.format == "coreai" && !BasePredictor.isCoreAIAvailable {
       throw NSError(
         domain: "ModelImport", code: 2,

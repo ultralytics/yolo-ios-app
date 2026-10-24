@@ -196,7 +196,7 @@ Then `import UltralyticsYOLO` and use the `YOLO` class — see the [Swift Packag
 
 ## Import a custom model from Ultralytics Platform
 
-On a completed Core ML or Core AI export in Platform, select **Open on phone**, then open Ultralytics YOLO, tap **Scan QR**, and point the existing camera preview at the code. Tap **Cancel** to return to inference. Confirm the model name, task, and download size. The app installs the model and adds it to **My models**, where you can select or remove it. The last selected custom model is restored on launch and works offline.
+On a completed Core ML or Core AI export in Platform, select **Open on phone**, then open Ultralytics YOLO, tap **Scan QR**, and point the existing camera preview at the code. Tap **Cancel** to return to inference. Confirm the model name, task, and download size. The app installs the model and adds it to the **Custom** section of the model menu. The model button shows the active name and **Official** or **Custom**; tap it to choose a model in one list. Use **Remove custom model** to remove an import. The last selected custom model is restored on launch and works offline.
 
 Exports must use batch 1 and static inputs. Core AI requires a supported iOS 27+ device; use Core ML for broader compatibility. Importing a model uses its actual format independently of the official-model Core AI setting. Links authorize one export for ten minutes; anyone with the link can download during that window. Installed models continue working after expiry, and separate exports never overwrite each other even when their names match.
 

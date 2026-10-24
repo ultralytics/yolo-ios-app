@@ -340,6 +340,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     pausedShareImage = nil
     removePausedImage()
     videoCapture.start()
+    playButton.isEnabled = false
+    pauseButton.isEnabled = true
   }
 
   // MARK: - Threshold Configuration Methods
@@ -1109,11 +1111,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   @objc func playTapped() {
     selection.selectionChanged()
-    pausedShareImage = nil
-    removePausedImage()
-    self.videoCapture.start()
-    playButton.isEnabled = false
-    pauseButton.isEnabled = true
+    resume()
   }
 
   @objc func pauseTapped() {

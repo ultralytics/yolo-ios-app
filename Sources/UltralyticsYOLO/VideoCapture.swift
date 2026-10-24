@@ -36,9 +36,9 @@ public final class QRCodeScan {
   /// Returns true when this frame belongs to the active QR request instead of model inference.
   public func process(_ sampleBuffer: CMSampleBuffer) -> Bool {
     guard let active else { return false }
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return true }
     do {
-      try VNImageRequestHandler(cmSampleBuffer: sampleBuffer, options: [:]).perform([active.request]
-      )
+      try VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:]).perform([active.request])
       if let value = active.request.results?.first?.payloadStringValue { finish(.success(value)) }
     } catch { finish(.failure(error)) }
     return true

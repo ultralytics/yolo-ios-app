@@ -67,7 +67,6 @@ extension ViewController {
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
           self.yoloView.playButton, self.yoloView.pauseButton,
-          self.modelSegmentedControl,
         ].forEach { $0?.isHidden = false }
 
         [
@@ -77,8 +76,6 @@ extension ViewController {
         ].forEach { $0.isHidden = true }
         // Lens and torch controls derive their visibility from switchCameraButton during layout.
         self.yoloView.setNeedsLayout()
-        self.modelSegmentedControl.setNeedsLayout()
-        self.modelSegmentedControl.layoutIfNeeded()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -126,7 +123,6 @@ extension ViewController {
       self.yoloView.isHidden = false
       self.hideExternalDisplayStatus()
 
-      self.modelSegmentedControl.isHidden = false
       [
         self.yoloView.switchCameraButton,
         self.yoloView.shareButton,

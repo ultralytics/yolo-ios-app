@@ -321,7 +321,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   /// Reads one QR code from the current camera stream without replacing its session or preview.
-  public func scanQRCode(completion: @escaping @MainActor @Sendable (Result<String?, Error>) -> Void) {
+  public func scanQRCode(
+    completion: @escaping @MainActor @Sendable (Result<String?, Error>) -> Void
+  ) {
     videoCapture.scanQRCode(completion: completion)
     resume()
   }

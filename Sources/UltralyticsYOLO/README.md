@@ -259,7 +259,7 @@ class CameraViewController: UIViewController {
 
 With just a few lines of code, you can integrate real-time, YOLO-based inference into your application's camera feed. For more advanced use cases, explore the customization options available for these components.
 
-`YOLOView.scanQRCode(completion:) reads one QR value from the existing camera stream while model inference pauses. `cancelQRCodeScan()` completes with `nil`; both completion paths return the same preview to inference. The shared `QRCodeScan` decoder also serves the Flutter camera owner.
+`YOLOView.scanQRCode(completion:) reads one QR value from the existing camera stream while model inference pauses. `cancelQRCodeScan()`completes with`nil`; both completion paths return the same preview to inference. The shared `QRCodeScan` decoder also serves the Flutter camera owner.
 
 A failed `YOLOView.setModel` keeps the current predictor, task, model name, and overlay configuration. Replacement state is committed only after the new predictor loads successfully.
 

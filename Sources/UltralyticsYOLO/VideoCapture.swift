@@ -16,7 +16,11 @@ import Vision
 
 /// A QR request processed on its owning camera queue; it does not create or control a camera.
 public final class QRCodeScan {
-  private var active: (request: VNDetectBarcodesRequest, completion: @MainActor @Sendable (Result<String?, Error>) -> Void)?
+  private var active:
+    (
+      request: VNDetectBarcodesRequest,
+      completion: @MainActor @Sendable (Result<String?, Error>) -> Void
+    )?
 
   public init() {}
 
@@ -33,7 +37,8 @@ public final class QRCodeScan {
   public func process(_ sampleBuffer: CMSampleBuffer) -> Bool {
     guard let active else { return false }
     do {
-      try VNImageRequestHandler(cmSampleBuffer: sampleBuffer, options: [:]).perform([active.request])
+      try VNImageRequestHandler(cmSampleBuffer: sampleBuffer, options: [:]).perform([active.request]
+      )
       if let value = active.request.results?.first?.payloadStringValue { finish(.success(value)) }
     } catch { finish(.failure(error)) }
     return true

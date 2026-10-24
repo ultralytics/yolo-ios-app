@@ -17,7 +17,6 @@ import CoreML
 import CoreMedia
 import UIKit
 import UltralyticsYOLO
-import VisionKit
 
 let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
   ("Detect", "Det", "Models/Detect", .detect),
@@ -30,7 +29,7 @@ let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOT
 ]
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
-class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControllerDelegate {
+class ViewController: UIViewController, YOLOViewDelegate {
 
   // MARK: - External Display Support (Optional)
   // External display features remain dormant until a display is connected. See ExternalDisplay/ for details.
@@ -58,6 +57,7 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
   private let cancelLoadingButton = UIButton(type: .system)
   private let modelsButton = UIButton(type: .system)
   private let scanButton = UIButton(type: .system)
+  private var qrCamera: YOLOView?
 
   private var loadingOverlayView: UIView?
 
@@ -377,6 +377,7 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
       print("Model is already loading. Please wait.")
       return
     }
+    qrCamera?.cancelQRCodeScan()
     isLoadingModel = true
 
     let needsDownload =
@@ -687,71 +688,35 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
 
   @objc private func scanModelQRCode() {
     guard !isLoadingModel else { return }
-    guard DataScannerViewController.isSupported, DataScannerViewController.isAvailable else {
-      showImportError(
-        NSError(
-          domain: "ModelImport", code: 3,
-          userInfo: [
-            NSLocalizedDescriptionKey:
-              "QR scanning is unavailable. Allow camera access or scan with your phone’s Camera app."
-          ]))
+    if let qrCamera {
+      qrCamera.cancelQRCodeScan()
       return
     }
-    let scanner = DataScannerViewController(
-      recognizedDataTypes: [.barcode(symbologies: [.qr])], recognizesMultipleItems: false,
-      isGuidanceEnabled: true, isHighlightingEnabled: true)
-    scanner.delegate = self
-    scanner.title = "Scan model QR"
-    scanner.navigationItem.leftBarButtonItem = UIBarButtonItem(
-      barButtonSystemItem: .cancel, target: self, action: #selector(cancelModelQRScan))
-    let navigation = UINavigationController(rootViewController: scanner)
-    navigation.modalPresentationStyle = .fullScreen
-    yoloView.stop()
-    present(navigation, animated: true) {
-      do { try scanner.startScanning() } catch {
-        self.finishModelQRScan(scanner) { self.showImportError(error) }
+    let externalCamera = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }.flatMap { $0.windows }
+      .compactMap { $0.rootViewController as? ExternalViewController }.first?.yoloView
+    let camera = externalCamera ?? yoloView!
+    qrCamera = camera
+    camera.showOverlays = false
+    scanButton.configuration?.title = "Cancel"
+    renderPerformanceLabel()
+    camera.scanQRCode { [weak self, weak camera] result in
+      guard let self, let camera else { return }
+      self.qrCamera = nil
+      camera.showOverlays = true
+      self.scanButton.configuration?.title = "Scan QR"
+      self.renderPerformanceLabel()
+      if !camera.pauseButton.isEnabled { camera.stop() }
+      switch result {
+      case .success(let value):
+        if let value, let url = URL(string: value) { self.importModel(from: url) }
+      case .failure(let error): self.showImportError(error)
       }
     }
-  }
-
-  @objc private func cancelModelQRScan() {
-    guard let navigation = presentedViewController as? UINavigationController,
-      let scanner = navigation.viewControllers.first as? DataScannerViewController
-    else { return }
-    finishModelQRScan(scanner)
-  }
-
-  private func finishModelQRScan(
-    _ scanner: DataScannerViewController, completion: (() -> Void)? = nil
-  ) {
-    scanner.delegate = nil
-    scanner.stopScanning()
-    dismiss(animated: true) {
-      if !self.hasExternalScreen(), self.yoloView.pauseButton.isEnabled { self.yoloView.resume() }
-      completion?()
-    }
-  }
-
-  func dataScanner(
-    _ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem],
-    allItems: [RecognizedItem]
-  ) {
-    for case .barcode(let barcode) in addedItems {
-      if let value = barcode.payloadStringValue, let url = URL(string: value) {
-        finishModelQRScan(dataScanner) { self.importModel(from: url) }
-        return
-      }
-    }
-  }
-
-  func dataScanner(
-    _ dataScanner: DataScannerViewController,
-    becameUnavailableWithError error: DataScannerViewController.ScanningUnavailable
-  ) {
-    finishModelQRScan(dataScanner) { self.showImportError(error) }
   }
 
   func importModel(from url: URL) {
+    qrCamera?.cancelQRCodeScan()
     guard !isLoadingModel else { return }
     Task { @MainActor in
       do {
@@ -983,6 +948,10 @@ extension ViewController {
   /// Renders the FPS line with the smaller stage-breakdown line beneath it in the single `labelFPS`,
   /// so the breakdown inherits the label's exact layout and show/hide behavior (e.g. camera switching).
   private func renderPerformanceLabel() {
+    if qrCamera != nil {
+      labelFPS.text = "Point at the model QR code"
+      return
+    }
     let rendered = NSMutableAttributedString(
       string: fpsText,
       attributes: [

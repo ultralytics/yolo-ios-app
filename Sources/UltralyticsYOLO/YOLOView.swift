@@ -320,6 +320,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
   }
 
+  /// Reads one QR code from the current camera stream without replacing its session or preview.
+  public func scanQRCode(completion: @escaping @MainActor @Sendable (Result<String?, Error>) -> Void) {
+    videoCapture.scanQRCode(completion: completion)
+    resume()
+  }
+
+  public func cancelQRCodeScan() { videoCapture.cancelQRCodeScan() }
+
   public func stop() {
     // Stopping the capture session turns the hardware torch off; keep the chip truthful.
     setTorchUI(on: false)

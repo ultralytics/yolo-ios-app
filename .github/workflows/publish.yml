@@ -39,6 +39,7 @@ jobs:
       new_version: ${{ steps.check_version.outputs.new_version }}
       current_tag: ${{ steps.check_version.outputs.current_tag }}
       marketing_version: ${{ steps.check_version.outputs.marketing_version }}
+      pod_missing: ${{ steps.check_version.outputs.pod_missing }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -51,7 +52,7 @@ jobs:
       - id: check_version
         shell: python
         run: |
-          import os, re
+          import json, os, re, urllib.request
 
           # Read MARKETING_VERSION from project.pbxproj
           with open('YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj', 'r') as f:
@@ -68,9 +69,19 @@ jobs:
           tag_exists = os.system(f'git rev-parse {current_tag} >/dev/null 2>&1') == 0
           new_version = not tag_exists
 
+          # Check trunk when the tag exists: a run interrupted after tagging leaves the pod unpublished
+          pod_missing = new_version
+          if not new_version:
+              try:
+                  with urllib.request.urlopen('https://trunk.cocoapods.org/api/v1/pods/UltralyticsYOLO', timeout=30) as r:
+                      pod_missing = marketing_version not in {v['name'] for v in json.load(r)['versions']}
+              except Exception as e:
+                  print(f'::warning::CocoaPods trunk check failed: {e}')
+
           os.system(f'echo "new_version={str(new_version).lower()}" >> $GITHUB_OUTPUT')
           os.system(f'echo "current_tag={current_tag}" >> $GITHUB_OUTPUT')
           os.system(f'echo "marketing_version={marketing_version}" >> $GITHUB_OUTPUT')
+          os.system(f'echo "pod_missing={str(pod_missing).lower()}" >> $GITHUB_OUTPUT')
 
           if new_version:
               print(f'New marketing version {current_tag} detected ✅')
@@ -107,7 +118,7 @@ jobs:
 
   pod:
     needs: [check, release]
-    if: needs.check.outputs.new_version == 'true' && (github.event_name == 'push' || inputs.release == true)
+    if: ${{ !cancelled() && needs.check.outputs.pod_missing == 'true' && needs.release.result != 'failure' && (github.event_name == 'push' || inputs.release == true) }}
     runs-on: macos-26
     permissions:
       contents: read
@@ -119,7 +130,7 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
-      # Publishes the UltralyticsYOLO pod from the v{MARKETING_VERSION} tag created by the release job above, so the
+      # Publishes the UltralyticsYOLO pod from the v{MARKETING_VERSION} tag whenever trunk lacks that version, so the
       # Flutter plugin's CocoaPods consumers resolve it from trunk. Requires the COCOAPODS_TRUNK_TOKEN repo secret.
       - name: Push UltralyticsYOLO to CocoaPods trunk
         env:
@@ -182,7 +193,7 @@ jobs:
 
   notify:
     needs: [check, release, pod, testflight]
-    if: always() && (needs.check.outputs.new_version == 'true' || needs.testflight.result == 'failure') && github.run_attempt == '1'
+    if: always() && (needs.check.outputs.new_version == 'true' || needs.testflight.result == 'failure' || needs.pod.result == 'failure') && github.run_attempt == '1'
     runs-on: ubuntu-latest
     permissions:
       contents: read

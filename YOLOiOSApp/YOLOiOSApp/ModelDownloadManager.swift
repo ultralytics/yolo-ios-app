@@ -26,7 +26,7 @@ struct ModelEntry: Codable {
   var installedExtension: String? = nil
 
   var installedURL: URL? {
-    installedExtension.map { ModelCacheManager.shared.modelURL(for: identifier, fileExtension: $0) }
+    installedExtension.map { documentsDirectory.appendingPathComponent(identifier).appendingPathExtension($0) }
   }
 }
 
@@ -97,10 +97,9 @@ class ModelCacheManager {
   private init() {}
 
   /// Core ML and Core AI downloads of one model are cached side by side under their own extensions.
-  func modelURL(for key: String, fileExtension: String? = nil) -> URL {
+  func modelURL(for key: String) -> URL {
     documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
-      .appendingPathExtension(
-        fileExtension ?? (remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc"))
+      .appendingPathExtension(remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
   }
 
   var customModels: [ModelEntry] {
@@ -302,8 +301,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           guard metadata["task"] == modelImport.task else { throw CocoaError(.fileReadCorruptFile) }
         }
         // The destination follows the installed artifact, not the live setting, which can change during an install.
-        let destination = ModelCacheManager.shared.modelURL(for: key).deletingPathExtension()
-          .appendingPathExtension(installURL.pathExtension)
+        let destination = modelImport?.entry.installedURL
+          ?? ModelCacheManager.shared.modelURL(for: key).deletingPathExtension()
+            .appendingPathExtension(installURL.pathExtension)
         if FileManager.default.fileExists(atPath: destination.path) {
           try FileManager.default.removeItem(at: destination)
         }

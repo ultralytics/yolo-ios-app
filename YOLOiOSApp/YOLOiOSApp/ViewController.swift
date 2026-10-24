@@ -155,7 +155,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
       else { return }
       remoteModelExtension = preferredModelExtension
       appTasks.forEach { self.modelsForTask[$0.name] = self.getModelFiles(in: $0.folder) }
-      self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+      if self.currentModels.first(where: { $0.identifier == self.currentModelIdentifier })?.installedURL != nil {
+        self.showModelEntries(for: self.currentTask)
+        self.modelSegmentedControl.selectedSegmentIndex = UISegmentedControl.noSegment
+      } else {
+        self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+      }
     }
 
     // Wire up gestures and delegates.

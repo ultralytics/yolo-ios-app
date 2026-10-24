@@ -55,7 +55,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let cancelLoadingButton = UIButton(type: .system)
   private let modelsButton = UIButton(type: .system)
   private let scanButton = UIButton(type: .system)
-  private var qrCamera: YOLOView? { didSet { updateActivityIndicator() } }
+  private let qrCancelButton = UIButton(type: .system)
+  private var qrCamera: YOLOView? {
+    didSet {
+      updateActivityState()
+      renderPerformanceLabel()
+    }
+  }
 
   private var loadingOverlayView: UIView?
 
@@ -72,11 +78,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
     cancelLoadingButton.isHidden = !(loading && canCancel)
-    scanButton.isEnabled = !loading
-    modelsButton.isEnabled = !loading && qrCamera == nil
   }
 
-  private func updateActivityIndicator() {
+  private func updateActivityState() {
+    qrCancelButton.isHidden = qrCamera == nil
+    scanButton.isEnabled = !isLoadingModel && qrCamera == nil
+    modelsButton.isEnabled = !isLoadingModel && qrCamera == nil
     if isLoadingModel || qrCamera != nil {
       activityIndicator.startAnimating()
     } else {
@@ -110,7 +117,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var currentModelIdentifier: String = ""
   var initialImportURL: URL?
 
-  private var isLoadingModel = false { didSet { updateActivityIndicator() } }
+  private var isLoadingModel = false { didSet { updateActivityState() } }
   private var currentLoadingTask: String?
 
   override func viewDidLoad() {
@@ -559,16 +566,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
     scanButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
     yoloView.toolbar.addSubview(scanButton)
 
+    qrCancelButton.setImage(UIImage(systemName: "xmark"), for: .normal)
+    qrCancelButton.tintColor = .white
+    qrCancelButton.accessibilityLabel = "Cancel QR scan"
+    qrCancelButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
+    qrCancelButton.isHidden = true
+    qrCancelButton.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(qrCancelButton)
+    NSLayoutConstraint.activate([
+      qrCancelButton.leadingAnchor.constraint(equalTo: labelFPS.trailingAnchor, constant: 4),
+      qrCancelButton.centerYAnchor.constraint(equalTo: labelFPS.centerYAnchor),
+      qrCancelButton.widthAnchor.constraint(equalToConstant: 44),
+      qrCancelButton.heightAnchor.constraint(equalToConstant: 44),
+    ])
+
     var configuration = UIButton.Configuration.filled()
     configuration.title = "Models"
     configuration.image = UIImage(systemName: "chevron.down")
     configuration.imagePadding = 6
+    configuration.imagePlacement = .trailing
+    configuration.titleAlignment = .center
     configuration.baseForegroundColor = .white
     configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
     configuration.cornerStyle = .capsule
     configuration.titleLineBreakMode = .byTruncatingTail
     modelsButton.configuration = configuration
-    modelsButton.semanticContentAttribute = .forceRightToLeft
     modelsButton.addTarget(self, action: #selector(showModelPicker), for: .touchUpInside)
     modelsButton.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(modelsButton)
@@ -599,7 +621,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
           URL(string: "https://docs.ultralytics.com/platform/train/models#export-model")!)
       },
       onSelect: { [weak self] entry in
-        guard let self, !self.isLoadingModel else { return }
+        guard let self, !self.isLoadingModel, entry.identifier != self.currentModelIdentifier else { return }
         let task = appTasks.first { String(describing: $0.yoloTask) == entry.task }!.name
         self.showModelEntries(for: task)
         self.loadModel(entry: entry, forTask: task)
@@ -642,26 +664,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let camera = externalCamera ?? yoloView!
     qrCamera = camera
     camera.showOverlays = false
-    modelsButton.isEnabled = false
-    scanButton.setImage(
-      UIImage(
-        systemName: "xmark",
-        withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
-      for: .normal)
-    scanButton.accessibilityLabel = "Cancel QR scan"
-    renderPerformanceLabel()
     camera.scanQRCode { [weak self, weak camera] result in
       guard let self, let camera else { return }
       self.qrCamera = nil
-      self.modelsButton.isEnabled = !self.isLoadingModel
       camera.showOverlays = true
-      self.scanButton.setImage(
-        UIImage(
-          systemName: "qrcode.viewfinder",
-          withConfiguration: self.yoloView.shareButton.currentImage?.symbolConfiguration),
-        for: .normal)
-      self.scanButton.accessibilityLabel = "Scan QR"
-      self.renderPerformanceLabel()
       switch result {
       case .success(let value):
         if let value, let url = URL(string: value) { self.importModel(from: url) }

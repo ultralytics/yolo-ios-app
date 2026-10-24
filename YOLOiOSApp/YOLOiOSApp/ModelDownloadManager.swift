@@ -57,10 +57,12 @@ struct MobileModelImport: Decodable {
       parts[3].range(of: "^[0-9a-f]{24}$", options: .regularExpression) != nil,
       let fragment = url.fragment, fragment.count <= 128
     else { throw CocoaError(.fileReadUnsupportedScheme) }
-    var endpoint = URLComponents(
-      string: "https://platform.ultralytics.com/api/mobile/models/\(parts[3])")!
-    endpoint.queryItems = URLComponents(string: "?\(fragment)")?.queryItems
-    let (data, response) = try await URLSession.shared.data(from: endpoint.url!)
+    var request = URLRequest(url: URL(string: "https://platform.ultralytics.com/api/mobile/models/\(parts[3])")!)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    let fields = URLComponents(string: "?\(fragment)")?.queryItems?.reduce(into: [String: String]()) { $0[$1.name] = $1.value } ?? [:]
+    request.httpBody = try JSONSerialization.data(withJSONObject: fields)
+    let (data, response) = try await URLSession.shared.data(for: request)
     guard (response as? HTTPURLResponse)?.statusCode == 200 else {
       throw NSError(
         domain: "ModelImport", code: 1,

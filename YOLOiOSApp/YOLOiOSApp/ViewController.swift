@@ -16,6 +16,7 @@ import AudioToolbox
 import CoreML
 import CoreMedia
 import UIKit
+import VisionKit
 import UltralyticsYOLO
 
 let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
@@ -29,7 +30,7 @@ let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOT
 ]
 
 /// The main view controller for the YOLO iOS application, handling model selection and visualization.
-class ViewController: UIViewController, YOLOViewDelegate {
+class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControllerDelegate {
 
   // MARK: - External Display Support (Optional)
   // External display features remain dormant until a display is connected. See ExternalDisplay/ for details.
@@ -56,6 +57,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let downloadProgressLabel = UILabel()
   private let cancelLoadingButton = UIButton(type: .system)
   private let modelsButton = UIButton(type: .system)
+  private let scanButton = UIButton(type: .system)
 
   private var loadingOverlayView: UIView?
 
@@ -73,6 +75,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
     cancelLoadingButton.isHidden = !(loading && canCancel)
+    scanButton.isEnabled = !loading
   }
 
   private func updateLoadingOverlay(_ show: Bool) {
@@ -124,7 +127,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
     setupTaskSegmentedControl()
 
     setupModelSegmentedControl()
-    setupCustomModelsButton()
+    setupModelActions()
 
     let savedModel = ModelCacheManager.shared.customModels.first {
       $0.identifier == UserDefaults.standard.string(forKey: "selectedCustomModel")
@@ -623,18 +626,31 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func setupCustomModelsButton() {
-    modelsButton.setTitle("My models", for: .normal)
-    modelsButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
-    modelsButton.tintColor = .white
+  private func setupModelActions() {
+    for (button, title, symbol) in [
+      (scanButton, "Scan QR", "qrcode.viewfinder"),
+      (modelsButton, "My models", "chevron.down"),
+    ] {
+      var configuration = UIButton.Configuration.filled()
+      configuration.title = title
+      configuration.image = UIImage(systemName: symbol)
+      configuration.imagePadding = 6
+      configuration.baseForegroundColor = .white
+      configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
+      configuration.cornerStyle = .capsule
+      button.configuration = configuration
+    }
     modelsButton.semanticContentAttribute = .forceRightToLeft
     modelsButton.showsMenuAsPrimaryAction = true
-    modelsButton.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(modelsButton)
+    scanButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
+    let actions = UIStackView(arrangedSubviews: [scanButton, modelsButton])
+    actions.spacing = 16
+    actions.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(actions)
     NSLayoutConstraint.activate([
-      modelsButton.topAnchor.constraint(equalTo: modelSegmentedControl.bottomAnchor),
-      modelsButton.centerXAnchor.constraint(equalTo: modelSegmentedControl.centerXAnchor),
-      modelsButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+      actions.topAnchor.constraint(equalTo: modelSegmentedControl.bottomAnchor),
+      actions.centerXAnchor.constraint(equalTo: modelSegmentedControl.centerXAnchor),
+      actions.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
     ])
     refreshCustomModelsMenu()
   }
@@ -665,30 +681,60 @@ class ViewController: UIViewController, YOLOViewDelegate {
           },
         ])
     }
-    modelsButton.menu = UIMenu(
-      children: entries + [
-        UIAction(title: "Paste Platform import link", image: UIImage(systemName: "link")) {
-          [weak self] _ in
-          let alert = UIAlertController(
-            title: "Import model",
-            message: "Paste the link from your model’s Export tab in Platform.",
-            preferredStyle: .alert)
-          alert.addTextField {
-            $0.placeholder = "https://platform.ultralytics.com/deploy/mobile/…"
-            $0.keyboardType = .URL
-            $0.autocapitalizationType = .none
-          }
-          alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-          alert.addAction(
-            UIAlertAction(title: "Import", style: .default) { [weak self, weak alert] _ in
-              guard let value = alert?.textFields?.first?.text, let url = URL(string: value) else {
-                return
-              }
-              self?.importModel(from: url)
-            })
-          self?.present(alert, animated: true)
-        }
-      ])
+    modelsButton.menu = UIMenu(children: entries)
+    modelsButton.isEnabled = !entries.isEmpty
+  }
+
+  @objc private func scanModelQRCode() {
+    guard !isLoadingModel else { return }
+    guard DataScannerViewController.isSupported, DataScannerViewController.isAvailable else {
+      showImportError(NSError(domain: "ModelImport", code: 3, userInfo: [
+        NSLocalizedDescriptionKey: "QR scanning is unavailable. Allow camera access or scan with your phone’s Camera app."
+      ]))
+      return
+    }
+    let scanner = DataScannerViewController(
+      recognizedDataTypes: [.barcode(symbologies: [.qr])], recognizesMultipleItems: false,
+      isGuidanceEnabled: true, isHighlightingEnabled: true)
+    scanner.delegate = self
+    scanner.title = "Scan model QR"
+    scanner.navigationItem.leftBarButtonItem = UIBarButtonItem(
+      barButtonSystemItem: .cancel, target: self, action: #selector(cancelModelQRScan))
+    let navigation = UINavigationController(rootViewController: scanner)
+    navigation.modalPresentationStyle = .fullScreen
+    yoloView.stop()
+    present(navigation, animated: true) {
+      do { try scanner.startScanning() }
+      catch { self.finishModelQRScan(scanner) { self.showImportError(error) } }
+    }
+  }
+
+  @objc private func cancelModelQRScan() {
+    guard let navigation = presentedViewController as? UINavigationController,
+      let scanner = navigation.viewControllers.first as? DataScannerViewController else { return }
+    finishModelQRScan(scanner)
+  }
+
+  private func finishModelQRScan(_ scanner: DataScannerViewController, completion: (() -> Void)? = nil) {
+    scanner.delegate = nil
+    scanner.stopScanning()
+    dismiss(animated: true) {
+      if !self.hasExternalScreen(), self.yoloView.pauseButton.isEnabled { self.yoloView.resume() }
+      completion?()
+    }
+  }
+
+  func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
+    for case .barcode(let barcode) in addedItems {
+      if let value = barcode.payloadStringValue, let url = URL(string: value) {
+        finishModelQRScan(dataScanner) { self.importModel(from: url) }
+        return
+      }
+    }
+  }
+
+  func dataScanner(_ dataScanner: DataScannerViewController, becameUnavailableWithError error: DataScannerViewController.ScanningUnavailable) {
+    finishModelQRScan(dataScanner) { self.showImportError(error) }
   }
 
   func importModel(from url: URL) {

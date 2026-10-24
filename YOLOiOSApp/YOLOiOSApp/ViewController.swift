@@ -862,7 +862,7 @@ private final class ModelHeaderControl: UIControl {
 
   override var isEnabled: Bool {
     didSet {
-      chevron.alpha = isEnabled ? 1 : 0.35
+      chevron.tintColor = UIColor.white.withAlphaComponent(isEnabled ? 0.62 : 0.35)
       accessibilityTraits = isEnabled ? .button : [.button, .notEnabled]
     }
   }
@@ -897,7 +897,6 @@ private final class QRScanOverlayView: UIView {
     messageLabel.textColor = UIColor.white.withAlphaComponent(0.78)
     messageLabel.numberOfLines = 0
     [titleLabel, messageLabel].forEach {
-      $0.textAlignment = .center
       $0.adjustsFontForContentSizeCategory = true
       addSubview($0)
     }
@@ -928,8 +927,10 @@ private final class QRScanOverlayView: UIView {
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    // Portrait stacks the copy, viewfinder and Cancel; landscape puts the copy and Cancel beside the viewfinder.
+    // Portrait stacks the centered copy, viewfinder and Cancel; landscape left-aligns the copy and Cancel beside the
+    // viewfinder's top edge, clear of the zoom and lens row.
     let wide = bounds.width > bounds.height
+    [titleLabel, messageLabel].forEach { $0.textAlignment = wide ? .natural : .center }
     let side = min(236, wide ? bounds.height * 0.5 : bounds.width * 0.6)
     let textWidth = min(310, wide ? bounds.width / 2 - 72 : bounds.width - 80)
     let fit = CGSize(width: textWidth, height: .greatestFiniteMagnitude)
@@ -942,8 +943,7 @@ private final class QRScanOverlayView: UIView {
     if wide {
       let left = (bounds.width - side - 32 - textWidth) / 2
       viewfinder = CGRect(x: left, y: bounds.midY - side / 2, width: side, height: side)
-      textOrigin = CGPoint(
-        x: viewfinder.maxX + 32, y: bounds.midY - (textHeight + 20 + button.height) / 2)
+      textOrigin = CGPoint(x: viewfinder.maxX + 32, y: viewfinder.minY)
     } else {
       let top = bounds.midY - (textHeight + 24 + side + 20 + button.height) / 2
       textOrigin = CGPoint(x: bounds.midX - textWidth / 2, y: top)
@@ -955,10 +955,10 @@ private final class QRScanOverlayView: UIView {
     textOrigin.y += titleHeight + 6
     messageLabel.frame = CGRect(
       origin: textOrigin, size: CGSize(width: textWidth, height: messageHeight))
-    let buttonCenterX = wide ? textOrigin.x + textWidth / 2 : viewfinder.midX
-    let buttonTop = wide ? textOrigin.y + messageHeight + 20 : viewfinder.maxY + 20
     cancelButton.frame = CGRect(
-      x: buttonCenterX - button.width / 2, y: buttonTop, width: button.width, height: button.height)
+      x: wide ? textOrigin.x : viewfinder.midX - button.width / 2,
+      y: wide ? textOrigin.y + messageHeight + 20 : viewfinder.maxY + 20,
+      width: button.width, height: button.height)
 
     CATransaction.begin()
     CATransaction.setDisableActions(true)

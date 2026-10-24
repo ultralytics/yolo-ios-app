@@ -26,7 +26,9 @@ struct ModelEntry: Codable {
   var installedExtension: String? = nil
 
   var installedURL: URL? {
-    installedExtension.map { documentsDirectory.appendingPathComponent(identifier).appendingPathExtension($0) }
+    installedExtension.map {
+      documentsDirectory.appendingPathComponent(identifier).appendingPathExtension($0)
+    }
   }
 }
 
@@ -301,9 +303,10 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           guard metadata["task"] == modelImport.task else { throw CocoaError(.fileReadCorruptFile) }
         }
         // The destination follows the installed artifact, not the live setting, which can change during an install.
-        let destination = modelImport?.entry.installedURL
+        let destination =
+          modelImport?.entry.installedURL
           ?? ModelCacheManager.shared.modelURL(for: key).deletingPathExtension()
-            .appendingPathExtension(installURL.pathExtension)
+          .appendingPathExtension(installURL.pathExtension)
         if FileManager.default.fileExists(atPath: destination.path) {
           try FileManager.default.removeItem(at: destination)
         }

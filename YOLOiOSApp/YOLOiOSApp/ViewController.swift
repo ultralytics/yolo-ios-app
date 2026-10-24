@@ -85,8 +85,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     scanButton.accessibilityTraits = scanning ? [.button, .selected] : .button
     modelsButton.isEnabled = !isLoadingModel && !scanning
     qrOverlay.isHidden = !scanning
-    [labelFPS, yoloView.labelSliderConf, yoloView.sliderConf, yoloView.labelSliderIoU, yoloView.sliderIoU]
-      .forEach { $0?.isHidden = scanning }
+    [
+      labelFPS, yoloView.labelSliderConf, yoloView.sliderConf, yoloView.labelSliderIoU,
+      yoloView.sliderIoU,
+    ]
+    .forEach { $0?.isHidden = scanning }
     if isLoadingModel {
       activityIndicator.startAnimating()
     } else {
@@ -576,7 +579,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     view.addSubview(modelsButton)
     yoloView.insertSubview(qrOverlay, belowSubview: yoloView.toolbar)
     NSLayoutConstraint.activate([
-      modelsButton.topAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.topAnchor, constant: -10),
+      modelsButton.topAnchor.constraint(
+        equalTo: yoloView.layoutMarginsGuide.topAnchor, constant: -10),
       modelsButton.centerXAnchor.constraint(equalTo: yoloView.centerXAnchor),
       modelsButton.widthAnchor.constraint(lessThanOrEqualTo: yoloView.widthAnchor, constant: -40),
       labelFPS.topAnchor.constraint(equalTo: modelsButton.bottomAnchor, constant: 5),
@@ -895,9 +899,11 @@ private final class QRScanOverlayView: UIView {
     var configuration = UIButton.Configuration.filled()
     configuration.title = "Cancel"
     configuration.baseForegroundColor = .white
-    configuration.baseBackgroundColor = UIColor(red: 118 / 255, green: 118 / 255, blue: 128 / 255, alpha: 0.32)
+    configuration.baseBackgroundColor = UIColor(
+      red: 118 / 255, green: 118 / 255, blue: 128 / 255, alpha: 0.32)
     configuration.cornerStyle = .capsule
-    configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 22, bottom: 12, trailing: 22)
+    configuration.contentInsets = NSDirectionalEdgeInsets(
+      top: 12, leading: 22, bottom: 12, trailing: 22)
     configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer {
       var attributes = $0
       attributes.font = UIFontMetrics(forTextStyle: .subheadline).scaledFont(
@@ -935,11 +941,14 @@ private final class QRScanOverlayView: UIView {
     } else {
       let top = bounds.midY - (textHeight + 24 + side + 20 + button.height) / 2
       textOrigin = CGPoint(x: bounds.midX - textWidth / 2, y: top)
-      viewfinder = CGRect(x: bounds.midX - side / 2, y: top + textHeight + 24, width: side, height: side)
+      viewfinder = CGRect(
+        x: bounds.midX - side / 2, y: top + textHeight + 24, width: side, height: side)
     }
-    titleLabel.frame = CGRect(origin: textOrigin, size: CGSize(width: textWidth, height: titleHeight))
+    titleLabel.frame = CGRect(
+      origin: textOrigin, size: CGSize(width: textWidth, height: titleHeight))
     textOrigin.y += titleHeight + 6
-    messageLabel.frame = CGRect(origin: textOrigin, size: CGSize(width: textWidth, height: messageHeight))
+    messageLabel.frame = CGRect(
+      origin: textOrigin, size: CGSize(width: textWidth, height: messageHeight))
     let buttonCenterX = wide ? textOrigin.x + textWidth / 2 : viewfinder.midX
     let buttonTop = wide ? textOrigin.y + messageHeight + 20 : viewfinder.maxY + 20
     cancelButton.frame = CGRect(

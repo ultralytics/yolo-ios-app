@@ -791,7 +791,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     )
 
     layoutBottomControls(
-      width: width, height: height, sliderX: width * 0.1, sliderWidth: width * 0.2)
+      width: width, height: height, sliderX: width * 0.1, sliderWidth: min(max(width * 0.28, 220), 300))
   }
 
   /// Lays out the controls and overlays for portrait orientation.

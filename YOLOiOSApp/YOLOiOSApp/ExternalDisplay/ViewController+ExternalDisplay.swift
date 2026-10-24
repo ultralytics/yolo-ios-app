@@ -66,7 +66,6 @@ extension ViewController {
         [
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
-          self.yoloView.playButton, self.yoloView.pauseButton,
         ].forEach { $0?.isHidden = false }
 
         [

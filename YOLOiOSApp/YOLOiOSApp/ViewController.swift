@@ -82,6 +82,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
       scanning ? .systemYellow : yoloView.shareButton.tintColor
     scanButton.configuration?.background.backgroundColor =
       scanning ? UIColor.systemYellow.withAlphaComponent(0.16) : .clear
+    // A 44 pt circle inside the toolbar slot, the same size as the Flutter toggle.
+    let inset = max(0, (scanButton.bounds.height - 44) / 2)
+    scanButton.configuration?.background.backgroundInsets = NSDirectionalEdgeInsets(
+      top: inset, leading: inset, bottom: inset, trailing: inset)
     scanButton.accessibilityTraits = scanning ? [.button, .selected] : .button
     modelsButton.isEnabled = !isLoadingModel && !scanning
     qrOverlay.isHidden = !scanning

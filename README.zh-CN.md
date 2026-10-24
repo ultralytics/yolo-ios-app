@@ -190,7 +190,7 @@ pod 'UltralyticsYOLO', '~> 8.9'
 
 ## 从 Ultralytics Platform 导入自定义模型
 
-在 Platform 中，对已完成的 Core ML 或 Core AI 导出选择 **Open on phone**，然后打开 Ultralytics YOLO，点击底部工具栏中的二维码按钮，并将当前相机预览对准二维码。点击“Scanning for QR code…”旁的 ✕ 可取消扫描并恢复推理。确认模型名称、任务和下载大小后，应用会安装模型并将其添加到模型选择器的 **Custom** 分组。模型按钮分两行显示当前模型名称与任务，并为导入模型标注 **Custom**；点击后可在同一列表中选择自定义导入模型或每个任务一行、按尺寸排列的任意官方模型。**Custom** 分组还提供 **Scan QR** 和打开 [Platform 导出指南](https://docs.ultralytics.com/platform/train/models#export-model)的帮助按钮。点击自定义模型旁的垃圾桶图标可将其删除。应用启动时会恢复上次选择的自定义模型，且支持离线使用。
+在 Platform 中，对已完成的 Core ML 或 Core AI 导出选择 **Open on phone**，然后打开 Ultralytics YOLO，点击底部工具栏中的二维码按钮，并将当前相机预览对准二维码。扫码时相机画面会在取景框外变暗；点击 **Cancel** 或再次点击二维码按钮即可恢复推理。确认模型名称、任务和下载大小后，应用会安装模型并将其添加到模型选择器的 **Custom** 分组。顶部在当前模型名称上方显示任务，并为导入模型标注 **Custom**；点击后可在同一列表中选择自定义导入模型或每个任务一行、按尺寸排列的任意官方模型。**Custom** 分组还提供 **Scan QR** 和打开 [Platform 导出指南](https://docs.ultralytics.com/platform/train/models#export-model)的帮助按钮。点击自定义模型旁的垃圾桶图标可将其删除。应用启动时会恢复上次选择的自定义模型，且支持离线使用。
 
 导出必须使用 batch 1 和静态输入。Core AI 需要支持的 iOS 27 或更高版本设备；为兼容更多设备，请使用 Core ML。导入使用模型实际的格式，不受官方模型 Core AI 设置影响。链接在十分钟内授权下载单个导出，任何获得链接的人都可以在有效期内下载。链接过期后，已安装的模型仍可使用；名称相同的不同导出也不会互相覆盖。
 

@@ -201,6 +201,9 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       let key = downloadTasks[downloadTask]?.key
     else { return }
 
+    let zipURL = destinationURL
+    let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
+    DispatchQueue.main.async { self.progressHandler?(1) }
     do {
       guard (downloadTask.response as? HTTPURLResponse)?.statusCode == 200 else {
         throw CocoaError(.fileReadUnknown)
@@ -212,14 +215,12 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           throw CocoaError(.fileReadCorruptFile)
         }
       }
-      let zipURL = destinationURL
       if FileManager.default.fileExists(atPath: zipURL.path) {
         try FileManager.default.removeItem(at: zipURL)
       }
       try FileManager.default.moveItem(at: location, to: zipURL)
 
       // Extract to a per-key temp directory to avoid collisions between concurrent downloads.
-      let tempExtractionURL = documentsDirectory.appendingPathComponent("temp_\(key)")
       if FileManager.default.fileExists(atPath: tempExtractionURL.path) {
         try FileManager.default.removeItem(at: tempExtractionURL)
       }
@@ -264,6 +265,8 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
         self.completeTask(downloadTask, success: success, key: key)
       }
     } catch {
+      try? FileManager.default.removeItem(at: tempExtractionURL)
+      try? FileManager.default.removeItem(at: zipURL)
       print("Download processing failed: \(error)")
       completeTask(downloadTask, success: false, key: key)
     }

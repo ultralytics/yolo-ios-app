@@ -237,7 +237,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.downloadProgressView.progress = Float(progress)
         self.downloadProgressLabel.isHidden = false
         let percentage = Int(progress * 100)
-        self.downloadProgressLabel.text = "Downloading \(percentage)%"
+        self.downloadProgressLabel.text = progress >= 1 ? "Installing model" : "Downloading \(percentage)%"
+        self.cancelLoadingButton.isHidden = progress >= 1
       }
     }
     if let url = initialImportURL { importModel(from: url) }

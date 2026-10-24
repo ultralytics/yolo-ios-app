@@ -183,7 +183,7 @@ Ready to integrate YOLO into your own project? Explore the Swift Package and exa
 Add the `UltralyticsYOLO` package to your app with Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.16")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.17")
 ```
 
 Or with CocoaPods:
@@ -193,6 +193,12 @@ pod 'UltralyticsYOLO', '~> 8.9'
 ```
 
 Then `import UltralyticsYOLO` and use the `YOLO` class — see the [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO) for full usage. The same `UltralyticsYOLO` package powers both this native iOS app and the [Ultralytics YOLO Flutter plugin](https://github.com/ultralytics/yolo-flutter-app), keeping one source of truth across platforms.
+
+## Import a custom model from Ultralytics Platform
+
+On a completed Core ML or Core AI export in Platform, select **Open on phone**, then scan the QR code with your iPhone's Camera app. Confirm the model name, task, and download size. The app installs the model and adds it to **My models**, where you can select or remove it. The last selected custom model is restored on launch and works offline. You can also paste the import link from the My models menu.
+
+Exports must use batch 1 and static inputs. Core AI requires a supported iOS 27+ device; use Core ML for broader compatibility. Importing a model uses its actual format independently of the official-model Core AI setting. Links authorize one export for ten minutes; anyone with the link can download during that window. Installed models continue working after expiry, and separate exports never overwrite each other even when their names match.
 
 ## 🧪 Testing Procedures
 

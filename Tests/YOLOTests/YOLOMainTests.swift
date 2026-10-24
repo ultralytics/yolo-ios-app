@@ -10,6 +10,22 @@ import XCTest
 /// Minimal tests for YOLO main class functionality
 class YOLOMainTests: XCTestCase {
 
+  @MainActor
+  func testFailedViewModelSwitchPreservesRunningIdentity() {
+    let view = YOLOView(frame: .zero)
+    view.stop()
+    view.task = .segment
+    view.modelName = "installed-custom"
+    let done = expectation(description: "Missing replacement fails")
+    view.setModel(modelPathOrName: "/missing/imported-model.mlpackage", task: .detect) { result in
+      if case .success = result { XCTFail("Missing model must fail") }
+      done.fulfill()
+    }
+    wait(for: [done], timeout: 1)
+    XCTAssertEqual(view.task, .segment)
+    XCTAssertEqual(view.modelName, "installed-custom")
+  }
+
   func testYOLOInitializationWithInvalidPath() {
     let expectation = XCTestExpectation(description: "Invalid model path")
 

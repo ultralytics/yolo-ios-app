@@ -56,7 +56,7 @@ Alternatively, declare the dependency in your own `Package.swift`:
 ```swift
 // In your Package.swift dependencies array
 dependencies: [
-    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.16")
+    .package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.17")
 ]
 
 // In your target's dependencies
@@ -258,6 +258,8 @@ class CameraViewController: UIViewController {
 ```
 
 With just a few lines of code, you can integrate real-time, YOLO-based inference into your application's camera feed. For more advanced use cases, explore the customization options available for these components.
+
+A failed `YOLOView.setModel` keeps the current predictor, task, model name, and overlay configuration. Replacement state is committed only after the new predictor loads successfully.
 
 ## ⚙️ How to Obtain YOLO Core ML Models
 

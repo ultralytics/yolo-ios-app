@@ -17,11 +17,64 @@ private let documentsDirectory = FileManager.default.urls(
   for: .documentDirectory, in: .userDomainMask)[0]
 
 /// Metadata describing a selectable YOLO model entry (local bundle or downloadable remote).
-struct ModelEntry {
+struct ModelEntry: Codable {
   let displayName: String
   let identifier: String
   let isLocalBundle: Bool
   let remoteURL: URL?
+  var task: String? = nil
+  var installedExtension: String? = nil
+
+  var installedURL: URL? {
+    installedExtension.map { ModelCacheManager.shared.modelURL(for: identifier, fileExtension: $0) }
+  }
+}
+
+struct MobileModelImport: Decodable {
+  let version: Int
+  let exportId: String
+  let name: String
+  let task: String
+  let format: String
+  let filename: String
+  let size: Int64
+  let downloadUrl: URL
+  let expiresAt: String
+
+  var entry: ModelEntry {
+    ModelEntry(displayName: name, identifier: exportId, isLocalBundle: false, remoteURL: nil,
+      task: task, installedExtension: format == "coreai" ? "aimodel" : "mlmodelc")
+  }
+
+  static func resolve(_ url: URL) async throws -> MobileModelImport {
+    let parts = url.pathComponents
+    guard url.scheme == "https", url.host == "platform.ultralytics.com", url.port == nil,
+      url.user == nil, url.password == nil, parts.count == 4,
+      parts[1] == "mobile", parts[2] == "models",
+      parts[3].range(of: "^[0-9a-f]{24}$", options: .regularExpression) != nil,
+      let fragment = url.fragment, fragment.count <= 128
+    else { throw CocoaError(.fileReadUnsupportedScheme) }
+    var endpoint = URLComponents(string: "https://platform.ultralytics.com/api/mobile/models/\(parts[3])")!
+    endpoint.queryItems = URLComponents(string: "?\(fragment)")?.queryItems
+    let (data, response) = try await URLSession.shared.data(from: endpoint.url!)
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+      throw NSError(domain: "ModelImport", code: 1, userInfo: [NSLocalizedDescriptionKey: "Import link expired or unavailable. Create a new QR code in Platform."])
+    }
+    let model = try JSONDecoder().decode(Self.self, from: data)
+    let dateFormatter = ISO8601DateFormatter()
+    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    guard model.version == 1, model.exportId == parts[3],
+      ["coreml", "coreai"].contains(model.format),
+      model.filename == "\(model.exportId).\(model.format == "coreai" ? "aimodel.zip" : "mlpackage.zip")",
+      appTasks.contains(where: { String(describing: $0.yoloTask) == model.task }),
+      model.downloadUrl.scheme == "https", model.size > 0,
+      dateFormatter.date(from: model.expiresAt).map({ $0 > Date() }) == true
+    else { throw CocoaError(.fileReadCorruptFile) }
+    if model.format == "coreai" && !BasePredictor.isCoreAIAvailable {
+      throw NSError(domain: "ModelImport", code: 2, userInfo: [NSLocalizedDescriptionKey: "This model requires Core AI on iOS 27 or later. Export Core ML for this device."])
+    }
+    return model
+  }
 }
 
 class ModelCacheManager {
@@ -31,9 +84,25 @@ class ModelCacheManager {
   private init() {}
 
   /// Core ML and Core AI downloads of one model are cached side by side under their own extensions.
-  func modelURL(for key: String) -> URL {
+  func modelURL(for key: String, fileExtension: String? = nil) -> URL {
     documentsDirectory.appendingPathComponent("\(key)-\(Self.assetRevision)")
-      .appendingPathExtension(remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc")
+      .appendingPathExtension(fileExtension ?? (remoteModelExtension == "aimodel" ? "aimodel" : "mlmodelc"))
+  }
+
+  var customModels: [ModelEntry] {
+    guard let data = UserDefaults.standard.data(forKey: "customModels"),
+      let entries = try? JSONDecoder().decode([ModelEntry].self, from: data) else { return [] }
+    return entries.filter { $0.installedURL.map { FileManager.default.fileExists(atPath: $0.path) } == true }
+  }
+
+  func saveCustomModel(_ entry: ModelEntry) throws {
+    let entries = customModels.filter { $0.identifier != entry.identifier } + [entry]
+    UserDefaults.standard.set(try JSONEncoder().encode(entries), forKey: "customModels")
+  }
+
+  func removeCustomModel(_ entry: ModelEntry) throws {
+    if let url = entry.installedURL { try FileManager.default.removeItem(at: url) }
+    UserDefaults.standard.set(try JSONEncoder().encode(customModels.filter { $0.identifier != entry.identifier }), forKey: "customModels")
   }
 
   func loadModel(
@@ -61,7 +130,7 @@ class ModelCacheManager {
 
 class ModelDownloadManager: NSObject {
   static let shared = ModelDownloadManager()
-  private var downloadTasks: [URLSessionDownloadTask: (url: URL, key: String)] = [:]
+  private var downloadTasks: [URLSessionDownloadTask: (url: URL, key: String, modelImport: MobileModelImport?)] = [:]
   private var downloadCompletionHandlers: [URLSessionDownloadTask: (Bool, String) -> Void] = [:]
   private lazy var session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
   var progressHandler: ((Double) -> Void)?
@@ -76,11 +145,11 @@ class ModelDownloadManager: NSObject {
   }
 
   func startDownload(
-    url: URL, fileName: String, key: String, completion: @escaping (Bool, String) -> Void
+    url: URL, fileName: String, key: String, modelImport: MobileModelImport? = nil, completion: @escaping (Bool, String) -> Void
   ) {
     let downloadTask = session.downloadTask(with: url)
     let destinationURL = documentsDirectory.appendingPathComponent(fileName)
-    downloadTasks[downloadTask] = (url: destinationURL, key: key)
+    downloadTasks[downloadTask] = (url: destinationURL, key: key, modelImport: modelImport)
     downloadCompletionHandlers[downloadTask] = completion
     downloadTask.resume()
   }
@@ -105,6 +174,14 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
     else { return }
 
     do {
+      guard (downloadTask.response as? HTTPURLResponse)?.statusCode == 200 else {
+        throw CocoaError(.fileReadUnknown)
+      }
+      let modelImport = downloadTasks[downloadTask]?.modelImport
+      if let modelImport {
+        let size = try location.resourceValues(forKeys: [.fileSizeKey]).fileSize
+        guard size.map(Int64.init) == modelImport.size else { throw CocoaError(.fileReadCorruptFile) }
+      }
       let zipURL = destinationURL
       if FileManager.default.fileExists(atPath: zipURL.path) {
         try FileManager.default.removeItem(at: zipURL)
@@ -150,7 +227,7 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
           userInfo: [NSLocalizedDescriptionKey: "No model file found in extracted archive"])
       }
 
-      installModel(from: foundModelURL, key: key) { success in
+      installModel(from: foundModelURL, key: key, modelImport: modelImport) { success in
         // Clean up temp extraction directory and downloaded zip.
         try? FileManager.default.removeItem(at: tempExtractionURL)
         try? FileManager.default.removeItem(at: zipURL)
@@ -168,23 +245,35 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
       let key = downloadTasks[downloadTask]?.key
     else { return }
 
-    print("Download failed: \(error)")
+    print("Download failed: \(error.localizedDescription)")
     completeTask(downloadTask, success: false, key: key)
   }
 
   /// Moves the extracted model into Documents, compiling it first when it is a Core ML model.
-  private func installModel(from url: URL, key: String, completion: @escaping (Bool) -> Void) {
+  private func installModel(from url: URL, key: String, modelImport: MobileModelImport?, completion: @escaping (Bool) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       do {
         let isCoreAI = url.pathExtension == "aimodel"
+        if let modelImport, isCoreAI != (modelImport.format == "coreai") { throw CocoaError(.fileReadCorruptFile) }
         let marker = url.appendingPathComponent("metadata.json")
         if isCoreAI && !FileManager.default.fileExists(atPath: marker.path) {
           throw CocoaError(.fileReadCorruptFile)
         }
         let installURL = isCoreAI ? url : try MLModel.compileModel(at: url)
+        if let modelImport {
+          let metadata: [String: String]
+          if isCoreAI {
+            let json = try JSONSerialization.jsonObject(with: Data(contentsOf: marker)) as? [String: Any]
+            metadata = json?["creatorDefinedMetadata"] as? [String: String] ?? [:]
+          } else {
+            metadata = try MLModel(contentsOf: installURL).modelDescription.metadata[.creatorDefinedKey] as? [String: String] ?? [:]
+          }
+          guard metadata["task"] == modelImport.task else { throw CocoaError(.fileReadCorruptFile) }
+        }
         // The destination follows the installed artifact, not the live setting, which can change during an install.
         let destination = ModelCacheManager.shared.modelURL(for: key).deletingPathExtension()
           .appendingPathExtension(installURL.pathExtension)
+        if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
         try FileManager.default.moveItem(at: installURL, to: destination)
         DispatchQueue.main.async { completion(true) }
       } catch {

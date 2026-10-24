@@ -100,9 +100,11 @@ extension ViewController {
 
     var fullModelPath = currentModelName
     if let entry = currentLoadingEntry
-      ?? currentModels.first(where: { processString($0.displayName) == currentModelName })
+      ?? currentModels.first(where: { $0.identifier == currentModelIdentifier })
     {
-      if entry.isLocalBundle,
+      if let url = entry.installedURL {
+        fullModelPath = url.path
+      } else if entry.isLocalBundle,
         let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
         let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
       {
@@ -151,12 +153,14 @@ extension ViewController {
     let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
 
     let currentEntry =
-      currentModels.first(where: { processString($0.displayName) == currentModelName })
+      currentModels.first(where: { $0.identifier == currentModelIdentifier })
       ?? currentModels.first
     guard let entry = currentEntry else { return }
 
     var fullModelPath = ""
-    if entry.isLocalBundle,
+    if let url = entry.installedURL {
+      fullModelPath = url.path
+    } else if entry.isLocalBundle,
       let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
       let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
     {

@@ -238,21 +238,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     }
 
     activityIndicator.startAnimating()
-    boundingBoxViews.forEach { box in
-      box.hide()
-    }
-    removeClassificationLayers()
-
-    self.task = task
-    setupSublayers()
-
     guard let modelURL = ModelPathResolver.resolve(modelPathOrName) else {
       activityIndicator.stopAnimating()
       completion?(.failure(PredictorError.modelFileNotFound))
       return
     }
-
-    modelName = modelURL.deletingPathExtension().lastPathComponent
 
     BasePredictor.create(for: task, modelURL: modelURL, isRealTime: true) {
       @Sendable [weak self] result in
@@ -261,6 +251,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         self.activityIndicator.stopAnimating()
         switch result {
         case .success(let predictor):
+          self.boundingBoxViews.forEach { $0.hide() }
+          self.removeClassificationLayers()
+          self.task = task
+          self.setupSublayers()
+          self.modelName = modelURL.deletingPathExtension().lastPathComponent
           self.videoCapture.predictor = predictor
           predictor.setNumItemsThreshold(numItems: self.getNumItemsThreshold())
           self.labelName.text = processString(self.modelName)

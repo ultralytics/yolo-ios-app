@@ -177,7 +177,7 @@ w8a32 `.tflite` 资源。此动态范围格式使用 int8 权重和 FP32 激活�
 使用 Swift Package Manager 将 `UltralyticsYOLO` package 添加到你的应用：
 
 ```swift
-.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.16")
+.package(url: "https://github.com/ultralytics/yolo-ios-app.git", from: "8.9.17")
 ```
 
 或使用 CocoaPods：
@@ -187,6 +187,12 @@ pod 'UltralyticsYOLO', '~> 8.9'
 ```
 
 然后 `import UltralyticsYOLO` 并使用 `YOLO` 类——完整用法请参阅 [Swift Package README](https://github.com/ultralytics/yolo-ios-app/tree/main/Sources/UltralyticsYOLO)。同一个 `UltralyticsYOLO` package 同时驱动本原生 iOS 应用和 [Ultralytics YOLO Flutter 插件](https://github.com/ultralytics/yolo-flutter-app)，在多个平台间保持单一事实来源。
+
+## 从 Ultralytics Platform 导入自定义模型
+
+在 Platform 中，对已完成的 Core ML 或 Core AI 导出选择 **Open on phone**，然后使用 iPhone 相机扫描二维码。确认模型名称、任务和下载大小后，应用会安装模型并将其添加到 **My models**，可在其中选择或删除模型。应用启动时会恢复上次选择的自定义模型，且支持离线使用。也可以在 My models 菜单中粘贴导入链接。
+
+导出必须使用 batch 1 和静态输入。Core AI 需要支持的 iOS 27 或更高版本设备；为兼容更多设备，请使用 Core ML。导入使用模型实际的格式，不受官方模型 Core AI 设置影响。链接在十分钟内授权下载单个导出，任何获得链接的人都可以在有效期内下载。链接过期后，已安装的模型仍可使用；名称相同的不同导出也不会互相覆盖。
 
 ## 🧪 测试流程
 

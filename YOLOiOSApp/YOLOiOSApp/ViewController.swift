@@ -274,7 +274,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func showModelEntries(for taskName: String) {
-    currentModels = makeModelEntries(for: taskName)
+    currentModels =
+      makeModelEntries(for: taskName)
       + ModelCacheManager.shared.customModels.filter { entry in
         appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
       }
@@ -549,7 +550,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func setupModelActions() {
     scanButton.setImage(
-      UIImage(systemName: "qrcode.viewfinder", withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
+      UIImage(
+        systemName: "qrcode.viewfinder",
+        withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
       for: .normal)
     scanButton.tintColor = yoloView.shareButton.tintColor
     scanButton.accessibilityLabel = "Scan QR"
@@ -572,7 +575,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     NSLayoutConstraint.activate([
       modelsButton.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 5),
       modelsButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      modelsButton.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
+      modelsButton.widthAnchor.constraint(
+        lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
       modelsButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
       modelsButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
     ])
@@ -584,11 +588,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
       custom: ModelCacheManager.shared.customModels,
       official: appTasks.compactMap { task in
         let names = Set((remoteModelsInfo[task.name] ?? []).map { $0.modelName.lowercased() })
-        let entries = makeModelEntries(for: task.name).filter { names.contains($0.displayName.lowercased()) }
+        let entries = makeModelEntries(for: task.name).filter {
+          names.contains($0.displayName.lowercased())
+        }
         return entries.isEmpty ? nil : (task: task.name, entries: entries)
       }, selectedID: currentModelIdentifier,
       onScan: { [weak self] in self?.scanModelQRCode() },
-      onHelp: { UIApplication.shared.open(URL(string: "https://docs.ultralytics.com/platform/train/models#export-model")!) },
+      onHelp: {
+        UIApplication.shared.open(
+          URL(string: "https://docs.ultralytics.com/platform/train/models#export-model")!)
+      },
       onSelect: { [weak self] entry in
         guard let self, !self.isLoadingModel else { return }
         let task = appTasks.first { String(describing: $0.yoloTask) == entry.task }!.name
@@ -609,13 +618,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func refreshModelButton() {
-    let isCustom = ModelCacheManager.shared.customModels.contains { $0.identifier == currentModelIdentifier }
+    let isCustom = ModelCacheManager.shared.customModels.contains {
+      $0.identifier == currentModelIdentifier
+    }
     modelsButton.configuration?.title =
       currentModelName.isEmpty ? "Models" : currentModelName
     modelsButton.configuration?.subtitle =
       currentModelName.isEmpty ? nil : "\(currentTask)\(isCustom ? " · Custom" : "")"
     modelsButton.accessibilityLabel =
-      currentModelName.isEmpty ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
+      currentModelName.isEmpty
+      ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
   }
 
   @objc private func scanModelQRCode() {
@@ -632,7 +644,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     camera.showOverlays = false
     modelsButton.isEnabled = false
     scanButton.setImage(
-      UIImage(systemName: "xmark", withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
+      UIImage(
+        systemName: "xmark",
+        withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
       for: .normal)
     scanButton.accessibilityLabel = "Cancel QR scan"
     renderPerformanceLabel()
@@ -642,7 +656,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
       self.modelsButton.isEnabled = !self.isLoadingModel
       camera.showOverlays = true
       self.scanButton.setImage(
-        UIImage(systemName: "qrcode.viewfinder", withConfiguration: self.yoloView.shareButton.currentImage?.symbolConfiguration),
+        UIImage(
+          systemName: "qrcode.viewfinder",
+          withConfiguration: self.yoloView.shareButton.currentImage?.symbolConfiguration),
         for: .normal)
       self.scanButton.accessibilityLabel = "Scan QR"
       self.renderPerformanceLabel()
@@ -803,7 +819,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
 }
 
-private final class ModelPickerController: UITableViewController, UIPopoverPresentationControllerDelegate {
+private final class ModelPickerController: UITableViewController,
+  UIPopoverPresentationControllerDelegate
+{
   private let custom: [ModelEntry]
   private let official: [(task: String, entries: [ModelEntry])]
   private let selectedID: String
@@ -812,9 +830,11 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
   private let onSelect: (ModelEntry) -> Void
   private let onRemove: (ModelEntry) -> Void
 
-  init(custom: [ModelEntry], official: [(task: String, entries: [ModelEntry])], selectedID: String,
+  init(
+    custom: [ModelEntry], official: [(task: String, entries: [ModelEntry])], selectedID: String,
     onScan: @escaping () -> Void, onHelp: @escaping () -> Void,
-    onSelect: @escaping (ModelEntry) -> Void, onRemove: @escaping (ModelEntry) -> Void) {
+    onSelect: @escaping (ModelEntry) -> Void, onRemove: @escaping (ModelEntry) -> Void
+  ) {
     self.custom = custom
     self.official = official
     self.selectedID = selectedID
@@ -839,8 +859,11 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
     preferredContentSize = CGSize(width: 350, height: tableView.contentSize.height)
   }
 
-  func adaptivePresentationStyle(for _: UIPresentationController, traitCollection _: UITraitCollection)
-    -> UIModalPresentationStyle { .none }
+  func adaptivePresentationStyle(
+    for _: UIPresentationController, traitCollection _: UITraitCollection
+  )
+    -> UIModalPresentationStyle
+  { .none }
 
   override func viewIsAppearing(_ animated: Bool) {
     super.viewIsAppearing(animated)
@@ -881,12 +904,15 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
     if indexPath.section == 1 {
       let group = official[indexPath.row]
       content.text = group.task
-      let control = UISegmentedControl(items: group.entries.map { entry in
-        let size = String(entry.displayName.split(separator: "-")[0].suffix(1))
-        return entry.isLocalBundle || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
-          ? size : "↓\(size)"
-      })
-      control.selectedSegmentIndex = group.entries.firstIndex { $0.identifier == selectedID }
+      let control = UISegmentedControl(
+        items: group.entries.map { entry in
+          let size = String(entry.displayName.split(separator: "-")[0].suffix(1))
+          return entry.isLocalBundle
+            || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+            ? size : "↓\(size)"
+        })
+      control.selectedSegmentIndex =
+        group.entries.firstIndex { $0.identifier == selectedID }
         ?? UISegmentedControl.noSegment
       control.accessibilityLabel = "\(group.task) model size"
       control.backgroundColor = UIColor.black.withAlphaComponent(0.7)
@@ -895,24 +921,31 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
         [.font: UIFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: UIColor.white],
         for: .selected)
       control.setTitleTextAttributes(
-        [.font: UIFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: UIColor.white.withAlphaComponent(0.72)],
+        [
+          .font: UIFont.systemFont(ofSize: 12, weight: .medium),
+          .foregroundColor: UIColor.white.withAlphaComponent(0.72),
+        ],
         for: .normal)
       control.frame = CGRect(x: 0, y: 0, width: 220, height: 44)
-      control.addAction(UIAction { [weak self] action in
-        guard let self, let control = action.sender as? UISegmentedControl else { return }
-        let entry = group.entries[control.selectedSegmentIndex]
-        self.dismiss(animated: true) { self.onSelect(entry) }
-      }, for: .valueChanged)
+      control.addAction(
+        UIAction { [weak self] action in
+          guard let self, let control = action.sender as? UISegmentedControl else { return }
+          let entry = group.entries[control.selectedSegmentIndex]
+          self.dismiss(animated: true) { self.onSelect(entry) }
+        }, for: .valueChanged)
       cell.accessoryView = control
       cell.selectionStyle = .none
     } else if indexPath.row == 0 {
       content.text = "Scan QR"
       content.image = UIImage(systemName: "qrcode.viewfinder")
       content.imageProperties.tintColor = .white
-      let help = UIButton(type: .system, primaryAction: UIAction(image: UIImage(systemName: "questionmark.circle")) { [weak self] _ in
-        guard let self else { return }
-        self.dismiss(animated: true) { self.onHelp() }
-      })
+      let help = UIButton(
+        type: .system,
+        primaryAction: UIAction(image: UIImage(systemName: "questionmark.circle")) {
+          [weak self] _ in
+          guard let self else { return }
+          self.dismiss(animated: true) { self.onHelp() }
+        })
       help.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
       help.tintColor = .white
       help.accessibilityLabel = "Platform export guide"
@@ -924,10 +957,12 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
       content.imageProperties.tintColor = entry.identifier == selectedID ? .white : .clear
       content.secondaryText = appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name
       if entry.identifier == selectedID { cell.accessibilityTraits.insert(.selected) }
-      let trash = UIButton(type: .system, primaryAction: UIAction(image: UIImage(systemName: "trash")) { [weak self] _ in
-        guard let self else { return }
-        self.dismiss(animated: true) { self.onRemove(entry) }
-      })
+      let trash = UIButton(
+        type: .system,
+        primaryAction: UIAction(image: UIImage(systemName: "trash")) { [weak self] _ in
+          guard let self else { return }
+          self.dismiss(animated: true) { self.onRemove(entry) }
+        })
       trash.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
       trash.tintColor = .systemRed
       trash.accessibilityLabel = "Remove \(entry.displayName)"
@@ -937,7 +972,9 @@ private final class ModelPickerController: UITableViewController, UIPopoverPrese
     return cell
   }
 
-  override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+  override func tableView(
+    _ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int
+  ) {
     var content = UIListContentConfiguration.plainHeader()
     content.text = self.tableView(tableView, titleForHeaderInSection: section)
     content.textProperties.font = .systemFont(ofSize: 12, weight: .semibold)

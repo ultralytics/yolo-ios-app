@@ -621,7 +621,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
           URL(string: "https://docs.ultralytics.com/platform/train/models#export-model")!)
       },
       onSelect: { [weak self] entry in
-        guard let self, !self.isLoadingModel, entry.identifier != self.currentModelIdentifier else { return }
+        guard let self, !self.isLoadingModel, entry.identifier != self.currentModelIdentifier else {
+          return
+        }
         let task = appTasks.first { String(describing: $0.yoloTask) == entry.task }!.name
         self.showModelEntries(for: task)
         self.loadModel(entry: entry, forTask: task)

@@ -261,6 +261,8 @@ With just a few lines of code, you can integrate real-time, YOLO-based inference
 
 `YOLOView.scanQRCode(completion:)` reads one QR value from the existing camera stream while model inference pauses. `cancelQRCodeScan()` completes with `nil`; both completion paths return the same preview to live inference, including when scanning started from a paused preview. The shared `QRCodeScan` decoder also serves the Flutter camera owner.
 
+Buttons added to `YOLOView.toolbar` are laid out after Share, with Info kept at the right edge. The app uses this slot for the QR scan/cancel button; its model picker lists Custom imports first, then Official models in one size-control row per task, with an inline trash action for each custom model. Custom also offers Scan QR and a link to the [Platform export guide](https://docs.ultralytics.com/platform/train/models#export-model). The model button shows the active name above its task, adding Custom for imported models.
+
 A failed `YOLOView.setModel` keeps the current predictor, task, model name, and overlay configuration. Replacement state is committed only after the new predictor loads successfully.
 
 ## ⚙️ How to Obtain YOLO Core ML Models

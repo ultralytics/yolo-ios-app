@@ -36,7 +36,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   @IBOutlet weak var yoloView: YOLOView!
   @IBOutlet weak var View0: UIView!
-  @IBOutlet weak var segmentedControl: UISegmentedControl!
   @IBOutlet weak var labelName: UILabel!
   @IBOutlet weak var labelFPS: UILabel!
   /// Latest "x FPS - y ms" line and pre/inference/post breakdown, rendered together in `labelFPS`.
@@ -56,7 +55,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let cancelLoadingButton = UIButton(type: .system)
   private let modelsButton = UIButton(type: .system)
   private let scanButton = UIButton(type: .system)
-  private var qrCamera: YOLOView?
+  private var qrCamera: YOLOView? { didSet { updateActivityIndicator() } }
 
   private var loadingOverlayView: UIView?
 
@@ -70,12 +69,19 @@ class ViewController: UIViewController, YOLOViewDelegate {
   // MARK: - Loading State Management
   private func setLoadingState(_ loading: Bool, showOverlay: Bool = false, canCancel: Bool = false)
   {
-    loading ? activityIndicator.startAnimating() : activityIndicator.stopAnimating()
     if showOverlay && loading { updateLoadingOverlay(true) }
     if !loading { updateLoadingOverlay(false) }
     cancelLoadingButton.isHidden = !(loading && canCancel)
     scanButton.isEnabled = !loading
     modelsButton.isEnabled = !loading && qrCamera == nil
+  }
+
+  private func updateActivityIndicator() {
+    if isLoadingModel || qrCamera != nil {
+      activityIndicator.startAnimating()
+    } else {
+      activityIndicator.stopAnimating()
+    }
   }
 
   private func updateLoadingOverlay(_ show: Bool) {
@@ -104,7 +110,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
   var currentModelIdentifier: String = ""
   var initialImportURL: URL?
 
-  private var isLoadingModel = false
+  private var isLoadingModel = false { didSet { updateActivityIndicator() } }
   private var currentLoadingTask: String?
 
   override func viewDidLoad() {
@@ -112,23 +118,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
     // Optional external display setup — dormant unless a monitor/TV is connected. See ExternalDisplay/ for details.
     setupExternalDisplayNotifications()
-    if hasExternalScreen() {
-      yoloView.isHidden = true
-    }
 
-    // Populate the task segmented control and discover bundled models per task.
-    segmentedControl.removeAllSegments()
-    appTasks.enumerated().forEach { index, task in
-      segmentedControl.insertSegment(withTitle: task.shortName, at: index, animated: false)
-      modelsForTask[task.name] = getModelFiles(in: task.folder)
-    }
-    setupTaskSegmentedControl()
+    appTasks.forEach { modelsForTask[$0.name] = getModelFiles(in: $0.folder) }
 
     setupModelActions()
 
-    let defaultTaskIndex = appTasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
-    segmentedControl.selectedSegmentIndex = defaultTaskIndex
-    currentTask = appTasks[defaultTaskIndex].name
+    currentTask = appTasks.first { $0.yoloTask == Constants.defaultTask }!.name
 
     // External display handling will stop the local camera if needed.
     if initialImportURL != nil {
@@ -280,26 +275,26 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func showModelEntries(for taskName: String) {
     currentModels = makeModelEntries(for: taskName)
-    refreshModelMenu()
+      + ModelCacheManager.shared.customModels.filter { entry in
+        appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
+      }
   }
 
   private func restoreCurrentModelSelection() {
     guard !currentTask.isEmpty else { return }
-    if let taskIndex = appTasks.firstIndex(where: { $0.name == currentTask }) {
-      segmentedControl.selectedSegmentIndex = taskIndex
-    }
     showModelEntries(for: currentTask)
     if !currentModelName.isEmpty { labelName.text = currentModelName }
   }
 
   private func makeModelEntries(for taskName: String) -> [ModelEntry] {
+    let task = String(describing: appTasks.first { $0.name == taskName }!.yoloTask)
     let localFileNames = modelsForTask[taskName] ?? []
     let localEntries = localFileNames.map { fileName -> ModelEntry in
       ModelEntry(
         displayName: (fileName as NSString).deletingPathExtension,
         identifier: fileName,
         isLocalBundle: true,
-        remoteURL: nil
+        remoteURL: nil, task: task
       )
     }
 
@@ -307,14 +302,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let officialEntries = remoteList.map { (modelName, url) -> ModelEntry in
       localEntries.first(where: { $0.displayName.lowercased() == modelName.lowercased() })
         ?? ModelEntry(
-          displayName: modelName, identifier: modelName, isLocalBundle: false, remoteURL: url)
+          displayName: modelName, identifier: modelName, isLocalBundle: false, remoteURL: url,
+          task: task)
     }
     let officialNames = Set(officialEntries.map { $0.displayName.lowercased() })
     return officialEntries
       + localEntries.filter { !officialNames.contains($0.displayName.lowercased()) }
-      + ModelCacheManager.shared.customModels.filter { entry in
-        appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
-      }
   }
 
   func loadModel(entry: ModelEntry, forTask task: String) {
@@ -495,9 +488,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
       if success {
         let previousTask = self.currentTask
         self.currentTask = loadedTask
-        if let taskIndex = appTasks.firstIndex(where: { $0.name == loadedTask }) {
-          self.segmentedControl.selectedSegmentIndex = taskIndex
-        }
         if previousTask != loadedTask {
           NotificationCenter.default.post(
             name: .taskDidChange,
@@ -512,7 +502,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
           self.currentLoadingEntry?.installedURL == nil ? nil : self.currentModelIdentifier,
           forKey: "selectedCustomModel")
 
-        self.refreshModelMenu()
+        self.refreshModelButton()
       } else {
         self.restoreCurrentModelSelection()
       }
@@ -558,105 +548,74 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func setupModelActions() {
-    for (button, title, symbol) in [
-      (scanButton, "Scan QR", "qrcode.viewfinder"),
-      (modelsButton, "Models", "chevron.down"),
-    ] {
-      var configuration = UIButton.Configuration.filled()
-      configuration.title = title
-      configuration.image = UIImage(systemName: symbol)
-      configuration.imagePadding = 6
-      configuration.baseForegroundColor = .white
-      configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
-      configuration.cornerStyle = .capsule
-      configuration.titleLineBreakMode = .byTruncatingMiddle
-      button.configuration = configuration
-      button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-      button.widthAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
-    }
-    scanButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-    modelsButton.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    modelsButton.semanticContentAttribute = .forceRightToLeft
-    modelsButton.showsMenuAsPrimaryAction = true
+    scanButton.setImage(
+      UIImage(systemName: "qrcode.viewfinder", withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
+      for: .normal)
+    scanButton.tintColor = yoloView.shareButton.tintColor
+    scanButton.accessibilityLabel = "Scan QR"
     scanButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
-    let actions = UIStackView(arrangedSubviews: [scanButton, modelsButton])
-    actions.spacing = 16
-    actions.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(actions)
+    yoloView.toolbar.addSubview(scanButton)
+
+    var configuration = UIButton.Configuration.filled()
+    configuration.title = "Models"
+    configuration.image = UIImage(systemName: "chevron.down")
+    configuration.imagePadding = 6
+    configuration.baseForegroundColor = .white
+    configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
+    configuration.cornerStyle = .capsule
+    configuration.titleLineBreakMode = .byTruncatingTail
+    modelsButton.configuration = configuration
+    modelsButton.semanticContentAttribute = .forceRightToLeft
+    modelsButton.addTarget(self, action: #selector(showModelPicker), for: .touchUpInside)
+    modelsButton.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(modelsButton)
     NSLayoutConstraint.activate([
-      actions.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 5),
-      actions.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      actions.widthAnchor.constraint(
-        lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
+      modelsButton.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 5),
+      modelsButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+      modelsButton.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
+      modelsButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+      modelsButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
     ])
-    refreshModelMenu()
+    refreshModelButton()
   }
 
-  private func refreshModelMenu() {
-    let task = currentTask
-    let official = currentModels.filter { $0.installedURL == nil }.map { entry in
-      let downloaded =
-        entry.isLocalBundle
-        || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
-      return UIAction(
-        title: processString(entry.displayName),
-        image: downloaded ? nil : UIImage(systemName: "arrow.down"),
-        state: entry.identifier == currentModelIdentifier ? .on : .off
-      ) { [weak self] _ in self?.loadModel(entry: entry, forTask: task) }
-    }
-    let customModels = ModelCacheManager.shared.customModels
-    let custom: [UIMenuElement] =
-      customModels.isEmpty
-      ? [UIAction(title: "Scan a Platform QR code to add one", attributes: .disabled) { _ in }]
-      : customModels.map { entry in
-        UIAction(
-          title: entry.displayName,
-          subtitle: appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name,
-          state: entry.identifier == currentModelIdentifier ? .on : .off
-        ) { [weak self] _ in
-          guard let self, !self.isLoadingModel,
-            let task = appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })
-          else { return }
-          self.showModelEntries(for: task.name)
-          self.loadModel(entry: entry, forTask: task.name)
-        }
-      }
-    var groups = [
-      UIMenu(title: "Official · \(task)", options: .displayInline, children: official),
-      UIMenu(title: "Custom", options: .displayInline, children: custom),
-    ]
-    if !customModels.isEmpty {
-      groups.append(
-        UIMenu(
-          title: "Remove custom model", image: UIImage(systemName: "trash"),
-          children:
-            customModels.map { entry in
-              UIAction(
-                title: entry.displayName,
-                subtitle: appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name,
-                attributes: .destructive
-              ) {
-                [weak self] _ in
-                guard let self, !self.isLoadingModel else { return }
-                do {
-                  try ModelCacheManager.shared.removeCustomModel(entry)
-                  if self.currentModelIdentifier == entry.identifier {
-                    self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
-                  } else {
-                    self.refreshModelMenu()
-                  }
-                } catch { self.showImportError(error) }
-              }
-            }))
-    }
-    modelsButton.menu = UIMenu(children: groups)
-    let source =
-      customModels.contains(where: { $0.identifier == currentModelIdentifier })
-      ? "Custom" : "Official"
+  @objc private func showModelPicker() {
+    let picker = ModelPickerController(
+      custom: ModelCacheManager.shared.customModels,
+      official: appTasks.compactMap { task in
+        let names = Set((remoteModelsInfo[task.name] ?? []).map { $0.modelName.lowercased() })
+        let entries = makeModelEntries(for: task.name).filter { names.contains($0.displayName.lowercased()) }
+        return entries.isEmpty ? nil : (task: task.name, entries: entries)
+      }, selectedID: currentModelIdentifier,
+      onScan: { [weak self] in self?.scanModelQRCode() },
+      onHelp: { UIApplication.shared.open(URL(string: "https://docs.ultralytics.com/platform/train/models#export-model")!) },
+      onSelect: { [weak self] entry in
+        guard let self, !self.isLoadingModel else { return }
+        let task = appTasks.first { String(describing: $0.yoloTask) == entry.task }!.name
+        self.showModelEntries(for: task)
+        self.loadModel(entry: entry, forTask: task)
+      },
+      onRemove: { [weak self] entry in
+        guard let self, !self.isLoadingModel else { return }
+        do {
+          try ModelCacheManager.shared.removeCustomModel(entry)
+          if self.currentModelIdentifier == entry.identifier {
+            self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+          }
+        } catch { self.showImportError(error) }
+      })
+    picker.popoverPresentationController?.sourceItem = modelsButton
+    present(picker, animated: true)
+  }
+
+  private func refreshModelButton() {
+    let isCustom = ModelCacheManager.shared.customModels.contains { $0.identifier == currentModelIdentifier }
     modelsButton.configuration?.title =
-      currentModelName.isEmpty ? "Models" : "\(currentModelName) · \(source)"
+      currentModelName.isEmpty ? "Models" : currentModelName
+    modelsButton.configuration?.subtitle =
+      currentModelName.isEmpty ? nil : "\(currentTask)\(isCustom ? " · Custom" : "")"
     modelsButton.accessibilityLabel =
-      currentModelName.isEmpty ? "Models" : "Models, \(currentModelName), \(source)"
+      currentModelName.isEmpty ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
   }
 
   @objc private func scanModelQRCode() {
@@ -672,14 +631,20 @@ class ViewController: UIViewController, YOLOViewDelegate {
     qrCamera = camera
     camera.showOverlays = false
     modelsButton.isEnabled = false
-    scanButton.configuration?.title = "Cancel"
+    scanButton.setImage(
+      UIImage(systemName: "xmark", withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
+      for: .normal)
+    scanButton.accessibilityLabel = "Cancel QR scan"
     renderPerformanceLabel()
     camera.scanQRCode { [weak self, weak camera] result in
       guard let self, let camera else { return }
       self.qrCamera = nil
       self.modelsButton.isEnabled = !self.isLoadingModel
       camera.showOverlays = true
-      self.scanButton.configuration?.title = "Scan QR"
+      self.scanButton.setImage(
+        UIImage(systemName: "qrcode.viewfinder", withConfiguration: self.yoloView.shareButton.currentImage?.symbolConfiguration),
+        for: .normal)
+      self.scanButton.accessibilityLabel = "Scan QR"
       self.renderPerformanceLabel()
       switch result {
       case .success(let value):
@@ -692,6 +657,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
   func importModel(from url: URL) {
     qrCamera?.cancelQRCodeScan()
     guard !isLoadingModel else { return }
+    if presentedViewController != nil {
+      dismiss(animated: true) { [weak self] in self?.importModel(from: url) }
+      return
+    }
     isLoadingModel = true
     setLoadingState(true, showOverlay: true)
     Task { @MainActor in
@@ -758,7 +727,6 @@ class ViewController: UIViewController, YOLOViewDelegate {
         }
         do {
           try ModelCacheManager.shared.saveCustomModel(model.entry)
-          self.refreshModelMenu()
           let task = appTasks.first { String(describing: $0.yoloTask) == model.task }!
           self.showModelEntries(for: task.name)
           self.loadModel(entry: model.entry, forTask: task.name)
@@ -778,49 +746,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     present(alert, animated: true)
   }
 
-  @IBAction func vibrate(_ sender: Any) { selection.selectionChanged() }
-
-  @IBAction func indexChanged(_ sender: UISegmentedControl) {
-    selection.selectionChanged()
-    guard appTasks.indices.contains(sender.selectedSegmentIndex) else { return }
-
-    let newTask = appTasks[sender.selectedSegmentIndex].name
-
-    if (modelsForTask[newTask]?.isEmpty ?? true) && (remoteModelsInfo[newTask]?.isEmpty ?? true) {
-      let alert = UIAlertController(
-        title: "\(newTask) Models not found",
-        message: "Please add or define models for \(newTask).", preferredStyle: .alert)
-      alert.addAction(
-        UIAlertAction(title: "OK", style: .cancel) { _ in alert.dismiss(animated: true) })
-      present(alert, animated: true)
-      sender.selectedSegmentIndex = appTasks.firstIndex { $0.name == currentTask } ?? 0
-      return
-    }
-
-    reloadModelEntriesAndLoadFirst(for: newTask)
-  }
-
   @objc func logoButton() {
     selection.selectionChanged()
     if let link = URL(string: Constants.logoURL) {
       UIApplication.shared.open(link)
     }
-  }
-
-  private func setupTaskSegmentedControl() {
-    segmentedControl.overrideUserInterfaceStyle = .dark
-    segmentedControl.apportionsSegmentWidthsByContent = false
-    segmentedControl.selectedSegmentTintColor = UIColor.white.withAlphaComponent(0.18)
-    segmentedControl.setTitleTextAttributes(
-      [
-        .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
-        .foregroundColor: UIColor.white,
-      ], for: .selected)
-    segmentedControl.setTitleTextAttributes(
-      [
-        .font: UIFont.systemFont(ofSize: 12, weight: .medium),
-        .foregroundColor: UIColor.white.withAlphaComponent(0.72),
-      ], for: .normal)
   }
 
   override func viewDidLayoutSubviews() {
@@ -873,6 +803,159 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
 }
 
+private final class ModelPickerController: UITableViewController, UIPopoverPresentationControllerDelegate {
+  private let custom: [ModelEntry]
+  private let official: [(task: String, entries: [ModelEntry])]
+  private let selectedID: String
+  private let onScan: () -> Void
+  private let onHelp: () -> Void
+  private let onSelect: (ModelEntry) -> Void
+  private let onRemove: (ModelEntry) -> Void
+
+  init(custom: [ModelEntry], official: [(task: String, entries: [ModelEntry])], selectedID: String,
+    onScan: @escaping () -> Void, onHelp: @escaping () -> Void,
+    onSelect: @escaping (ModelEntry) -> Void, onRemove: @escaping (ModelEntry) -> Void) {
+    self.custom = custom
+    self.official = official
+    self.selectedID = selectedID
+    self.onScan = onScan
+    self.onHelp = onHelp
+    self.onSelect = onSelect
+    self.onRemove = onRemove
+    super.init(style: .plain)
+    tableView.backgroundColor = .clear
+    tableView.separatorStyle = .none
+    tableView.sectionHeaderTopPadding = 0
+    modalPresentationStyle = .popover
+    overrideUserInterfaceStyle = .dark
+    popoverPresentationController?.delegate = self
+    popoverPresentationController?.permittedArrowDirections = [.up, .down]
+  }
+
+  required init?(coder: NSCoder) { return nil }
+
+  override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    preferredContentSize = CGSize(width: 350, height: tableView.contentSize.height)
+  }
+
+  func adaptivePresentationStyle(for _: UIPresentationController, traitCollection _: UITraitCollection)
+    -> UIModalPresentationStyle { .none }
+
+  override func viewIsAppearing(_ animated: Bool) {
+    super.viewIsAppearing(animated)
+    tableView.layoutIfNeeded()
+    let selected: IndexPath?
+    if let row = custom.firstIndex(where: { $0.identifier == selectedID }) {
+      selected = IndexPath(row: row + 1, section: 0)
+    } else {
+      selected = official.firstIndex(where: { $0.entries.contains { $0.identifier == selectedID } })
+        .map { IndexPath(row: $0, section: 1) }
+    }
+    if let selected { tableView.scrollToRow(at: selected, at: .middle, animated: false) }
+  }
+
+  override func numberOfSections(in _: UITableView) -> Int { 2 }
+
+  override func tableView(_: UITableView, numberOfRowsInSection section: Int) -> Int {
+    section == 1 ? official.count : custom.count + 1
+  }
+
+  override func tableView(_: UITableView, titleForHeaderInSection section: Int) -> String? {
+    section == 1 ? "Official" : "Custom"
+  }
+
+  override func tableView(_: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    indexPath.section == 1 ? 52 : UITableView.automaticDimension
+  }
+
+  override func tableView(_: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    let cell = UITableViewCell()
+    cell.backgroundColor = .clear
+    var content = UIListContentConfiguration.subtitleCell()
+    content.textProperties.font = .systemFont(ofSize: 15, weight: .medium)
+    content.textProperties.color = .white
+    content.textProperties.numberOfLines = 1
+    content.secondaryTextProperties.font = .systemFont(ofSize: 12)
+    content.secondaryTextProperties.color = .white.withAlphaComponent(0.72)
+    if indexPath.section == 1 {
+      let group = official[indexPath.row]
+      content.text = group.task
+      let control = UISegmentedControl(items: group.entries.map { entry in
+        let size = String(entry.displayName.split(separator: "-")[0].suffix(1))
+        return entry.isLocalBundle || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+          ? size : "↓\(size)"
+      })
+      control.selectedSegmentIndex = group.entries.firstIndex { $0.identifier == selectedID }
+        ?? UISegmentedControl.noSegment
+      control.accessibilityLabel = "\(group.task) model size"
+      control.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+      control.selectedSegmentTintColor = .white.withAlphaComponent(0.18)
+      control.setTitleTextAttributes(
+        [.font: UIFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: UIColor.white],
+        for: .selected)
+      control.setTitleTextAttributes(
+        [.font: UIFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: UIColor.white.withAlphaComponent(0.72)],
+        for: .normal)
+      control.frame = CGRect(x: 0, y: 0, width: 220, height: 44)
+      control.addAction(UIAction { [weak self] action in
+        guard let self, let control = action.sender as? UISegmentedControl else { return }
+        let entry = group.entries[control.selectedSegmentIndex]
+        self.dismiss(animated: true) { self.onSelect(entry) }
+      }, for: .valueChanged)
+      cell.accessoryView = control
+      cell.selectionStyle = .none
+    } else if indexPath.row == 0 {
+      content.text = "Scan QR"
+      content.image = UIImage(systemName: "qrcode.viewfinder")
+      content.imageProperties.tintColor = .white
+      let help = UIButton(type: .system, primaryAction: UIAction(image: UIImage(systemName: "questionmark.circle")) { [weak self] _ in
+        guard let self else { return }
+        self.dismiss(animated: true) { self.onHelp() }
+      })
+      help.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+      help.tintColor = .white
+      help.accessibilityLabel = "Platform export guide"
+      cell.accessoryView = help
+    } else {
+      let entry = custom[indexPath.row - 1]
+      content.text = entry.displayName
+      content.image = UIImage(systemName: "checkmark")
+      content.imageProperties.tintColor = entry.identifier == selectedID ? .white : .clear
+      content.secondaryText = appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name
+      if entry.identifier == selectedID { cell.accessibilityTraits.insert(.selected) }
+      let trash = UIButton(type: .system, primaryAction: UIAction(image: UIImage(systemName: "trash")) { [weak self] _ in
+        guard let self else { return }
+        self.dismiss(animated: true) { self.onRemove(entry) }
+      })
+      trash.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+      trash.tintColor = .systemRed
+      trash.accessibilityLabel = "Remove \(entry.displayName)"
+      cell.accessoryView = trash
+    }
+    cell.contentConfiguration = content
+    return cell
+  }
+
+  override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+    var content = UIListContentConfiguration.plainHeader()
+    content.text = self.tableView(tableView, titleForHeaderInSection: section)
+    content.textProperties.font = .systemFont(ofSize: 12, weight: .semibold)
+    content.textProperties.color = .white.withAlphaComponent(0.72)
+    (view as? UITableViewHeaderFooterView)?.contentConfiguration = content
+  }
+
+  override func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
+    guard indexPath.section == 0 else { return }
+    if indexPath.row == 0 {
+      dismiss(animated: true) { self.onScan() }
+    } else {
+      let entry = custom[indexPath.row - 1]
+      dismiss(animated: true) { self.onSelect(entry) }
+    }
+  }
+}
+
 // MARK: - YOLOViewDelegate
 extension ViewController {
   func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
@@ -900,7 +983,7 @@ extension ViewController {
   /// so the breakdown inherits the label's exact layout and show/hide behavior (e.g. camera switching).
   private func renderPerformanceLabel() {
     if qrCamera != nil {
-      labelFPS.text = "Point at the model QR code"
+      labelFPS.text = "Scanning for QR code…"
       return
     }
     let rendered = NSMutableAttributedString(

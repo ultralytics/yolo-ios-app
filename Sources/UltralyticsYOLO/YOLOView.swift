@@ -908,16 +908,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     let horizontalInset = buttonHeight * 0.25
 
     toolbar.frame = CGRect(x: 0, y: height - toolBarHeight, width: width, height: toolBarHeight)
-    playButton.frame = CGRect(x: horizontalInset, y: 0, width: buttonHeight, height: buttonHeight)
-    pauseButton.frame = CGRect(
-      x: playButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
-    )
-    switchCameraButton.frame = CGRect(
-      x: pauseButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
-    )
-    shareButton.frame = CGRect(
-      x: switchCameraButton.frame.maxX, y: 0, width: buttonHeight, height: buttonHeight
-    )
+    var x = horizontalInset
+    for case let button as UIButton in toolbar.subviews where button !== infoButton {
+      button.frame = CGRect(x: x, y: 0, width: buttonHeight, height: buttonHeight)
+      x += buttonHeight
+    }
     infoButton.frame = CGRect(
       x: width - buttonHeight - horizontalInset, y: 0, width: buttonHeight, height: buttonHeight
     )

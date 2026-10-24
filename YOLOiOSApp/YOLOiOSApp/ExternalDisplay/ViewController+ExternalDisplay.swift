@@ -138,7 +138,8 @@ extension ViewController {
         self.loadModel(entry: currentEntry, forTask: self.currentTask)
       } else if !self.currentModels.isEmpty {
         self.loadModel(
-          entry: self.currentModels.first { $0.identifier == self.currentModelIdentifier } ?? self.currentModels[0],
+          entry: self.currentModels.first { $0.identifier == self.currentModelIdentifier }
+            ?? self.currentModels[0],
           forTask: self.currentTask)
       }
     }

@@ -53,7 +53,7 @@ struct MobileModelImport: Decodable {
     let parts = url.pathComponents
     guard url.scheme == "https", url.host == "platform.ultralytics.com", url.port == nil,
       url.user == nil, url.password == nil, parts.count == 4,
-      parts[1] == "mobile", parts[2] == "models",
+      parts[1] == "deploy", parts[2] == "mobile",
       parts[3].range(of: "^[0-9a-f]{24}$", options: .regularExpression) != nil,
       let fragment = url.fragment, fragment.count <= 128
     else { throw CocoaError(.fileReadUnsupportedScheme) }

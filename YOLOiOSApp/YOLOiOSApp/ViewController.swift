@@ -672,7 +672,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
             message: "Paste the link from your model’s Export tab in Platform.",
             preferredStyle: .alert)
           alert.addTextField {
-            $0.placeholder = "https://platform.ultralytics.com/mobile/models/…"
+            $0.placeholder = "https://platform.ultralytics.com/deploy/mobile/…"
             $0.keyboardType = .URL
             $0.autocapitalizationType = .none
           }

@@ -53,15 +53,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private let downloadProgressView = UIProgressView(progressViewStyle: .default)
   private let downloadProgressLabel = UILabel()
   private let cancelLoadingButton = UIButton(type: .system)
-  private let modelsButton = UIButton(type: .system)
+  private lazy var modelsButton = ModelHeaderControl(title: labelName)
   private let scanButton = UIButton(type: .system)
-  private let qrCancelButton = UIButton(type: .system)
-  private var qrCamera: YOLOView? {
-    didSet {
-      updateActivityState()
-      renderPerformanceLabel()
-    }
-  }
+  private let qrOverlay = QRScanOverlayView()
+  private var qrCamera: YOLOView? { didSet { updateActivityState() } }
 
   private var loadingOverlayView: UIView?
 
@@ -81,10 +76,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func updateActivityState() {
-    qrCancelButton.isHidden = qrCamera == nil
-    scanButton.isEnabled = !isLoadingModel && qrCamera == nil
-    modelsButton.isEnabled = !isLoadingModel && qrCamera == nil
-    if isLoadingModel || qrCamera != nil {
+    let scanning = qrCamera != nil
+    scanButton.isEnabled = !isLoadingModel
+    scanButton.configuration?.baseForegroundColor =
+      scanning ? .systemYellow : yoloView.shareButton.tintColor
+    scanButton.configuration?.background.backgroundColor =
+      scanning ? UIColor.systemYellow.withAlphaComponent(0.16) : .clear
+    scanButton.accessibilityTraits = scanning ? [.button, .selected] : .button
+    modelsButton.isEnabled = !isLoadingModel && !scanning
+    qrOverlay.isHidden = !scanning
+    [labelFPS, yoloView.labelSliderConf, yoloView.sliderConf, yoloView.labelSliderIoU, yoloView.sliderIoU]
+      .forEach { $0?.isHidden = scanning }
+    if isLoadingModel {
       activityIndicator.startAnimating()
     } else {
       activityIndicator.stopAnimating()
@@ -556,50 +559,33 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func setupModelActions() {
-    scanButton.setImage(
-      UIImage(
-        systemName: "qrcode.viewfinder",
-        withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration),
-      for: .normal)
-    scanButton.tintColor = yoloView.shareButton.tintColor
+    var scanConfiguration = UIButton.Configuration.plain()
+    scanConfiguration.image = UIImage(
+      systemName: "qrcode.viewfinder",
+      withConfiguration: yoloView.shareButton.currentImage?.symbolConfiguration)
+    scanConfiguration.cornerStyle = .capsule
+    scanButton.configuration = scanConfiguration
     scanButton.accessibilityLabel = "Scan QR"
     scanButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
     yoloView.toolbar.addSubview(scanButton)
 
-    qrCancelButton.setImage(UIImage(systemName: "xmark"), for: .normal)
-    qrCancelButton.tintColor = .white
-    qrCancelButton.accessibilityLabel = "Cancel QR scan"
-    qrCancelButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
-    qrCancelButton.isHidden = true
-    qrCancelButton.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(qrCancelButton)
-    NSLayoutConstraint.activate([
-      qrCancelButton.leadingAnchor.constraint(equalTo: labelFPS.trailingAnchor, constant: 4),
-      qrCancelButton.centerYAnchor.constraint(equalTo: labelFPS.centerYAnchor),
-      qrCancelButton.widthAnchor.constraint(equalToConstant: 44),
-      qrCancelButton.heightAnchor.constraint(equalToConstant: 44),
-    ])
-
-    var configuration = UIButton.Configuration.filled()
-    configuration.title = "Models"
-    configuration.image = UIImage(systemName: "chevron.down")
-    configuration.imagePadding = 6
-    configuration.imagePlacement = .trailing
-    configuration.baseForegroundColor = .white
-    configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
-    configuration.cornerStyle = .capsule
-    modelsButton.configuration = configuration
+    // The task eyebrow and title move into one control above the performance line; it opens the picker.
     modelsButton.addTarget(self, action: #selector(showModelPicker), for: .touchUpInside)
-    modelsButton.translatesAutoresizingMaskIntoConstraints = false
+    qrOverlay.cancelButton.addTarget(self, action: #selector(scanModelQRCode), for: .touchUpInside)
+    [modelsButton, qrOverlay].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
     view.addSubview(modelsButton)
+    yoloView.insertSubview(qrOverlay, belowSubview: yoloView.toolbar)
     NSLayoutConstraint.activate([
-      modelsButton.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 5),
-      modelsButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      modelsButton.widthAnchor.constraint(
-        lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
-      modelsButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
-      modelsButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 44),
+      modelsButton.topAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.topAnchor, constant: -10),
+      modelsButton.centerXAnchor.constraint(equalTo: yoloView.centerXAnchor),
+      modelsButton.widthAnchor.constraint(lessThanOrEqualTo: yoloView.widthAnchor, constant: -40),
+      labelFPS.topAnchor.constraint(equalTo: modelsButton.bottomAnchor, constant: 5),
+      qrOverlay.topAnchor.constraint(equalTo: yoloView.topAnchor),
+      qrOverlay.bottomAnchor.constraint(equalTo: yoloView.bottomAnchor),
+      qrOverlay.leadingAnchor.constraint(equalTo: yoloView.leadingAnchor),
+      qrOverlay.trailingAnchor.constraint(equalTo: yoloView.trailingAnchor),
     ])
+    updateActivityState()
     refreshModelButton()
   }
 
@@ -643,8 +629,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let isCustom = ModelCacheManager.shared.customModels.contains {
       $0.identifier == currentModelIdentifier
     }
-    modelsButton.configuration?.title =
-      currentModelName.isEmpty ? "Models" : "\(currentTask)\(isCustom ? " · Custom" : "")"
+    let task = "\(currentTask)\(isCustom ? " · Custom" : "")"
+    modelsButton.taskLabel.attributedText = NSAttributedString(
+      string: currentTask.isEmpty ? " " : task.uppercased(), attributes: [.kern: 1])
     modelsButton.accessibilityLabel =
       currentModelName.isEmpty
       ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
@@ -821,6 +808,176 @@ class ViewController: UIViewController, YOLOViewDelegate {
     NotificationCenter.default.removeObserver(self)
   }
 
+}
+
+/// Task eyebrow above the model title and its chevron; the whole block opens the model picker.
+private final class ModelHeaderControl: UIControl {
+  let taskLabel = UILabel()
+  private let chevron = UIImageView(
+    image: UIImage(
+      systemName: "chevron.down",
+      withConfiguration: UIImage.SymbolConfiguration(pointSize: 13, weight: .semibold)))
+
+  init(title: UILabel) {
+    super.init(frame: .zero)
+    taskLabel.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(
+      for: .systemFont(ofSize: 12, weight: .semibold))
+    taskLabel.adjustsFontForContentSizeCategory = true
+    taskLabel.textColor = UIColor.white.withAlphaComponent(0.62)
+    chevron.tintColor = UIColor.white.withAlphaComponent(0.62)
+    chevron.setContentCompressionResistancePriority(.required, for: .horizontal)
+    title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    let row = UIStackView(arrangedSubviews: [title, chevron])
+    row.spacing = 6
+    row.alignment = .center
+    let stack = UIStackView(arrangedSubviews: [taskLabel, row])
+    stack.axis = .vertical
+    stack.alignment = .center
+    stack.isUserInteractionEnabled = false
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.topAnchor.constraint(equalTo: topAnchor),
+      stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+      stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+      stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+    ])
+    isAccessibilityElement = true
+    accessibilityTraits = .button
+  }
+
+  required init?(coder: NSCoder) { return nil }
+
+  override var isHighlighted: Bool { didSet { alpha = isHighlighted ? 0.5 : 1 } }
+
+  override var isEnabled: Bool {
+    didSet {
+      chevron.alpha = isEnabled ? 1 : 0.35
+      accessibilityTraits = isEnabled ? .button : [.button, .notEnabled]
+    }
+  }
+}
+
+/// Dims the running camera around a viewfinder and says which Platform QR code to scan. Touches outside Cancel pass
+/// through to the camera, so pinch-to-zoom keeps working while scanning.
+private final class QRScanOverlayView: UIView {
+  let cancelButton = UIButton(type: .system)
+  private let titleLabel = UILabel()
+  private let messageLabel = UILabel()
+  private let scrim = CAShapeLayer()
+  private let corners = CAShapeLayer()
+
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    scrim.fillRule = .evenOdd
+    scrim.fillColor = UIColor.black.withAlphaComponent(0.56).cgColor
+    corners.fillColor = nil
+    corners.strokeColor = UIColor.white.cgColor
+    corners.lineWidth = 4
+    corners.lineCap = .round
+    layer.addSublayer(scrim)
+    layer.addSublayer(corners)
+
+    titleLabel.text = "Scan a model QR code"
+    titleLabel.font = UIFontMetrics(forTextStyle: .title3).scaledFont(
+      for: .systemFont(ofSize: 20, weight: .semibold))
+    titleLabel.textColor = .white
+    messageLabel.text = "In Ultralytics Platform, open an iPhone export and choose Open on phone."
+    messageLabel.font = .preferredFont(forTextStyle: .subheadline)
+    messageLabel.textColor = UIColor.white.withAlphaComponent(0.78)
+    messageLabel.numberOfLines = 0
+    [titleLabel, messageLabel].forEach {
+      $0.textAlignment = .center
+      $0.adjustsFontForContentSizeCategory = true
+      addSubview($0)
+    }
+
+    var configuration = UIButton.Configuration.filled()
+    configuration.title = "Cancel"
+    configuration.baseForegroundColor = .white
+    configuration.baseBackgroundColor = UIColor(red: 118 / 255, green: 118 / 255, blue: 128 / 255, alpha: 0.32)
+    configuration.cornerStyle = .capsule
+    configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 22, bottom: 12, trailing: 22)
+    configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer {
+      var attributes = $0
+      attributes.font = UIFontMetrics(forTextStyle: .subheadline).scaledFont(
+        for: .systemFont(ofSize: 15, weight: .semibold))
+      return attributes
+    }
+    cancelButton.configuration = configuration
+    addSubview(cancelButton)
+  }
+
+  required init?(coder: NSCoder) { return nil }
+
+  override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+    cancelButton.frame.contains(point)
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    // Portrait stacks the copy, viewfinder and Cancel; landscape puts the copy and Cancel beside the viewfinder.
+    let wide = bounds.width > bounds.height
+    let side = min(236, wide ? bounds.height * 0.5 : bounds.width * 0.6)
+    let textWidth = min(310, wide ? bounds.width / 2 - 72 : bounds.width - 80)
+    let fit = CGSize(width: textWidth, height: .greatestFiniteMagnitude)
+    let titleHeight = titleLabel.sizeThatFits(fit).height
+    let messageHeight = messageLabel.sizeThatFits(fit).height
+    let button = cancelButton.intrinsicContentSize
+    let textHeight = titleHeight + 6 + messageHeight
+    let viewfinder: CGRect
+    var textOrigin: CGPoint
+    if wide {
+      let left = (bounds.width - side - 32 - textWidth) / 2
+      viewfinder = CGRect(x: left, y: bounds.midY - side / 2, width: side, height: side)
+      textOrigin = CGPoint(
+        x: viewfinder.maxX + 32, y: bounds.midY - (textHeight + 20 + button.height) / 2)
+    } else {
+      let top = bounds.midY - (textHeight + 24 + side + 20 + button.height) / 2
+      textOrigin = CGPoint(x: bounds.midX - textWidth / 2, y: top)
+      viewfinder = CGRect(x: bounds.midX - side / 2, y: top + textHeight + 24, width: side, height: side)
+    }
+    titleLabel.frame = CGRect(origin: textOrigin, size: CGSize(width: textWidth, height: titleHeight))
+    textOrigin.y += titleHeight + 6
+    messageLabel.frame = CGRect(origin: textOrigin, size: CGSize(width: textWidth, height: messageHeight))
+    let buttonCenterX = wide ? textOrigin.x + textWidth / 2 : viewfinder.midX
+    let buttonTop = wide ? textOrigin.y + messageHeight + 20 : viewfinder.maxY + 20
+    cancelButton.frame = CGRect(
+      x: buttonCenterX - button.width / 2, y: buttonTop, width: button.width, height: button.height)
+
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    let cutout = UIBezierPath(rect: bounds)
+    cutout.append(UIBezierPath(roundedRect: viewfinder, cornerRadius: 28))
+    scrim.path = cutout.cgPath
+    corners.path = Self.cornerPath(in: viewfinder.insetBy(dx: 2, dy: 2), radius: 26, arm: 44).cgPath
+    CATransaction.commit()
+  }
+
+  private static func cornerPath(in r: CGRect, radius: CGFloat, arm: CGFloat) -> UIBezierPath {
+    let path = UIBezierPath()
+    path.move(to: CGPoint(x: r.minX, y: r.minY + arm))
+    path.addArc(
+      withCenter: CGPoint(x: r.minX + radius, y: r.minY + radius), radius: radius,
+      startAngle: .pi, endAngle: 1.5 * .pi, clockwise: true)
+    path.addLine(to: CGPoint(x: r.minX + arm, y: r.minY))
+    path.move(to: CGPoint(x: r.maxX - arm, y: r.minY))
+    path.addArc(
+      withCenter: CGPoint(x: r.maxX - radius, y: r.minY + radius), radius: radius,
+      startAngle: 1.5 * .pi, endAngle: 2 * .pi, clockwise: true)
+    path.addLine(to: CGPoint(x: r.maxX, y: r.minY + arm))
+    path.move(to: CGPoint(x: r.maxX, y: r.maxY - arm))
+    path.addArc(
+      withCenter: CGPoint(x: r.maxX - radius, y: r.maxY - radius), radius: radius,
+      startAngle: 0, endAngle: 0.5 * .pi, clockwise: true)
+    path.addLine(to: CGPoint(x: r.maxX - arm, y: r.maxY))
+    path.move(to: CGPoint(x: r.minX + arm, y: r.maxY))
+    path.addArc(
+      withCenter: CGPoint(x: r.minX + radius, y: r.maxY - radius), radius: radius,
+      startAngle: 0.5 * .pi, endAngle: .pi, clockwise: true)
+    path.addLine(to: CGPoint(x: r.minX, y: r.maxY - arm))
+    return path
+  }
 }
 
 private final class ModelPickerController: UITableViewController,
@@ -1023,10 +1180,6 @@ extension ViewController {
   /// Renders the FPS line with the smaller stage-breakdown line beneath it in the single `labelFPS`,
   /// so the breakdown inherits the label's exact layout and show/hide behavior (e.g. camera switching).
   private func renderPerformanceLabel() {
-    if qrCamera != nil {
-      labelFPS.text = "Scanning for QR code…"
-      return
-    }
     let rendered = NSMutableAttributedString(
       string: fpsText,
       attributes: [

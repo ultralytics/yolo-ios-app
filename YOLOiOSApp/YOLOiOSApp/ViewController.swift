@@ -896,7 +896,7 @@ private final class QRScanOverlayView: UIView {
     titleLabel.font = UIFontMetrics(forTextStyle: .title3).scaledFont(
       for: .systemFont(ofSize: 20, weight: .semibold))
     titleLabel.textColor = .white
-    messageLabel.text = "In Ultralytics Platform, open an iPhone export and choose Open on phone."
+    messageLabel.text = "In Ultralytics Platform, open an iPhone export and choose Open on iPhone."
     messageLabel.font = .preferredFont(forTextStyle: .subheadline)
     messageLabel.textColor = UIColor.white.withAlphaComponent(0.78)
     messageLabel.numberOfLines = 0

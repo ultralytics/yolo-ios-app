@@ -57,9 +57,11 @@ struct MobileModelImport: Decodable {
       parts[3].range(of: "^[0-9a-f]{24}$", options: .regularExpression) != nil,
       let fragment = url.fragment, fragment.count <= 128
     else {
-      throw NSError(domain: "ModelImport", code: 0, userInfo: [
-        NSLocalizedDescriptionKey: "Scan a model QR code from Ultralytics Platform."
-      ])
+      throw NSError(
+        domain: "ModelImport", code: 0,
+        userInfo: [
+          NSLocalizedDescriptionKey: "Scan a model QR code from Ultralytics Platform."
+        ])
     }
     var request = URLRequest(
       url: URL(string: "https://platform.ultralytics.com/api/mobile/models/\(parts[3])")!)

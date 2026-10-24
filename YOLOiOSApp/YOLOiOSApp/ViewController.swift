@@ -16,8 +16,8 @@ import AudioToolbox
 import CoreML
 import CoreMedia
 import UIKit
-import VisionKit
 import UltralyticsYOLO
+import VisionKit
 
 let appTasks: [(name: String, shortName: String, folder: String, yoloTask: YOLOTask)] = [
   ("Detect", "Det", "Models/Detect", .detect),
@@ -688,9 +688,13 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
   @objc private func scanModelQRCode() {
     guard !isLoadingModel else { return }
     guard DataScannerViewController.isSupported, DataScannerViewController.isAvailable else {
-      showImportError(NSError(domain: "ModelImport", code: 3, userInfo: [
-        NSLocalizedDescriptionKey: "QR scanning is unavailable. Allow camera access or scan with your phone’s Camera app."
-      ]))
+      showImportError(
+        NSError(
+          domain: "ModelImport", code: 3,
+          userInfo: [
+            NSLocalizedDescriptionKey:
+              "QR scanning is unavailable. Allow camera access or scan with your phone’s Camera app."
+          ]))
       return
     }
     let scanner = DataScannerViewController(
@@ -704,18 +708,22 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
     navigation.modalPresentationStyle = .fullScreen
     yoloView.stop()
     present(navigation, animated: true) {
-      do { try scanner.startScanning() }
-      catch { self.finishModelQRScan(scanner) { self.showImportError(error) } }
+      do { try scanner.startScanning() } catch {
+        self.finishModelQRScan(scanner) { self.showImportError(error) }
+      }
     }
   }
 
   @objc private func cancelModelQRScan() {
     guard let navigation = presentedViewController as? UINavigationController,
-      let scanner = navigation.viewControllers.first as? DataScannerViewController else { return }
+      let scanner = navigation.viewControllers.first as? DataScannerViewController
+    else { return }
     finishModelQRScan(scanner)
   }
 
-  private func finishModelQRScan(_ scanner: DataScannerViewController, completion: (() -> Void)? = nil) {
+  private func finishModelQRScan(
+    _ scanner: DataScannerViewController, completion: (() -> Void)? = nil
+  ) {
     scanner.delegate = nil
     scanner.stopScanning()
     dismiss(animated: true) {
@@ -724,7 +732,10 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
     }
   }
 
-  func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
+  func dataScanner(
+    _ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem],
+    allItems: [RecognizedItem]
+  ) {
     for case .barcode(let barcode) in addedItems {
       if let value = barcode.payloadStringValue, let url = URL(string: value) {
         finishModelQRScan(dataScanner) { self.importModel(from: url) }
@@ -733,7 +744,10 @@ class ViewController: UIViewController, YOLOViewDelegate, DataScannerViewControl
     }
   }
 
-  func dataScanner(_ dataScanner: DataScannerViewController, becameUnavailableWithError error: DataScannerViewController.ScanningUnavailable) {
+  func dataScanner(
+    _ dataScanner: DataScannerViewController,
+    becameUnavailableWithError error: DataScannerViewController.ScanningUnavailable
+  ) {
     finishModelQRScan(dataScanner) { self.showImportError(error) }
   }
 

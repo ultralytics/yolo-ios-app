@@ -585,11 +585,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     configuration.image = UIImage(systemName: "chevron.down")
     configuration.imagePadding = 6
     configuration.imagePlacement = .trailing
-    configuration.titleAlignment = .center
     configuration.baseForegroundColor = .white
     configuration.baseBackgroundColor = UIColor.black.withAlphaComponent(0.7)
     configuration.cornerStyle = .capsule
-    configuration.titleLineBreakMode = .byTruncatingTail
     modelsButton.configuration = configuration
     modelsButton.addTarget(self, action: #selector(showModelPicker), for: .touchUpInside)
     modelsButton.translatesAutoresizingMaskIntoConstraints = false
@@ -646,9 +644,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       $0.identifier == currentModelIdentifier
     }
     modelsButton.configuration?.title =
-      currentModelName.isEmpty ? "Models" : currentModelName
-    modelsButton.configuration?.subtitle =
-      currentModelName.isEmpty ? nil : "\(currentTask)\(isCustom ? " · Custom" : "")"
+      currentModelName.isEmpty ? "Models" : "\(currentTask)\(isCustom ? " · Custom" : "")"
     modelsButton.accessibilityLabel =
       currentModelName.isEmpty
       ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"

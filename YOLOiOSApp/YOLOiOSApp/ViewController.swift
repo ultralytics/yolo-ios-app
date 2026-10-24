@@ -126,8 +126,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
     setupModelSegmentedControl()
     setupCustomModelsButton()
 
-    let savedModel = ModelCacheManager.shared.customModels.first { $0.identifier == UserDefaults.standard.string(forKey: "selectedCustomModel") }
-    let defaultTaskIndex = appTasks.firstIndex(where: { String(describing: $0.yoloTask) == savedModel?.task })
+    let savedModel = ModelCacheManager.shared.customModels.first {
+      $0.identifier == UserDefaults.standard.string(forKey: "selectedCustomModel")
+    }
+    let defaultTaskIndex =
+      appTasks.firstIndex(where: { String(describing: $0.yoloTask) == savedModel?.task })
       ?? appTasks.firstIndex(where: { $0.yoloTask == Constants.defaultTask }) ?? 0
     segmentedControl.selectedSegmentIndex = defaultTaskIndex
     currentTask = appTasks[defaultTaskIndex].name
@@ -351,9 +354,10 @@ class ViewController: UIViewController, YOLOViewDelegate {
       )
     }
 
-    return localEntries + remoteEntries + ModelCacheManager.shared.customModels.filter { entry in
-      appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
-    }
+    return localEntries + remoteEntries
+      + ModelCacheManager.shared.customModels.filter { entry in
+        appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
+      }
   }
 
   func loadModel(entry: ModelEntry, forTask task: String) {
@@ -364,7 +368,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     isLoadingModel = true
 
     let needsDownload =
-      entry.installedURL == nil && !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+      entry.installedURL == nil && !entry.isLocalBundle
+      && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
 
     // Skip the local YOLOView reset when an external display owns the camera.
     let hasExternalDisplay = hasExternalScreen()
@@ -425,7 +430,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
       if ModelCacheManager.shared.isModelDownloaded(key: key) {
         loadModelAndSetToYOLOView(
-          at: ModelCacheManager.shared.modelURL(for: key), yoloTask: yoloTask, displayName: entry.displayName)
+          at: ModelCacheManager.shared.modelURL(for: key), yoloTask: yoloTask,
+          displayName: entry.displayName)
       } else {
         guard let remoteURL = entry.remoteURL else {
           self.finishLoadingModel(success: false, modelName: entry.displayName)
@@ -460,8 +466,9 @@ class ViewController: UIViewController, YOLOViewDelegate {
     }
   }
 
-  private func loadModelAndSetToYOLOView(at localModelURL: URL, yoloTask: YOLOTask, displayName: String)
-  {
+  private func loadModelAndSetToYOLOView(
+    at localModelURL: URL, yoloTask: YOLOTask, displayName: String
+  ) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
       self.downloadProgressLabel.isHidden = false
@@ -541,9 +548,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
           )
         }
         let yoloTask = appTasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
-        self.currentModelName = self.currentLoadingEntry?.installedURL == nil ? processString(modelName) : modelName
+        self.currentModelName =
+          self.currentLoadingEntry?.installedURL == nil ? processString(modelName) : modelName
         self.currentModelIdentifier = self.currentLoadingEntry?.identifier ?? ""
-        UserDefaults.standard.set(self.currentLoadingEntry?.installedURL == nil ? nil : self.currentModelIdentifier, forKey: "selectedCustomModel")
+        UserDefaults.standard.set(
+          self.currentLoadingEntry?.installedURL == nil ? nil : self.currentModelIdentifier,
+          forKey: "selectedCustomModel")
 
         ModelSelectionManager.setupSegmentedControl(
           self.modelSegmentedControl,
@@ -622,35 +632,54 @@ class ViewController: UIViewController, YOLOViewDelegate {
 
   private func refreshCustomModelsMenu() {
     let entries: [UIMenuElement] = ModelCacheManager.shared.customModels.map { entry in
-      UIMenu(title: entry.displayName, subtitle: entry.task, children: [
-        UIAction(title: "Use model", image: UIImage(systemName: "checkmark")) { [weak self] _ in
-          guard let self, !self.isLoadingModel,
-            let task = appTasks.first(where: { String(describing: $0.yoloTask) == entry.task }) else { return }
-          self.showModelEntries(for: task.name)
-          self.loadModel(entry: entry, forTask: task.name)
-        },
-        UIAction(title: "Remove model", image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-          guard let self, !self.isLoadingModel else { return }
-          do {
-            try ModelCacheManager.shared.removeCustomModel(entry)
-            self.refreshCustomModelsMenu()
-            if self.currentModelIdentifier == entry.identifier {
-              self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
-            }
-          } catch { self.showImportError(error) }
-        },
-      ])
+      UIMenu(
+        title: entry.displayName, subtitle: entry.task,
+        children: [
+          UIAction(title: "Use model", image: UIImage(systemName: "checkmark")) { [weak self] _ in
+            guard let self, !self.isLoadingModel,
+              let task = appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })
+            else { return }
+            self.showModelEntries(for: task.name)
+            self.loadModel(entry: entry, forTask: task.name)
+          },
+          UIAction(
+            title: "Remove model", image: UIImage(systemName: "trash"), attributes: .destructive
+          ) { [weak self] _ in
+            guard let self, !self.isLoadingModel else { return }
+            do {
+              try ModelCacheManager.shared.removeCustomModel(entry)
+              self.refreshCustomModelsMenu()
+              if self.currentModelIdentifier == entry.identifier {
+                self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+              }
+            } catch { self.showImportError(error) }
+          },
+        ])
     }
-    modelsButton.menu = UIMenu(children: entries + [UIAction(title: "Paste Platform import link", image: UIImage(systemName: "link")) { [weak self] _ in
-      let alert = UIAlertController(title: "Import model", message: "Paste the link from your model’s Export tab in Platform.", preferredStyle: .alert)
-      alert.addTextField { $0.placeholder = "https://platform.ultralytics.com/mobile/models/…"; $0.keyboardType = .URL; $0.autocapitalizationType = .none }
-      alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-      alert.addAction(UIAlertAction(title: "Import", style: .default) { [weak self, weak alert] _ in
-        guard let value = alert?.textFields?.first?.text, let url = URL(string: value) else { return }
-        self?.importModel(from: url)
-      })
-      self?.present(alert, animated: true)
-    }])
+    modelsButton.menu = UIMenu(
+      children: entries + [
+        UIAction(title: "Paste Platform import link", image: UIImage(systemName: "link")) {
+          [weak self] _ in
+          let alert = UIAlertController(
+            title: "Import model",
+            message: "Paste the link from your model’s Export tab in Platform.",
+            preferredStyle: .alert)
+          alert.addTextField {
+            $0.placeholder = "https://platform.ultralytics.com/mobile/models/…"
+            $0.keyboardType = .URL
+            $0.autocapitalizationType = .none
+          }
+          alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+          alert.addAction(
+            UIAlertAction(title: "Import", style: .default) { [weak self, weak alert] _ in
+              guard let value = alert?.textFields?.first?.text, let url = URL(string: value) else {
+                return
+              }
+              self?.importModel(from: url)
+            })
+          self?.present(alert, animated: true)
+        }
+      ])
   }
 
   func importModel(from url: URL) {
@@ -659,18 +688,28 @@ class ViewController: UIViewController, YOLOViewDelegate {
       do {
         let model = try await MobileModelImport.resolve(url)
         guard !isLoadingModel else { return }
-        if let installed = ModelCacheManager.shared.customModels.first(where: { $0.identifier == model.exportId }) {
+        if let installed = ModelCacheManager.shared.customModels.first(where: {
+          $0.identifier == model.exportId
+        }) {
           let task = appTasks.first { String(describing: $0.yoloTask) == model.task }!
           showModelEntries(for: task.name)
           loadModel(entry: installed, forTask: task.name)
           return
         }
-        let alert = UIAlertController(title: model.name, message: "\(model.task.capitalized) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))\nDownload for offline use?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-          guard let self, self.currentModelName.isEmpty else { return }
-          self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
-        })
-        alert.addAction(UIAlertAction(title: "Download", style: .default) { [weak self] _ in self?.installImportedModel(model) })
+        let alert = UIAlertController(
+          title: model.name,
+          message:
+            "\(model.task.capitalized) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))\nDownload for offline use?",
+          preferredStyle: .alert)
+        alert.addAction(
+          UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+            guard let self, self.currentModelName.isEmpty else { return }
+            self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+          })
+        alert.addAction(
+          UIAlertAction(title: "Download", style: .default) { [weak self] _ in
+            self?.installImportedModel(model)
+          })
         present(alert, animated: true)
       } catch { showImportError(error) }
     }
@@ -682,14 +721,20 @@ class ViewController: UIViewController, YOLOViewDelegate {
     currentLoadingEntry = model.entry
     setLoadingState(true, showOverlay: true, canCancel: true)
     downloadProgressView.isHidden = false
-    ModelDownloadManager.shared.startDownload(url: model.downloadUrl, fileName: "\(model.exportId).zip", key: model.exportId, modelImport: model) { [weak self] success, _ in
+    ModelDownloadManager.shared.startDownload(
+      url: model.downloadUrl, fileName: "\(model.exportId).zip", key: model.exportId,
+      modelImport: model
+    ) { [weak self] success, _ in
       DispatchQueue.main.async {
         guard let self else { return }
         self.isLoadingModel = false
         self.currentLoadingEntry = nil
         self.setLoadingState(false)
         self.resetDownloadProgress()
-        guard success else { self.showImportError(CocoaError(.fileReadCorruptFile)); return }
+        guard success else {
+          self.showImportError(CocoaError(.fileReadCorruptFile))
+          return
+        }
         do {
           try ModelCacheManager.shared.saveCustomModel(model.entry)
           self.refreshCustomModelsMenu()
@@ -702,11 +747,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func showImportError(_ error: Error) {
-    let alert = UIAlertController(title: "Model import failed", message: error.localizedDescription, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] _ in
-      guard let self, self.currentModelName.isEmpty else { return }
-      self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
-    })
+    let alert = UIAlertController(
+      title: "Model import failed", message: error.localizedDescription, preferredStyle: .alert)
+    alert.addAction(
+      UIAlertAction(title: "OK", style: .cancel) { [weak self] _ in
+        guard let self, self.currentModelName.isEmpty else { return }
+        self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+      })
     present(alert, animated: true)
   }
 

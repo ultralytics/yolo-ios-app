@@ -137,7 +137,9 @@ extension ViewController {
       if let currentEntry = self.currentLoadingEntry {
         self.loadModel(entry: currentEntry, forTask: self.currentTask)
       } else if !self.currentModels.isEmpty {
-        self.loadModel(entry: self.currentModels[0], forTask: self.currentTask)
+        self.loadModel(
+          entry: self.currentModels.first { $0.identifier == self.currentModelIdentifier } ?? self.currentModels[0],
+          forTask: self.currentTask)
       }
     }
   }

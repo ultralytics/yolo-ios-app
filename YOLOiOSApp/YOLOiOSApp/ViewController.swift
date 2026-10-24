@@ -610,7 +610,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       ? [UIAction(title: "Scan a Platform QR code to add one", attributes: .disabled) { _ in }]
       : customModels.map { entry in
         UIAction(
-          title: entry.displayName, subtitle: entry.task,
+          title: entry.displayName,
+          subtitle: appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name,
           state: entry.identifier == currentModelIdentifier ? .on : .off
         ) { [weak self] _ in
           guard let self, !self.isLoadingModel,
@@ -630,7 +631,11 @@ class ViewController: UIViewController, YOLOViewDelegate {
           title: "Remove custom model", image: UIImage(systemName: "trash"),
           children:
             customModels.map { entry in
-              UIAction(title: entry.displayName, subtitle: entry.task, attributes: .destructive) {
+              UIAction(
+                title: entry.displayName,
+                subtitle: appTasks.first { String(describing: $0.yoloTask) == entry.task }?.name,
+                attributes: .destructive
+              ) {
                 [weak self] _ in
                 guard let self, !self.isLoadingModel else { return }
                 do {
@@ -692,12 +697,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     Task { @MainActor in
       do {
         let model = try await MobileModelImport.resolve(url)
+        let task = appTasks.first { String(describing: $0.yoloTask) == model.task }!
         isLoadingModel = false
         setLoadingState(false)
         if let installed = ModelCacheManager.shared.customModels.first(where: {
           $0.identifier == model.exportId
         }) {
-          let task = appTasks.first { String(describing: $0.yoloTask) == model.task }!
           showModelEntries(for: task.name)
           loadModel(entry: installed, forTask: task.name)
           return
@@ -705,7 +710,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
         let alert = UIAlertController(
           title: model.name,
           message:
-            "\(model.task.capitalized) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))\nDownload for offline use?",
+            "\(task.name) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))\nDownload for offline use?",
           preferredStyle: .alert)
         alert.addAction(
           UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in

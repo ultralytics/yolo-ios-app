@@ -790,7 +790,8 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
     )
 
-    layoutBottomControls(width: width, height: height, sliderX: width * 0.1, sliderWidth: width * 0.2)
+    layoutBottomControls(
+      width: width, height: height, sliderX: width * 0.1, sliderWidth: width * 0.2)
   }
 
   /// Lays out the controls and overlays for portrait orientation.
@@ -842,10 +843,14 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       (labelSliderConf, "Confidence", sliderConf.value), (labelSliderIoU, "IoU", sliderIoU.value),
     ] {
       let paragraph = NSMutableParagraphStyle()
-      paragraph.tabStops = [NSTextTab(textAlignment: .right, location: max(label.bounds.width - 1, 0))]
+      paragraph.tabStops = [
+        NSTextTab(textAlignment: .right, location: max(label.bounds.width - 1, 0))
+      ]
       let text = NSMutableAttributedString(
         string: name + "\t",
-        attributes: [.foregroundColor: UIColor.white.withAlphaComponent(0.62), .paragraphStyle: paragraph])
+        attributes: [
+          .foregroundColor: UIColor.white.withAlphaComponent(0.62), .paragraphStyle: paragraph,
+        ])
       text.append(
         NSAttributedString(
           string: String(format: "%.2f", value),
@@ -1467,7 +1472,9 @@ extension UISegmentedControl {
       [.foregroundColor: UIColor.white, .font: UIFont.systemFont(ofSize: 13, weight: .semibold)],
       for: .normal)
     setTitleTextAttributes(
-      [.foregroundColor: UIColor.systemYellow, .font: UIFont.systemFont(ofSize: 13, weight: .bold)],
+      [
+        .foregroundColor: UIColor.systemYellow, .font: UIFont.systemFont(ofSize: 13, weight: .bold),
+      ],
       for: .selected)
   }
 }

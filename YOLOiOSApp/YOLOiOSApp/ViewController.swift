@@ -1085,7 +1085,9 @@ private final class ModelPickerController: UITableViewController,
       control.applyCameraStyle()
       // Segments share one title color, so sizes still to download draw their letter as a dimmed image.
       for (index, entry) in group.entries.enumerated()
-      where !entry.isLocalBundle && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier) {
+      where !entry.isLocalBundle
+        && !ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
+      {
         let title = NSAttributedString(
           string: sizes[index],
           attributes: [

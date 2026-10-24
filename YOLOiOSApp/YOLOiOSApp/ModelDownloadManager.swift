@@ -92,9 +92,12 @@ struct MobileModelImport: Decodable {
       model.downloadUrl.scheme == "https", model.size > 0,
       dateFormatter.date(from: model.expiresAt).map({ $0 > Date() }) == true
     else {
-      throw NSError(domain: "ModelImport", code: 1, userInfo: [
-        NSLocalizedDescriptionKey: "This model is unavailable or incompatible. Create a new QR code in Platform."
-      ])
+      throw NSError(
+        domain: "ModelImport", code: 1,
+        userInfo: [
+          NSLocalizedDescriptionKey:
+            "This model is unavailable or incompatible. Create a new QR code in Platform."
+        ])
     }
     if model.format == "coreai" && !BasePredictor.isCoreAIAvailable {
       throw NSError(

@@ -310,7 +310,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
           displayName: modelName, identifier: modelName, isLocalBundle: false, remoteURL: url)
     }
     let officialNames = Set(officialEntries.map { $0.displayName.lowercased() })
-    return officialEntries + localEntries.filter { !officialNames.contains($0.displayName.lowercased()) }
+    return officialEntries
+      + localEntries.filter { !officialNames.contains($0.displayName.lowercased()) }
       + ModelCacheManager.shared.customModels.filter { entry in
         appTasks.first(where: { String(describing: $0.yoloTask) == entry.task })?.name == taskName
       }
@@ -585,7 +586,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
     NSLayoutConstraint.activate([
       actions.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 5),
       actions.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-      actions.widthAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
+      actions.widthAnchor.constraint(
+        lessThanOrEqualTo: view.safeAreaLayoutGuide.widthAnchor, constant: -40),
     ])
     refreshModelMenu()
   }
@@ -593,7 +595,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
   private func refreshModelMenu() {
     let task = currentTask
     let official = currentModels.filter { $0.installedURL == nil }.map { entry in
-      let downloaded = entry.isLocalBundle
+      let downloaded =
+        entry.isLocalBundle
         || ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
       return UIAction(
         title: processString(entry.displayName),
@@ -602,7 +605,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
       ) { [weak self] _ in self?.loadModel(entry: entry, forTask: task) }
     }
     let customModels = ModelCacheManager.shared.customModels
-    let custom: [UIMenuElement] = customModels.isEmpty
+    let custom: [UIMenuElement] =
+      customModels.isEmpty
       ? [UIAction(title: "Scan a Platform QR code to add one", attributes: .disabled) { _ in }]
       : customModels.map { entry in
         UIAction(
@@ -621,25 +625,33 @@ class ViewController: UIViewController, YOLOViewDelegate {
       UIMenu(title: "Custom", options: .displayInline, children: custom),
     ]
     if !customModels.isEmpty {
-      groups.append(UIMenu(title: "Remove custom model", image: UIImage(systemName: "trash"), children:
-        customModels.map { entry in
-          UIAction(title: entry.displayName, subtitle: entry.task, attributes: .destructive) { [weak self] _ in
-            guard let self, !self.isLoadingModel else { return }
-            do {
-              try ModelCacheManager.shared.removeCustomModel(entry)
-              if self.currentModelIdentifier == entry.identifier {
-                self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
-              } else {
-                self.refreshModelMenu()
+      groups.append(
+        UIMenu(
+          title: "Remove custom model", image: UIImage(systemName: "trash"),
+          children:
+            customModels.map { entry in
+              UIAction(title: entry.displayName, subtitle: entry.task, attributes: .destructive) {
+                [weak self] _ in
+                guard let self, !self.isLoadingModel else { return }
+                do {
+                  try ModelCacheManager.shared.removeCustomModel(entry)
+                  if self.currentModelIdentifier == entry.identifier {
+                    self.reloadModelEntriesAndLoadFirst(for: self.currentTask)
+                  } else {
+                    self.refreshModelMenu()
+                  }
+                } catch { self.showImportError(error) }
               }
-            } catch { self.showImportError(error) }
-          }
-        }))
+            }))
     }
     modelsButton.menu = UIMenu(children: groups)
-    let source = customModels.contains(where: { $0.identifier == currentModelIdentifier }) ? "Custom" : "Official"
-    modelsButton.configuration?.title = currentModelName.isEmpty ? "Models" : "\(currentModelName) · \(source)"
-    modelsButton.accessibilityLabel = currentModelName.isEmpty ? "Models" : "Models, \(currentModelName), \(source)"
+    let source =
+      customModels.contains(where: { $0.identifier == currentModelIdentifier })
+      ? "Custom" : "Official"
+    modelsButton.configuration?.title =
+      currentModelName.isEmpty ? "Models" : "\(currentModelName) · \(source)"
+    modelsButton.accessibilityLabel =
+      currentModelName.isEmpty ? "Models" : "Models, \(currentModelName), \(source)"
   }
 
   @objc private func scanModelQRCode() {
@@ -730,9 +742,13 @@ class ViewController: UIViewController, YOLOViewDelegate {
         self.setLoadingState(false)
         self.resetDownloadProgress()
         guard success else {
-          self.showImportError(NSError(domain: "ModelImport", code: 3, userInfo: [
-            NSLocalizedDescriptionKey: "Download failed. Check your connection and scan a new code."
-          ]))
+          self.showImportError(
+            NSError(
+              domain: "ModelImport", code: 3,
+              userInfo: [
+                NSLocalizedDescriptionKey:
+                  "Download failed. Check your connection and scan a new code."
+              ]))
           return
         }
         do {

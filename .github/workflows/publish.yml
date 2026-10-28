@@ -142,8 +142,8 @@ jobs:
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.marketing_version }}
         run: |
-          VERSION=$(sed -n "s/^ *s.version *= *'\(.*\)'/\1/p" UltralyticsYOLO.podspec)
           for attempt in 1 2 3; do
             pod trunk push UltralyticsYOLO.podspec --allow-warnings && exit 0
             echo "::warning::pod trunk push attempt $attempt failed"

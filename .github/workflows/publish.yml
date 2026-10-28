@@ -51,8 +51,10 @@ jobs:
       - run: uv pip install --no-cache ultralytics-actions
       - id: check_version
         shell: python
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          import json, os, re, urllib.request
+          import os, re, subprocess
 
           # Read MARKETING_VERSION from project.pbxproj
           with open('YOLOiOSApp/YOLOiOSApp.xcodeproj/project.pbxproj', 'r') as f:
@@ -69,14 +71,16 @@ jobs:
           tag_exists = os.system(f'git rev-parse {current_tag} >/dev/null 2>&1') == 0
           new_version = not tag_exists
 
-          # Check trunk when the tag exists: a run interrupted after tagging leaves the pod unpublished
+          # Check the CocoaPods Specs repo when the tag exists: a run interrupted after tagging leaves the pod unpublished,
+          # and trunk's own version list includes pushes whose Specs commit timed out. 4/e/9 is the MD5 shard of the pod name.
           pod_missing = new_version
           if not new_version:
-              try:
-                  with urllib.request.urlopen('https://trunk.cocoapods.org/api/v1/pods/UltralyticsYOLO', timeout=30) as r:
-                      pod_missing = marketing_version not in {v['name'] for v in json.load(r)['versions']}
-              except Exception as e:
-                  print(f'::warning::CocoaPods trunk check failed: {e}')
+              r = subprocess.run(
+                  ['gh', 'api', f'repos/CocoaPods/Specs/contents/Specs/4/e/9/UltralyticsYOLO/{marketing_version}', '--silent'],
+                  capture_output=True, text=True)
+              pod_missing = 'HTTP 404' in r.stderr
+              if r.returncode and not pod_missing:
+                  print(f'::warning::CocoaPods Specs check failed: {r.stderr.strip()}')
 
           os.system(f'echo "new_version={str(new_version).lower()}" >> $GITHUB_OUTPUT')
           os.system(f'echo "current_tag={current_tag}" >> $GITHUB_OUTPUT')
@@ -132,10 +136,21 @@ jobs:
           xcodebuild -version
       # Publishes the UltralyticsYOLO pod from the v{MARKETING_VERSION} tag whenever trunk lacks that version, so the
       # Flutter plugin's CocoaPods consumers resolve it from trunk. Requires the COCOAPODS_TRUNK_TOKEN repo secret.
+      # Trunk pushes time out transiently ("Calling the GitHub commit API timed out"), so retry. Trunk gives up after
+      # 14 s while its commit to the CocoaPods Specs repo can still land, so stop once the podspec is in Specs.
       - name: Push UltralyticsYOLO to CocoaPods trunk
         env:
           COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
-        run: pod trunk push UltralyticsYOLO.podspec --allow-warnings
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.marketing_version }}
+        run: |
+          for attempt in 1 2 3; do
+            pod trunk push UltralyticsYOLO.podspec --allow-warnings && exit 0
+            echo "::warning::pod trunk push attempt $attempt failed"
+            sleep 60
+            gh api "repos/CocoaPods/Specs/contents/Specs/4/e/9/UltralyticsYOLO/$VERSION" --silent && exit 0
+          done
+          exit 1
 
   testflight:
     needs: check

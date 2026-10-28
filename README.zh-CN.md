@@ -17,7 +17,7 @@
 
 <div align="center">
   <br>
-  <a href="https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://github.com/user-attachments/assets/d5dab2e7-f473-47ce-bc63-69bef89ba52a" alt="Ultralytics YOLO iOS App previews"></a>
+  <a href="https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527" target="_blank"><img width="100%" src="https://cdn.ul.run/i/4d2098fa5d7bc0e5a5aa28660da41eb4.avif" alt="Ultralytics YOLO iOS App previews"></a>
   <br>
   <br>
   <a href="https://apps.apple.com/cn/app/ultralytics-yolo/id1452689527" style="text-decoration:none;">

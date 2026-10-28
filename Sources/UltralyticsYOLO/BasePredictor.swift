@@ -230,7 +230,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameters:
   ///   - unwrappedModelURL: The URL of the model to load.
   ///   - isRealTime: Pass `true` when the predictor will be driven by a camera feed.
-  ///   - functionName: Function of a multifunction Core ML model to load (iOS 18+). `nil` loads the default function.
+  ///   - functionName: Function of a multifunction model to load. `nil` loads the default function (`main` for Core
+  ///     AI). Core ML models need iOS 18+ to select one.
   ///   - completion: Callback that receives the initialized predictor or an error.
   public static func create(
     unwrappedModelURL: URL,
@@ -249,7 +250,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       do {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         if ext == "aimodel" {
-          try predictor.loadCoreAIModel(at: unwrappedModelURL, useGpu: useGpu)
+          try predictor.loadCoreAIModel(
+            at: unwrappedModelURL, useGpu: useGpu, functionName: functionName)
           predictor.isModelLoaded = true
           DispatchQueue.main.async { completion(.success(predictor)) }
           return
@@ -273,9 +275,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
         } else {
           config.computeUnits = .cpuOnly
         }
-        // Selects a function of a multifunction model (iOS 18+); nil loads the model's default function.
         if let functionName {
-          guard #available(iOS 18.0, macOS 15.0, *) else {
+          guard #available(iOS 18.0, *) else {
             throw PredictorError.functionNameUnavailable
           }
           config.functionName = functionName

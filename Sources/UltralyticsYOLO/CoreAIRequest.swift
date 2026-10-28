@@ -64,12 +64,13 @@ extension BasePredictor {
   }
 
   /// Loads a Core AI model and installs it as this predictor's request.
-  func loadCoreAIModel(at url: URL, useGpu: Bool) throws {
+  func loadCoreAIModel(at url: URL, useGpu: Bool, functionName: String?) throws {
     #if canImport(CoreAI)
       if #available(iOS 27.0, *) {
         let metadata = try Self.coreAIMetadata(at: url)
         labels = Self.parseLabels(from: metadata)
-        let request = try CoreAIRequest.load(url: url, useGpu: useGpu)
+        let request = try CoreAIRequest.load(
+          url: url, useGpu: useGpu, functionName: functionName ?? "main")
         modelInputSize = (
           CVPixelBufferGetWidth(request.pixelBuffer), CVPixelBufferGetHeight(request.pixelBuffer)
         )
@@ -151,23 +152,26 @@ extension BasePredictor {
   extension CoreAIRequest {
     /// Loads and specializes an `.aimodel`. `useGpu` keeps its SDK meaning of hardware acceleration: when true Core AI
     /// places the model across the Neural Engine, GPU and CPU itself, and when false inference is pinned to the CPU.
-    static func load(url: URL, useGpu: Bool) throws -> CoreAIRequest {
+    static func load(url: URL, useGpu: Bool, functionName: String) throws -> CoreAIRequest {
       let options: SpecializationOptions = useGpu ? .default : .cpuOnly
       let function = try blocking {
         do {
-          return try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
+          return try await AIModel(contentsOf: url, options: options).loadFunction(
+            named: functionName)
         } catch {
           // On iOS 27.0 a stale specialization cache entry (the asset was replaced under the same path, or the app was
           // reinstalled) fails the load with `nilError` instead of being rebuilt, so evict it and specialize again.
           try? AIModelCache.default.deleteEntries(for: url)
-          return try await AIModel(contentsOf: url, options: options).loadFunction(named: "main")
+          return try await AIModel(contentsOf: url, options: options).loadFunction(
+            named: functionName)
         }
       }
       guard let function, let inputName = function.descriptor.inputNames.first,
         case .ndArray(let input)? = function.descriptor.inputDescriptor(of: inputName),
         input.shape.count == 4
       else {
-        throw PredictorError.invalidCoreAIModel("expected one BCHW tensor input in function 'main'")
+        throw PredictorError.invalidCoreAIModel(
+          "expected one BCHW tensor input in function '\(functionName)'")
       }
       let shape = input.shape
       let isHalf = input.scalarType == .float16

@@ -187,37 +187,38 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     isRealTime: Bool = false,
     useGpu: Bool = true,
     numItemsThreshold: Int = 30,
+    functionName: String? = nil,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     switch task {
     case .classify:
       Classifier.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .segment:
       Segmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .semantic:
       SemanticSegmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .depth:
       DepthEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .obb:
       ObbDetector.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .detect:
       ObjectDetector.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     }
   }
 
@@ -229,12 +230,14 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameters:
   ///   - unwrappedModelURL: The URL of the model to load.
   ///   - isRealTime: Pass `true` when the predictor will be driven by a camera feed.
+  ///   - functionName: Function of a multifunction Core ML model to load (iOS 18+). `nil` loads the default function.
   ///   - completion: Callback that receives the initialized predictor or an error.
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
     useGpu: Bool = true,
     numItemsThreshold: Int = 30,
+    functionName: String? = nil,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     // Create an instance (synchronously, cheap)
@@ -269,6 +272,13 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           }
         } else {
           config.computeUnits = .cpuOnly
+        }
+        // Selects a function of a multifunction model (iOS 18+); nil loads the model's default function.
+        if let functionName {
+          guard #available(iOS 18.0, macOS 15.0, *) else {
+            throw PredictorError.functionNameUnavailable
+          }
+          config.functionName = functionName
         }
 
         let mlModel: MLModel

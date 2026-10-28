@@ -72,4 +72,6 @@ public enum PredictorError: Error {
   case coreAIUnavailable
   /// The Core AI model cannot be run by the SDK.
   case invalidCoreAIModel(String)
+  /// A multifunction model function was requested on an OS before iOS 18 / macOS 15.
+  case functionNameUnavailable
 }

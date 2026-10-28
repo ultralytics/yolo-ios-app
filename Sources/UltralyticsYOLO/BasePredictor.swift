@@ -187,37 +187,38 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     isRealTime: Bool = false,
     useGpu: Bool = true,
     numItemsThreshold: Int = 30,
+    functionName: String? = nil,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     switch task {
     case .classify:
       Classifier.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .segment:
       Segmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .semantic:
       SemanticSegmenter.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .depth:
       DepthEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .pose:
       PoseEstimator.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .obb:
       ObbDetector.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     case .detect:
       ObjectDetector.create(
         unwrappedModelURL: modelURL, isRealTime: isRealTime, useGpu: useGpu,
-        numItemsThreshold: numItemsThreshold, completion: completion)
+        numItemsThreshold: numItemsThreshold, functionName: functionName, completion: completion)
     }
   }
 
@@ -229,12 +230,15 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// - Parameters:
   ///   - unwrappedModelURL: The URL of the model to load.
   ///   - isRealTime: Pass `true` when the predictor will be driven by a camera feed.
+  ///   - functionName: Function of a multifunction model to load. `nil` loads the default function (`main` for Core
+  ///     AI). Core ML models need iOS 18+ to select one.
   ///   - completion: Callback that receives the initialized predictor or an error.
   public static func create(
     unwrappedModelURL: URL,
     isRealTime: Bool = false,
     useGpu: Bool = true,
     numItemsThreshold: Int = 30,
+    functionName: String? = nil,
     completion: @escaping @Sendable (Result<BasePredictor, Error>) -> Void
   ) {
     // Create an instance (synchronously, cheap)
@@ -246,7 +250,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       do {
         let ext = unwrappedModelURL.pathExtension.lowercased()
         if ext == "aimodel" {
-          try predictor.loadCoreAIModel(at: unwrappedModelURL, useGpu: useGpu)
+          try predictor.loadCoreAIModel(
+            at: unwrappedModelURL, useGpu: useGpu, functionName: functionName)
           predictor.isModelLoaded = true
           DispatchQueue.main.async { completion(.success(predictor)) }
           return
@@ -269,6 +274,12 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           }
         } else {
           config.computeUnits = .cpuOnly
+        }
+        if let functionName {
+          guard #available(iOS 18.0, *) else {
+            throw PredictorError.functionNameUnavailable
+          }
+          config.functionName = functionName
         }
 
         let mlModel: MLModel

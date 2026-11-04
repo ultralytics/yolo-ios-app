@@ -68,7 +68,10 @@ jobs:
           current_tag = f'v{marketing_version}'
 
           # Gate on the release, not the tag: a run interrupted after tagging can leave the release uncreated
-          new_version = os.system(f'gh release view {current_tag} >/dev/null 2>&1') != 0
+          r = subprocess.run(['gh', 'release', 'view', current_tag], capture_output=True, text=True)
+          if r.returncode and 'release not found' not in r.stderr:
+              raise SystemExit(r.stderr.strip() or 'gh release view failed')
+          new_version = r.returncode != 0
 
           # Check the CocoaPods Specs repo when the release exists: an interrupted run can leave the pod unpublished,
           # and trunk's own version list includes pushes whose Specs commit timed out. 4/e/9 is the MD5 shard of the pod name.

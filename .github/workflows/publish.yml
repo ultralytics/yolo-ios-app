@@ -67,11 +67,13 @@ jobs:
           marketing_version = version_match.group(1).strip()
           current_tag = f'v{marketing_version}'
 
-          # Check if tag already exists
-          tag_exists = os.system(f'git rev-parse {current_tag} >/dev/null 2>&1') == 0
-          new_version = not tag_exists
+          # Gate on the release, not the tag: a run interrupted after tagging can leave the release uncreated
+          r = subprocess.run(['gh', 'release', 'view', current_tag], capture_output=True, text=True)
+          if r.returncode and 'release not found' not in r.stderr:
+              raise SystemExit(r.stderr.strip() or 'gh release view failed')
+          new_version = r.returncode != 0
 
-          # Check the CocoaPods Specs repo when the tag exists: a run interrupted after tagging leaves the pod unpublished,
+          # Check the CocoaPods Specs repo when the release exists: an interrupted run can leave the pod unpublished,
           # and trunk's own version list includes pushes whose Specs commit timed out. 4/e/9 is the MD5 shard of the pod name.
           pod_missing = new_version
           if not new_version:
@@ -113,10 +115,12 @@ jobs:
           CURRENT_TAG: ${{ needs.check.outputs.current_tag }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          git config --global user.name "UltralyticsAssistant"
-          git config --global user.email "web@ultralytics.com"
-          git tag -a "$CURRENT_TAG" -m "$(git log -1 --pretty=%B)"
-          git push origin "$CURRENT_TAG"
+          if [ -z "$(git tag -l "$CURRENT_TAG")" ]; then
+            git config --global user.name "UltralyticsAssistant"
+            git config --global user.email "web@ultralytics.com"
+            git tag -a "$CURRENT_TAG" -m "$(git log -1 --pretty=%B)"
+            git push origin "$CURRENT_TAG"
+          fi
           ultralytics-actions-summarize-release
           uv cache prune --ci
 

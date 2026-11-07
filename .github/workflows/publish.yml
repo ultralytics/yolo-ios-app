@@ -127,7 +127,7 @@ jobs:
   pod:
     needs: [check, release]
     if: ${{ !cancelled() && needs.check.outputs.pod_missing == 'true' && needs.release.result != 'failure' && (github.event_name == 'push' || inputs.release == true) }}
-    runs-on: macos-26
+    runs-on: macos-latest
     permissions:
       contents: read
     steps:
@@ -159,7 +159,7 @@ jobs:
   testflight:
     needs: check
     if: github.event_name == 'push' || inputs.testflight == true
-    runs-on: macos-26
+    runs-on: macos-latest
     permissions:
       contents: write
     environment:

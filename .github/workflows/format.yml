@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   actions:
-    runs-on: macos-26 # Swift formatting requires macOS
+    runs-on: macos-latest # Swift formatting requires macOS
     steps:
       - name: Run Ultralytics Actions
         uses: ultralytics/actions@main

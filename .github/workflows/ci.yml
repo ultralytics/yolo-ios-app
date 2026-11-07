@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: macos-26
+    runs-on: macos-latest
     timeout-minutes: 25
     permissions:
       contents: read
@@ -134,7 +134,7 @@ jobs:
           fail_ci_if_error: false
 
   periphery:
-    runs-on: macos-26
+    runs-on: macos-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7

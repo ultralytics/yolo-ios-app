@@ -470,8 +470,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       iouThreshold: iou, confidenceThreshold: confidenceThreshold)
   }
 
-  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
-  public internal(set) var iouThreshold = 0.7
+  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.5).
+  public internal(set) var iouThreshold = 0.5
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///

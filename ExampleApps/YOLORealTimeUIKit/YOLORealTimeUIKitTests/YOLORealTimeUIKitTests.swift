@@ -81,7 +81,7 @@ struct YOLORealTimeUIKitTests {
 
     await #expect(yoloView.sliderIoU.minimumValue == 0)
     await #expect(yoloView.sliderIoU.maximumValue == 1)
-    await #expect(yoloView.sliderIoU.value == 0.7)  // Default IoU threshold
+    await #expect(yoloView.sliderIoU.value == 0.5)  // Default IoU threshold
 
     await #expect(yoloView.sliderNumItems.minimumValue == 1)
     await #expect(yoloView.sliderNumItems.maximumValue == 100)

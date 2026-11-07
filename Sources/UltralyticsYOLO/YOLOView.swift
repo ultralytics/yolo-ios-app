@@ -373,7 +373,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   public func getConfidenceThreshold() -> Double { Double(sliderConf.value) }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.5).
   public func setIouThreshold(_ iou: Double) {
     guard validateUnitRange(iou, name: "IoU threshold") else { return }
     sliderIoU.value = Float(iou)
@@ -661,7 +661,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
-    configureSlider(sliderIoU, min: 0, max: 1, value: 0.7)
+    configureSlider(sliderIoU, min: 0, max: 1, value: 0.5)
     self.addSubview(sliderIoU)
     renderThresholdLabels()
 

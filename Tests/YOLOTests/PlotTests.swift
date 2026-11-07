@@ -40,6 +40,7 @@ class PlotTests: XCTestCase {
     XCTAssertEqual(classColor(2, colors: colors).color, ultralyticsColors[2])  // past the list: palette
     XCTAssertEqual(classColor(21).color, ultralyticsColors[1])
     XCTAssertTrue(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]).isEmpty)
+    XCTAssertTrue(BasePredictor.parseColors(from: ["colors": "['#ff0000', 'red']"]).isEmpty)
     XCTAssertEqual(rgb(classColor(2).textColor), [17, 31, 104])  // #F3F3F3 gets dark text
     XCTAssertEqual(classColor(0).textColor, .white)
     XCTAssertEqual(classColor(0).rgba, 0xFFFF_2A04)  // #042AFF as RGBA bytes

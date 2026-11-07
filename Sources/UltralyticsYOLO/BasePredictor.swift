@@ -184,13 +184,19 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     return []
   }
 
-  /// Parses optional `colors` metadata (a Python list repr like `"['#042aff', '#ff0000']"`), indexed by class id.
+  /// Parses optional `colors` metadata (a Python list repr like `"['#042aff', '#ff0000']"`), indexed by class id. Any
+  /// malformed entry voids the whole list, so colors never shift or apply partially.
   static func parseColors(from userDefined: [String: String]) -> [ClassColor] {
-    guard let colors = userDefined["colors"] else { return [] }
-    return colors.split(separator: ",").enumerated().map { index, entry in
-      let hex = entry.trimmingCharacters(in: CharacterSet(charactersIn: "[]'\" #"))
-      return Int(hex, radix: 16).map { ClassColor(UIColor(rgb: $0)) } ?? classColor(index)
+    guard let list = userDefined["colors"] else { return [] }
+    var colors = [ClassColor]()
+    for entry in list.split(separator: ",") {
+      let hex = entry.trimmingCharacters(in: CharacterSet(charactersIn: "[]'\" "))
+      guard hex.count == 7, hex.first == "#", hex.dropFirst().allSatisfy(\.isHexDigit),
+        let rgb = Int(hex.dropFirst(), radix: 16)
+      else { return [] }
+      colors.append(ClassColor(UIColor(rgb: rgb)))
     }
+    return colors
   }
 
   /// Dispatches `create` to the concrete predictor type for the given task, centralizing the task → predictor mapping.

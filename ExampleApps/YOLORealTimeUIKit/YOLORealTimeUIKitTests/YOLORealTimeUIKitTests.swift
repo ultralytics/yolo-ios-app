@@ -101,7 +101,7 @@ struct YOLORealTimeUIKitTests {
 
     // Verify label text
     await #expect(yoloView.labelSliderConf.text == "0.25 Confidence Threshold")
-    await #expect(yoloView.labelSliderIoU.text == "0.70 IoU Threshold")
+    await #expect(yoloView.labelSliderIoU.text == "0.50 IoU Threshold")
   }
 
   /// Tests the bounding box view initialization.

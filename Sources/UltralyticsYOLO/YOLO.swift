@@ -137,7 +137,7 @@ public final class YOLO: @unchecked Sendable {
   }
 
   /// Sets the IoU (Intersection over Union) threshold for non-maximum suppression.
-  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.7).
+  /// - Parameter iou: The IoU threshold value (0.0 to 1.0, default is 0.5).
   public func setIouThreshold(_ iou: Double) {
     guard validateUnitRange(iou, name: "IoU threshold") else { return }
     pendingIou = iou

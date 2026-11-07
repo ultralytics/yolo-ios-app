@@ -43,6 +43,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
+  /// Class colors from the model's optional `colors` metadata, indexed by class id (empty when absent).
+  var colors = [UIColor]()
+
   /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.
   public var capturesOriginalImage = false
 
@@ -180,6 +183,15 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     return []
   }
 
+  /// Parses optional `colors` metadata (a Python list repr like `"['#042aff', '#ff0000']"`), indexed by class id.
+  static func parseColors(from userDefined: [String: String]) -> [UIColor] {
+    guard let colors = userDefined["colors"] else { return [] }
+    return colors.split(separator: ",").enumerated().map { index, entry in
+      let hex = entry.trimmingCharacters(in: CharacterSet(charactersIn: "[]'\" #"))
+      return Int(hex, radix: 16).map(UIColor.init(rgb:)) ?? classColor(index)
+    }
+  }
+
   /// Dispatches `create` to the concrete predictor type for the given task, centralizing the task → predictor mapping.
   public static func create(
     for task: YOLOTask,
@@ -294,8 +306,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           mlModel.modelDescription
           .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
 
-        // (2) Extract class labels
+        // (2) Extract class labels and colors
         predictor.labels = userDefined.map(Self.parseLabels(from:)) ?? []
+        predictor.colors = userDefined.map(Self.parseColors(from:)) ?? []
 
         // Detect NMS-free models (YOLO26 support)
         if let nmsValue = userDefined?["nms"] {

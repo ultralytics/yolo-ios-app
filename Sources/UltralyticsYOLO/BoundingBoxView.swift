@@ -41,11 +41,10 @@ enum DetectionLabelStyle {
     textLayer.masksToBounds = true
   }
 
-  static func attributes(fontSize: CGFloat, alpha: CGFloat = 1) -> [NSAttributedString.Key: Any] {
-    [
-      .font: font(size: fontSize),
-      .foregroundColor: UIColor.white.withAlphaComponent(alpha),
-    ]
+  static func attributes(
+    fontSize: CGFloat, color: UIColor = .white
+  ) -> [NSAttributedString.Key: Any] {
+    [.font: font(size: fontSize), .foregroundColor: color]
   }
 
   static func size(for label: String, fontSize: CGFloat) -> CGSize {
@@ -146,7 +145,7 @@ public final class BoundingBoxView {
 
     textLayer.string = label
     textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
-    textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
+    textLayer.foregroundColor = labelTextColor(for: color).withAlphaComponent(alpha).cgColor
 
     let bounds = textLayer.superlayer?.bounds ?? .zero
     textLayer.isHidden = !DetectionLabelStyle.isVisible(path.bounds, within: bounds)

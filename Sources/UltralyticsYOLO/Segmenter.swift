@@ -31,6 +31,7 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
     let capturedInputSize = self.inputSize
     let capturedModelInputSize = self.modelInputSize
     let capturedLabels = self.labels
+    let capturedColors = self.colors
     let capturedOriginalImage = self.currentOriginalImage
     let capturedWantsInstanceMasks = self.capturesInstanceMasks
     let capturedMaskCropRect = inputMaskCropRect(
@@ -47,7 +48,8 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           inputWidth: capturedModelInputSize.width,
           inputHeight: capturedModelInputSize.height,
           cropRect: capturedMaskCropRect,
-          returnIndividualMasks: capturedWantsInstanceMasks
+          returnIndividualMasks: capturedWantsInstanceMasks,
+          colors: capturedColors
         )
       else {
         DispatchQueue.main.async { [weak self] in self?.isUpdating = false }
@@ -58,7 +60,8 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
         orig_shape: capturedInputSize,
         boxes: boxes,
         masks: Masks(masks: processed.1 ?? [], combinedMask: processed.0),
-        speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels)
+        speed: self?.t2 ?? 0, fps: self.map { 1 / $0.t4 }, names: capturedLabels,
+        colors: capturedColors)
       self?.applyTimingBreakdown(&result, smoothed: true)
       result.originalImage = capturedOriginalImage
       self?.currentOnResultsListener?.on(result: result)
@@ -94,22 +97,24 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
           maskWidth: parsed.masks.shape[3].intValue,
           maskHeight: parsed.masks.shape[2].intValue,
           inputSize: inputSize,
-          modelInputSize: modelInputSize)
+          modelInputSize: modelInputSize),
+        colors: colors
       ),
       let masks = processed.1
     else {
       return YOLOResult(
-        orig_shape: inputSize, boxes: boxes, speed: finishTiming(notify: false), names: labels)
+        orig_shape: inputSize, boxes: boxes, speed: finishTiming(notify: false), names: labels,
+        colors: colors)
     }
 
     let speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
     let annotatedImage = drawYOLOSegmentationWithBoxes(
-      ciImage: image, boxes: boxes, maskImage: processed.0)
+      ciImage: image, boxes: boxes, maskImage: processed.0, colors: colors)
     var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes,
       masks: Masks(masks: masks, combinedMask: processed.0),
       annotatedImage: annotatedImage,
-      speed: speed, names: labels)
+      speed: speed, names: labels, colors: colors)
     applyTimingBreakdown(&result)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)

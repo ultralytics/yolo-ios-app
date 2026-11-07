@@ -169,6 +169,9 @@ Depth estimation stretches the whole image to the model input, matching Ultralyt
 `DepthMap.width` and `height` are the model output dimensions (640×640 for official models); the full map covers the
 original image without cropped padding. Scale it to the original image dimensions when mapping pixels to depth.
 
+Annotations color each class from the model's optional `colors` metadata (one `#rrggbb` per class id), falling back to
+the default Ultralytics palette. Custom overlays get the same color from `classColor(box.index, colors: output.colors)`.
+
 To run one function of a multifunction model, such as several input sizes merged into one package with coremltools'
 `MultiFunctionDescriptor`, create the predictor with `functionName`. `nil` loads the default function (`main` for Core
 AI). Core ML needs iOS 18 or later to select a function and fails with `PredictorError.functionNameUnavailable` on

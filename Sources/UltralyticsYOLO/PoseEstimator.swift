@@ -39,7 +39,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil, keypointsList: keypointsList,
-      annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels)
+      annotatedImage: nil, speed: self.t2, fps: 1 / self.t4, names: labels, colors: colors)
     applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
@@ -78,13 +78,14 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
         keypointsList: keypointsForImage,
         confsList: confsList,
         boundingBoxes: boxes,
-        originalImageSize: inputSize
+        originalImageSize: inputSize,
+        colors: colors
       )
 
       var result = YOLOResult(
         orig_shape: inputSize, boxes: boxes, masks: nil, probs: nil,
         keypointsList: keypointsList, annotatedImage: annotatedImage,
-        speed: speed, names: labels)
+        speed: speed, names: labels, colors: colors)
       applyTimingBreakdown(&result)
       if capturesOriginalImage {
         result.originalImage = UIImage(ciImage: image)

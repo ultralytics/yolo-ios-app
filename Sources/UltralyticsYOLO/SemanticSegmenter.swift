@@ -24,7 +24,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask, speed: self.t2,
-      fps: 1 / self.t4, names: labels)
+      fps: 1 / self.t4, names: labels, colors: colors)
     applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
@@ -44,7 +44,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
 
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], semanticMask: semanticMask,
-      speed: 0, names: labels)
+      speed: 0, names: labels, colors: colors)
     result.speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
     applyTimingBreakdown(&result)
     result.annotatedImage = drawYOLOSemanticSegmentation(
@@ -257,16 +257,11 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       return colorCache.colors
     }
 
-    let colors = (0..<classCount).map { classIndex in
-      let color = ultralyticsColors[classIndex % ultralyticsColors.count]
-      var red: CGFloat = 0
-      var green: CGFloat = 0
-      var blue: CGFloat = 0
-      color.getRed(&red, green: &green, blue: &blue, alpha: nil)
-      return (UInt8(red * 255), UInt8(green * 255), UInt8(blue * 255))
+    let classColors = (0..<classCount).map {
+      classColor($0, colors: colors).toRGBComponents() ?? (0, 0, 0)
     }
-    colorCache = (classCount, colors)
-    return colors
+    colorCache = (classCount, classColors)
+    return classColors
   }
 
   /// Maps clamped float class indices to RGBA through vImage lookup tables - vectorized C, so debug builds

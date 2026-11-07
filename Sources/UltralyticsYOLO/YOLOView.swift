@@ -90,7 +90,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         : task == .semantic ? result.semanticMask?.maskImage : result.depthMap?.image
       if let maskImage {
         maskLayer.isHidden = false
-        maskLayer.opacity = task == .depth ? 0.7 : 0.5
+        maskLayer.opacity = task == .depth ? 0.6 : 0.5
         maskLayer.frame = imageFrameInOverlay(for: result.orig_shape)
         maskLayer.contents = maskImage
       } else {
@@ -488,7 +488,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         imageSize: predictions.orig_shape,
         viewSize: viewSize
       )
-      showBox(at: i, prediction: prediction, frame: rect)
+      showBox(at: i, prediction: prediction, frame: rect, colors: predictions.colors)
     }
 
     for i in maxVisible..<boundingBoxViews.count {
@@ -518,7 +518,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         at: i,
         className: detection.cls,
         confidence: CGFloat(detection.confidence),
-        classIndex: detection.index,
+        color: classColor(detection.index, colors: predictions.colors),
         frame: frame,
         angle: CGFloat(box.angle)
       )
@@ -531,12 +531,12 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
   @inline(__always)
-  private func showBox(at index: Int, prediction: Box, frame: CGRect) {
+  private func showBox(at index: Int, prediction: Box, frame: CGRect, colors: [UIColor]) {
     showBox(
       at: index,
       className: prediction.cls,
       confidence: CGFloat(prediction.conf),
-      classIndex: prediction.index,
+      color: classColor(prediction.index, colors: colors),
       frame: frame
     )
   }
@@ -546,11 +546,10 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     at index: Int,
     className: String,
     confidence: CGFloat,
-    classIndex: Int,
+    color: UIColor,
     frame: CGRect,
     angle: CGFloat? = nil
   ) {
-    let color = ultralyticsColors[classIndex % ultralyticsColors.count]
     let label = DetectionLabelStyle.text(className: className, confidence: confidence)
     let alpha = DetectionLabelStyle.alpha(confidence: confidence)
     boundingBoxViews[index].show(
@@ -588,11 +587,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
       return
     }
 
-    var colorIndex = 0
-    if let index = result.names.firstIndex(of: top1) {
-      colorIndex = index % ultralyticsColors.count
-    }
-    let color = ultralyticsColors[colorIndex]
+    let color = classColor(result.names.firstIndex(of: top1) ?? 0, colors: result.colors)
 
     let confidence = CGFloat(top1Conf)
     let labelText = DetectionLabelStyle.text(className: top1, confidence: confidence)
@@ -613,7 +608,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
     textLayer.string = labelText
     let alpha = DetectionLabelStyle.alpha(confidence: confidence)
-    textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
+    textLayer.foregroundColor = labelTextColor(for: color).withAlphaComponent(alpha).cgColor
     textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
     let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
     textLayer.frame = CGRect(

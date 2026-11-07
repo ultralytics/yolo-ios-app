@@ -242,15 +242,6 @@ class YOLOIntegrationTests: XCTestCase {
       XCTAssertGreaterThan(bone[1], 0)
       XCTAssertLessThanOrEqual(bone[1], 17)
     }
-
-    // Test color palette structure
-    for color in posePalette {
-      XCTAssertEqual(color.count, 3)  // RGB values
-      for component in color {
-        XCTAssertGreaterThanOrEqual(component, 0)
-        XCTAssertLessThanOrEqual(component, 255)
-      }
-    }
   }
 
   func testThreadSafety() {

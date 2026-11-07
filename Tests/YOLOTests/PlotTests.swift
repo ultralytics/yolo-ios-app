@@ -25,12 +25,35 @@ class PlotTests: XCTestCase {
     // Test pose-related constants are properly initialized
     XCTAssertGreaterThan(posePalette.count, 0)
     XCTAssertEqual(posePalette.count, 20)
-    XCTAssertEqual(posePalette[0].count, 3)  // RGB values
 
     XCTAssertGreaterThan(limbColorIndices.count, 0)
     XCTAssertGreaterThan(kptColorIndices.count, 0)
     XCTAssertGreaterThan(skeleton.count, 0)
     XCTAssertEqual(skeleton[0].count, 2)  // Each bone connects 2 points
+  }
+
+  func testClassColorsFromModelMetadata() {
+    let rgb = { (color: UIColor) in color.toRGBComponents().map { [$0.red, $0.green, $0.blue] } }
+    let colors = BasePredictor.parseColors(from: ["colors": "['#ff0000', '#00FF7F']"])
+    XCTAssertEqual(colors.map(rgb), [[255, 0, 0], [0, 255, 127]])
+    XCTAssertEqual(classColor(1, colors: colors), colors[1])
+    XCTAssertEqual(classColor(2, colors: colors), ultralyticsColors[2])  // past the list: palette
+    XCTAssertEqual(classColor(21), ultralyticsColors[1])
+    XCTAssertEqual(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]), [])
+    XCTAssertEqual(rgb(labelTextColor(for: ultralyticsColors[2])), [17, 31, 104])  // #F3F3F3: dark
+    XCTAssertEqual(labelTextColor(for: ultralyticsColors[0]), .white)
+  }
+
+  func testNonCOCOKeypointsUseClassPaletteWithoutSkeleton() {
+    let layer = CALayer()
+    let box = Box(
+      index: 0, cls: "a", conf: 0.9, xywh: .zero, xywhn: CGRect(x: 0, y: 0, width: 1, height: 1))
+    drawKeypoints(
+      keypointsList: [Array(repeating: (x: 0.5, y: 0.5), count: 5)],
+      confsList: [Array(repeating: 0.9, count: 5)], boundingBoxes: [box], on: layer,
+      imageViewSize: CGSize(width: 10, height: 10))
+    let fills = layer.sublayers?.compactMap { ($0 as? CAShapeLayer)?.fillColor }
+    XCTAssertEqual(fills, ultralyticsColors.prefix(5).map(\.cgColor))
   }
 
   func testUIColorRGBComponentsExtension() {

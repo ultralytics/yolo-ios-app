@@ -36,7 +36,8 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     let boxes = decodeBoxes(from: request)
     self.updateTime()
     var result = YOLOResult(
-      orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels)
+      orig_shape: inputSize, boxes: boxes, speed: self.t2, fps: 1 / self.t4, names: labels,
+      colors: colors)
     applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
@@ -91,7 +92,8 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       boxes = decodeBoxes(from: request)
     }
 
-    var result = YOLOResult(orig_shape: inputSize, boxes: boxes, speed: 0, names: labels)
+    var result = YOLOResult(
+      orig_shape: inputSize, boxes: boxes, speed: 0, names: labels, colors: colors)
     result.speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
     applyTimingBreakdown(&result)
     let annotatedImage = drawYOLODetections(on: image, result: result)

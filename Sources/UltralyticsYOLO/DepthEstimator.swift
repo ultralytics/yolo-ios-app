@@ -8,24 +8,13 @@ import Vision
 
 /// Specialized predictor for monocular depth models that produce one metric distance per pixel.
 public final class DepthEstimator: BasePredictor, @unchecked Sendable {
+  /// Jet colormap, channel = clamp(1.5 - |4t - center|, 0, 1) at t = index / 255; entry 0 is black (invalid pixels).
   private static let colorTables: (red: [UInt8], green: [UInt8], blue: [UInt8]) = {
-    var red = [UInt8](repeating: 0, count: 256)
-    var green = red
-    var blue = red
-    let stops: [(Float, Float, Float)] = [
-      (48, 18, 59), (50, 100, 200), (40, 190, 140), (245, 210, 60), (180, 20, 40),
-    ]
-    for index in 0..<256 {
-      let position = Float(index) / 255 * Float(stops.count - 1)
-      let lower = min(Int(position), stops.count - 2)
-      let fraction = position - Float(lower)
-      let a = stops[lower]
-      let b = stops[lower + 1]
-      red[index] = UInt8(a.0 + (b.0 - a.0) * fraction)
-      green[index] = UInt8(a.1 + (b.1 - a.1) * fraction)
-      blue[index] = UInt8(a.2 + (b.2 - a.2) * fraction)
+    func channel(_ center: Float) -> [UInt8] {
+      let ramp = (1..<256).map { 1.5 - abs(4 * Float($0) / 255 - center) }
+      return [0] + ramp.map { UInt8((min(max($0, 0), 1) * 255).rounded()) }
     }
-    return (red, green, blue)
+    return (channel(3), channel(2), channel(1))
   }()
 
   /// Stretches the image to the model input without padding, matching Ultralytics depth validation and calibration.
@@ -61,7 +50,7 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     result.speed = finishTiming(notify: false)
     applyTimingBreakdown(&result)
     result.annotatedImage = drawYOLOSemanticSegmentation(
-      ciImage: image, semanticMask: depthMap?.image)
+      ciImage: image, semanticMask: depthMap?.image, opacity: 0.6)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)
     }
@@ -119,49 +108,55 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     vDSP_minv(scratch, 1, &minDepth, vDSP_Length(validCount))
     vDSP_maxv(scratch, 1, &maxDepth, vDSP_Length(validCount))
     guard minDepth.isFinite, maxDepth.isFinite else { return nil }
+
+    // Disparity (1/d) 2nd/98th percentiles from ~4k evenly strided valid values. Ultralytics Python samples ~64k, but
+    // sorting that many costs ~3 ms per frame here, and 4k moves the percentiles by under 0.2%.
+    let step = Swift.max(1, validCount / 4096)
+    var disparities = [Float](repeating: 0, count: (validCount + step - 1) / step)
+    var one: Float = 1
+    vDSP_svdiv(&one, scratch, step, &disparities, 1, vDSP_Length(disparities.count))
+    vDSP.sort(&disparities, sortOrder: .ascending)
+    let last = Float(disparities.count - 1)
     return DepthMap(
       values: values,
       width: width,
       height: height,
       minDepth: minDepth,
       maxDepth: maxDepth,
-      image: colorizeDepth(values, width: width, height: height, min: minDepth, max: maxDepth)
+      image: colorizeDepth(
+        values, width: width, height: height, low: disparities[Int((0.02 * last).rounded())],
+        high: disparities[Int((0.98 * last).rounded())])
     )
   }
 
+  /// Maps disparity linearly from `low` to `high` onto the jet table (near = warm), invalid (d <= 0) pixels black.
   private func colorizeDepth(
-    _ values: [Float], width: Int, height: Int, min minDepth: Float, max maxDepth: Float
+    _ values: [Float], width: Int, height: Int, low: Float, high: Float
   ) -> CGImage? {
-    let low = log(Swift.max(minDepth, 1e-3))
-    let range = Swift.max(log(maxDepth) - low, 1e-6)
-    var normalized = vDSP.threshold(values, to: minDepth, with: .clampToThreshold)
-    var count = Int32(values.count)
-    normalized.withUnsafeMutableBufferPointer { destination in
-      vvlogf(destination.baseAddress!, destination.baseAddress!, &count)
-      var scale = -1 / range
-      var offset = log(maxDepth) / range
-      vDSP_vsmsa(
-        destination.baseAddress!, 1, &scale, &offset, destination.baseAddress!, 1,
-        vDSP_Length(values.count))
-      var lower: Float = 0
-      var upper: Float = 1
-      vDSP_vclip(
-        destination.baseAddress!, 1, &lower, &upper, destination.baseAddress!, 1,
-        vDSP_Length(values.count))
-    }
-
+    let count = vDSP_Length(values.count)
+    let valid = vDSP.add(
+      0.5, vDSP.threshold(values, to: .leastNonzeroMagnitude, with: .signedConstant(0.5)))
+    var scaled = [Float](repeating: 0, count: values.count)
     var pixels = Data(count: values.count * 4)
-    normalized.withUnsafeMutableBufferPointer { source in
+    scaled.withUnsafeMutableBufferPointer { buffer in
+      // Table index = clip(255 (1/d - low) / (high - low), 1, 255), zeroed where d <= 0
+      let index = buffer.baseAddress!
+      var one: Float = 1
+      var scale = 255 / Swift.max(high - low, 1e-6)
+      var offset = -low * scale
+      var lower: Float = 1
+      var upper: Float = 255
+      vDSP_svdiv(&one, values, 1, index, 1, count)
+      vDSP_vsmsa(index, 1, &scale, &offset, index, 1, count)
+      vDSP_vclip(index, 1, &lower, &upper, index, 1, count)
+      vDSP_vmul(index, 1, valid, 1, index, 1, count)
+
       let planeData = UnsafeMutablePointer<UInt8>.allocate(capacity: values.count * 4)
       defer { planeData.deallocate() }
-
-      var sourceBuffer = vImage_Buffer(
-        data: source.baseAddress, height: vImagePixelCount(height), width: vImagePixelCount(width),
-        rowBytes: width * MemoryLayout<Float>.stride)
+      vDSP_vfixu8(index, 1, planeData, 1, count)
       var indices = vImage_Buffer(
         data: planeData, height: vImagePixelCount(height), width: vImagePixelCount(width),
         rowBytes: width)
-      vImageConvert_PlanarFtoPlanar8(&sourceBuffer, &indices, 1, 0, vImage_Flags(kvImageNoFlags))
 
       var red = vImage_Buffer(
         data: planeData + values.count, height: vImagePixelCount(height),
@@ -178,16 +173,7 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
       vImageTableLookUp_Planar8(&indices, &red, &redTable, vImage_Flags(kvImageNoFlags))
       vImageTableLookUp_Planar8(&indices, &green, &greenTable, vImage_Flags(kvImageNoFlags))
       vImageTableLookUp_Planar8(&indices, &blue, &blueTable, vImage_Flags(kvImageNoFlags))
-      for index in values.indices {
-        if values[index] > 0 {
-          planeData[index] = 0xFF
-        } else {
-          planeData[index] = 0
-          planeData[index + values.count] = 0
-          planeData[index + values.count * 2] = 0
-          planeData[index + values.count * 3] = 0
-        }
-      }
+      memset(planeData, 0xFF, values.count)  // the index plane becomes the opaque alpha plane
 
       pixels.withUnsafeMutableBytes { rawBuffer in
         var rgba = vImage_Buffer(

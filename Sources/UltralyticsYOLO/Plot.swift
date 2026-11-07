@@ -15,63 +15,26 @@ import Foundation
 import QuartzCore
 import UIKit
 
-let ultralyticsColors: [UIColor] = [
-  UIColor(red: 4 / 255, green: 42 / 255, blue: 255 / 255, alpha: 0.6),
-  UIColor(red: 11 / 255, green: 219 / 255, blue: 235 / 255, alpha: 0.6),
-  UIColor(red: 243 / 255, green: 243 / 255, blue: 243 / 255, alpha: 0.6),
-  UIColor(red: 0 / 255, green: 223 / 255, blue: 183 / 255, alpha: 0.6),
-  UIColor(red: 17 / 255, green: 31 / 255, blue: 104 / 255, alpha: 0.6),
-  UIColor(red: 255 / 255, green: 111 / 255, blue: 221 / 255, alpha: 0.6),
-  UIColor(red: 255 / 255, green: 68 / 255, blue: 79 / 255, alpha: 0.6),
-  UIColor(red: 204 / 255, green: 237 / 255, blue: 0 / 255, alpha: 0.6),
-  UIColor(red: 0 / 255, green: 243 / 255, blue: 68 / 255, alpha: 0.6),
-  UIColor(red: 189 / 255, green: 0 / 255, blue: 255 / 255, alpha: 0.6),
-  UIColor(red: 0 / 255, green: 180 / 255, blue: 255 / 255, alpha: 0.6),
-  UIColor(red: 221 / 255, green: 0 / 255, blue: 186 / 255, alpha: 0.6),
-  UIColor(red: 0 / 255, green: 255 / 255, blue: 255 / 255, alpha: 0.6),
-  UIColor(red: 38 / 255, green: 192 / 255, blue: 0 / 255, alpha: 0.6),
-  UIColor(red: 1 / 255, green: 255 / 255, blue: 179 / 255, alpha: 0.6),
-  UIColor(red: 125 / 255, green: 36 / 255, blue: 255 / 255, alpha: 0.6),
-  UIColor(red: 123 / 255, green: 0 / 255, blue: 104 / 255, alpha: 0.6),
-  UIColor(red: 255 / 255, green: 27 / 255, blue: 108 / 255, alpha: 0.6),
-  UIColor(red: 252 / 255, green: 109 / 255, blue: 47 / 255, alpha: 0.6),
-  UIColor(red: 162 / 255, green: 255 / 255, blue: 11 / 255, alpha: 0.6),
-]
+// Annotation colors mirror ultralytics/utils/plotting.py Colors.
 
-private let ultralyticsColorWords: [UInt32] = ultralyticsColors.map { color in
-  var red: CGFloat = 0
-  var green: CGFloat = 0
-  var blue: CGFloat = 0
-  color.getRed(&red, green: &green, blue: &blue, alpha: nil)
-  return UInt32(UInt8(red * 255)) | UInt32(UInt8(green * 255)) << 8
-    | UInt32(UInt8(blue * 255)) << 16 | 0xFF00_0000
-}
+/// Default class palette, indexed by class id % 20. Prefer `classColor(_:colors:)`, which applies a model's `colors`.
+public let ultralyticsColors: [UIColor] = [
+  0x042AFF, 0x0BDBEB, 0xF3F3F3, 0x00DFB7, 0x111F68,
+  0xFF6FDD, 0xFF444F, 0xCCED00, 0x00F344, 0xBD00FF,
+  0x00B4FF, 0xDD00BA, 0x00FFFF, 0x26C000, 0x01FFB3,
+  0x7D24FF, 0x7B0068, 0xFF1B6C, 0xFC6D2F, 0xA2FF0B,
+].map(UIColor.init(rgb:))
 
-let posePalette: [[CGFloat]] = [
-  [255, 128, 0],
-  [255, 153, 51],
-  [255, 178, 102],
-  [230, 230, 0],
-  [255, 153, 255],
-  [153, 204, 255],
-  [255, 102, 255],
-  [255, 51, 255],
-  [102, 178, 255],
-  [51, 153, 255],
-  [255, 153, 153],
-  [255, 102, 102],
-  [255, 51, 51],
-  [153, 255, 153],
-  [102, 255, 102],
-  [51, 255, 51],
-  [0, 255, 0],
-  [0, 0, 255],
-  [255, 0, 0],
-  [255, 255, 255],
-]
+/// Pose palette, indexed by `kptColorIndices` and `limbColorIndices` for COCO-17 keypoints and limbs.
+public let posePalette: [UIColor] = [
+  0xFF8000, 0xFF9933, 0xFFB266, 0xE6E600, 0xFF99FF,
+  0x99CCFF, 0xFF66FF, 0xFF33FF, 0x66B2FF, 0x3399FF,
+  0xFF9999, 0xFF6666, 0xFF3333, 0x99FF99, 0x66FF66,
+  0x33FF33, 0x00FF00, 0x0000FF, 0xFF0000, 0xFFFFFF,
+].map(UIColor.init(rgb:))
 
-let limbColorIndices = [0, 0, 0, 0, 7, 7, 7, 9, 9, 9, 9, 9, 16, 16, 16, 16, 16, 16, 16]
-let kptColorIndices = [16, 16, 16, 16, 16, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0]
+public let limbColorIndices = [0, 0, 0, 0, 7, 7, 7, 9, 9, 9, 9, 9, 16, 16, 16, 16, 16, 16, 16]
+public let kptColorIndices = [16, 16, 16, 16, 16, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0]
 
 let skeleton = [
   [16, 14],
@@ -94,6 +57,18 @@ let skeleton = [
   [4, 6],
   [5, 7],
 ]
+
+/// Class color: the model's `colors` metadata entry for `index` when it has one, else the default palette.
+public func classColor(_ index: Int, colors: [UIColor] = []) -> UIColor {
+  index < colors.count ? colors[index] : ultralyticsColors[index % ultralyticsColors.count]
+}
+
+/// Text color for a label drawn on `background`: dark `#111F68` when the background luma exceeds 150, else white.
+public func labelTextColor(for background: UIColor) -> UIColor {
+  guard let rgb = background.toRGBComponents() else { return .white }
+  let luma = 0.299 * Double(rgb.red) + 0.587 * Double(rgb.green) + 0.114 * Double(rgb.blue)
+  return luma > 150 ? ultralyticsColors[4] : .white  // ultralyticsColors[4] is #111F68
+}
 
 func makeRGBAImage(
   from pixels: Data,
@@ -151,7 +126,6 @@ private func drawDetectionLabel(
   in ctx: CGContext,
   fontSize: CGFloat,
   color: UIColor,
-  alpha: CGFloat,
   anchor: CGPoint,
   geometry: CGRect,
   cornerRadius: CGFloat
@@ -164,7 +138,7 @@ private func drawDetectionLabel(
     anchor: anchor,
     within: bounds
   )
-  ctx.setFillColor(color.withAlphaComponent(alpha).cgColor)
+  ctx.setFillColor(color.cgColor)
   let labelPath = UIBezierPath(
     roundedRect: labelRect,
     cornerRadius: min(DetectionLabelStyle.cornerRadius, cornerRadius)
@@ -179,7 +153,8 @@ private func drawDetectionLabel(
   )
   labelText.draw(
     at: textPoint,
-    withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize, alpha: alpha)
+    withAttributes: DetectionLabelStyle.attributes(
+      fontSize: fontSize, color: labelTextColor(for: color))
   )
 }
 
@@ -191,10 +166,11 @@ private func drawBoxLabel(
   _ box: Box,
   in ctx: CGContext,
   imageSize: CGSize,
-  rounded: Bool
+  rounded: Bool,
+  colors: [UIColor]
 ) {
-  let color = ultralyticsColors[box.index % ultralyticsColors.count]
-  ctx.setStrokeColor(color.cgColor)
+  let color = classColor(box.index, colors: colors)
+  ctx.setStrokeColor(color.withAlphaComponent(0.6).cgColor)
   let lineWidth = max(imageSize.width, imageSize.height) / 200
   ctx.setLineWidth(lineWidth)
 
@@ -215,7 +191,6 @@ private func drawBoxLabel(
     in: ctx,
     fontSize: fontSize,
     color: color,
-    alpha: 1,
     anchor: rect.origin,
     geometry: rect,
     cornerRadius: max(min(rect.width, rect.height) * 0.05, 2.0)
@@ -225,7 +200,7 @@ private func drawBoxLabel(
 public func drawYOLODetections(on ciImage: CIImage, result: YOLOResult) -> UIImage {
   renderWithBackground(ciImage) { ctx, size in
     for box in result.boxes {
-      drawBoxLabel(box, in: ctx, imageSize: size, rounded: false)
+      drawBoxLabel(box, in: ctx, imageSize: size, rounded: false, colors: result.colors)
     }
   } ?? UIImage()
 }
@@ -237,7 +212,8 @@ func generateCombinedMaskImage(
   inputHeight: Int,
   threshold: Float = 0.0,
   cropRect: CGRect? = nil,
-  returnIndividualMasks: Bool = true
+  returnIndividualMasks: Bool = true,
+  colors: [UIColor] = []
 ) -> (CGImage?, [[[Float]]]?)? {
   let maskHeight = protos.shape[2].intValue  // e.g. 160
   let maskWidth = protos.shape[3].intValue  // e.g. 160
@@ -386,7 +362,9 @@ func generateCombinedMaskImage(
       let targetBoxHeight = targetY2 - targetY1
       guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
 
-      let colorWord = ultralyticsColorWords[classID % ultralyticsColorWords.count]
+      let rgb = classColor(classID, colors: colors).toRGBComponents() ?? (0, 0, 0)
+      let colorWord =
+        UInt32(rgb.red) | UInt32(rgb.green) << 8 | UInt32(rgb.blue) << 16 | 0xFF00_0000
 
       let scaledCount = targetBoxWidth * targetBoxHeight
       if scaledMask.count < scaledCount {
@@ -469,8 +447,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
     let labelMargin = fontSize / 2
 
     for (i, candidate) in top5.enumerated() {
-      let colorIndex = (result.names.firstIndex(of: candidate) ?? 0) % ultralyticsColors.count
-      let color = ultralyticsColors[colorIndex]
+      let color = classColor(result.names.firstIndex(of: candidate) ?? 0, colors: result.colors)
       let labelText = DetectionLabelStyle.text(
         className: candidate,
         confidence: CGFloat(result.probs?.top5Confs[i] ?? 0)
@@ -482,7 +459,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
         width: textSize.width,
         height: textSize.height)
 
-      ctx.setFillColor(color.cgColor)
+      ctx.setFillColor(color.withAlphaComponent(0.6).cgColor)
       let labelPath = UIBezierPath(
         roundedRect: labelRect,
         cornerRadius: DetectionLabelStyle.cornerRadius
@@ -493,12 +470,21 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
         x: labelRect.origin.x + DetectionLabelStyle.horizontalPadding / 2,
         y: labelRect.origin.y)
       labelText.draw(
-        at: textPoint, withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize))
+        at: textPoint,
+        withAttributes: DetectionLabelStyle.attributes(
+          fontSize: fontSize, color: labelTextColor(for: color)))
     }
   } ?? UIImage()
 }
 
 extension UIColor {
+  /// Creates an opaque color from a `0xRRGGBB` value.
+  convenience init(rgb: Int) {
+    self.init(
+      red: CGFloat(rgb >> 16 & 0xFF) / 255, green: CGFloat(rgb >> 8 & 0xFF) / 255,
+      blue: CGFloat(rgb & 0xFF) / 255, alpha: 1)
+  }
+
   func toRGBComponents() -> (red: UInt8, green: UInt8, blue: UInt8)? {
     var red: CGFloat = 0
     var green: CGFloat = 0
@@ -518,7 +504,8 @@ extension UIColor {
   }
 }
 
-func drawKeypoints(
+/// Draws pose keypoints and, for COCO-17 layouts, the skeleton onto `layer`.
+public func drawKeypoints(
   keypointsList: [[(x: Float, y: Float)]],
   confsList: [[Float]],
   boundingBoxes: [Box],
@@ -571,9 +558,11 @@ func drawSinglePersonKeypoints(
     {
       points[i] = (point, conf)
 
-      // Use modulo to cycle through available colors for any number of keypoints
-      let colorIndex = i < kptColorIndices.count ? kptColorIndices[i] : i % posePalette.count
-      drawCircle(on: layer, at: point, radius: radius, color: colorIndex)
+      // COCO-17 keypoints use the pose palette; any other layout cycles the class palette
+      let color =
+        numKeypoints == 17
+        ? posePalette[kptColorIndices[i]] : ultralyticsColors[i % ultralyticsColors.count]
+      drawCircle(on: layer, at: point, radius: radius, color: color)
     }
   }
 
@@ -595,10 +584,8 @@ func drawSinglePersonKeypoints(
         let endConf = points[endIdx].1
 
         if startConf >= confThreshold && endConf >= confThreshold {
-          let limbColorIndex =
-            index < limbColorIndices.count ? limbColorIndices[index] : index % posePalette.count
           drawLine(
-            on: layer, from: startPoint, to: endPoint, color: limbColorIndex,
+            on: layer, from: startPoint, to: endPoint, color: posePalette[limbColorIndices[index]],
             lineWidth: lineWidth)
         }
       }
@@ -606,7 +593,7 @@ func drawSinglePersonKeypoints(
   }
 }
 
-func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color index: Int) {
+func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color: UIColor) {
   let circleLayer = CAShapeLayer()
   circleLayer.path =
     UIBezierPath(
@@ -616,16 +603,13 @@ func drawCircle(on layer: CALayer, at point: CGPoint, radius: CGFloat, color ind
       endAngle: .pi * 2,
       clockwise: true
     ).cgPath
-
-  let color = posePalette[index].map { $0 / 255.0 }
-  circleLayer.fillColor =
-    UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+  circleLayer.fillColor = color.cgColor
 
   layer.addSublayer(circleLayer)
 }
 
 func drawLine(
-  on layer: CALayer, from start: CGPoint, to end: CGPoint, color index: Int, lineWidth: CGFloat = 2
+  on layer: CALayer, from start: CGPoint, to end: CGPoint, color: UIColor, lineWidth: CGFloat = 2
 ) {
   let lineLayer = CAShapeLayer()
   let path = UIBezierPath()
@@ -635,10 +619,7 @@ func drawLine(
   lineLayer.path = path.cgPath
   // Ensure minimum line width for visibility
   lineLayer.lineWidth = max(lineWidth, 1.5)
-
-  let color = posePalette[index].map { $0 / 255.0 }
-  lineLayer.strokeColor =
-    UIColor(red: color[0], green: color[1], blue: color[2], alpha: 1.0).cgColor
+  lineLayer.strokeColor = color.cgColor
 
   layer.addSublayer(lineLayer)
 }
@@ -646,7 +627,8 @@ func drawLine(
 func drawOBBsOnCIImage(
   ciImage: CIImage,
   obbDetections: [OBBResult],
-  targetSize: CGSize? = nil
+  targetSize: CGSize? = nil,
+  colors: [UIColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage, targetSize: targetSize) { ctx, size in
     let lineWidth: CGFloat = max(size.width, size.height) / 200
@@ -654,8 +636,8 @@ func drawOBBsOnCIImage(
     ctx.setLineWidth(lineWidth)
 
     for detection in obbDetections {
-      let color = ultralyticsColors[detection.index % ultralyticsColors.count]
-      ctx.setStrokeColor(color.cgColor)
+      let color = classColor(detection.index, colors: colors)
+      ctx.setStrokeColor(color.withAlphaComponent(0.6).cgColor)
 
       // Compute polygon in pixel space to avoid aspect-ratio distortion.
       let corners = detection.box.toPolygon(imageSize: size)
@@ -675,7 +657,6 @@ func drawOBBsOnCIImage(
           in: ctx,
           fontSize: fontSize,
           color: color,
-          alpha: 1,
           anchor: first,
           geometry: corners.dropFirst().reduce(
             CGRect(origin: first, size: .zero),
@@ -696,11 +677,12 @@ public func drawYOLOPoseWithBoxes(
   boundingBoxes: [Box],
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true,
-  originalImageSize: CGSize? = nil
+  originalImageSize: CGSize? = nil,
+  colors: [UIColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     for box in boundingBoxes {
-      drawBoxLabel(box, in: ctx, imageSize: size, rounded: true)
+      drawBoxLabel(box, in: ctx, imageSize: size, rounded: true, colors: colors)
     }
     let poseLayer = CALayer()
     poseLayer.frame = CGRect(origin: .zero, size: size)
@@ -721,7 +703,8 @@ public func drawYOLOPoseWithBoxes(
 public func drawYOLOSegmentationWithBoxes(
   ciImage: CIImage,
   boxes: [Box],
-  maskImage: CGImage?
+  maskImage: CGImage?,
+  colors: [UIColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     if let maskImage = maskImage {
@@ -734,20 +717,21 @@ public func drawYOLOSegmentationWithBoxes(
       ctx.restoreGState()
     }
     for box in boxes {
-      drawBoxLabel(box, in: ctx, imageSize: size, rounded: true)
+      drawBoxLabel(box, in: ctx, imageSize: size, rounded: true, colors: colors)
     }
   }
 }
 
-/// Renders a semantic segmentation color map onto the source image.
+/// Renders a semantic segmentation (or depth) color map onto the source image.
 public func drawYOLOSemanticSegmentation(
   ciImage: CIImage,
-  semanticMask: CGImage?
+  semanticMask: CGImage?,
+  opacity: CGFloat = 0.5
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     if let semanticMask = semanticMask {
       ctx.saveGState()
-      ctx.setAlpha(0.5)
+      ctx.setAlpha(opacity)
       ctx.translateBy(x: 0, y: size.height)
       ctx.scaleBy(x: 1, y: -1)
       ctx.draw(semanticMask, in: CGRect(origin: .zero, size: size))

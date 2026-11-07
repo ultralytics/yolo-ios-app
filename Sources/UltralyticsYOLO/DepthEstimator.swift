@@ -110,7 +110,8 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     guard minDepth.isFinite, maxDepth.isFinite else { return nil }
 
     // Disparity (1/d) 2nd/98th percentiles from ~4k evenly strided valid values. Ultralytics Python samples ~64k, but
-    // sorting that many costs ~3 ms per frame here, and 4k moves the percentiles by under 0.2%.
+    // sorting that many costs ~3 ms per frame here; 4k can shift the percentiles by ~1% of the range (a few colormap
+    // levels, invisible).
     let step = Swift.max(1, validCount / 4096)
     var disparities = [Float](repeating: 0, count: (validCount + step - 1) / step)
     var one: Float = 1

@@ -74,7 +74,7 @@ public struct YOLOResult: @unchecked Sendable {
 
   /// Class colors from the model's `colors` metadata, indexed by class id; empty when the model has none. Resolve a
   /// class's color with `classColor(_:colors:)`, which falls back to the default palette.
-  public var colors: [UIColor] = []
+  public var colors: [ClassColor] = []
 
   /// An empty result with zeroed metrics, used as a default return value before inference runs.
   public static let empty = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])

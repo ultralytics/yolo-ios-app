@@ -531,7 +531,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
   @inline(__always)
-  private func showBox(at index: Int, prediction: Box, frame: CGRect, colors: [UIColor]) {
+  private func showBox(at index: Int, prediction: Box, frame: CGRect, colors: [ClassColor]) {
     showBox(
       at: index,
       className: prediction.cls,
@@ -546,7 +546,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     at index: Int,
     className: String,
     confidence: CGFloat,
-    color: UIColor,
+    color: ClassColor,
     frame: CGRect,
     angle: CGFloat? = nil
   ) {
@@ -607,9 +607,9 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
     textLayer.string = labelText
-    let alpha = DetectionLabelStyle.alpha(confidence: confidence)
-    textLayer.foregroundColor = labelTextColor(for: color).withAlphaComponent(alpha).cgColor
-    textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
+    textLayer.foregroundColor = color.textColor.cgColor
+    textLayer.backgroundColor = color.color.cgColor
+    textLayer.opacity = Float(DetectionLabelStyle.alpha(confidence: confidence))
     let textSize = DetectionLabelStyle.size(for: labelText, fontSize: fontSize)
     textLayer.frame = CGRect(
       x: (viewBounds.width - textSize.width) / 2,

@@ -15,7 +15,7 @@ import Foundation
 import QuartzCore
 import UIKit
 
-// Annotation colors mirror ultralytics/utils/plotting.py Colors.
+// Annotation colors mirror ultralytics/utils/plotting.py Colors. They never change with light/dark mode.
 
 /// Default class palette, indexed by class id % 20. Prefer `classColor(_:colors:)`, which applies a model's `colors`.
 public let ultralyticsColors: [UIColor] = [
@@ -58,16 +58,31 @@ let skeleton = [
   [5, 7],
 ]
 
-/// Class color: the model's `colors` metadata entry for `index` when it has one, else the default palette.
-public func classColor(_ index: Int, colors: [UIColor] = []) -> UIColor {
-  index < colors.count ? colors[index] : ultralyticsColors[index % ultralyticsColors.count]
+/// A class color with its label text color and mask pixel, derived once per palette entry or model color.
+public struct ClassColor: @unchecked Sendable {
+  /// The opaque class color.
+  public let color: UIColor
+
+  /// Label text color on `color`: dark `#111F68` when its luma exceeds 150, else white.
+  public let textColor: UIColor
+
+  /// `color` as an opaque RGBA pixel for mask buffers.
+  let rgba: UInt32
+
+  init(_ color: UIColor) {
+    let rgb = color.toRGBComponents() ?? (0, 0, 0)
+    let luma = 0.299 * Double(rgb.red) + 0.587 * Double(rgb.green) + 0.114 * Double(rgb.blue)
+    self.color = color
+    textColor = luma > 150 ? ultralyticsColors[4] : .white  // ultralyticsColors[4] is #111F68
+    rgba = UInt32(rgb.red) | UInt32(rgb.green) << 8 | UInt32(rgb.blue) << 16 | 0xFF00_0000
+  }
 }
 
-/// Text color for a label drawn on `background`: dark `#111F68` when the background luma exceeds 150, else white.
-public func labelTextColor(for background: UIColor) -> UIColor {
-  guard let rgb = background.toRGBComponents() else { return .white }
-  let luma = 0.299 * Double(rgb.red) + 0.587 * Double(rgb.green) + 0.114 * Double(rgb.blue)
-  return luma > 150 ? ultralyticsColors[4] : .white  // ultralyticsColors[4] is #111F68
+private let paletteClassColors = ultralyticsColors.map(ClassColor.init)
+
+/// Class color: the model's `colors` metadata entry for `index` when it has one, else the default palette.
+public func classColor(_ index: Int, colors: [ClassColor] = []) -> ClassColor {
+  index < colors.count ? colors[index] : paletteClassColors[index % paletteClassColors.count]
 }
 
 func makeRGBAImage(
@@ -125,7 +140,7 @@ private func drawDetectionLabel(
   _ labelText: String,
   in ctx: CGContext,
   fontSize: CGFloat,
-  color: UIColor,
+  color: ClassColor,
   anchor: CGPoint,
   geometry: CGRect,
   cornerRadius: CGFloat
@@ -138,7 +153,7 @@ private func drawDetectionLabel(
     anchor: anchor,
     within: bounds
   )
-  ctx.setFillColor(color.cgColor)
+  ctx.setFillColor(color.color.cgColor)
   let labelPath = UIBezierPath(
     roundedRect: labelRect,
     cornerRadius: min(DetectionLabelStyle.cornerRadius, cornerRadius)
@@ -153,8 +168,7 @@ private func drawDetectionLabel(
   )
   labelText.draw(
     at: textPoint,
-    withAttributes: DetectionLabelStyle.attributes(
-      fontSize: fontSize, color: labelTextColor(for: color))
+    withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize, color: color.textColor)
   )
 }
 
@@ -167,10 +181,11 @@ private func drawBoxLabel(
   in ctx: CGContext,
   imageSize: CGSize,
   rounded: Bool,
-  colors: [UIColor]
+  colors: [ClassColor]
 ) {
   let color = classColor(box.index, colors: colors)
-  ctx.setStrokeColor(color.withAlphaComponent(0.6).cgColor)
+  ctx.setStrokeColor(color.color.cgColor)
+  ctx.setAlpha(0.6)  // translucent box stroke, opaque label
   let lineWidth = max(imageSize.width, imageSize.height) / 200
   ctx.setLineWidth(lineWidth)
 
@@ -183,8 +198,9 @@ private func drawBoxLabel(
   } else {
     ctx.stroke(rect)
   }
+  ctx.setAlpha(1)
 
-  let fontSize = max(imageSize.width, imageSize.height) / 50
+  let fontSize = DetectionLabelStyle.fontSize(for: imageSize)
   let labelText = DetectionLabelStyle.text(className: box.cls, confidence: CGFloat(box.conf))
   drawDetectionLabel(
     labelText,
@@ -213,7 +229,7 @@ func generateCombinedMaskImage(
   threshold: Float = 0.0,
   cropRect: CGRect? = nil,
   returnIndividualMasks: Bool = true,
-  colors: [UIColor] = []
+  colors: [ClassColor] = []
 ) -> (CGImage?, [[[Float]]]?)? {
   let maskHeight = protos.shape[2].intValue  // e.g. 160
   let maskWidth = protos.shape[3].intValue  // e.g. 160
@@ -362,9 +378,7 @@ func generateCombinedMaskImage(
       let targetBoxHeight = targetY2 - targetY1
       guard targetBoxWidth > 0, targetBoxHeight > 0 else { continue }
 
-      let rgb = classColor(classID, colors: colors).toRGBComponents() ?? (0, 0, 0)
-      let colorWord =
-        UInt32(rgb.red) | UInt32(rgb.green) << 8 | UInt32(rgb.blue) << 16 | 0xFF00_0000
+      let colorWord = classColor(classID, colors: colors).rgba
 
       let scaledCount = targetBoxWidth * targetBoxHeight
       if scaledMask.count < scaledCount {
@@ -443,7 +457,7 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
   guard let top5 = result.probs?.top5 else { return UIImage(ciImage: ciImage) }
 
   return renderWithBackground(ciImage) { ctx, size in
-    let fontSize = max(size.width, size.height) / 50
+    let fontSize = DetectionLabelStyle.fontSize(for: size)
     let labelMargin = fontSize / 2
 
     for (i, candidate) in top5.enumerated() {
@@ -459,20 +473,21 @@ public func drawYOLOClassifications(on ciImage: CIImage, result: YOLOResult) -> 
         width: textSize.width,
         height: textSize.height)
 
-      ctx.setFillColor(color.withAlphaComponent(0.6).cgColor)
+      ctx.setFillColor(color.color.cgColor)
+      ctx.setAlpha(0.6)
       let labelPath = UIBezierPath(
         roundedRect: labelRect,
         cornerRadius: DetectionLabelStyle.cornerRadius
       )
       ctx.addPath(labelPath.cgPath)
       ctx.fillPath()
+      ctx.setAlpha(1)
       let textPoint = CGPoint(
         x: labelRect.origin.x + DetectionLabelStyle.horizontalPadding / 2,
         y: labelRect.origin.y)
       labelText.draw(
         at: textPoint,
-        withAttributes: DetectionLabelStyle.attributes(
-          fontSize: fontSize, color: labelTextColor(for: color)))
+        withAttributes: DetectionLabelStyle.attributes(fontSize: fontSize, color: color.textColor))
     }
   } ?? UIImage()
 }
@@ -628,16 +643,17 @@ func drawOBBsOnCIImage(
   ciImage: CIImage,
   obbDetections: [OBBResult],
   targetSize: CGSize? = nil,
-  colors: [UIColor] = []
+  colors: [ClassColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage, targetSize: targetSize) { ctx, size in
     let lineWidth: CGFloat = max(size.width, size.height) / 200
-    let fontSize = max(size.width, size.height) / 50
+    let fontSize = DetectionLabelStyle.fontSize(for: size)
     ctx.setLineWidth(lineWidth)
 
     for detection in obbDetections {
       let color = classColor(detection.index, colors: colors)
-      ctx.setStrokeColor(color.withAlphaComponent(0.6).cgColor)
+      ctx.setStrokeColor(color.color.cgColor)
+      ctx.setAlpha(0.6)
 
       // Compute polygon in pixel space to avoid aspect-ratio distortion.
       let corners = detection.box.toPolygon(imageSize: size)
@@ -647,6 +663,7 @@ func drawOBBsOnCIImage(
       }
       ctx.closePath()
       ctx.strokePath()
+      ctx.setAlpha(1)
 
       if let first = corners.first {
         drawDetectionLabel(
@@ -678,7 +695,7 @@ public func drawYOLOPoseWithBoxes(
   confThreshold: Float = 0.25,
   drawSkeleton: Bool = true,
   originalImageSize: CGSize? = nil,
-  colors: [UIColor] = []
+  colors: [ClassColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     for box in boundingBoxes {
@@ -704,7 +721,7 @@ public func drawYOLOSegmentationWithBoxes(
   ciImage: CIImage,
   boxes: [Box],
   maskImage: CGImage?,
-  colors: [UIColor] = []
+  colors: [ClassColor] = []
 ) -> UIImage? {
   renderWithBackground(ciImage) { ctx, size in
     if let maskImage = maskImage {

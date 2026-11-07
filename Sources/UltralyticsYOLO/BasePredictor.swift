@@ -43,8 +43,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
-  /// Class colors from the model's optional `colors` metadata, indexed by class id (empty when absent).
-  var colors = [UIColor]()
+  /// Class colors from the model's optional `colors` metadata, resolved at load and indexed by class id (empty when
+  /// absent).
+  var colors = [ClassColor]()
 
   /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.
   public var capturesOriginalImage = false
@@ -184,11 +185,11 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   }
 
   /// Parses optional `colors` metadata (a Python list repr like `"['#042aff', '#ff0000']"`), indexed by class id.
-  static func parseColors(from userDefined: [String: String]) -> [UIColor] {
+  static func parseColors(from userDefined: [String: String]) -> [ClassColor] {
     guard let colors = userDefined["colors"] else { return [] }
     return colors.split(separator: ",").enumerated().map { index, entry in
       let hex = entry.trimmingCharacters(in: CharacterSet(charactersIn: "[]'\" #"))
-      return Int(hex, radix: 16).map(UIColor.init(rgb:)) ?? classColor(index)
+      return Int(hex, radix: 16).map { ClassColor(UIColor(rgb: $0)) } ?? classColor(index)
     }
   }
 

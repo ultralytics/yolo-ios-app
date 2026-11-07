@@ -16,7 +16,7 @@ import Vision
 
 /// Specialized predictor for YOLO semantic segmentation models that produce dense class maps.
 public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
-  private var colorCache: (classCount: Int, colors: [(red: UInt8, green: UInt8, blue: UInt8)])?
+  private var colorCache: (classCount: Int, colors: [UInt32])?
 
   override func processObservations(for request: VNRequest, _ error: Error?) {
     markInferenceEnd()
@@ -204,7 +204,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
 
   /// Paints the RGBA buffer from a resolved class map and packages the result.
   private func finishSemanticMask(
-    classMap: [Int32], pixels: inout Data, colors: [(red: UInt8, green: UInt8, blue: UInt8)],
+    classMap: [Int32], pixels: inout Data, colors: [UInt32],
     outputWidth: Int, outputHeight: Int
   ) -> SemanticMask {
     if colors.count <= 256 {
@@ -219,13 +219,10 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
       }
     } else {
       // vImage lookup tables are 8-bit; beyond 256 classes paint scalar so class indices keep their own colors
-      let lut = colors.map {
-        UInt32($0.red) | UInt32($0.green) << 8 | UInt32($0.blue) << 16 | 0xFF00_0000
-      }
       pixels.withUnsafeMutableBytes { rawBuffer in
         let pixelBuffer = rawBuffer.bindMemory(to: UInt32.self)
         classMap.withUnsafeBufferPointer { cm in
-          lut.withUnsafeBufferPointer { colorWords in
+          colors.withUnsafeBufferPointer { colorWords in
             for i in 0..<cm.count {
               pixelBuffer[i] = colorWords[Int(cm[i])]
             }
@@ -252,14 +249,13 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     return minValue >= 0 && maxValue <= 1 ? 0.5 : 0
   }
 
-  private func semanticColors(classCount: Int) -> [(red: UInt8, green: UInt8, blue: UInt8)] {
+  /// Opaque RGBA pixels per class, built once per model.
+  private func semanticColors(classCount: Int) -> [UInt32] {
     if let colorCache, colorCache.classCount == classCount {
       return colorCache.colors
     }
 
-    let classColors = (0..<classCount).map {
-      classColor($0, colors: colors).toRGBComponents() ?? (0, 0, 0)
-    }
+    let classColors = (0..<classCount).map { classColor($0, colors: colors).rgba }
     colorCache = (classCount, classColors)
     return classColors
   }
@@ -268,7 +264,7 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
   /// pay no Swift -Onone penalty on the ~1M-pixel sweep.
   private func paintPixels(
     fromClampedIndices indices: UnsafeMutablePointer<Float>,
-    colors: [(red: UInt8, green: UInt8, blue: UInt8)],
+    colors: [UInt32],
     outputWidth: Int, outputHeight: Int, pixels: inout Data
   ) {
     var rTable = [UInt8](repeating: 0, count: 256)
@@ -276,9 +272,9 @@ public final class SemanticSegmenter: BasePredictor, @unchecked Sendable {
     var bTable = [UInt8](repeating: 0, count: 256)
     for i in 0..<256 {
       let color = colors[i % colors.count]
-      rTable[i] = color.red
-      gTable[i] = color.green
-      bTable[i] = color.blue
+      rTable[i] = UInt8(truncatingIfNeeded: color)
+      gTable[i] = UInt8(truncatingIfNeeded: color >> 8)
+      bTable[i] = UInt8(truncatingIfNeeded: color >> 16)
     }
 
     let count = outputWidth * outputHeight

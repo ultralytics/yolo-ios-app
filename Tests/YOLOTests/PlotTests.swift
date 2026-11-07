@@ -35,13 +35,14 @@ class PlotTests: XCTestCase {
   func testClassColorsFromModelMetadata() {
     let rgb = { (color: UIColor) in color.toRGBComponents().map { [$0.red, $0.green, $0.blue] } }
     let colors = BasePredictor.parseColors(from: ["colors": "['#ff0000', '#00FF7F']"])
-    XCTAssertEqual(colors.map(rgb), [[255, 0, 0], [0, 255, 127]])
-    XCTAssertEqual(classColor(1, colors: colors), colors[1])
-    XCTAssertEqual(classColor(2, colors: colors), ultralyticsColors[2])  // past the list: palette
-    XCTAssertEqual(classColor(21), ultralyticsColors[1])
-    XCTAssertEqual(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]), [])
-    XCTAssertEqual(rgb(labelTextColor(for: ultralyticsColors[2])), [17, 31, 104])  // #F3F3F3: dark
-    XCTAssertEqual(labelTextColor(for: ultralyticsColors[0]), .white)
+    XCTAssertEqual(colors.map { rgb($0.color) }, [[255, 0, 0], [0, 255, 127]])
+    XCTAssertEqual(classColor(1, colors: colors).color, colors[1].color)
+    XCTAssertEqual(classColor(2, colors: colors).color, ultralyticsColors[2])  // past the list: palette
+    XCTAssertEqual(classColor(21).color, ultralyticsColors[1])
+    XCTAssertTrue(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]).isEmpty)
+    XCTAssertEqual(rgb(classColor(2).textColor), [17, 31, 104])  // #F3F3F3 gets dark text
+    XCTAssertEqual(classColor(0).textColor, .white)
+    XCTAssertEqual(classColor(0).rgba, 0xFFFF_2A04)  // #042AFF as RGBA bytes
   }
 
   func testNonCOCOKeypointsUseClassPaletteWithoutSkeleton() {

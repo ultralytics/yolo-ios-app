@@ -18,7 +18,7 @@ import UIKit
 // Annotation colors mirror ultralytics/utils/plotting.py Colors. They never change with light/dark mode.
 
 /// Default class palette, indexed by class id % 20. Prefer `classColor(_:colors:)`, which applies a model's `colors`.
-public let ultralyticsColors: [UIColor] = [
+let ultralyticsColors: [UIColor] = [
   0x042AFF, 0x0BDBEB, 0xF3F3F3, 0x00DFB7, 0x111F68,
   0xFF6FDD, 0xFF444F, 0xCCED00, 0x00F344, 0xBD00FF,
   0x00B4FF, 0xDD00BA, 0x00FFFF, 0x26C000, 0x01FFB3,
@@ -26,15 +26,15 @@ public let ultralyticsColors: [UIColor] = [
 ].map(UIColor.init(rgb:))
 
 /// Pose palette, indexed by `kptColorIndices` and `limbColorIndices` for COCO-17 keypoints and limbs.
-public let posePalette: [UIColor] = [
+let posePalette: [UIColor] = [
   0xFF8000, 0xFF9933, 0xFFB266, 0xE6E600, 0xFF99FF,
   0x99CCFF, 0xFF66FF, 0xFF33FF, 0x66B2FF, 0x3399FF,
   0xFF9999, 0xFF6666, 0xFF3333, 0x99FF99, 0x66FF66,
   0x33FF33, 0x00FF00, 0x0000FF, 0xFF0000, 0xFFFFFF,
 ].map(UIColor.init(rgb:))
 
-public let limbColorIndices = [0, 0, 0, 0, 7, 7, 7, 9, 9, 9, 9, 9, 16, 16, 16, 16, 16, 16, 16]
-public let kptColorIndices = [16, 16, 16, 16, 16, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0]
+let limbColorIndices = [0, 0, 0, 0, 7, 7, 7, 9, 9, 9, 9, 9, 16, 16, 16, 16, 16, 16, 16]
+let kptColorIndices = [16, 16, 16, 16, 16, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0]
 
 let skeleton = [
   [16, 14],

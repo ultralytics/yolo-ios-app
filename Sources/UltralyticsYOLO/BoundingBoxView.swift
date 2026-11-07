@@ -14,29 +14,29 @@ import UIKit
 
 /// The single owner of annotation label text, font (system sans), size, and chip geometry.
 public enum DetectionLabelStyle {
-  public static let maxTextSize = CGSize(width: 400, height: 100)
-  public static let horizontalPadding: CGFloat = 12
-  public static let verticalOffset: CGFloat = 2
-  public static let cornerRadius: CGFloat = 3
+  static let maxTextSize = CGSize(width: 400, height: 100)
+  static let horizontalPadding: CGFloat = 12
+  static let verticalOffset: CGFloat = 2
+  static let cornerRadius: CGFloat = 3
 
-  public static func text(className: String, confidence: CGFloat) -> String {
+  static func text(className: String, confidence: CGFloat) -> String {
     String(format: "%@ %.1f", className, confidence * 100)
   }
 
-  public static func alpha(confidence: CGFloat) -> CGFloat {
+  static func alpha(confidence: CGFloat) -> CGFloat {
     max(0.6, (confidence - 0.2) / (1.0 - 0.2) * 0.9)
   }
 
-  public static func font(size: CGFloat) -> UIFont {
+  static func font(size: CGFloat) -> UIFont {
     UIFont.systemFont(ofSize: size)
   }
 
   /// Label font size for an annotation drawn into an image of `imageSize` pixels.
-  public static func fontSize(for imageSize: CGSize) -> CGFloat {
+  static func fontSize(for imageSize: CGSize) -> CGFloat {
     max(imageSize.width, imageSize.height) / 50
   }
 
-  public static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
+  static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
     let font = font(size: fontSize)
     textLayer.contentsScale = UIScreen.main.scale
     textLayer.fontSize = fontSize
@@ -46,13 +46,13 @@ public enum DetectionLabelStyle {
     textLayer.masksToBounds = true
   }
 
-  public static func attributes(
+  static func attributes(
     fontSize: CGFloat, color: UIColor = .white
   ) -> [NSAttributedString.Key: Any] {
     [.font: font(size: fontSize), .foregroundColor: color]
   }
 
-  public static func size(for label: String, fontSize: CGFloat) -> CGSize {
+  static func size(for label: String, fontSize: CGFloat) -> CGSize {
     let textRect = label.boundingRect(
       with: maxTextSize,
       options: .truncatesLastVisibleLine,

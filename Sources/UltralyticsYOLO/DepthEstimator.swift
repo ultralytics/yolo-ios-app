@@ -129,23 +129,31 @@ public final class DepthEstimator: BasePredictor, @unchecked Sendable {
     )
   }
 
+  /// Colorize work buffer (valid mask, then table indices), reallocated only when the depth map size changes.
+  private var colorizeBuffer = [Float]()
+
   /// Maps disparity linearly from `low` to `high` onto the jet table (near = warm), invalid (d <= 0) pixels black.
   private func colorizeDepth(
     _ values: [Float], width: Int, height: Int, low: Float, high: Float
   ) -> CGImage? {
     let count = vDSP_Length(values.count)
-    let valid = vDSP.add(
-      0.5, vDSP.threshold(values, to: .leastNonzeroMagnitude, with: .signedConstant(0.5)))
-    var scaled = [Float](repeating: 0, count: values.count)
+    if colorizeBuffer.count != 2 * values.count {
+      colorizeBuffer = [Float](repeating: 0, count: 2 * values.count)
+    }
     var pixels = Data(count: values.count * 4)
-    scaled.withUnsafeMutableBufferPointer { buffer in
+    colorizeBuffer.withUnsafeMutableBufferPointer { buffer in
       // Table index = clip(255 (1/d - low) / (high - low), 1, 255), zeroed where d <= 0
-      let index = buffer.baseAddress!
+      let valid = buffer.baseAddress!
+      let index = valid + values.count
+      var tiny = Float.leastNonzeroMagnitude
+      var half: Float = 0.5
       var one: Float = 1
       var scale = 255 / Swift.max(high - low, 1e-6)
       var offset = -low * scale
       var lower: Float = 1
       var upper: Float = 255
+      vDSP_vthrsc(values, 1, &tiny, &half, valid, 1, count)  // +0.5 where d > 0, else -0.5
+      vDSP_vsadd(valid, 1, &half, valid, 1, count)
       vDSP_svdiv(&one, values, 1, index, 1, count)
       vDSP_vsmsa(index, 1, &scale, &offset, index, 1, count)
       vDSP_vclip(index, 1, &lower, &upper, index, 1, count)

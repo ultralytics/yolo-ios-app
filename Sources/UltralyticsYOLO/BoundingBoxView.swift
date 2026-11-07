@@ -36,7 +36,7 @@ public enum DetectionLabelStyle {
     max(imageSize.width, imageSize.height) / 50
   }
 
-  static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
+  public static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
     let font = font(size: fontSize)
     textLayer.contentsScale = UIScreen.main.scale
     textLayer.fontSize = fontSize

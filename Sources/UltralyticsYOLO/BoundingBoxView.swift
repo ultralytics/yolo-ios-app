@@ -19,11 +19,11 @@ public enum DetectionLabelStyle {
   static let verticalOffset: CGFloat = 2
   static let cornerRadius: CGFloat = 3
 
-  static func text(className: String, confidence: CGFloat) -> String {
+  public static func text(className: String, confidence: CGFloat) -> String {
     String(format: "%@ %.1f", className, confidence * 100)
   }
 
-  static func alpha(confidence: CGFloat) -> CGFloat {
+  public static func alpha(confidence: CGFloat) -> CGFloat {
     max(0.6, (confidence - 0.2) / (1.0 - 0.2) * 0.9)
   }
 
@@ -52,7 +52,7 @@ public enum DetectionLabelStyle {
     [.font: font(size: fontSize), .foregroundColor: color]
   }
 
-  static func size(for label: String, fontSize: CGFloat) -> CGSize {
+  public static func size(for label: String, fontSize: CGFloat) -> CGSize {
     let textRect = label.boundingRect(
       with: maxTextSize,
       options: .truncatesLastVisibleLine,

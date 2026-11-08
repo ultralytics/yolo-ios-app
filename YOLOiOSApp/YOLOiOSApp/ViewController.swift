@@ -674,7 +674,8 @@ class ViewController: UIViewController, YOLOViewDelegate {
             self.loadSavedModelOrFirstOfficial()
           })
         alert.addAction(
-          UIAlertAction(title: "Download", style: .default) { _ in self.installImportedModel(model) })
+          UIAlertAction(title: "Download", style: .default) { _ in self.installImportedModel(model)
+          })
         present(alert, animated: true)
       } catch {
         isLoadingModel = false

@@ -29,7 +29,8 @@ extension ViewController {
       _ = registerSceneAccessory(
         .externalNonInteractive(
           sceneConfiguration: UISceneConfiguration(
-            name: "External Display Configuration", sessionRole: .windowExternalDisplayNonInteractive)))
+            name: "External Display Configuration",
+            sessionRole: .windowExternalDisplayNonInteractive)))
     }
 
     if hasExternalScreen() {

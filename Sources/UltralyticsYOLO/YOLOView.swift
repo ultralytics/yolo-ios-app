@@ -740,7 +740,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     let width = bounds.width
     let height = bounds.height
-    labelName.frame = CGRect(x: 0, y: 0, width: width, height: height * 0.1)
+    labelName.frame = CGRect(x: 0, y: layoutMargins.top, width: width, height: height * 0.1)
     labelFPS.frame = CGRect(x: 0, y: labelName.frame.maxY + 15, width: width, height: height * 0.04)
     labelBreakdown.frame = CGRect(
       x: 0, y: labelFPS.frame.maxY, width: width, height: labelFPS.frame.height * 0.8)

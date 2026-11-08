@@ -12,17 +12,6 @@ class ExternalViewController: UIViewController {
     super.viewDidLoad()
     view.backgroundColor = .black
 
-    let logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
-    logoImageView.contentMode = .scaleAspectFit
-    logoImageView.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(logoImageView)
-    NSLayoutConstraint.activate([
-      logoImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-      logoImageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20),
-      logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2),
-      logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3),
-    ])
-
     NotificationCenter.default.addObserver(
       self, selector: #selector(handleModelChange(_:)), name: .modelDidChange, object: nil)
     NotificationCenter.default.addObserver(
@@ -40,11 +29,24 @@ class ExternalViewController: UIViewController {
     view.insertSubview(yoloView, at: 0)
     self.yoloView = yoloView
 
-    // YOLOView sizes its labels for a phone; scale them to the display height.
+    // YOLOView sizes its labels and margins for a phone; scale them to the display height.
     let height = view.bounds.height
+    let margin = height * 0.04
+    yoloView.layoutMargins = UIEdgeInsets(top: margin, left: margin, bottom: margin, right: margin)
     yoloView.labelName.font = .systemFont(ofSize: height * 0.08, weight: .bold)
     yoloView.labelFPS.font = .systemFont(ofSize: height * 0.03, weight: .medium)
     yoloView.labelBreakdown.font = .systemFont(ofSize: height * 0.022)
+
+    let logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
+    logoImageView.contentMode = .scaleAspectFit
+    logoImageView.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(logoImageView)
+    NSLayoutConstraint.activate([
+      logoImageView.trailingAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.trailingAnchor),
+      logoImageView.bottomAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.bottomAnchor),
+      logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2),
+      logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3),
+    ])
 
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
       self?.hideYOLOViewControls()

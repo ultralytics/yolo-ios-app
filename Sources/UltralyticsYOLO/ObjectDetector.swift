@@ -208,8 +208,9 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     var candidateScores = [Float]()
     var candidateClasses = [Int]()
 
-    // Best class score per anchor as vectorized row maxima: a Swift loop over every anchor and class is very slow in
-    // unoptimized (Debug) builds, while vDSP runs at full speed in any configuration.
+    // Vectorized per-anchor maxima prefilter the anchors: a Swift loop over every anchor and class is very slow in
+    // unoptimized (Debug) builds, while vDSP runs at full speed in any configuration. Anchors that pass (or whose
+    // maximum is NaN) get the exact scalar scan, so results match it for any threshold and any NaN.
     var maxScores = [Float](repeating: 0, count: numAnchors)
     maxScores.withUnsafeMutableBufferPointer { maxima in
       for c in 0..<numClasses {
@@ -219,12 +220,18 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
       }
     }
 
-    for j in 0..<numAnchors where maxScores[j] > confThreshold {
+    for j in 0..<numAnchors where !(maxScores[j] <= confThreshold) {
       let anchorOffset = j * anchorStride
-      let bestScore = maxScores[j]
-      // The first class holding the maximum, as a strict greater-than scan would pick.
+      var bestScore: Float = 0
       var bestClass = 0
-      while pointer[(4 + bestClass) * featureStride + anchorOffset] != bestScore { bestClass += 1 }
+      for c in 0..<numClasses {
+        let score = pointer[(4 + c) * featureStride + anchorOffset]
+        if score > bestScore {
+          bestScore = score
+          bestClass = c
+        }
+      }
+      guard bestScore > confThreshold else { continue }
 
       let x = pointer[anchorOffset]
       let y = pointer[featureStride + anchorOffset]

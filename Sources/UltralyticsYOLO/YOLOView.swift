@@ -763,7 +763,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
   }
 
-
   /// Lays out the toolbar, the zoom row above it (or the lens controls), then stacks the threshold labels and sliders
   /// upward from that row so they never overlap it; shared between portrait and landscape layouts.
   private func layoutBottomControls(

@@ -92,7 +92,7 @@ jobs:
           if new_version:
               print(f'New marketing version {current_tag} detected ✅')
           else:
-              print(f'Marketing version {current_tag} unchanged - TestFlight will use incremented build number')
+              print(f'Marketing version {current_tag} unchanged - skipping release and TestFlight')
 
   release:
     needs: check
@@ -158,7 +158,7 @@ jobs:
 
   testflight:
     needs: check
-    if: github.event_name == 'push' || inputs.testflight == true
+    if: (github.event_name == 'push' && needs.check.outputs.new_version == 'true') || inputs.testflight == true
     runs-on: macos-latest
     permissions:
       contents: write

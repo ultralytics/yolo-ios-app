@@ -603,18 +603,16 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func refreshModelButton() {
-    let isCustom = ModelCacheManager.shared.customModels.contains {
-      $0.identifier == currentModelIdentifier
-    }
+    // Custom models carry their own format; bundled and official models follow the listed format.
     let entry = currentModels.first { $0.identifier == currentModelIdentifier }
-    let isCoreAI =
-      (entry?.installedURL ?? entry?.remoteURL?.deletingPathExtension())?.pathExtension == "aimodel"
-    let task = "\(currentTask)\(isCustom ? " · Custom" : "")\(isCoreAI ? " · Core AI" : "")"
+    let isCustom = entry?.installedExtension != nil
+    let isCoreAI = (entry?.installedExtension ?? remoteModelExtension) == "aimodel"
+    let tags = (isCustom ? " · Custom" : "") + (isCoreAI ? " · Core AI" : "")
     modelsButton.taskLabel.attributedText = NSAttributedString(
-      string: currentTask.isEmpty ? " " : task.uppercased(), attributes: [.kern: 1])
+      string: currentTask.isEmpty ? " " : "\(currentTask)\(tags)".uppercased(), attributes: [.kern: 1])
     modelsButton.accessibilityLabel =
       currentModelName.isEmpty
-      ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
+      ? "Models" : "Models, \(currentModelName), \(currentTask)\(tags.replacingOccurrences(of: " ·", with: ","))"
   }
 
   @objc private func scanModelQRCode() {

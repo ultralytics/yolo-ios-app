@@ -24,14 +24,16 @@ extension ViewController {
 
   func setupExternalDisplayNotifications() {
     // iOS 27 offers an external display scene only to apps that register it as a scene accessory; earlier systems
-    // connect the Info.plist external display role on their own.
-    if #available(iOS 27.0, *) {
-      _ = registerSceneAccessory(
-        .externalNonInteractive(
-          sceneConfiguration: UISceneConfiguration(
-            name: "External Display Configuration",
-            sessionRole: .windowExternalDisplayNonInteractive)))
-    }
+    // connect the Info.plist external display role on their own. The API ships with the iOS 27 SDK (Swift 6.4).
+    #if compiler(>=6.4)
+      if #available(iOS 27.0, *) {
+        _ = registerSceneAccessory(
+          .externalNonInteractive(
+            sceneConfiguration: UISceneConfiguration(
+              name: "External Display Configuration",
+              sessionRole: .windowExternalDisplayNonInteractive)))
+      }
+    #endif
 
     if hasExternalScreen() {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -91,9 +93,7 @@ extension ViewController {
 
   /// Sends the current model to the external display, which loads it into its own YOLOView.
   @objc func notifyExternalDisplayOfCurrentModel() {
-    guard
-      let entry = currentLoadingEntry
-        ?? currentModels.first(where: { $0.identifier == currentModelIdentifier }),
+    guard let entry = currentModels.first(where: { $0.identifier == currentModelIdentifier }),
       let task = appTasks.first(where: { $0.name == currentTask })
     else { return }
     let url =

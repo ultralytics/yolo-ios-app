@@ -609,10 +609,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
     let isCoreAI = (entry?.installedExtension ?? remoteModelExtension) == "aimodel"
     let tags = (isCustom ? " · Custom" : "") + (isCoreAI ? " · Core AI" : "")
     modelsButton.taskLabel.attributedText = NSAttributedString(
-      string: currentTask.isEmpty ? " " : "\(currentTask)\(tags)".uppercased(), attributes: [.kern: 1])
+      string: currentTask.isEmpty ? " " : "\(currentTask)\(tags)".uppercased(),
+      attributes: [.kern: 1])
     modelsButton.accessibilityLabel =
       currentModelName.isEmpty
-      ? "Models" : "Models, \(currentModelName), \(currentTask)\(tags.replacingOccurrences(of: " ·", with: ","))"
+      ? "Models"
+      : "Models, \(currentModelName), \(currentTask)\(tags.replacingOccurrences(of: " ·", with: ","))"
   }
 
   @objc private func scanModelQRCode() {

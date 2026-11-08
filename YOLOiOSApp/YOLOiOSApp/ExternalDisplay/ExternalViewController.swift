@@ -1,164 +1,68 @@
 // Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-import AVFoundation
-import CoreMedia
 import UIKit
 import UltralyticsYOLO
 
-class ExternalViewController: UIViewController, YOLOViewDelegate {
+/// Shows the camera feed full screen on an external display with YOLOView's own model name and performance labels.
+class ExternalViewController: UIViewController {
 
   private(set) var yoloView: YOLOView?
-  private var isInitialized = false
-  private var currentTask: YOLOTask = .detect
-  private var currentModelName: String = "yolo26n"
-
-  // Scaled UI overlays drawn on top of the YOLOView.
-  private var labelName: UILabel!
-  private var labelFPS: UILabel!
-  private var segmentedControl: UISegmentedControl!
-  private var logoImageView: UIImageView!
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
     view.backgroundColor = .black
-    edgesForExtendedLayout = .all
-    extendedLayoutIncludesOpaqueBars = true
 
-    setupControlUI()
-    setupNotifications()
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(handleModelChange(_:)), name: .modelDidChange, object: nil)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(handleThresholdChange(_:)), name: .thresholdDidChange, object: nil)
   }
 
-  private func setupControlUI() {
-    let screenSize = view.bounds.size
-    let scaleFactor = calculateScaleFactor(for: screenSize)
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    guard yoloView == nil else { return }
 
-    // Font sizes scale with display height.
-    let baseFontSizeModelName = screenSize.height * 0.1
-    let baseFontSizeFPS = screenSize.height * 0.04
+    // Created once the view has its final size so YOLOView scales its boxes for the large display. The main app
+    // supplies the model via .modelDidChange.
+    let yoloView = YOLOView(frame: view.bounds)
+    yoloView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.insertSubview(yoloView, at: 0)
+    self.yoloView = yoloView
 
-    labelName = createLabel(
-      text: currentModelName,
-      fontSize: baseFontSizeModelName,
-      weight: .bold
-    )
-    view.addSubview(labelName)
+    // YOLOView sizes its labels and margins for a phone; scale them to the display height.
+    let height = view.bounds.height
+    let margin = height * 0.04
+    yoloView.layoutMargins = UIEdgeInsets(top: margin, left: margin, bottom: margin, right: margin)
+    yoloView.labelName.font = .systemFont(ofSize: height * 0.08, weight: .bold)
+    yoloView.labelFPS.font = .systemFont(ofSize: height * 0.03, weight: .medium)
+    yoloView.labelBreakdown.font = .systemFont(ofSize: height * 0.022)
 
-    labelFPS = createLabel(
-      text: "0.0 FPS - 0.0 ms",
-      fontSize: baseFontSizeFPS,
-      weight: .medium
-    )
-    view.addSubview(labelFPS)
-
-    segmentedControl = createSegmentedControl()
-    view.addSubview(segmentedControl)
-
-    logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
+    let logoImageView = UIImageView(image: UIImage(named: "ultralytics_yolo_logotype"))
     logoImageView.contentMode = .scaleAspectFit
-    logoImageView.alpha = 1.0
     logoImageView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(logoImageView)
-
-    setupConstraints(scaleFactor: scaleFactor)
-  }
-
-  private func createLabel(text: String, fontSize: CGFloat, weight: UIFont.Weight) -> UILabel {
-    let label = UILabel()
-    label.text = text
-    label.textAlignment = .center
-    label.font = .systemFont(ofSize: fontSize, weight: weight)
-    label.textColor = .white
-    label.adjustsFontSizeToFitWidth = true
-    label.minimumScaleFactor = 0.5
-    label.numberOfLines = 1
-    label.translatesAutoresizingMaskIntoConstraints = false
-    label.setContentHuggingPriority(.required, for: .vertical)
-    label.setContentCompressionResistancePriority(.required, for: .vertical)
-    return label
-  }
-
-  private func createSegmentedControl() -> UISegmentedControl {
-    let control = UISegmentedControl()
-    for (index, taskInfo) in appTasks.enumerated() {
-      control.insertSegment(withTitle: taskInfo.name, at: index, animated: false)
-    }
-    control.selectedSegmentIndex = 0  // default to Detect
-
-    control.backgroundColor = UIColor(white: 0.2, alpha: 0.3)
-    control.selectedSegmentTintColor = UIColor(white: 0.4, alpha: 0.8)
-    control.layer.cornerRadius = 12
-    control.layer.masksToBounds = true
-
-    let fontSize: CGFloat = 36
-    control.setTitleTextAttributes(
-      [
-        .foregroundColor: UIColor.white,
-        .font: UIFont.systemFont(ofSize: fontSize, weight: .semibold),
-      ], for: .selected)
-    control.setTitleTextAttributes(
-      [
-        .foregroundColor: UIColor.lightGray,
-        .font: UIFont.systemFont(ofSize: fontSize, weight: .medium),
-      ], for: .normal)
-
-    control.isUserInteractionEnabled = false
-    control.translatesAutoresizingMaskIntoConstraints = false
-    control.setContentHuggingPriority(.required, for: .vertical)
-    control.setContentCompressionResistancePriority(.required, for: .vertical)
-    control.isHidden = true
-    return control
-  }
-
-  private func calculateScaleFactor(for screenSize: CGSize) -> CGFloat {
-    let baseSize: CGFloat = 375.0
-    let rawScale = max(screenSize.width, screenSize.height) / baseSize
-    let scaleFactor = 1.0 + (rawScale - 1.0) * 1.2
-    return max(2.5, min(scaleFactor, 10.0))
-  }
-
-  private func setupConstraints(scaleFactor: CGFloat) {
-    let margin: CGFloat = 20
-
     NSLayoutConstraint.activate([
-      labelName.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      labelName.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: margin),
-      labelName.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-      labelName.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.1),
-
-      labelFPS.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      labelFPS.topAnchor.constraint(equalTo: labelName.bottomAnchor, constant: 20),
-      labelFPS.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
-      labelFPS.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.04),
-
-      segmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      segmentedControl.topAnchor.constraint(equalTo: labelFPS.bottomAnchor, constant: 30),
-      segmentedControl.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
-      segmentedControl.heightAnchor.constraint(equalToConstant: 60),
-
-      logoImageView.trailingAnchor.constraint(
-        equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -margin),
-      logoImageView.bottomAnchor.constraint(
-        equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -margin),
+      logoImageView.trailingAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.trailingAnchor),
+      logoImageView.bottomAnchor.constraint(equalTo: yoloView.layoutMarginsGuide.bottomAnchor),
       logoImageView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.2),
       logoImageView.heightAnchor.constraint(equalTo: logoImageView.widthAnchor, multiplier: 0.3),
     ])
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+      self?.hideYOLOViewControls()
+      NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
+    }
   }
 
+  /// The external display is non-interactive, so YOLOView's touch controls stay on the iPhone.
   private func hideYOLOViewControls() {
     guard let yoloView = yoloView else { return }
 
-    let controlsToRemove = [
+    [
       yoloView.sliderConf, yoloView.labelSliderConf,
       yoloView.sliderIoU, yoloView.labelSliderIoU,
-      yoloView.labelName, yoloView.labelFPS,
       yoloView.toolbar,
-    ]
-
-    controlsToRemove.forEach {
-      $0.isHidden = true
-      $0.removeFromSuperview()
-    }
+    ].forEach { $0.removeFromSuperview() }
 
     [
       yoloView.labelZoom, yoloView.activityIndicator,
@@ -167,173 +71,31 @@ class ExternalViewController: UIViewController, YOLOViewDelegate {
     ].forEach { $0.isHidden = true }
   }
 
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-
-    guard !isInitialized else { return }
-    isInitialized = true
-
-    setupYOLOView()
-  }
-
-  private func setupYOLOView() {
-    // Create the YOLOView without a model; the main app will supply one via .modelDidChange.
-    yoloView = YOLOView(frame: view.bounds)
-    yoloView?.delegate = self
-    yoloView?.backgroundColor = .clear
-
-    guard let yoloView = yoloView else { return }
-
-    view.insertSubview(yoloView, at: 0)
-
-    yoloView.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      yoloView.topAnchor.constraint(equalTo: view.topAnchor),
-      yoloView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      yoloView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      yoloView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-    ])
-
-    // Re-add overlays so they sit above the YOLOView.
-    [logoImageView, labelName, labelFPS].forEach {
-      $0?.removeFromSuperview()
-      if let view = $0 { self.view.addSubview(view) }
-    }
-
-    let scaleFactor = calculateScaleFactor(for: view.bounds.size)
-    setupConstraints(scaleFactor: scaleFactor)
-
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-      self?.hideYOLOViewControls()
-      NotificationCenter.default.post(name: .externalDisplayReady, object: nil)
-    }
-  }
-
-  private func setupNotifications() {
-    // Mirror model, threshold, and task changes from the iPhone-side ViewController.
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleModelChange(_:)),
-      name: .modelDidChange,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleThresholdChange(_:)),
-      name: .thresholdDidChange,
-      object: nil
-    )
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleTaskChange(_:)),
-      name: .taskDidChange,
-      object: nil
-    )
-  }
-
   @objc private func handleModelChange(_ notification: Notification) {
     guard let userInfo = notification.userInfo,
-      let taskString = userInfo["task"] as? String,
-      let modelName = userInfo["modelName"] as? String
+      let task = userInfo["task"] as? YOLOTask,
+      let modelPath = userInfo["modelPath"] as? String,
+      let displayName = userInfo["displayName"] as? String
     else { return }
 
-    let task = YOLOTask.fromString(taskString)
-
-    currentTask = task
-    currentModelName = modelName
-
-    if let taskIndex = appTasks.firstIndex(where: { $0.yoloTask == task }) {
-      DispatchQueue.main.async { [weak self] in
-        self?.segmentedControl.selectedSegmentIndex = taskIndex
-      }
-    }
-
-    var actualModelPath = modelName
-    if !modelName.hasPrefix("/") && !modelName.contains(".mlpackage")
-      && !modelName.contains(".mlmodel")
-    {
-      guard ModelCacheManager.shared.isModelDownloaded(key: modelName) else { return }
-      actualModelPath = ModelCacheManager.shared.modelURL(for: modelName).path
-    }
-
-    yoloView?.setModel(modelPathOrName: actualModelPath, task: task) { [weak self] result in
+    yoloView?.setModel(modelPathOrName: modelPath, task: task) { [weak self] result in
       guard case .success = result else { return }
-      DispatchQueue.main.async {
-        self?.updateModelNameLabel()
-        self?.yoloView?.setNeedsDisplay()
-        self?.yoloView?.layoutIfNeeded()
-      }
+      // YOLOView names the model after its file, which for downloads is the cache name.
+      DispatchQueue.main.async { self?.yoloView?.labelName.text = displayName }
     }
-  }
-
-  private func updateModelNameLabel() {
-    let modelDisplayName = (currentModelName as NSString).lastPathComponent
-    var nameWithoutExtension = (modelDisplayName as NSString).deletingPathExtension
-
-    if nameWithoutExtension.hasSuffix(".mlmodelc") {
-      nameWithoutExtension = (nameWithoutExtension as NSString).deletingPathExtension
-    }
-
-    // Format for display (e.g. "yolo26n-seg" -> "YOLO26n-seg").
-    labelName.text = processString(nameWithoutExtension)
   }
 
   @objc private func handleThresholdChange(_ notification: Notification) {
     guard let userInfo = notification.userInfo,
       let conf = userInfo["conf"] as? Double,
       let iou = userInfo["iou"] as? Double,
-      let maxItems = userInfo["maxItems"] as? Int,
-      let yoloView = yoloView
-    else {
-      return
-    }
+      let maxItems = userInfo["maxItems"] as? Int
+    else { return }
 
-    // Sync confidence, IoU, and max-items thresholds in a single call.
-    yoloView.updateThresholds(conf: conf, iou: iou, numItems: maxItems)
+    yoloView?.updateThresholds(conf: conf, iou: iou, numItems: maxItems)
   }
 
-  @objc private func handleTaskChange(_ notification: Notification) {
-    guard let userInfo = notification.userInfo,
-      let taskName = userInfo["task"] as? String
-    else {
-      return
-    }
+  override var prefersStatusBarHidden: Bool { true }
 
-    if let taskIndex = appTasks.firstIndex(where: { $0.name == taskName }) {
-      DispatchQueue.main.async { [weak self] in
-        self?.segmentedControl.selectedSegmentIndex = taskIndex
-      }
-    }
-  }
-
-  override var prefersStatusBarHidden: Bool {
-    return true
-  }
-
-  override var prefersHomeIndicatorAutoHidden: Bool {
-    return true
-  }
-
-  // External displays can be rotated; allow all orientations.
-  override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-    return .all
-  }
-
-  override var shouldAutorotate: Bool {
-    return true
-  }
-
-  deinit {
-    NotificationCenter.default.removeObserver(self)
-  }
-}
-
-// MARK: - YOLOViewDelegate
-extension ExternalViewController {
-  func yoloView(_ view: YOLOView, didUpdatePerformance fps: Double, inferenceTime: Double) {
-    DispatchQueue.main.async { [weak self] in
-      self?.labelFPS.text = String(format: "%.1f FPS - %.1f ms", fps, inferenceTime)
-    }
-  }
-
+  override var prefersHomeIndicatorAutoHidden: Bool { true }
 }

@@ -2,7 +2,7 @@
 
 // MARK: - OPTIONAL External Display Support
 // Optional extension that adds external monitor/TV support to the main ViewController. Dormant unless a display is
-// connected and dedicated mode is enabled in ExternalDisplayManager.
+// connected.
 //
 // Responsibilities:
 // - Detect external display connection/disconnection
@@ -17,14 +17,24 @@ import UltralyticsYOLO
 extension ViewController {
 
   func hasExternalScreen() -> Bool {
-    guard ExternalDisplayManager.isDedicatedModeEnabled else { return false }
-
-    return UIApplication.shared.connectedScenes
-      .compactMap { $0 as? UIWindowScene }
-      .contains { $0.screen != UIScreen.main }
+    UIApplication.shared.connectedScenes.contains {
+      $0.session.role == .windowExternalDisplayNonInteractive
+    }
   }
 
   func setupExternalDisplayNotifications() {
+    // iOS 27 offers an external display scene only to apps that register it as a scene accessory; earlier systems
+    // connect the Info.plist external display role on their own. The API ships with the iOS 27 SDK (Swift 6.4).
+    #if compiler(>=6.4)
+      if #available(iOS 27.0, *) {
+        _ = registerSceneAccessory(
+          .externalNonInteractive(
+            sceneConfiguration: UISceneConfiguration(
+              name: "External Display Configuration",
+              sessionRole: .windowExternalDisplayNonInteractive)))
+      }
+    #endif
+
     if hasExternalScreen() {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
         guard let self = self else { return }
@@ -46,15 +56,13 @@ extension ViewController {
     )
     NotificationCenter.default.addObserver(
       self,
-      selector: #selector(handleExternalDisplayReady(_:)),
+      selector: #selector(notifyExternalDisplayOfCurrentModel),
       name: .externalDisplayReady,
       object: nil
     )
   }
 
   @objc func handleExternalDisplayConnected(_ notification: Notification) {
-    guard ExternalDisplayManager.isDedicatedModeEnabled else { return }
-
     DispatchQueue.main.async {
       self.yoloView.stop()
       self.yoloView.setInferenceFlag(ok: false)
@@ -78,43 +86,26 @@ extension ViewController {
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        if self.currentLoadingEntry != nil || !self.currentModels.isEmpty {
-          self.notifyExternalDisplayOfCurrentModel()
-        }
         self.sliderValueChanged(self.yoloView.sliderConf)
-        NotificationCenter.default.post(
-          name: .taskDidChange,
-          object: nil,
-          userInfo: ["task": self.currentTask]
-        )
       }
     }
   }
 
-  func notifyExternalDisplayOfCurrentModel() {
-    let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
-
-    var fullModelPath = currentModelName
-    if let entry = currentLoadingEntry
-      ?? currentModels.first(where: { $0.identifier == currentModelIdentifier })
-    {
-      if let url = entry.installedURL {
-        fullModelPath = url.path
-      } else if entry.isLocalBundle,
-        let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
-        let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-      {
-        fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
-      } else if !entry.isLocalBundle,
-        ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
-      {
-        fullModelPath = ModelCacheManager.shared.modelURL(for: entry.identifier).path
-      } else {
-        fullModelPath = ""
-      }
-    }
-
-    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
+  /// Sends the current model to the external display, which loads it into its own YOLOView.
+  @objc func notifyExternalDisplayOfCurrentModel() {
+    guard let entry = currentModels.first(where: { $0.identifier == currentModelIdentifier }),
+      let task = appTasks.first(where: { $0.name == currentTask })
+    else { return }
+    let url =
+      entry.installedURL
+      ?? (entry.isLocalBundle
+        ? Bundle.main.url(forResource: task.folder, withExtension: nil)?
+          .appendingPathComponent(entry.identifier)
+        : ModelCacheManager.shared.modelURL(for: entry.identifier))
+    guard let url, FileManager.default.fileExists(atPath: url.path) else { return }
+    NotificationCenter.default.post(
+      name: .modelDidChange, object: nil,
+      userInfo: ["task": task.yoloTask, "modelPath": url.path, "displayName": currentModelName])
   }
 
   @objc func handleExternalDisplayDisconnected(_ notification: Notification) {
@@ -141,44 +132,6 @@ extension ViewController {
             ?? self.currentModels[0],
           forTask: self.currentTask)
       }
-    }
-  }
-
-  @objc func handleExternalDisplayReady(_ notification: Notification) {
-    guard ExternalDisplayManager.isDedicatedModeEnabled else { return }
-    guard !currentTask.isEmpty && !currentModels.isEmpty else { return }
-
-    let yoloTask = appTasks.first(where: { $0.name == currentTask })?.yoloTask ?? .detect
-
-    let currentEntry =
-      currentModels.first(where: { $0.identifier == currentModelIdentifier })
-      ?? currentModels.first
-    guard let entry = currentEntry else { return }
-
-    var fullModelPath = ""
-    if let url = entry.installedURL {
-      fullModelPath = url.path
-    } else if entry.isLocalBundle,
-      let folderURL = appTasks.first(where: { $0.name == currentTask })?.folder,
-      let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-    {
-      fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
-    } else if !entry.isLocalBundle,
-      ModelCacheManager.shared.isModelDownloaded(key: entry.identifier)
-    {
-      fullModelPath = ModelCacheManager.shared.modelURL(for: entry.identifier).path
-    }
-
-    guard !fullModelPath.isEmpty else { return }
-
-    ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
-  }
-
-  func checkAndNotifyExternalDisplayIfReady() {
-    guard hasExternalScreen() else { return }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-      guard let self = self else { return }
-      self.handleExternalDisplayReady(Notification(name: .externalDisplayReady))
     }
   }
 

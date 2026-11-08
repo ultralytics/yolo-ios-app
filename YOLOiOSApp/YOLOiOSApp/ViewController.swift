@@ -504,15 +504,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       let keptCurrentModel = !success && !self.currentModelName.isEmpty
 
       if success {
-        let previousTask = self.currentTask
         self.currentTask = loadedTask
-        if previousTask != loadedTask {
-          NotificationCenter.default.post(
-            name: .taskDidChange,
-            object: nil,
-            userInfo: ["task": loadedTask]
-          )
-        }
         self.currentModelName =
           self.currentLoadingEntry?.installedURL == nil ? processString(modelName) : modelName
         self.currentModelIdentifier = self.currentLoadingEntry?.identifier ?? ""
@@ -526,30 +518,7 @@ class ViewController: UIViewController, YOLOViewDelegate {
       }
 
       if success && hasExternalDisplay {
-        let yoloTask = appTasks.first(where: { $0.name == loadedTask })?.yoloTask ?? .detect
-        var fullModelPath = ""
-
-        if let entry = self.currentLoadingEntry {
-          if let url = entry.installedURL {
-            fullModelPath = url.path
-          } else if entry.isLocalBundle {
-            if let folderURL = appTasks.first(where: { $0.name == loadedTask })?.folder,
-              let folderPathURL = Bundle.main.url(forResource: folderURL, withExtension: nil)
-            {
-              fullModelPath = folderPathURL.appendingPathComponent(entry.identifier).path
-            }
-          } else {
-            let localModelURL = ModelCacheManager.shared.modelURL(for: entry.identifier)
-            fullModelPath =
-              FileManager.default.fileExists(atPath: localModelURL.path)
-              ? localModelURL.path : ""
-          }
-        }
-
-        if !fullModelPath.isEmpty {
-          ExternalDisplayManager.shared.notifyModelChange(task: yoloTask, modelName: fullModelPath)
-          self.checkAndNotifyExternalDisplayIfReady()
-        }
+        self.notifyExternalDisplayOfCurrentModel()
       }
 
       // Only toggle the local YOLOView inference flag when no external display is active.
@@ -634,15 +603,18 @@ class ViewController: UIViewController, YOLOViewDelegate {
   }
 
   private func refreshModelButton() {
-    let isCustom = ModelCacheManager.shared.customModels.contains {
-      $0.identifier == currentModelIdentifier
-    }
-    let task = "\(currentTask)\(isCustom ? " · Custom" : "")"
+    // Custom models carry their own format; bundled and official models follow the listed format.
+    let entry = currentModels.first { $0.identifier == currentModelIdentifier }
+    let isCustom = entry?.installedExtension != nil
+    let isCoreAI = (entry?.installedExtension ?? remoteModelExtension) == "aimodel"
+    let tags = (isCustom ? " · Custom" : "") + (isCoreAI ? " · Core AI" : "")
     modelsButton.taskLabel.attributedText = NSAttributedString(
-      string: currentTask.isEmpty ? " " : task.uppercased(), attributes: [.kern: 1])
+      string: currentTask.isEmpty ? " " : "\(currentTask)\(tags)".uppercased(),
+      attributes: [.kern: 1])
     modelsButton.accessibilityLabel =
       currentModelName.isEmpty
-      ? "Models" : "Models, \(currentModelName), \(currentTask)\(isCustom ? ", Custom" : "")"
+      ? "Models"
+      : "Models, \(currentModelName), \(currentTask)\(tags.replacingOccurrences(of: " ·", with: ","))"
   }
 
   @objc private func scanModelQRCode() {

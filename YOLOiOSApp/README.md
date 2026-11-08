@@ -100,7 +100,6 @@ The app includes **optional** external display optimizations that enhance the us
 
 ```
 YOLOiOSApp/ExternalDisplay/
-├── ExternalDisplayManager.swift       # Manages external display connections
 ├── ExternalSceneDelegate.swift        # Handles external display scene lifecycle
 ├── ExternalViewController.swift       # Controls external display content
 ├── NotificationExtensions.swift       # Notification helpers for display events

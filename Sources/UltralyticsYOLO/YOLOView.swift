@@ -738,10 +738,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
 
     updateLensControlVisibility()
 
+    let width = bounds.width
+    let height = bounds.height
+    labelName.frame = CGRect(x: 0, y: layoutMargins.top, width: width, height: height * 0.1)
+    labelFPS.frame = CGRect(x: 0, y: labelName.frame.maxY + 15, width: width, height: height * 0.04)
+    labelBreakdown.frame = CGRect(
+      x: 0, y: labelFPS.frame.maxY, width: width, height: labelFPS.frame.height * 0.8)
     if isLandscape {
-      layoutLandscape()
+      layoutBottomControls(
+        width: width, height: height, sliderX: width * 0.1,
+        sliderWidth: min(max(width * 0.28, 220), 300))
     } else {
-      layoutPortrait()
+      layoutBottomControls(width: width, height: height, sliderX: 20, sliderWidth: width * 0.46)
     }
 
     self.videoCapture.previewLayer?.frame = self.bounds
@@ -753,50 +761,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     super.didMoveToWindow()
     guard window != nil else { return }
     videoCapture.updateVideoOrientation(orientation: currentVideoOrientation())
-  }
-
-  /// Lays out the controls and overlays for landscape orientation.
-  private func layoutLandscape() {
-    let width = bounds.width
-    let height = bounds.height
-    let topMargin: CGFloat = 0
-    let titleLabelHeight: CGFloat = height * 0.1
-
-    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-
-    let subLabelHeight: CGFloat = height * 0.04
-    labelFPS.frame = CGRect(
-      x: 0, y: center.y - height * 0.24 - subLabelHeight,
-      width: width, height: subLabelHeight
-    )
-    labelBreakdown.frame = CGRect(
-      x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
-    )
-
-    layoutBottomControls(
-      width: width, height: height, sliderX: width * 0.1,
-      sliderWidth: min(max(width * 0.28, 220), 300))
-  }
-
-  /// Lays out the controls and overlays for portrait orientation.
-  private func layoutPortrait() {
-    let width = bounds.width
-    let height = bounds.height
-    let topMargin: CGFloat = 0
-    let titleLabelHeight: CGFloat = height * 0.1
-
-    labelName.frame = CGRect(x: 0, y: topMargin, width: width, height: titleLabelHeight)
-
-    let subLabelHeight: CGFloat = height * 0.04
-    labelFPS.frame = CGRect(
-      x: 0, y: labelName.frame.maxY + 15,
-      width: width, height: subLabelHeight
-    )
-    labelBreakdown.frame = CGRect(
-      x: 0, y: labelFPS.frame.maxY, width: width, height: subLabelHeight * 0.8
-    )
-
-    layoutBottomControls(width: width, height: height, sliderX: 20, sliderWidth: width * 0.46)
   }
 
   /// Lays out the toolbar, the zoom row above it (or the lens controls), then stacks the threshold labels and sliders

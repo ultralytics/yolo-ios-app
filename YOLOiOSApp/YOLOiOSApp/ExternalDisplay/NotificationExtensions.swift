@@ -9,5 +9,4 @@ extension Notification.Name {
   static let externalDisplayReady = Notification.Name("ExternalDisplayReady")
   static let modelDidChange = Notification.Name("ModelDidChange")
   static let thresholdDidChange = Notification.Name("ThresholdDidChange")
-  static let taskDidChange = Notification.Name("TaskDidChange")
 }

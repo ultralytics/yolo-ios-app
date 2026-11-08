@@ -20,7 +20,6 @@
 		737AB29E2E3E6418003FA92B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB29D2E3E6418003FA92B /* SceneDelegate.swift */; };
 		737AB29F2E3E6418003FA92B /* NotificationExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */; };
 		737AB2A02E3E6418003FA92B /* ExternalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB29B2E3E6418003FA92B /* ExternalViewController.swift */; };
-		737AB2A12E3E6418003FA92B /* ExternalDisplayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */; };
 		737AB2A22E3E6418003FA92B /* ExternalSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */; };
 		73D95D162D45DA510050E640 /* ModelDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D152D45DA510050E640 /* ModelDownloadManager.swift */; };
 		73D95D1B2D45DB800050E640 /* RemoteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D95D1A2D45DB800050E640 /* RemoteModels.swift */; };
@@ -37,7 +36,6 @@
 		636EFCA721E62DD300DE43BC /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		636EFCB821E62E3900DE43BC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		734B44432D42F7CF00D2CA6A /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Models; sourceTree = "<group>"; };
-		737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalDisplayManager.swift; sourceTree = "<group>"; };
 		737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSceneDelegate.swift; sourceTree = "<group>"; };
 		737AB29B2E3E6418003FA92B /* ExternalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalViewController.swift; sourceTree = "<group>"; };
 		737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationExtensions.swift; sourceTree = "<group>"; };
@@ -81,7 +79,6 @@
 		73EF45A02E3E6418003FA92B /* ExternalDisplay */ = {
 			isa = PBXGroup;
 			children = (
-				737AB2992E3E6418003FA92B /* ExternalDisplayManager.swift */,
 				737AB29A2E3E6418003FA92B /* ExternalSceneDelegate.swift */,
 				737AB29B2E3E6418003FA92B /* ExternalViewController.swift */,
 				737AB29C2E3E6418003FA92B /* NotificationExtensions.swift */,
@@ -234,7 +231,6 @@
 				737AB29E2E3E6418003FA92B /* SceneDelegate.swift in Sources */,
 				737AB29F2E3E6418003FA92B /* NotificationExtensions.swift in Sources */,
 				737AB2A02E3E6418003FA92B /* ExternalViewController.swift in Sources */,
-				737AB2A12E3E6418003FA92B /* ExternalDisplayManager.swift in Sources */,
 				737AB2A22E3E6418003FA92B /* ExternalSceneDelegate.swift in Sources */,
 				636EFCAA21E62DD300DE43BC /* ViewController.swift in Sources */,
 				636EFCAB21E62DD300DE43BC /* ViewController+ExternalDisplay.swift in Sources */,
@@ -385,7 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.20;
+				MARKETING_VERSION = 8.9.21;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -413,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.20;
+				MARKETING_VERSION = 8.9.21;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";

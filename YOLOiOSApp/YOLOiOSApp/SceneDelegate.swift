@@ -31,8 +31,4 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     else { return }
     (window?.rootViewController as? ViewController)?.importModel(from: url)
   }
-
-  func sceneDidBecomeActive(_ scene: UIScene) {
-    ExternalDisplayManager.refreshModeIfNeeded()
-  }
 }

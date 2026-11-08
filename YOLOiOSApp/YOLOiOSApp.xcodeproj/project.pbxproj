@@ -381,7 +381,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.20;
+				MARKETING_VERSION = 8.9.21;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -409,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.20;
+				MARKETING_VERSION = 8.9.21;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";

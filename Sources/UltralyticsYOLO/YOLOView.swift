@@ -488,7 +488,13 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
         imageSize: predictions.orig_shape,
         viewSize: viewSize
       )
-      showBox(at: i, prediction: prediction, frame: rect, colors: predictions.colors)
+      showBox(
+        at: i,
+        className: prediction.cls,
+        confidence: CGFloat(prediction.conf),
+        color: classColor(prediction.index, colors: predictions.colors),
+        frame: rect
+      )
     }
 
     for i in maxVisible..<boundingBoxViews.count {
@@ -530,17 +536,6 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   /// Configures the ith bounding box view with the prediction's color/label/alpha.
-  @inline(__always)
-  private func showBox(at index: Int, prediction: Box, frame: CGRect, colors: [ClassColor]) {
-    showBox(
-      at: index,
-      className: prediction.cls,
-      confidence: CGFloat(prediction.conf),
-      color: classColor(prediction.index, colors: colors),
-      frame: frame
-    )
-  }
-
   @inline(__always)
   private func showBox(
     at index: Int,

@@ -43,8 +43,7 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
-  /// Class colors from the model's optional `colors` metadata, resolved at load and indexed by class id (empty when
-  /// absent).
+  /// Class colors from the model's optional `colors` metadata, resolved at load (empty when absent).
   var colors = [ClassColor]()
 
   /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.

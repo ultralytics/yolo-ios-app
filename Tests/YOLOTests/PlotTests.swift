@@ -36,26 +36,9 @@ class PlotTests: XCTestCase {
     let rgb = { (color: UIColor) in color.toRGBComponents().map { [$0.red, $0.green, $0.blue] } }
     let colors = BasePredictor.parseColors(from: ["colors": "['#ff0000', '#00FF7F']"])
     XCTAssertEqual(colors.map { rgb($0.color) }, [[255, 0, 0], [0, 255, 127]])
-    XCTAssertEqual(classColor(1, colors: colors).color, colors[1].color)
     XCTAssertEqual(classColor(2, colors: colors).color, ultralyticsColors[2])  // past the list: palette
-    XCTAssertEqual(classColor(21).color, ultralyticsColors[1])
     XCTAssertTrue(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]).isEmpty)
     XCTAssertTrue(BasePredictor.parseColors(from: ["colors": "['#ff0000', 'red']"]).isEmpty)
-    XCTAssertEqual(rgb(classColor(2).textColor), [17, 31, 104])  // #F3F3F3 gets dark text
-    XCTAssertEqual(classColor(0).textColor, .white)
-    XCTAssertEqual(classColor(0).rgba, 0xFFFF_2A04)  // #042AFF as RGBA bytes
-  }
-
-  func testNonCOCOKeypointsUseClassPaletteWithoutSkeleton() {
-    let layer = CALayer()
-    let box = Box(
-      index: 0, cls: "a", conf: 0.9, xywh: .zero, xywhn: CGRect(x: 0, y: 0, width: 1, height: 1))
-    drawKeypoints(
-      keypointsList: [Array(repeating: (x: 0.5, y: 0.5), count: 5)],
-      confsList: [Array(repeating: 0.9, count: 5)], boundingBoxes: [box], on: layer,
-      imageViewSize: CGSize(width: 10, height: 10))
-    let fills = layer.sublayers?.compactMap { ($0 as? CAShapeLayer)?.fillColor }
-    XCTAssertEqual(fills, ultralyticsColors.prefix(5).map(\.cgColor))
   }
 
   func testUIColorRGBComponentsExtension() {

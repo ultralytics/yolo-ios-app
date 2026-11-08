@@ -171,7 +171,8 @@ original image without cropped padding. Scale it to the original image dimension
 
 Annotations color each class from the model's optional `colors` metadata (one `#rrggbb` per class id), falling back to
 the default Ultralytics palette, and label it in the system font (`DetectionLabelStyle`). Custom overlays get the same
-colors from `classColor(box.index, colors: output.colors)`, whose `color` and `textColor` are resolved once per model.
+colors from `classColor(box.index, colors: output.colors)`, whose `color` and `textColor` are resolved once per model,
+or draw boxes with `BoundingBoxView(fontSize:)` (`addToLayer`, `show`, `hide`).
 
 To run one function of a multifunction model, such as several input sizes merged into one package with coremltools'
 `MultiFunctionDescriptor`, create the predictor with `functionName`. `nil` loads the default function (`main` for Core

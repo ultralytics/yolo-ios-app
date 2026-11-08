@@ -106,11 +106,6 @@ public final class BoundingBoxView {
     DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
   }
 
-  /// Sets the font size for the text layer (useful for external displays)
-  func setFontSize(_ size: CGFloat) {
-    DetectionLabelStyle.configure(textLayer, fontSize: size)
-  }
-
   /// Sets the line width for the bounding box (useful for external displays)
   func setLineWidth(_ width: CGFloat) {
     shapeLayer.lineWidth = width

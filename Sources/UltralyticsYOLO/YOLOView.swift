@@ -397,25 +397,18 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
   }
 
   func setUpBoundingBoxViews() {
+    // External displays are much larger than iPhone screens (< 1000 points in their largest dimension), so their boxes
+    // get a font size and line width proportional to the view height
+    let viewBounds = self.bounds
+    let isExternalDisplay = max(viewBounds.width, viewBounds.height) > 1000
     // Ensure all bounding box views are initialized up to the maximum allowed.
     while boundingBoxViews.count < maxBoundingBoxViews {
-      let boxView = BoundingBoxView()
-
-      // Check if this is likely an external display based on view size
-      let viewBounds = self.bounds
-      let maxDimension = max(viewBounds.width, viewBounds.height)
-
-      // External displays are typically much larger than iPhone screens
-      // iPhone screens are typically < 1000 points in their largest dimension
-      if maxDimension > 1000 {
-        // Scale font size and line width for external display
-        // Use a proportional size similar to what's used elsewhere (height * 0.025-0.03)
-        let scaledFontSize = max(24, viewBounds.height * 0.03)
-        let scaledLineWidth = max(6, viewBounds.height * 0.005)
-        boxView.setFontSize(scaledFontSize)
-        boxView.setLineWidth(scaledLineWidth)
+      let boxView =
+        isExternalDisplay
+        ? BoundingBoxView(fontSize: max(24, viewBounds.height * 0.03)) : BoundingBoxView()
+      if isExternalDisplay {
+        boxView.setLineWidth(max(6, viewBounds.height * 0.005))
       }
-
       boundingBoxViews.append(boxView)
     }
   }

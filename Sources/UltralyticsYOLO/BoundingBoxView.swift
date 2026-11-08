@@ -93,11 +93,9 @@ public final class BoundingBoxView {
   /// The layer that displays the label and confidence score for the detected object.
   let textLayer: CATextLayer
 
-  /// The base font size that can be scaled for external displays
-  private var baseFontSize: CGFloat = 14
-
   /// Initializes a new BoundingBoxView with configured shape and text layers.
-  init() {
+  /// - Parameter fontSize: The label font size in points.
+  public init(fontSize: CGFloat = 14) {
     shapeLayer = CAShapeLayer()
     shapeLayer.fillColor = UIColor.clear.cgColor  // outline only, no fill
     shapeLayer.lineWidth = 4
@@ -105,13 +103,7 @@ public final class BoundingBoxView {
 
     textLayer = CATextLayer()
     textLayer.isHidden = true  // shown when a detection occurs
-    DetectionLabelStyle.configure(textLayer, fontSize: baseFontSize)
-  }
-
-  /// Sets the font size for the text layer (useful for external displays)
-  func setFontSize(_ size: CGFloat) {
-    baseFontSize = size
-    DetectionLabelStyle.configure(textLayer, fontSize: size)
+    DetectionLabelStyle.configure(textLayer, fontSize: fontSize)
   }
 
   /// Sets the line width for the bounding box (useful for external displays)
@@ -121,7 +113,7 @@ public final class BoundingBoxView {
 
   /// Adds the bounding box and text layers to a specified parent layer.
   /// - Parameter parent: The CALayer to which the bounding box and text layers will be added.
-  func addToLayer(_ parent: CALayer) {
+  public func addToLayer(_ parent: CALayer) {
     parent.addSublayer(shapeLayer)
     parent.addSublayer(textLayer)
   }
@@ -133,7 +125,7 @@ public final class BoundingBoxView {
   ///   - color: The color of the bounding box stroke and label background.
   ///   - alpha: The opacity level for the bounding box stroke and label background.
   ///   - angle: Optional rotation angle in radians for oriented boxes.
-  func show(
+  public func show(
     frame: CGRect, label: String, color: ClassColor, alpha: CGFloat, angle: CGFloat? = nil
   ) {
     CATransaction.begin()
@@ -173,7 +165,7 @@ public final class BoundingBoxView {
   }
 
   /// Hides the bounding box and text layers.
-  func hide() {
+  public func hide() {
     shapeLayer.isHidden = true
     textLayer.isHidden = true
   }

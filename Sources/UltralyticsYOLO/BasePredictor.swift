@@ -15,6 +15,9 @@ import Foundation
 import UIKit
 import Vision
 
+/// Default NMS IoU threshold, matching Ultralytics predict.
+let defaultIouThreshold = 0.5
+
 /// Base class for all YOLO model predictors, handling common model loading and inference logic.
 ///
 /// Manages Core ML model loading, initialization, and shared inference operations. Specialized subclasses (detection,
@@ -489,8 +492,8 @@ public class BasePredictor: Predictor, @unchecked Sendable {
       iouThreshold: iou, confidenceThreshold: confidenceThreshold)
   }
 
-  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.7).
-  public internal(set) var iouThreshold = 0.7
+  /// The IoU (Intersection over Union) threshold for non-maximum suppression (default: 0.5).
+  public internal(set) var iouThreshold = defaultIouThreshold
 
   /// Sets the IoU threshold for non-maximum suppression.
   ///

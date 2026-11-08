@@ -24,7 +24,7 @@ public final class ThresholdProvider: MLFeatureProvider {
   /// - Parameters:
   ///   - iouThreshold: IoU threshold used by NMS to merge overlapping detections.
   ///   - confidenceThreshold: Minimum confidence required for a detection to be kept.
-  init(iouThreshold: Double = 0.7, confidenceThreshold: Double = 0.25) {
+  init(iouThreshold: Double = defaultIouThreshold, confidenceThreshold: Double = 0.25) {
     values = [
       "iouThreshold": MLFeatureValue(double: iouThreshold),
       "confidenceThreshold": MLFeatureValue(double: confidenceThreshold),

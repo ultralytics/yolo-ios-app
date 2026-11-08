@@ -72,6 +72,9 @@ public struct YOLOResult: @unchecked Sendable {
   /// Array of class label names used by the model.
   public var names: [String]
 
+  /// Class colors from the model's `colors` metadata (empty when absent); resolve one with `classColor(_:colors:)`.
+  public var colors: [ClassColor] = []
+
   /// An empty result with zeroed metrics, used as a default return value before inference runs.
   public static let empty = YOLOResult(orig_shape: .zero, boxes: [], speed: 0, names: [])
 }

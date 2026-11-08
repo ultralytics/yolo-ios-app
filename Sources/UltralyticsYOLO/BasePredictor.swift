@@ -43,6 +43,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
   /// The class labels used by the model for categorizing detections.
   public var labels = [String]()
 
+  /// Class colors from the model's optional `colors` metadata, resolved at load (empty when absent).
+  var colors = [ClassColor]()
+
   /// Whether camera predictions should include a copy of the original input image in `YOLOResult`.
   public var capturesOriginalImage = false
 
@@ -180,6 +183,21 @@ public class BasePredictor: Predictor, @unchecked Sendable {
     return []
   }
 
+  /// Parses optional `colors` metadata (a Python list repr like `"['#042aff', '#ff0000']"`), indexed by class id. Any
+  /// malformed entry voids the whole list, so colors never shift or apply partially.
+  static func parseColors(from userDefined: [String: String]) -> [ClassColor] {
+    guard let list = userDefined["colors"] else { return [] }
+    var colors = [ClassColor]()
+    for entry in list.split(separator: ",") {
+      let hex = entry.trimmingCharacters(in: CharacterSet(charactersIn: "[]'\" "))
+      guard hex.count == 7, hex.first == "#", hex.dropFirst().allSatisfy(\.isHexDigit),
+        let rgb = Int(hex.dropFirst(), radix: 16)
+      else { return [] }
+      colors.append(ClassColor(UIColor(rgb: rgb)))
+    }
+    return colors
+  }
+
   /// Dispatches `create` to the concrete predictor type for the given task, centralizing the task → predictor mapping.
   public static func create(
     for task: YOLOTask,
@@ -294,8 +312,9 @@ public class BasePredictor: Predictor, @unchecked Sendable {
           mlModel.modelDescription
           .metadata[MLModelMetadataKey.creatorDefinedKey] as? [String: String]
 
-        // (2) Extract class labels
+        // (2) Extract class labels and colors
         predictor.labels = userDefined.map(Self.parseLabels(from:)) ?? []
+        predictor.colors = userDefined.map(Self.parseColors(from:)) ?? []
 
         // Detect NMS-free models (YOLO26 support)
         if let nmsValue = userDefined?["nms"] {

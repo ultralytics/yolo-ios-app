@@ -25,12 +25,20 @@ class PlotTests: XCTestCase {
     // Test pose-related constants are properly initialized
     XCTAssertGreaterThan(posePalette.count, 0)
     XCTAssertEqual(posePalette.count, 20)
-    XCTAssertEqual(posePalette[0].count, 3)  // RGB values
 
     XCTAssertGreaterThan(limbColorIndices.count, 0)
     XCTAssertGreaterThan(kptColorIndices.count, 0)
     XCTAssertGreaterThan(skeleton.count, 0)
     XCTAssertEqual(skeleton[0].count, 2)  // Each bone connects 2 points
+  }
+
+  func testClassColorsFromModelMetadata() {
+    let rgb = { (color: UIColor) in color.toRGBComponents().map { [$0.red, $0.green, $0.blue] } }
+    let colors = BasePredictor.parseColors(from: ["colors": "['#ff0000', '#00FF7F']"])
+    XCTAssertEqual(colors.map { rgb($0.color) }, [[255, 0, 0], [0, 255, 127]])
+    XCTAssertEqual(classColor(2, colors: colors).color, ultralyticsColors[2])  // past the list: palette
+    XCTAssertTrue(BasePredictor.parseColors(from: ["names": "{0: 'a'}"]).isEmpty)
+    XCTAssertTrue(BasePredictor.parseColors(from: ["colors": "['#ff0000', 'red']"]).isEmpty)
   }
 
   func testUIColorRGBComponentsExtension() {

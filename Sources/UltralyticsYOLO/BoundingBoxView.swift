@@ -12,26 +12,31 @@
 import Foundation
 import UIKit
 
-enum DetectionLabelStyle {
-  static let fontName = "Avenir"
+/// The single owner of annotation label text, font (system sans), size, and chip geometry.
+public enum DetectionLabelStyle {
   static let maxTextSize = CGSize(width: 400, height: 100)
   static let horizontalPadding: CGFloat = 12
   static let verticalOffset: CGFloat = 2
   static let cornerRadius: CGFloat = 3
 
-  static func text(className: String, confidence: CGFloat) -> String {
+  public static func text(className: String, confidence: CGFloat) -> String {
     String(format: "%@ %.1f", className, confidence * 100)
   }
 
-  static func alpha(confidence: CGFloat) -> CGFloat {
+  public static func alpha(confidence: CGFloat) -> CGFloat {
     max(0.6, (confidence - 0.2) / (1.0 - 0.2) * 0.9)
   }
 
   static func font(size: CGFloat) -> UIFont {
-    UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size)
+    UIFont.systemFont(ofSize: size)
   }
 
-  static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
+  /// Label font size for an annotation drawn into an image of `imageSize` pixels.
+  static func fontSize(for imageSize: CGSize) -> CGFloat {
+    max(imageSize.width, imageSize.height) / 50
+  }
+
+  public static func configure(_ textLayer: CATextLayer, fontSize: CGFloat) {
     let font = font(size: fontSize)
     textLayer.contentsScale = UIScreen.main.scale
     textLayer.fontSize = fontSize
@@ -41,14 +46,13 @@ enum DetectionLabelStyle {
     textLayer.masksToBounds = true
   }
 
-  static func attributes(fontSize: CGFloat, alpha: CGFloat = 1) -> [NSAttributedString.Key: Any] {
-    [
-      .font: font(size: fontSize),
-      .foregroundColor: UIColor.white.withAlphaComponent(alpha),
-    ]
+  static func attributes(
+    fontSize: CGFloat, color: UIColor = .white
+  ) -> [NSAttributedString.Key: Any] {
+    [.font: font(size: fontSize), .foregroundColor: color]
   }
 
-  static func size(for label: String, fontSize: CGFloat) -> CGSize {
+  public static func size(for label: String, fontSize: CGFloat) -> CGSize {
     let textRect = label.boundingRect(
       with: maxTextSize,
       options: .truncatesLastVisibleLine,
@@ -58,13 +62,13 @@ enum DetectionLabelStyle {
     return CGSize(width: textRect.width + horizontalPadding, height: textRect.height)
   }
 
-  static func isVisible(_ geometry: CGRect, within bounds: CGRect) -> Bool {
+  public static func isVisible(_ geometry: CGRect, within bounds: CGRect) -> Bool {
     geometry.intersects(bounds)
   }
 
-  static func frame(for label: String, fontSize: CGFloat, anchor: CGPoint, within bounds: CGRect)
-    -> CGRect
-  {
+  public static func frame(
+    for label: String, fontSize: CGFloat, anchor: CGPoint, within bounds: CGRect
+  ) -> CGRect {
     var textSize = size(for: label, fontSize: fontSize)
     textSize.width = min(textSize.width, bounds.width)
     textSize.height = min(textSize.height, bounds.height)
@@ -129,7 +133,9 @@ public final class BoundingBoxView {
   ///   - color: The color of the bounding box stroke and label background.
   ///   - alpha: The opacity level for the bounding box stroke and label background.
   ///   - angle: Optional rotation angle in radians for oriented boxes.
-  func show(frame: CGRect, label: String, color: UIColor, alpha: CGFloat, angle: CGFloat? = nil) {
+  func show(
+    frame: CGRect, label: String, color: ClassColor, alpha: CGFloat, angle: CGFloat? = nil
+  ) {
     CATransaction.begin()
     CATransaction.setDisableActions(true)  // disable implicit animations
 
@@ -141,12 +147,15 @@ public final class BoundingBoxView {
       path.apply(transform)
     }
     shapeLayer.path = path.cgPath
-    shapeLayer.strokeColor = color.withAlphaComponent(alpha).cgColor
+    // Confidence alpha goes on the layers so the cached class colors are reused every frame
+    shapeLayer.strokeColor = color.color.cgColor
+    shapeLayer.opacity = Float(alpha)
     shapeLayer.isHidden = false
 
     textLayer.string = label
-    textLayer.backgroundColor = color.withAlphaComponent(alpha).cgColor
-    textLayer.foregroundColor = UIColor.white.withAlphaComponent(alpha).cgColor
+    textLayer.backgroundColor = color.color.cgColor
+    textLayer.foregroundColor = color.textColor.cgColor
+    textLayer.opacity = Float(alpha)
 
     let bounds = textLayer.superlayer?.bounds ?? .zero
     textLayer.isHidden = !DetectionLabelStyle.isVisible(path.bounds, within: bounds)

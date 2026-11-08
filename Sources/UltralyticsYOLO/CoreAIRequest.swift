@@ -69,6 +69,7 @@ extension BasePredictor {
       if #available(iOS 27.0, *) {
         let metadata = try Self.coreAIMetadata(at: url)
         labels = Self.parseLabels(from: metadata)
+        colors = Self.parseColors(from: metadata)
         let request = try CoreAIRequest.load(
           url: url, useGpu: useGpu, functionName: functionName ?? "main")
         modelInputSize = (

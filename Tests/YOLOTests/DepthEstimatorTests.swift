@@ -53,7 +53,7 @@ final class DepthEstimatorTests: XCTestCase {
     XCTAssertEqual(result.maxDepth, 5)
     let image = try XCTUnwrap(result.image)
     let data = try XCTUnwrap(image.dataProvider?.data as Data?)
-    XCTAssertEqual(Array(data[0..<4]), [0, 0, 0, 0])
+    XCTAssertEqual(Array(data[0..<4]), [0, 0, 0, 255])
   }
 
   func testDepthImageColorsNearAndFarPixels() throws {
@@ -66,7 +66,10 @@ final class DepthEstimatorTests: XCTestCase {
     let image = try XCTUnwrap(result.image)
     let data = try XCTUnwrap(image.dataProvider?.data as Data?)
 
-    XCTAssertEqual(Array(data[0..<4]), [180, 20, 40, 255])
-    XCTAssertEqual(Array(data[4..<8]), [48, 18, 59, 255])
+    // Jet on disparity: near (high 1/d) is dark red, far is dark blue
+    XCTAssertEqual(Array(data[0..<4]), [128, 0, 0, 255])
+    XCTAssertEqual(Array(data[4..<6]), [0, 0])
+    XCTAssertEqual(Double(data[6]), 132, accuracy: 1)
+    XCTAssertEqual(data[7], 255)
   }
 }

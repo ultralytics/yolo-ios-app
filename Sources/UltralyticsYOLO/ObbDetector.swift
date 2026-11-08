@@ -28,7 +28,7 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     self.updateTime()
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], obb: obbResults,
-      speed: self.t2, fps: 1 / self.t4, names: labels)
+      speed: self.t2, fps: 1 / self.t4, names: labels, colors: colors)
     applyTimingBreakdown(&result, smoothed: true)
     result.originalImage = currentOriginalImage
     self.currentOnResultsListener?.on(result: result)
@@ -49,11 +49,12 @@ public final class ObbDetector: BasePredictor, @unchecked Sendable {
     markInferenceEnd()
     let obbResults = buildResults(from: prediction)
     let speed = finishTiming(notify: false)  // before drawing: annotation is excluded from timings
-    let annotatedImage = drawOBBsOnCIImage(ciImage: image, obbDetections: obbResults)
+    let annotatedImage = drawOBBsOnCIImage(
+      ciImage: image, obbDetections: obbResults, colors: colors)
     var result = YOLOResult(
       orig_shape: inputSize, boxes: [], obb: obbResults,
       annotatedImage: annotatedImage,
-      speed: speed, names: labels)
+      speed: speed, names: labels, colors: colors)
     applyTimingBreakdown(&result)
     if capturesOriginalImage {
       result.originalImage = UIImage(ciImage: image)

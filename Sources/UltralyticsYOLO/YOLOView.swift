@@ -256,8 +256,11 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
           self.task = task
           self.setupSublayers()
           self.modelName = modelURL.deletingPathExtension().lastPathComponent
-          self.videoCapture.predictor = predictor
+          // The new predictor starts at its defaults; apply the slider values before the first frame.
           predictor.setNumItemsThreshold(numItems: self.getNumItemsThreshold())
+          predictor.setConfidenceThreshold(confidence: self.getConfidenceThreshold())
+          predictor.setIouThreshold(iou: self.getIouThreshold())
+          self.videoCapture.predictor = predictor
           self.labelName.text = processString(self.modelName)
           completion?(.success(()))
         case .failure(let error):

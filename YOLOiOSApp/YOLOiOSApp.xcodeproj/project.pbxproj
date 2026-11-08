@@ -111,7 +111,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7BCB412921C3096200BFC4D0 /* Build configuration list for PBXNativeTarget "YOLOiOSApp" */;
 			buildPhases = (
-				63F890A422A1723300072C38 /* ShellScript */,
 				734DA0AD2E10000000000001 /* Download YOLO Models */,
 				7BCB411321C3096100BFC4D0 /* Sources */,
 				7BCB411421C3096100BFC4D0 /* Frameworks */,
@@ -181,24 +180,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		63F890A422A1723300072C38 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Bump CFBundleVersion on archive builds only, so regular builds don't dirty the working tree.\nif [ \"$ACTION\" != \"install\" ]; then exit 0; fi\nbuildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\"\n";
-		};
 		734DA0AD2E10000000000001 /* Download YOLO Models */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -381,7 +362,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.22;
+				MARKETING_VERSION = 8.9.23;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -409,7 +390,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 8.9.22;
+				MARKETING_VERSION = 8.9.23;
 				CODE_SIGN_ENTITLEMENTS = YOLOiOSApp/YOLOiOSApp.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ultralytics.iDetection;
 				PRODUCT_NAME = "$(TARGET_NAME)";

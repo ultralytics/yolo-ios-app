@@ -17,8 +17,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: macos-latest
-    timeout-minutes: 25
+    # Xcode 27 matches release builds; periphery stays on macos-latest so the Xcode 26 compile path is covered too
+    runs-on: xcode-27
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
@@ -54,6 +55,17 @@ jobs:
             -enableCodeCoverage YES \
             IPHONEOS_DEPLOYMENT_TARGET=16.0 \
             clean build test
+
+      # The simulator SDK has no CoreAI.framework, so only a device build compiles the Core AI backend
+      - name: Build app for device
+        run: |
+          xcodebuild \
+            -project YOLOiOSApp/YOLOiOSApp.xcodeproj \
+            -scheme YOLOiOSApp \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath Build/ \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
       - name: Generate Code Coverage Report
         run: |

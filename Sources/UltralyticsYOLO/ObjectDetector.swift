@@ -9,6 +9,7 @@
 //  (YOLO11, returning `VNRecognizedObjectObservation`) and NMS-free end2end models (YOLO26, returning raw
 //  `MLMultiArray` tensors), converting model coordinates to input-image space and packaging results as `YOLOResult`.
 
+import Accelerate
 import CoreML
 import Foundation
 import UIKit
@@ -207,7 +208,19 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     var candidateScores = [Float]()
     var candidateClasses = [Int]()
 
-    for j in 0..<numAnchors {
+    // Vectorized per-anchor maxima prefilter the anchors: a Swift loop over every anchor and class is very slow in
+    // unoptimized (Debug) builds, while vDSP runs at full speed in any configuration. Anchors that pass (or whose
+    // maximum is NaN) get the exact scalar scan, so results match it for any threshold and any NaN.
+    var maxScores = [Float](repeating: 0, count: numAnchors)
+    maxScores.withUnsafeMutableBufferPointer { maxima in
+      for c in 0..<numClasses {
+        vDSP_vmax(
+          pointer + (4 + c) * featureStride, vDSP_Stride(anchorStride), maxima.baseAddress!, 1,
+          maxima.baseAddress!, 1, vDSP_Length(numAnchors))
+      }
+    }
+
+    for j in 0..<numAnchors where !(maxScores[j] <= confThreshold) {
       let anchorOffset = j * anchorStride
       var bestScore: Float = 0
       var bestClass = 0

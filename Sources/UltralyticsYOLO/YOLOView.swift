@@ -661,7 +661,7 @@ public final class YOLOView: UIView, VideoCaptureDelegate {
     labelSliderIoU.font = UIFont.preferredFont(forTextStyle: .subheadline)
     self.addSubview(labelSliderIoU)
 
-    configureSlider(sliderIoU, min: 0, max: 1, value: 0.5)
+    configureSlider(sliderIoU, min: 0, max: 1, value: Float(defaultIouThreshold))
     self.addSubview(sliderIoU)
     renderThresholdLabels()
 

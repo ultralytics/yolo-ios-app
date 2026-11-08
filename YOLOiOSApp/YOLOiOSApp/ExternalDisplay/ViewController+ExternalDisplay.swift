@@ -69,8 +69,6 @@ extension ViewController {
       self.showExternalDisplayStatus()
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        self.view.setNeedsLayout()
-        self.view.layoutIfNeeded()
         [
           self.yoloView.sliderConf, self.yoloView.labelSliderConf,
           self.yoloView.sliderIoU, self.yoloView.labelSliderIoU,
@@ -81,8 +79,10 @@ extension ViewController {
           self.yoloView.shareButton,
           self.yoloView.infoButton,
         ].forEach { $0.isHidden = true }
-        // Lens and torch controls derive their visibility from switchCameraButton during layout.
+        // Lens and torch controls follow switchCameraButton in YOLOView layout, moving the zoom row; this
+        // controller's layout then realigns the version label with it.
         self.yoloView.setNeedsLayout()
+        self.view.setNeedsLayout()
       }
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -118,8 +118,9 @@ extension ViewController {
         self.yoloView.shareButton,
         self.yoloView.infoButton,
       ].forEach { $0.isHidden = false }
-      // Lens and torch controls derive their visibility from switchCameraButton during layout.
+      // Lens and torch controls follow switchCameraButton in YOLOView layout; realign the version label too.
       self.yoloView.setNeedsLayout()
+      self.view.setNeedsLayout()
 
       self.yoloView.resume()
       self.yoloView.setInferenceFlag(ok: true)

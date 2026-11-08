@@ -669,14 +669,12 @@ class ViewController: UIViewController, YOLOViewDelegate {
             "\(task.name) · \(ByteCountFormatter.string(fromByteCount: model.size, countStyle: .file))\nDownload for offline use?",
           preferredStyle: .alert)
         alert.addAction(
-          UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
-            guard let self, self.currentModelName.isEmpty else { return }
+          UIAlertAction(title: "Cancel", style: .cancel) { _ in
+            guard self.currentModelName.isEmpty else { return }
             self.loadSavedModelOrFirstOfficial()
           })
         alert.addAction(
-          UIAlertAction(title: "Download", style: .default) { [weak self] _ in
-            self?.installImportedModel(model)
-          })
+          UIAlertAction(title: "Download", style: .default) { _ in self.installImportedModel(model) })
         present(alert, animated: true)
       } catch {
         isLoadingModel = false

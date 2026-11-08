@@ -9,6 +9,7 @@
 //  (YOLO11, returning `VNRecognizedObjectObservation`) and NMS-free end2end models (YOLO26, returning raw
 //  `MLMultiArray` tensors), converting model coordinates to input-image space and packaging results as `YOLOResult`.
 
+import Accelerate
 import CoreML
 import Foundation
 import UIKit
@@ -207,18 +208,23 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
     var candidateScores = [Float]()
     var candidateClasses = [Int]()
 
-    for j in 0..<numAnchors {
-      let anchorOffset = j * anchorStride
-      var bestScore: Float = 0
-      var bestClass = 0
+    // Best class score per anchor as vectorized row maxima: a Swift loop over every anchor and class is very slow in
+    // unoptimized (Debug) builds, while vDSP runs at full speed in any configuration.
+    var maxScores = [Float](repeating: 0, count: numAnchors)
+    maxScores.withUnsafeMutableBufferPointer { maxima in
       for c in 0..<numClasses {
-        let score = pointer[(4 + c) * featureStride + anchorOffset]
-        if score > bestScore {
-          bestScore = score
-          bestClass = c
-        }
+        vDSP_vmax(
+          pointer + (4 + c) * featureStride, vDSP_Stride(anchorStride), maxima.baseAddress!, 1,
+          maxima.baseAddress!, 1, vDSP_Length(numAnchors))
       }
-      guard bestScore > confThreshold else { continue }
+    }
+
+    for j in 0..<numAnchors where maxScores[j] > confThreshold {
+      let anchorOffset = j * anchorStride
+      let bestScore = maxScores[j]
+      // The first class holding the maximum, as a strict greater-than scan would pick.
+      var bestClass = 0
+      while pointer[(4 + bestClass) * featureStride + anchorOffset] != bestScore { bestClass += 1 }
 
       let x = pointer[anchorOffset]
       let y = pointer[featureStride + anchorOffset]

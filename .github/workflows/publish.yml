@@ -202,10 +202,8 @@ jobs:
             echo "No Package.resolved (project has no remote SPM dependencies) — skipping"
           fi
 
-          # Single commit with version info
-          MARKETING_VERSION="${{ needs.check.outputs.marketing_version }}"
-          CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "YOLOiOSApp/YOLOiOSApp/Info.plist")
-          git commit -m "v$MARKETING_VERSION ($CURRENT_BUILD)"
+          # Single commit named for the version; Xcode Cloud assigns the build number when it distributes
+          git commit -m "v${{ needs.check.outputs.marketing_version }}"
 
       - name: Push to Xcode Cloud
         run: git push --force origin testflight

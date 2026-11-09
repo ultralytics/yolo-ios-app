@@ -58,7 +58,7 @@ jobs:
             "${XCODEBUILD[@]}" test-without-building 2>&1 | tee test.log && exit 0
             grep -q "hung before establishing connection" test.log || exit 1
             echo "::warning::Test runner hung before connecting (attempt $attempt)"
-            xcrun simctl shutdown "$IOS_SIMULATOR"
+            xcrun simctl shutdown "$IOS_SIMULATOR" || true
           done
           exit 1
 

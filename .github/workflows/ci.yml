@@ -46,15 +46,21 @@ jobs:
             IOS_SIMULATOR=$(xcrun simctl create "CI iPhone" "$IOS_DEVICE_TYPE" "$IOS_RUNTIME")
           fi
           DESTINATION="platform=iOS Simulator,id=$IOS_SIMULATOR,arch=arm64"
+          XCODEBUILD=(xcodebuild -scheme UltralyticsYOLO -sdk iphonesimulator -derivedDataPath Build/
+            -destination "$DESTINATION" -enableCodeCoverage YES IPHONEOS_DEPLOYMENT_TARGET=16.0)
 
-          xcodebuild \
-            -scheme UltralyticsYOLO \
-            -sdk iphonesimulator \
-            -derivedDataPath Build/ \
-            -destination "$DESTINATION" \
-            -enableCodeCoverage YES \
-            IPHONEOS_DEPLOYMENT_TARGET=16.0 \
-            clean build test
+          "${XCODEBUILD[@]}" clean build-for-testing
+
+          # The simulator test runner sometimes hangs before connecting and no test runs; reboot and retry only that
+          set -o pipefail
+          for attempt in 1 2; do
+            xcrun simctl bootstatus "$IOS_SIMULATOR" -b
+            "${XCODEBUILD[@]}" test-without-building 2>&1 | tee test.log && exit 0
+            grep -q "hung before establishing connection" test.log || exit 1
+            echo "::warning::Test runner hung before connecting (attempt $attempt)"
+            xcrun simctl shutdown "$IOS_SIMULATOR"
+          done
+          exit 1
 
       # The simulator SDK has no CoreAI.framework, so only a device build compiles the Core AI backend
       - name: Build app for device

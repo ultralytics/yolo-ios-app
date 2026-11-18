@@ -66,7 +66,7 @@ public final class ObjectDetector: BasePredictor, @unchecked Sendable {
         let observationLabel = prediction.labels.first?.identifier ?? ""
         let index = self.labels.firstIndex(of: observationLabel) ?? 0
         let label = observationLabel.isEmpty ? labelName(for: index) : observationLabel
-        let confidence = prediction.labels.first?.confidence ?? 0
+        let confidence = prediction.confidence
         boxes.append(
           Box(index: index, cls: label, conf: confidence, xywh: imageRect, xywhn: invertedBox))
       }

@@ -192,46 +192,38 @@ public final class Segmenter: BasePredictor, @unchecked Sendable {
 
     let resultsWrapper = ResultsWrapper()
 
+    let strides = feature.strides.map { $0.intValue }
+    let featureStride = strides[1]
     let featurePointer = feature.dataPointer.assumingMemoryBound(to: Float.self)
     let pointerWrapper = FloatPointerWrapper(featurePointer)
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-      let x = pointerWrapper.pointer[j]
-      let y = pointerWrapper.pointer[numAnchors + j]
-      let width = pointerWrapper.pointer[2 * numAnchors + j]
-      let height = pointerWrapper.pointer[3 * numAnchors + j]
+      let anchor = pointerWrapper.pointer + j * strides[2]
+      let x = anchor[0]
+      let y = anchor[featureStride]
+      let width = anchor[2 * featureStride]
+      let height = anchor[3 * featureStride]
 
       let boxX = CGFloat(x - width / 2)
       let boxY = CGFloat(y - height / 2)
       let boundingBox = CGRect(x: boxX, y: boxY, width: CGFloat(width), height: CGFloat(height))
 
-      // Use thread-local storage for class probabilities
-      let localClassProbs = UnsafeMutableBufferPointer<Float>.allocate(capacity: numClasses)
-      defer { localClassProbs.deallocate() }
-
-      vDSP_mtrans(
-        pointerWrapper.pointer + 4 * numAnchors + j,
-        numAnchors,
-        localClassProbs.baseAddress!,
-        1,
-        1,
-        vDSP_Length(numClasses)
-      )
-
       var maxClassValue: Float = 0
       var maxClassIndex: vDSP_Length = 0
       vDSP_maxvi(
-        localClassProbs.baseAddress!, 1, &maxClassValue, &maxClassIndex, vDSP_Length(numClasses))
+        anchor + 4 * featureStride, featureStride, &maxClassValue, &maxClassIndex,
+        vDSP_Length(numClasses))
 
       if maxClassValue > confidenceThreshold {
         // Collect the 32 mask coefficients into a lightweight [Float] (no per-detection MLMultiArray object).
-        let maskProbsPointer = pointerWrapper.pointer + (4 + numClasses) * numAnchors + j
+        let maskProbsPointer = anchor + (4 + numClasses) * featureStride
         var maskProbs = [Float](repeating: 0, count: maskConfidenceLength)
         for i in 0..<maskConfidenceLength {
-          maskProbs[i] = maskProbsPointer[i * numAnchors]
+          maskProbs[i] = maskProbsPointer[i * featureStride]
         }
 
-        resultsWrapper.append((boundingBox, Int(maxClassIndex), maxClassValue, maskProbs))
+        resultsWrapper.append(
+          (boundingBox, Int(maxClassIndex) / featureStride, maxClassValue, maskProbs))
       }
     }
 

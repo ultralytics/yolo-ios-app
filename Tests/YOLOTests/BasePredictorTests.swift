@@ -534,7 +534,9 @@ private func makeArray(
   let strides = [shape[1] * rowStride, rowStride, 1]
   let pointer = UnsafeMutablePointer<Float>.allocate(capacity: strides[0])
   pointer.initialize(repeating: 0, count: strides[0])
-  for row in 0..<shape[1] { (pointer + row * rowStride + shape[2]).update(repeating: 9999, count: 3) }
+  for row in 0..<shape[1] {
+    (pointer + row * rowStride + shape[2]).update(repeating: 9999, count: 3)
+  }
   let array = try MLMultiArray(
     dataPointer: pointer, shape: shape.map(NSNumber.init(value:)), dataType: .float32,
     strides: strides.map(NSNumber.init(value:)), deallocator: { $0.deallocate() })

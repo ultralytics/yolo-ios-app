@@ -246,7 +246,9 @@ func generateCombinedMaskImage(
   }
 
   let protosPointer = protos.dataPointer.assumingMemoryBound(to: Float.self)
-  let HW = maskHeight * maskWidth
+  // Core ML may pad rows (e.g. 104 -> 112 values), so masks keep the protos' strides and skip the padding.
+  let rowStride = protos.strides[2].intValue
+  let HW = protos.strides[1].intValue
   let N = detectedObjects.count
 
   // No detections: nothing to composite. Return early so the empty-buffer unsafe-pointer paths below
@@ -262,10 +264,6 @@ func generateCombinedMaskImage(
       coeffsArray[i * maskChannels + c] = coeffs[c]
     }
   }
-
-  // 3) Matrix B: (C, HW) uses protosPointer directly
-  //    Memory layout is [1, C, H, W] => (C, H, W) => (C, HW). Rows: C, Columns: HW
-  //    vDSP_mmul simply treats contiguous memory as 2D, so this is OK.
 
   // 4) Matrix C (output): (N, HW) allocate => combinedMask
   //    A flat 1D array with N*HW elements
@@ -333,7 +331,7 @@ func generateCombinedMaskImage(
       let box = maskBoxes[i]
       let startIdx = i * HW
       for y in 0..<maskHeight {
-        let rowStart = startIdx + y * maskWidth
+        let rowStart = startIdx + y * rowStride
         let insideY = y >= box.y1 && y < box.y2
         for x in 0..<maskWidth where !insideY || x < box.x1 || x >= box.x2 {
           combinedMask[rowStart + x] = 0
@@ -388,10 +386,10 @@ func generateCombinedMaskImage(
         scaledMask.withUnsafeMutableBufferPointer { targetBuffer in
           var source = vImage_Buffer(
             data: UnsafeMutableRawPointer(
-              mutating: sourceBuffer.baseAddress! + startIdx + sourceY * maskWidth + sourceX),
+              mutating: sourceBuffer.baseAddress! + startIdx + sourceY * rowStride + sourceX),
             height: vImagePixelCount(sourceHeight),
             width: vImagePixelCount(sourceWidth),
-            rowBytes: maskWidth * MemoryLayout<Float>.stride)
+            rowBytes: rowStride * MemoryLayout<Float>.stride)
           var target = vImage_Buffer(
             data: targetBuffer.baseAddress!,
             height: vImagePixelCount(targetBoxHeight),
@@ -439,7 +437,7 @@ func generateCombinedMaskImage(
         var rows = [[Float]]()
         rows.reserveCapacity(outputHeight)
         for y in 0..<outputHeight {
-          let rowStart = startIdx + (outputY + y) * maskWidth + outputX
+          let rowStart = startIdx + (outputY + y) * rowStride + outputX
           rows.append(Array(UnsafeBufferPointer(start: base + rowStart, count: outputWidth)))
         }
         masksArray.append(rows)

@@ -528,10 +528,18 @@ private func makeArray(
   shape: [Int],
   writeValues: (_ write: (_ indices: [Int], _ value: Float) -> Void) -> Void
 ) throws -> MLMultiArray {
-  let array = try MLMultiArray(shape: shape.map(NSNumber.init(value:)), dataType: .float32)
-  let pointer = array.dataPointer.assumingMemoryBound(to: Float.self)
-  pointer.initialize(repeating: 0, count: array.count)
-  let strides = array.strides.map { $0.intValue }
+  // Pad each row by 3 values, as Core ML does on device and in the simulator (2100 -> 2112), with a value that
+  // breaks any decoder reading the padding.
+  let rowStride = shape[2] + 3
+  let strides = [shape[1] * rowStride, rowStride, 1]
+  let pointer = UnsafeMutablePointer<Float>.allocate(capacity: strides[0])
+  pointer.initialize(repeating: 0, count: strides[0])
+  for row in 0..<shape[1] {
+    (pointer + row * rowStride + shape[2]).update(repeating: 9999, count: 3)
+  }
+  let array = try MLMultiArray(
+    dataPointer: pointer, shape: shape.map(NSNumber.init(value:)), dataType: .float32,
+    strides: strides.map(NSNumber.init(value:)), deallocator: { $0.deallocate() })
 
   writeValues { indices, value in
     let offset = zip(indices, strides).reduce(0) { $0 + $1.0 * $1.1 }

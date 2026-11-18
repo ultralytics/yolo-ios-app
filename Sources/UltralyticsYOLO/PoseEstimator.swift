@@ -132,23 +132,21 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
       }
     }
 
-    // Wrapper to make pointer Sendable
-    struct PointerWrapper: @unchecked Sendable {
-      let pointer: UnsafeMutablePointer<Float>
-    }
-
-    let featurePointer = UnsafeMutablePointer<Float>(OpaquePointer(prediction.dataPointer))
-    let pointerWrapper = PointerWrapper(pointer: featurePointer)
+    let strides = prediction.strides.map { $0.intValue }
+    let featureStride = strides[1]
+    let featurePointer = prediction.dataPointer.assumingMemoryBound(to: Float.self)
+    let pointerWrapper = FloatPointerWrapper(featurePointer)
     let collectionsWrapper = CollectionsWrapper()
 
     DispatchQueue.concurrentPerform(iterations: numAnchors) { j in
-      let confidence = pointerWrapper.pointer[4 * numAnchors + j]
+      let anchor = pointerWrapper.pointer + j * strides[2]
+      let confidence = anchor[4 * featureStride]
       guard confidence > confidenceThreshold else { return }
 
-      let x = pointerWrapper.pointer[j]
-      let y = pointerWrapper.pointer[numAnchors + j]
-      let width = pointerWrapper.pointer[2 * numAnchors + j]
-      let height = pointerWrapper.pointer[3 * numAnchors + j]
+      let x = anchor[0]
+      let y = anchor[featureStride]
+      let width = anchor[2 * featureStride]
+      let height = anchor[3 * featureStride]
 
       let boundingBox = CGRect(
         x: CGFloat(x - width / 2),
@@ -158,7 +156,7 @@ public final class PoseEstimator: BasePredictor, @unchecked Sendable {
 
       var boxFeatures = [Float](repeating: 0, count: featureCount)
       for k in 0..<featureCount {
-        boxFeatures[k] = pointerWrapper.pointer[(5 + k) * numAnchors + j]
+        boxFeatures[k] = anchor[(5 + k) * featureStride]
       }
 
       collectionsWrapper.append(box: boundingBox, score: confidence, feature: boxFeatures)

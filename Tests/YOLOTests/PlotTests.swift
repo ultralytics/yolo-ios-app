@@ -225,10 +225,14 @@ class PlotTests: XCTestCase {
     let H = 4
     let W = 4
     let HW = 16
-    let protos = try! MLMultiArray(shape: [1, C, H, W] as [NSNumber], dataType: .float32)
-    let pPtr = protos.dataPointer.assumingMemoryBound(to: Float.self)
-    for i in 0..<HW { pPtr[i] = Float(i) }  // channel 0: 0..15
-    for i in 0..<HW { pPtr[HW + i] = 0 }  // channel 1: zeros
+    // Rows padded from 4 to 7 values, as Core ML pads them (104 -> 112); the padding must not reach the masks.
+    let pPtr = UnsafeMutablePointer<Float>.allocate(capacity: C * H * 7)
+    pPtr.initialize(repeating: 9999, count: C * H * 7)
+    for i in 0..<HW { pPtr[i / W * 7 + i % W] = Float(i) }  // channel 0: 0..15
+    for i in 0..<HW { pPtr[H * 7 + i / W * 7 + i % W] = 0 }  // channel 1: zeros
+    let protos = try! MLMultiArray(
+      dataPointer: pPtr, shape: [1, C, H, W] as [NSNumber], dataType: .float32,
+      strides: [C * H * 7, H * 7, 7, 1] as [NSNumber], deallocator: { $0.deallocate() })
 
     // One detection with coefficients [1, 0] -> combinedMask == channel 0 of protos.
     let detected: [(CGRect, Int, Float, [Float])] = [
